@@ -255,6 +255,102 @@ func toolingRecommendations(report analyzer.Report) []ToolRecommendation {
 		seen[rec.ID] = true
 		out = append(out, rec)
 	}
+	findingIDs := map[string]bool{}
+	for _, finding := range report.Findings {
+		findingIDs[finding.ID] = true
+	}
+
+	add(ToolRecommendation{
+		ID:             "ccusage",
+		Category:       "metrics_telemetry",
+		Why:            "Parse local Claude Code JSONL logs for independent token, cost, and burn-rate visibility before and after optimization.",
+		InstallCommand: "npx ccusage@latest",
+		Source:         "https://github.com/ryoppippi/ccusage",
+	})
+	add(ToolRecommendation{
+		ID:             "awesome-claude-code",
+		Category:       "ecosystem_index",
+		Why:            "Use as a monitored discovery source for Claude Code skills, hooks, plugins, statuslines, and orchestration tools; do not install from it directly.",
+		InstallCommand: "Review https://github.com/hesreallyhim/awesome-claude-code before adding any new third-party tool to the allowlist.",
+		Source:         "https://github.com/hesreallyhim/awesome-claude-code",
+	})
+
+	if findingIDs["tool_output_bloat"] || findingIDs["context_growth_spikes"] {
+		add(ToolRecommendation{
+			ID:             "context-mode",
+			Category:       "context_defense",
+			Why:            "Route large tool outputs through sandboxed processing and summaries instead of flooding Claude's live context.",
+			InstallCommand: "/plugin marketplace add mksglu/context-mode\n/plugin install context-mode@context-mode\n/reload-plugins\n/context-mode:ctx-doctor",
+			Source:         "https://github.com/mksglu/context-mode",
+		})
+		add(ToolRecommendation{
+			ID:                "rtk",
+			Category:          "advanced_shell_compression",
+			Why:               "Compress common shell command output before it reaches Claude; useful when terminal output is a dominant waste source.",
+			InstallCommand:    "brew install rtk\nrtk init -g",
+			RequiredBinary:    "rtk",
+			BinaryInstallHint: "macOS: brew install rtk. Linux/macOS fallback: curl -fsSL https://raw.githubusercontent.com/rtk-ai/rtk/refs/heads/master/install.sh | sh",
+			Source:            "https://github.com/rtk-ai/rtk",
+		})
+		add(ToolRecommendation{
+			ID:             "claude-token-efficient",
+			Category:       "claude_md_optimization",
+			Why:            "Reduce accumulated assistant verbosity, but only merge the smallest useful rules because persistent CLAUDE.md text adds input tokens.",
+			InstallCommand: "Ask Claude to review https://github.com/drona23/claude-token-efficient and propose a minimal CLAUDE.md diff; do not overwrite existing CLAUDE.md automatically.",
+			Source:         "https://github.com/drona23/claude-token-efficient",
+		})
+	}
+
+	if findingIDs["repeated_file_reads"] {
+		add(ToolRecommendation{
+			ID:                "grepai",
+			Category:          "local_semantic_retrieval",
+			Why:               "Use local semantic code search and call graphs to reduce repeated grep/read loops without sending code to a hosted retrieval service.",
+			InstallCommand:    "brew install yoanbernabeu/tap/grepai\ngrepai init\ngrepai watch",
+			RequiredBinary:    "grepai",
+			BinaryInstallHint: "Requires an embedding provider such as Ollama; install with curl script only after reviewing the GitHub source.",
+			Source:            "https://github.com/yoanbernabeu/grepai",
+		})
+		add(ToolRecommendation{
+			ID:             "claude-context",
+			Category:       "semantic_retrieval_mcp",
+			Why:            "Add MCP semantic code retrieval for large repositories where brute-force file exploration causes repeated rereads.",
+			InstallCommand: "claude mcp add claude-context -e OPENAI_API_KEY=<openai-key> -e MILVUS_ADDRESS=<zilliz-endpoint> -e MILVUS_TOKEN=<zilliz-token> -- npx @zilliz/claude-context-mcp@latest",
+			Source:         "https://github.com/zilliztech/claude-context",
+		})
+	}
+
+	if findingIDs["retry_loop"] || findingIDs["context_growth_spikes"] {
+		add(ToolRecommendation{
+			ID:             "claude-code-hooks-mastery",
+			Category:       "implementation_reference",
+			Why:            "Use as a reference for SessionStart, PostToolUse, PreCompact, Stop, and UserPromptSubmit patterns when building workflow discipline.",
+			InstallCommand: "Review https://github.com/disler/claude-code-hooks-mastery before enabling any new hook behavior.",
+			Source:         "https://github.com/disler/claude-code-hooks-mastery",
+		})
+	}
+
+	if findingIDs["tool_output_bloat"] || findingIDs["retry_loop"] || findingIDs["context_growth_spikes"] {
+		add(ToolRecommendation{
+			ID:                "ccstatusline",
+			Category:          "statusline_telemetry",
+			Why:               "Expose session state in the statusline so users notice cost, git state, and workflow drift without adding messages to context.",
+			InstallCommand:    "Review https://github.com/sirmalloc/ccstatusline and install only if it does not conflict with Context Mode or the user's existing statusline.",
+			RequiredBinary:    "ccstatusline",
+			BinaryInstallHint: "Prefer the repository's current release/install instructions over copied commands.",
+			Source:            "https://github.com/sirmalloc/ccstatusline",
+		})
+	}
+
+	add(ToolRecommendation{
+		ID:                "claude-code-usage-monitor",
+		Category:          "burn_rate_monitoring",
+		Why:               "Optional live forecasting for users who care about session limits and burn-rate warnings outside Claude's context.",
+		InstallCommand:    "uv tool install claude-monitor\nclaude-monitor",
+		RequiredBinary:    "claude-monitor",
+		BinaryInstallHint: "Alternative: pip install claude-monitor.",
+		Source:            "https://github.com/Maciek-roboblog/Claude-Code-Usage-Monitor",
+	})
 
 	for _, manager := range report.Ecosystem.PackageManagers {
 		switch manager {
@@ -526,7 +622,7 @@ Claude Analyzer is not responsible for damage, data loss, credential exposure, b
 
 func toolingCommand(recommendations []ToolRecommendation) string {
 	return `---
-description: Review the generated code-intelligence and MCP setup recommendations.
+description: Review the generated token-saving, code-intelligence, and MCP setup recommendations.
 ---
 
 # Claude Analyzer Tooling Setup
@@ -572,7 +668,7 @@ Generated waste bucket: %s
 
 func toolingSetupSkill(recommendations []ToolRecommendation) string {
 	return `---
-description: Use when setting up vetted language servers, Claude Code code-intelligence plugins, or MCP integrations.
+description: Use when setting up vetted token-saving tools, language servers, Claude Code plugins, or MCP integrations.
 ---
 
 # Tooling Setup

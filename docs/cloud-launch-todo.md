@@ -292,6 +292,7 @@ Acceptance:
 - [x] Define deterministic Claude plugin artifact contract.
 - [x] Add initial plugin artifact generator and archive safety tests.
 - [x] Replace Bash-nag hook concept with vetted code-intelligence/MCP recommendation pack.
+- [x] Add first GitHub-hosted token-saving tooling matrix.
 - [ ] Add checkout waiver checkbox before paid install commands are revealed. (#33)
 - [ ] Complete public-tool vetting sprint for language servers, MCPs, Claude plugins, and skills. (#32)
 - [ ] Add analyzer signals for language stack detection beyond package-manager inference.

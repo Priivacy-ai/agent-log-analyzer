@@ -68,7 +68,23 @@ Never generate a Bash nag hook as the primary paid value. Pre-command hooks may 
 
 The generator may recommend only allowlisted, public, stable tools. Recommendations are advice plus Claude-native setup instructions; each install still requires explicit user approval.
 
-Initial allowlist:
+Initial allowlist is maintained in `docs/remediation/token-saving-tooling-matrix.md`.
+
+Generated recommendations now include two classes:
+
+- official Claude Code marketplace/code-intelligence recommendations
+- GitHub-hosted open-source token-saving tools that are waiver-gated and mapped to analyzer signals
+
+Core open-source recommendations:
+
+- `context-mode` for context defense and large tool-output compression
+- `ccusage` for independent usage analysis and before/after telemetry
+- `grepai` and `claude-context` for repeated-reread/retrieval problems
+- `claude-token-efficient` as a minimal CLAUDE.md diff, never an overwrite
+- `ccstatusline` and Claude Code Usage Monitor as out-of-context awareness tools
+- `rtk` only as an advanced shell-compression option because it rewrites shell command execution
+
+Official Claude Code plugin allowlist:
 
 - Official Claude Code code-intelligence plugins:
   - `typescript-lsp` with `typescript-language-server`
