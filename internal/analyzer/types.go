@@ -28,6 +28,7 @@ type Metrics struct {
 	RetryDepthMax       int `json:"retry_depth_max"`
 	ContextGrowthEvents int `json:"context_growth_events"`
 	FailedCommands      int `json:"failed_commands"`
+	SessionCount        int `json:"session_count,omitempty"`
 }
 
 type Finding struct {

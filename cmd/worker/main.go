@@ -8,6 +8,7 @@ import (
 	"github.com/robertDouglass/claude-log-analyzer/internal/analyzer"
 	"github.com/robertDouglass/claude-log-analyzer/internal/app"
 	"github.com/robertDouglass/claude-log-analyzer/internal/backend"
+	"github.com/robertDouglass/claude-log-analyzer/internal/paidscan"
 )
 
 func main() {
@@ -40,7 +41,12 @@ func processOnce(store app.WorkerStore) error {
 		_ = store.FailJob(job, err)
 		return err
 	}
-	report, err := analyzer.Analyze(job.ID, data)
+	var report analyzer.Report
+	if job.ScanType == app.ScanTypePaidBundle {
+		report, err = paidscan.AnalyzeBundle(job.ID, data, paidscan.Options{MaxFiles: paidscan.DefaultMaxFiles})
+	} else {
+		report, err = analyzer.Analyze(job.ID, data)
+	}
 	if err != nil {
 		_ = store.FailJob(job, err)
 		return err

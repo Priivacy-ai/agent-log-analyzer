@@ -21,6 +21,7 @@ import (
 )
 
 const maxUploadBytes = 50 * 1024 * 1024
+const maxPaidUploadBytes = 250 * 1024 * 1024
 
 type analysisSessionResponse struct {
 	JobID        string    `json:"job_id"`
@@ -59,6 +60,8 @@ func buildMux(store app.APIStore) http.Handler {
 	mux.HandleFunc("POST /api/analysis-sessions", createAnalysisSessionHandler(store, maxQueueDepth(), uploadTokenTTL()))
 	mux.HandleFunc("PUT /api/uploads/{id}", tokenUploadHandler(store))
 	mux.HandleFunc("POST /api/uploads/{id}/finalize", finalizeTokenUploadHandler(store))
+	mux.HandleFunc("PUT /api/paid-uploads/{id}", paidBundleUploadHandler(store))
+	mux.HandleFunc("POST /api/paid-uploads/{id}/finalize", finalizeTokenUploadHandler(store))
 	mux.HandleFunc("GET /api/public-reports/{id}/{token}", getPublicReportHandler(store))
 	mux.HandleFunc("GET /r/{id}/{token}", reportPageHandler())
 	mux.HandleFunc("GET /api/jobs/{id}", getJobHandler(store))
@@ -104,6 +107,7 @@ func createAnalysisSessionHandler(store app.APIStore, maxDepth int, expiresIn ti
 		job := app.Job{
 			ID:                   jobID,
 			Status:               app.StatusUploading,
+			ScanType:             app.ScanTypeSingle,
 			MaxUploadBytes:       maxUploadBytes,
 			UploadTokenHash:      tokenHash(uploadToken),
 			ReportTokenHash:      tokenHash(reportToken),
@@ -150,6 +154,10 @@ func tokenUploadHandler(store app.APIStore) http.HandlerFunc {
 			writeError(w, http.StatusConflict, "upload token already used")
 			return
 		}
+		if job.ScanType != "" && job.ScanType != app.ScanTypeSingle {
+			writeError(w, http.StatusBadRequest, "use paid bundle upload endpoint")
+			return
+		}
 		if job.UploadPath != "" {
 			writeError(w, http.StatusConflict, "upload already received")
 			return
@@ -172,6 +180,61 @@ func tokenUploadHandler(store app.APIStore) http.HandlerFunc {
 			"job_id": job.ID,
 			"status": string(job.Status),
 			"bytes":  len(data),
+		})
+	}
+}
+
+func paidBundleUploadHandler(store app.APIStore) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		sessionStore, ok := store.(app.TokenUploadStore)
+		if !ok {
+			writeError(w, http.StatusNotImplemented, "token upload unavailable")
+			return
+		}
+		job, ok := authorizeTokenJob(w, r, store, r.PathValue("id"), true)
+		if !ok {
+			return
+		}
+		if job.Status != app.StatusUploading {
+			writeError(w, http.StatusConflict, "upload token already used")
+			return
+		}
+		if job.ScanType != app.ScanTypePaidBundle {
+			writeError(w, http.StatusBadRequest, "paid upload token required")
+			return
+		}
+		if job.UploadPath != "" {
+			writeError(w, http.StatusConflict, "upload already received")
+			return
+		}
+		if r.URL.Query().Get("limit") != "100" || r.Header.Get("X-Scan-Limit") != "100" {
+			writeError(w, http.StatusBadRequest, "paid scan requires limit=100 and X-Scan-Limit: 100")
+			return
+		}
+		contentType := strings.ToLower(r.Header.Get("Content-Type"))
+		if contentType != "" && !strings.Contains(contentType, "application/gzip") && !strings.Contains(contentType, "application/x-gzip") && !strings.Contains(contentType, "application/octet-stream") {
+			writeError(w, http.StatusUnsupportedMediaType, "paid scan upload must be application/gzip")
+			return
+		}
+		maxBytes := job.MaxUploadBytes
+		if maxBytes <= 0 {
+			maxBytes = maxPaidUploadBytes
+		}
+		data, err := analyzer.ReadAllLimited(r.Body, maxBytes)
+		if err != nil {
+			writeError(w, http.StatusRequestEntityTooLarge, "upload too large")
+			return
+		}
+		job, err = sessionStore.StoreUploadSession(job, data)
+		if err != nil {
+			writeError(w, http.StatusInternalServerError, "could not store upload")
+			return
+		}
+		writeJSON(w, http.StatusCreated, map[string]any{
+			"job_id": job.ID,
+			"status": string(job.Status),
+			"bytes":  len(data),
+			"limit":  100,
 		})
 	}
 }
@@ -262,6 +325,9 @@ func logRequests(next http.Handler) http.Handler {
 func sanitizePath(path string) string {
 	if strings.HasPrefix(path, "/api/uploads/") {
 		return "/api/uploads/:id"
+	}
+	if strings.HasPrefix(path, "/api/paid-uploads/") {
+		return "/api/paid-uploads/:id"
 	}
 	if strings.HasPrefix(path, "/api/public-reports/") {
 		return "/api/public-reports/:id/:token"

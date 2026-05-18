@@ -200,6 +200,8 @@ function renderPaidCommandPreview() {
     "  -H 'Content-Type: application/gzip' \\",
     "  -H 'X-Scan-Limit: 100' \\",
     "  --data-binary \"@$BUNDLE\"",
+    `curl -fsS -X POST '${window.location.origin}/api/paid-uploads/$PAID_SESSION/finalize' \\`,
+    "  -H \"Authorization: Bearer $PAID_TOKEN\"",
   ].join("\n");
 }
 

@@ -345,6 +345,9 @@ func (s *Store) putJob(job app.Job) error {
 		"upload_path": &dynamodbtypes.AttributeValueMemberS{Value: job.UploadPath},
 		"updated_at":  &dynamodbtypes.AttributeValueMemberS{Value: job.UpdatedAt.Format(time.RFC3339Nano)},
 	}
+	if job.ScanType != "" {
+		item["scan_type"] = &dynamodbtypes.AttributeValueMemberS{Value: string(job.ScanType)}
+	}
 	if !job.CreatedAt.IsZero() {
 		item["created_at"] = &dynamodbtypes.AttributeValueMemberS{Value: job.CreatedAt.Format(time.RFC3339Nano)}
 	}
@@ -402,6 +405,7 @@ func jobFromItem(item map[string]dynamodbtypes.AttributeValue) (app.Job, error) 
 	job := app.Job{
 		ID:              stringAttr(item, "id"),
 		Status:          app.JobStatus(stringAttr(item, "status")),
+		ScanType:        app.ScanType(stringAttr(item, "scan_type")),
 		UploadPath:      stringAttr(item, "upload_path"),
 		MaxUploadBytes:  int64Attr(item, "max_upload_bytes"),
 		UploadTokenHash: stringAttr(item, "upload_token_hash"),

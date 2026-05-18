@@ -182,8 +182,12 @@ The public upload UX is Claude/prompt/curl only. There is no browser file upload
 - [x] Enqueue analysis only after `POST /api/uploads/{job_id}/finalize`.
 - [x] Serve reports only through tokenized `/r/{job_id}/{report_token}` URLs.
 - [x] Update LocalStack smoke to cover the token/curl flow.
-- [ ] Add the Stripe-gated paid-session endpoint that issues a separate paid token.
-- [ ] Enforce paid scan limit of 100 most recent Claude Code JSONL logs.
+- [x] Add paid bundle upload endpoint for paid-token jobs.
+- [x] Enforce paid scan upload contract: `limit=100` and `X-Scan-Limit: 100`.
+- [x] Validate paid tar/gzip bundles for max 100 JSONL files and hostile archive entries.
+- [x] Add worker aggregate analysis path for paid bundles.
+- [ ] Add the Stripe-gated paid-session endpoint that creates paid-token jobs.
+- [ ] Connect paid command generation to the Stripe-created session.
 
 Acceptance:
 

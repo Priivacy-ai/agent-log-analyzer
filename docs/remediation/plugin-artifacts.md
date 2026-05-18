@@ -14,6 +14,8 @@ Paid scan:
 
 - uses a separate paid token
 - uploads at most the 100 most recent Claude Code JSONL logs
+- sends `limit=100` and `X-Scan-Limit: 100`
+- finalizes with `POST /api/paid-uploads/{job_id}/finalize`
 - aggregates deterministic metrics across sessions
 - generates a customized Claude Code plugin archive
 - shows copyable install commands and a Claude-native install prompt

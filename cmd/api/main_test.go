@@ -1,6 +1,9 @@
 package main
 
 import (
+	"archive/tar"
+	"bytes"
+	"compress/gzip"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -62,6 +65,8 @@ func TestSanitizePathRedactsDynamicIDs(t *testing.T) {
 	for _, path := range []string{
 		"/api/uploads/job-1234567890",
 		"/api/uploads/job-1234567890/finalize",
+		"/api/paid-uploads/job-1234567890",
+		"/api/paid-uploads/job-1234567890/finalize",
 		"/api/public-reports/job-1234567890/token-secret",
 		"/api/jobs/job-1234567890",
 		"/r/job-1234567890/token-secret",
@@ -196,6 +201,117 @@ func TestAnalysisSessionCurlFlow(t *testing.T) {
 	}
 }
 
+func TestPaidBundleUploadRequiresPaidTokenAndLimit(t *testing.T) {
+	store, err := localstore.New(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	token := "paid-token"
+	job := app.Job{
+		ID:                   "job-paid-token",
+		Status:               app.StatusUploading,
+		ScanType:             app.ScanTypePaidBundle,
+		MaxUploadBytes:       maxPaidUploadBytes,
+		UploadTokenHash:      tokenHash(token),
+		ReportTokenHash:      tokenHash("report-token"),
+		UploadTokenExpiresAt: time.Now().UTC().Add(15 * time.Minute),
+	}
+	if err := store.CreateUploadSession(job); err != nil {
+		t.Fatal(err)
+	}
+
+	req := httptest.NewRequest(http.MethodPut, "/api/paid-uploads/job-paid-token?limit=100", bytes.NewReader(testPaidBundle(t)))
+	req.SetPathValue("id", "job-paid-token")
+	req.Header.Set("Authorization", "Bearer "+token)
+	req.Header.Set("Content-Type", "application/gzip")
+	req.Header.Set("X-Scan-Limit", "100")
+	rec := httptest.NewRecorder()
+	paidBundleUploadHandler(store).ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusCreated {
+		t.Fatalf("expected paid upload status 201, got %d: %s", rec.Code, rec.Body.String())
+	}
+	finalizeReq := httptest.NewRequest(http.MethodPost, "/api/paid-uploads/job-paid-token/finalize", nil)
+	finalizeReq.SetPathValue("id", "job-paid-token")
+	finalizeReq.Header.Set("Authorization", "Bearer "+token)
+	finalizeRec := httptest.NewRecorder()
+	finalizeTokenUploadHandler(store).ServeHTTP(finalizeRec, finalizeReq)
+
+	if finalizeRec.Code != http.StatusAccepted {
+		t.Fatalf("expected finalize status 202, got %d: %s", finalizeRec.Code, finalizeRec.Body.String())
+	}
+	stored, err := store.GetJob("job-paid-token")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if stored.Status != app.StatusPending || stored.ScanType != app.ScanTypePaidBundle {
+		t.Fatalf("expected pending paid bundle job, got %#v", stored)
+	}
+}
+
+func TestPaidBundleUploadRejectsFreeToken(t *testing.T) {
+	store, err := localstore.New(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	token := "free-token"
+	job := app.Job{
+		ID:                   "job-free-token",
+		Status:               app.StatusUploading,
+		ScanType:             app.ScanTypeSingle,
+		MaxUploadBytes:       maxUploadBytes,
+		UploadTokenHash:      tokenHash(token),
+		ReportTokenHash:      tokenHash("report-token"),
+		UploadTokenExpiresAt: time.Now().UTC().Add(15 * time.Minute),
+	}
+	if err := store.CreateUploadSession(job); err != nil {
+		t.Fatal(err)
+	}
+
+	req := httptest.NewRequest(http.MethodPut, "/api/paid-uploads/job-free-token?limit=100", bytes.NewReader(testPaidBundle(t)))
+	req.SetPathValue("id", "job-free-token")
+	req.Header.Set("Authorization", "Bearer "+token)
+	req.Header.Set("Content-Type", "application/gzip")
+	req.Header.Set("X-Scan-Limit", "100")
+	rec := httptest.NewRecorder()
+	paidBundleUploadHandler(store).ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected free token rejection 400, got %d: %s", rec.Code, rec.Body.String())
+	}
+}
+
+func TestPaidBundleUploadRequiresScanLimitContract(t *testing.T) {
+	store, err := localstore.New(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	token := "paid-token"
+	job := app.Job{
+		ID:                   "job-paid-limit",
+		Status:               app.StatusUploading,
+		ScanType:             app.ScanTypePaidBundle,
+		MaxUploadBytes:       maxPaidUploadBytes,
+		UploadTokenHash:      tokenHash(token),
+		ReportTokenHash:      tokenHash("report-token"),
+		UploadTokenExpiresAt: time.Now().UTC().Add(15 * time.Minute),
+	}
+	if err := store.CreateUploadSession(job); err != nil {
+		t.Fatal(err)
+	}
+
+	req := httptest.NewRequest(http.MethodPut, "/api/paid-uploads/job-paid-limit", bytes.NewReader(testPaidBundle(t)))
+	req.SetPathValue("id", "job-paid-limit")
+	req.Header.Set("Authorization", "Bearer "+token)
+	req.Header.Set("Content-Type", "application/gzip")
+	rec := httptest.NewRecorder()
+	paidBundleUploadHandler(store).ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected missing limit rejection 400, got %d: %s", rec.Code, rec.Body.String())
+	}
+}
+
 func TestTokenUploadRejectsExpiredToken(t *testing.T) {
 	store, err := localstore.New(t.TempDir())
 	if err != nil {
@@ -224,4 +340,25 @@ func TestTokenUploadRejectsExpiredToken(t *testing.T) {
 	if rec.Code != http.StatusGone {
 		t.Fatalf("expected expired token status 410, got %d: %s", rec.Code, rec.Body.String())
 	}
+}
+
+func testPaidBundle(t *testing.T) []byte {
+	t.Helper()
+	var buf bytes.Buffer
+	gzipWriter := gzip.NewWriter(&buf)
+	tarWriter := tar.NewWriter(gzipWriter)
+	data := []byte(`{"type":"tool","command":"cat src/auth.ts","output":"ok"}` + "\n")
+	if err := tarWriter.WriteHeader(&tar.Header{Name: "logs/session.jsonl", Mode: 0o600, Size: int64(len(data)), Typeflag: tar.TypeReg}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := tarWriter.Write(data); err != nil {
+		t.Fatal(err)
+	}
+	if err := tarWriter.Close(); err != nil {
+		t.Fatal(err)
+	}
+	if err := gzipWriter.Close(); err != nil {
+		t.Fatal(err)
+	}
+	return buf.Bytes()
 }

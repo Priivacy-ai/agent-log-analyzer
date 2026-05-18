@@ -3,6 +3,7 @@ package app
 import "time"
 
 type JobStatus string
+type ScanType string
 
 const (
 	StatusUploading  JobStatus = "uploading"
@@ -12,9 +13,15 @@ const (
 	StatusFailed     JobStatus = "failed"
 )
 
+const (
+	ScanTypeSingle     ScanType = "single"
+	ScanTypePaidBundle ScanType = "paid_bundle"
+)
+
 type Job struct {
 	ID                   string    `json:"id"`
 	Status               JobStatus `json:"status"`
+	ScanType             ScanType  `json:"scan_type,omitempty"`
 	UploadPath           string    `json:"upload_path"`
 	MaxUploadBytes       int64     `json:"max_upload_bytes,omitempty"`
 	UploadTokenHash      string    `json:"upload_token_hash,omitempty"`
