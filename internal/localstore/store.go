@@ -161,8 +161,8 @@ func (s *Store) ReadUpload(path string) ([]byte, error) {
 	return os.ReadFile(cleanPath)
 }
 
-func (s *Store) SweepExpired(now time.Time, rawUploadTTL, reportTTL time.Duration) (SweepResult, error) {
-	result := SweepResult{}
+func (s *Store) SweepExpired(now time.Time, rawUploadTTL, reportTTL time.Duration) (app.SweepResult, error) {
+	result := app.SweepResult{}
 	if err := s.sweepDir(filepath.Join(s.root, "uploads"), now, rawUploadTTL, &result.UploadsDeleted); err != nil {
 		return result, err
 	}
@@ -170,11 +170,6 @@ func (s *Store) SweepExpired(now time.Time, rawUploadTTL, reportTTL time.Duratio
 		return result, err
 	}
 	return result, nil
-}
-
-type SweepResult struct {
-	UploadsDeleted int `json:"uploads_deleted"`
-	ReportsDeleted int `json:"reports_deleted"`
 }
 
 func (s *Store) sweepDir(dir string, now time.Time, ttl time.Duration, count *int) error {

@@ -31,6 +31,8 @@ LocalStack smoke:
 ./scripts/smoke-aws-local.sh
 ```
 
+The sweeper also supports AWS mode, so production retention can be enforced by a scheduled `claude-analyzer-sweeper` task instead of relying only on S3 lifecycle rules.
+
 ## Required AWS Resources
 
 - S3 quarantine upload bucket with 15 minute lifecycle deletion.
@@ -42,4 +44,4 @@ LocalStack smoke:
 
 ## Current Status
 
-The AWS adapter compiles and is config-gated. It is not deployed and should next be exercised against LocalStack before touching real AWS.
+The AWS adapter compiles, is config-gated, and has been exercised against LocalStack. It is not deployed to real AWS yet.

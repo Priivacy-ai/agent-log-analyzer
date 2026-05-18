@@ -13,12 +13,21 @@ jobs:
       - uses: actions/setup-go@v6
         with:
           go-version-file: go.mod
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_wrapper: false
       - name: gofmt
         run: test -z "$(gofmt -l .)"
       - name: go vet
         run: go vet ./...
       - name: tests
         run: go test ./...
+      - name: terraform fmt
+        run: terraform -chdir=infra/aws fmt -check -recursive
+      - name: terraform validate
+        run: |
+          terraform -chdir=infra/aws init -backend=false
+          terraform -chdir=infra/aws validate
       - name: docker build
         run: docker build .
       - name: docker compose smoke

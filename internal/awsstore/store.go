@@ -245,6 +245,51 @@ func (s *Store) GetReport(id string) (analyzer.Report, error) {
 	return report, json.Unmarshal(data, &report)
 }
 
+func (s *Store) SweepExpired(now time.Time, rawUploadTTL, reportTTL time.Duration) (app.SweepResult, error) {
+	result := app.SweepResult{}
+	uploadsDeleted, err := s.sweepS3Prefix(context.Background(), s.uploadBucket, "uploads/", now, rawUploadTTL)
+	if err != nil {
+		return result, err
+	}
+	reportsDeleted, err := s.sweepS3Prefix(context.Background(), s.reportBucket, "reports/", now, reportTTL)
+	if err != nil {
+		return result, err
+	}
+	result.UploadsDeleted = uploadsDeleted
+	result.ReportsDeleted = reportsDeleted
+	return result, nil
+}
+
+func (s *Store) sweepS3Prefix(ctx context.Context, bucket, prefix string, now time.Time, ttl time.Duration) (int, error) {
+	if ttl <= 0 {
+		return 0, nil
+	}
+	deleted := 0
+	paginator := s3.NewListObjectsV2Paginator(s.s3, &s3.ListObjectsV2Input{
+		Bucket: aws.String(bucket),
+		Prefix: aws.String(prefix),
+	})
+	for paginator.HasMorePages() {
+		page, err := paginator.NextPage(ctx)
+		if err != nil {
+			return deleted, err
+		}
+		for _, object := range page.Contents {
+			if object.LastModified == nil || now.Sub(*object.LastModified) <= ttl {
+				continue
+			}
+			if _, err := s.s3.DeleteObject(ctx, &s3.DeleteObjectInput{
+				Bucket: aws.String(bucket),
+				Key:    object.Key,
+			}); err != nil {
+				return deleted, err
+			}
+			deleted++
+		}
+	}
+	return deleted, nil
+}
+
 func (s *Store) putJob(job app.Job) error {
 	item := map[string]dynamodbtypes.AttributeValue{
 		"id":          &dynamodbtypes.AttributeValueMemberS{Value: job.ID},

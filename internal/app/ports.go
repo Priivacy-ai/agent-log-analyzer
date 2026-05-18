@@ -1,6 +1,10 @@
 package app
 
-import "github.com/robertDouglass/claude-log-analyzer/internal/analyzer"
+import (
+	"time"
+
+	"github.com/robertDouglass/claude-log-analyzer/internal/analyzer"
+)
 
 type UploadStore interface {
 	SaveUpload(jobID string, data []byte) (string, error)
@@ -29,4 +33,13 @@ type APIStore interface {
 type WorkerStore interface {
 	UploadStore
 	JobQueue
+}
+
+type SweepResult struct {
+	UploadsDeleted int `json:"uploads_deleted"`
+	ReportsDeleted int `json:"reports_deleted"`
+}
+
+type SweeperStore interface {
+	SweepExpired(now time.Time, rawUploadTTL, reportTTL time.Duration) (SweepResult, error)
 }

@@ -64,6 +64,8 @@ CLAUDE_ANALYZER_BACKEND=aws   -> S3 + SQS + DynamoDB
 
 AWS mode is intended to be tested against LocalStack before real cloud resources.
 
+The first AWS deployment scaffold lives in `infra/aws`. It provisions the S3/SQS/DynamoDB backend, private ECS API/worker/sweeper tasks, ALB ingress, and VPC endpoints so the workers do not need general outbound internet.
+
 ## Load Shedding
 
 `CLAUDE_ANALYZER_MAX_QUEUE_DEPTH` lets the API reject new uploads before reading multipart bodies when the queue is saturated. This keeps launch spikes from turning into API memory pressure.
