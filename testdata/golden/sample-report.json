@@ -1,0 +1,151 @@
+{
+  "job_id": "job-golden-sample",
+  "version": "0.1.0",
+  "score": 48,
+  "estimated_waste_pct": {
+    "low": 26,
+    "high": 34
+  },
+  "metrics": {
+    "turns": 11,
+    "estimated_tokens": 143,
+    "tool_output_tokens": 91,
+    "rereads": 3,
+    "retry_depth_max": 3,
+    "context_growth_events": 0,
+    "failed_commands": 3
+  },
+  "findings": [
+    {
+      "id": "repeated_file_reads",
+      "title": "Excessive repeated file reads",
+      "severity": "medium",
+      "cost_impact": "medium-high",
+      "evidence": {
+        "count": 3,
+        "top_files": [
+          "auth.ts",
+          "routes.ts"
+        ]
+      },
+      "recommendation": "Prefer targeted searches and summarize file state before rereading the same files.",
+      "deterministic": true
+    },
+    {
+      "id": "tool_output_bloat",
+      "title": "Large shell/tool output overhead",
+      "severity": "high",
+      "cost_impact": "high",
+      "evidence": {
+        "token_share_pct": 63
+      },
+      "recommendation": "Cap command output and use narrower queries before pasting long terminal output into context.",
+      "deterministic": true
+    },
+    {
+      "id": "retry_loop",
+      "title": "Retry-loop behavior",
+      "severity": "medium",
+      "cost_impact": "medium",
+      "evidence": {
+        "count": 3
+      },
+      "recommendation": "Stop after repeated failures, inspect the invariant, and restart with a smaller debugging scope.",
+      "deterministic": true
+    }
+  ],
+  "ecosystem": {
+    "client": "claude_code",
+    "coding_agents": [
+      "claude_code"
+    ],
+    "operating_system": "macos",
+    "shell": "zsh",
+    "workflow_frameworks": [
+      "bmad",
+      "spec_kitty"
+    ],
+    "mcp_servers_known": [
+      "github"
+    ],
+    "unknown_mcp_server_count": 0,
+    "known_skills": [],
+    "unknown_skill_count": 0,
+    "known_plugins": [],
+    "unknown_plugin_count": 0,
+    "package_managers": [
+      "go"
+    ],
+    "version_control": "unknown"
+  },
+  "redactions": {
+    "anthropic_key": 1
+  },
+  "security_receipt": {
+    "raw_transcript_sent_to_llm": false,
+    "outbound_during_analysis": false,
+    "secrets_redacted": 1,
+    "raw_log_ttl": "15m production target; local Docker data is developer-controlled"
+  },
+  "timeline": [
+    {
+      "turn": 10,
+      "estimated_tokens": 126,
+      "tool_tokens": 91,
+      "rereads": 3,
+      "retries": 3
+    },
+    {
+      "turn": 11,
+      "estimated_tokens": 143,
+      "tool_tokens": 91,
+      "rereads": 3,
+      "retries": 3
+    }
+  ],
+  "immediate_fixes": [
+    "Prefer targeted searches and summarize file state before rereading the same files.",
+    "Cap command output and use narrower queries before pasting long terminal output into context.",
+    "Stop after repeated failures, inspect the invariant, and restart with a smaller debugging scope."
+  ],
+  "aggregate_event": {
+    "event": "analysis_completed",
+    "parser_type": "jsonl",
+    "input_size_bucket": "0_1024",
+    "turn_bucket": "10_50",
+    "score_bucket": "40_60",
+    "waste_bucket": "20_40",
+    "findings": {
+      "repeated_file_reads": "medium",
+      "retry_loop": "medium",
+      "tool_output_bloat": "high"
+    },
+    "redactions": {
+      "anthropic_key": 1
+    },
+    "ecosystem": {
+      "client": "claude_code",
+      "coding_agents": [
+        "claude_code"
+      ],
+      "operating_system": "macos",
+      "shell": "zsh",
+      "workflow_frameworks": [
+        "bmad",
+        "spec_kitty"
+      ],
+      "mcp_servers_known": [
+        "github"
+      ],
+      "unknown_mcp_server_count": 0,
+      "known_skills": [],
+      "unknown_skill_count": 0,
+      "known_plugins": [],
+      "unknown_plugin_count": 0,
+      "package_managers": [
+        "go"
+      ],
+      "version_control": "unknown"
+    }
+  }
+}

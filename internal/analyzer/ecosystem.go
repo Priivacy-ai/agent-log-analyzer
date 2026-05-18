@@ -117,14 +117,22 @@ func countUnknownMCP(input []byte, known []string) int {
 }
 
 func countUnknownSlashCommands(lines []parsedLine, known []string) int {
-	re := regexp.MustCompile(`/(?:[A-Za-z][A-Za-z0-9_-]{2,})`)
+	re := regexp.MustCompile(`(?:^|[\s"'(:])/(?:[A-Za-z][A-Za-z0-9_-]{2,})`)
 	knownSet := map[string]bool{}
 	for _, item := range known {
 		knownSet[normalizeID(item)] = true
 	}
 	unknown := map[string]bool{}
 	for _, line := range lines {
+		if line.IsTool {
+			continue
+		}
 		for _, raw := range re.FindAllString(line.Text, -1) {
+			raw = strings.TrimLeft(raw, " \t\n\r\"'(:")
+			matchEnd := strings.Index(line.Text, raw) + len(raw)
+			if matchEnd > len(raw)-1 && matchEnd < len(line.Text) && line.Text[matchEnd] == '/' {
+				continue
+			}
 			name := strings.TrimPrefix(strings.ToLower(raw), "/")
 			name = strings.TrimPrefix(name, "gstack-")
 			if !knownSet[normalizeID(name)] {

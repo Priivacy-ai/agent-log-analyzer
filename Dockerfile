@@ -3,6 +3,7 @@ WORKDIR /src
 COPY go.mod go.sum ./
 COPY cmd ./cmd
 COPY internal ./internal
+COPY testdata ./testdata
 RUN go test ./...
 RUN go build -o /out/api ./cmd/api
 RUN go build -o /out/worker ./cmd/worker

@@ -42,7 +42,10 @@ func TestAnalyzeDetectsWasteAndScrubsSecrets(t *testing.T) {
 }
 
 func TestUnknownNamesAreCountsOnly(t *testing.T) {
-	input := []byte(`{"type":"tool","name":"mcp__private_company_server__lookup","message":"/private-internal-command"}`)
+	input := []byte(strings.Join([]string{
+		`{"type":"tool","name":"mcp__private_company_server__lookup"}`,
+		`{"type":"user","message":"/private-internal-command"}`,
+	}, "\n"))
 	report, err := Analyze("job-test", input)
 	if err != nil {
 		t.Fatalf("Analyze returned error: %v", err)
@@ -56,6 +59,20 @@ func TestUnknownNamesAreCountsOnly(t *testing.T) {
 	}
 	if report.Ecosystem.UnknownSkillCount != 1 {
 		t.Fatalf("expected unknown skill count, got %#v", report.Ecosystem)
+	}
+}
+
+func TestSlashCommandDetectionDoesNotCountPaths(t *testing.T) {
+	input := []byte(strings.Join([]string{
+		`{"type":"user","message":"Inspect /Users/example/project and src/auth.ts before running tests."}`,
+		`{"type":"tool","command":"cat src/routes.ts","output":"ok"}`,
+	}, "\n"))
+	report, err := Analyze("job-test", input)
+	if err != nil {
+		t.Fatalf("Analyze returned error: %v", err)
+	}
+	if report.Ecosystem.UnknownSkillCount != 0 {
+		t.Fatalf("expected file paths not to count as slash commands: %#v", report.Ecosystem)
 	}
 }
 
