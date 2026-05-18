@@ -55,6 +55,15 @@ This is deliberately simpler than production but preserves the important product
 | API container | CDN + API Gateway + Go/Lambda control plane |
 | Worker container | ECS Fargate worker in private subnet |
 
+The code now has a backend selector:
+
+```text
+CLAUDE_ANALYZER_BACKEND=local -> local file store
+CLAUDE_ANALYZER_BACKEND=aws   -> S3 + SQS + DynamoDB
+```
+
+AWS mode is intended to be tested against LocalStack before real cloud resources.
+
 ## Scale Gates
 
 - Static pages must be CDN cacheable.
@@ -62,4 +71,3 @@ This is deliberately simpler than production but preserves the important product
 - Analysis must never be synchronous.
 - Worker backlog must degrade into wait time, not API failure.
 - Optional LLM interpretation must be load-sheddable.
-

@@ -10,14 +10,14 @@ import (
 
 	"github.com/robertDouglass/claude-log-analyzer/internal/analyzer"
 	"github.com/robertDouglass/claude-log-analyzer/internal/app"
-	"github.com/robertDouglass/claude-log-analyzer/internal/localstore"
+	"github.com/robertDouglass/claude-log-analyzer/internal/backend"
 )
 
 const maxUploadBytes = 50 * 1024 * 1024
 
 func main() {
 	addr := getenv("CLAUDE_ANALYZER_ADDR", ":8080")
-	store, err := localstore.New(getenv("CLAUDE_ANALYZER_DATA_DIR", "/tmp/claude-log-analyzer"))
+	store, err := backend.NewAPIStore()
 	if err != nil {
 		slog.Error("store init failed", "error", err)
 		os.Exit(1)
@@ -56,7 +56,7 @@ func createJobHandler(store app.APIStore) http.HandlerFunc {
 			writeError(w, http.StatusRequestEntityTooLarge, "upload too large")
 			return
 		}
-		id := localstore.NewJobID()
+		id := app.NewJobID()
 		uploadPath, err := store.SaveUpload(id, data)
 		if err != nil {
 			writeError(w, http.StatusInternalServerError, "could not store upload")

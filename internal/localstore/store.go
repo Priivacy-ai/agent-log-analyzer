@@ -3,7 +3,6 @@ package localstore
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -233,8 +232,4 @@ func validID(id string) bool {
 		return false
 	}
 	return true
-}
-
-func NewJobID() string {
-	return fmt.Sprintf("job-%d", time.Now().UTC().UnixNano())
 }

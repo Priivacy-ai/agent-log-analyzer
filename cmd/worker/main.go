@@ -7,11 +7,11 @@ import (
 
 	"github.com/robertDouglass/claude-log-analyzer/internal/analyzer"
 	"github.com/robertDouglass/claude-log-analyzer/internal/app"
-	"github.com/robertDouglass/claude-log-analyzer/internal/localstore"
+	"github.com/robertDouglass/claude-log-analyzer/internal/backend"
 )
 
 func main() {
-	store, err := localstore.New(getenv("CLAUDE_ANALYZER_DATA_DIR", "/tmp/claude-log-analyzer"))
+	store, err := backend.NewWorkerStore()
 	if err != nil {
 		slog.Error("store init failed", "error", err)
 		os.Exit(1)
