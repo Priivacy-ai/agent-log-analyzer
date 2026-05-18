@@ -51,3 +51,9 @@ variable "force_destroy_buckets" {
   description = "Allow Terraform destroy to delete non-empty buckets. Keep false for production."
   default     = false
 }
+
+variable "upload_cors_allowed_origins" {
+  type        = list(string)
+  description = "Origins allowed to submit direct browser uploads to the quarantine bucket."
+  default     = ["*"]
+}

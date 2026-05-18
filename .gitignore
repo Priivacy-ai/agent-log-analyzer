@@ -9,3 +9,5 @@ coverage.out
 .terraform/
 *.tfstate
 *.tfstate.*
+*.tfplan
+tfplan

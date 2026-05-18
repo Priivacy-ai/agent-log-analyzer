@@ -4,15 +4,15 @@ This is the remaining work to move from green Docker/LocalStack gates to real cl
 
 ## 0. Credential And Account Prep
 
-- [ ] Install AWS CLI v2 locally.
-- [ ] Configure access with AWS SSO or a named AWS profile. Do not paste long-lived AWS access keys into chat.
-- [ ] Confirm the target account:
+- [x] Install AWS CLI v2 locally.
+- [x] Configure access with AWS SSO or a named AWS profile. Do not paste long-lived AWS access keys into chat.
+- [x] Confirm the target account:
 
   ```sh
   aws sts get-caller-identity --profile <profile>
   ```
 
-- [ ] Decide production region, default `us-east-1`.
+- [x] Decide production region, default `us-east-1`.
 - [ ] Confirm Route 53 or external DNS provider access.
 - [ ] Confirm ACM certificate path:
   - [ ] Use existing cert ARN, or
@@ -23,9 +23,9 @@ This is the remaining work to move from green Docker/LocalStack gates to real cl
 
 The current `infra/aws` scaffold uses local Terraform state. Before production apply:
 
-- [ ] Create a remote Terraform state bucket.
-- [ ] Create a DynamoDB lock table.
-- [ ] Add `backend "s3"` config to `infra/aws/versions.tf`.
+- [x] Create a remote Terraform state bucket.
+- [x] Create a DynamoDB lock table.
+- [x] Add `backend "s3"` config to `infra/aws/versions.tf`.
 - [ ] Run:
 
   ```sh
@@ -36,8 +36,8 @@ The current `infra/aws` scaffold uses local Terraform state. Before production a
 
 Acceptance:
 
-- [ ] Terraform state is remote, encrypted, and locked.
-- [ ] No local `.tfstate` is required for production operations.
+- [x] Terraform state is remote, encrypted, and locked.
+- [x] No local `.tfstate` is required for production operations.
 
 ## 2. Infrastructure Review Before Apply
 
@@ -176,20 +176,20 @@ Acceptance:
 
 The current cloud scaffold still accepts multipart uploads through the API. Before serious HN/ProductHunt traffic, replace this with signed direct-to-S3 upload URLs.
 
-- [ ] Add API endpoint to create upload job and return short-lived signed S3 PUT URL.
-- [ ] Set signed URL expiry to 15 minutes or less.
-- [ ] Restrict key prefix to `uploads/<job_id>.log`.
-- [ ] Enforce content length and content type constraints where possible.
-- [ ] Update frontend upload flow:
-  - [ ] Create job.
-  - [ ] PUT file directly to S3.
-  - [ ] Enqueue analysis only after upload confirmation, or add finalize endpoint.
-- [ ] Update LocalStack smoke to cover signed upload flow.
+- [x] Add API endpoint to create upload job and return short-lived signed S3 PUT URL.
+- [x] Set signed URL expiry to 15 minutes or less.
+- [x] Restrict key prefix to `uploads/<job_id>.log`.
+- [x] Enforce content length and content type constraints where possible.
+- [x] Update frontend upload flow:
+  - [x] Create job.
+  - [x] PUT file directly to S3.
+  - [x] Enqueue analysis only after upload confirmation, or add finalize endpoint.
+- [x] Update LocalStack smoke to cover signed upload flow.
 - [ ] Keep existing multipart endpoint disabled or dev-only in production.
 
 Acceptance:
 
-- [ ] Large upload traffic no longer consumes API memory/bandwidth.
+- [x] Large upload traffic no longer consumes API memory/bandwidth.
 - [ ] API can survive landing-page spikes and upload-init spikes separately.
 
 ## 8. Observability Without Privacy Leakage

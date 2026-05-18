@@ -27,5 +27,8 @@ for _ in $(seq 1 60); do
 done
 
 CLAUDE_ANALYZER_URL=http://127.0.0.1:8081 ./scripts/load-local.sh 3
+CLAUDE_ANALYZER_URL=http://127.0.0.1:8081 \
+  CLAUDE_ANALYZER_UPLOAD_URL_REWRITE_FROM=http://localstack:4566 \
+  CLAUDE_ANALYZER_UPLOAD_URL_REWRITE_TO=http://127.0.0.1:4566 \
+  go run ./cmd/direct-upload-smoke
 echo "aws local smoke ok"
-

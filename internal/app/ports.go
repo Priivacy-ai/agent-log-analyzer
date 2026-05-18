@@ -30,6 +30,22 @@ type APIStore interface {
 	ReportStore
 }
 
+type DirectUpload struct {
+	JobID        string            `json:"job_id"`
+	Method       string            `json:"method"`
+	URL          string            `json:"url"`
+	Fields       map[string]string `json:"fields,omitempty"`
+	Headers      map[string]string `json:"headers,omitempty"`
+	ExpiresAt    time.Time         `json:"expires_at"`
+	MaxBytes     int64             `json:"max_bytes"`
+	FinalizePath string            `json:"finalize_path"`
+}
+
+type DirectUploadStore interface {
+	CreateDirectUpload(jobID string, expiresIn time.Duration, maxBytes int64) (DirectUpload, error)
+	FinalizeDirectUpload(jobID string) error
+}
+
 type WorkerStore interface {
 	UploadStore
 	JobQueue

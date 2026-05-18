@@ -16,6 +16,8 @@ import (
 type fakeStore struct {
 	job        app.Job
 	queueDepth int
+	direct     app.DirectUpload
+	finalized  string
 }
 
 func (f fakeStore) SaveUpload(jobID string, data []byte) (string, error) {
@@ -55,6 +57,20 @@ func (f fakeStore) QueueDepth() (int, error) {
 
 func (f fakeStore) GetReport(id string) (analyzer.Report, error) {
 	return analyzer.Report{}, errors.New("not implemented")
+}
+
+func (f fakeStore) CreateDirectUpload(jobID string, expiresIn time.Duration, maxBytes int64) (app.DirectUpload, error) {
+	upload := f.direct
+	upload.JobID = jobID
+	upload.MaxBytes = maxBytes
+	return upload, nil
+}
+
+func (f fakeStore) FinalizeDirectUpload(jobID string) error {
+	if f.finalized != "" && f.finalized != jobID {
+		return errors.New("unexpected job id")
+	}
+	return nil
 }
 
 func TestSanitizePathRedactsDynamicIDs(t *testing.T) {
@@ -116,5 +132,48 @@ func TestCreateJobHandlerRejectsWhenQueueIsBusyBeforeParsingUpload(t *testing.T)
 	}
 	if !strings.Contains(rec.Body.String(), "analysis queue is busy") {
 		t.Fatalf("expected busy queue response, got %s", rec.Body.String())
+	}
+}
+
+func TestCreateDirectUploadHandlerReturnsUploadSpec(t *testing.T) {
+	store := fakeStore{
+		direct: app.DirectUpload{
+			Method:       "POST",
+			URL:          "https://uploads.example.test",
+			Fields:       map[string]string{"key": "uploads/job.log"},
+			ExpiresAt:    time.Now().UTC().Add(15 * time.Minute),
+			FinalizePath: "/api/jobs/job-1234567890/finalize",
+		},
+	}
+	req := httptest.NewRequest(http.MethodPost, "/api/upload-url", nil)
+	rec := httptest.NewRecorder()
+
+	createDirectUploadHandler(store, 100, 15*time.Minute).ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusCreated {
+		t.Fatalf("expected status 201, got %d: %s", rec.Code, rec.Body.String())
+	}
+	var upload app.DirectUpload
+	if err := json.Unmarshal(rec.Body.Bytes(), &upload); err != nil {
+		t.Fatalf("response is not valid upload JSON: %v", err)
+	}
+	if upload.JobID == "" || upload.URL == "" || upload.Method != "POST" || upload.MaxBytes == 0 {
+		t.Fatalf("unexpected upload response: %#v", upload)
+	}
+}
+
+func TestFinalizeDirectUploadHandlerQueuesJob(t *testing.T) {
+	store := fakeStore{finalized: "job-1234567890"}
+	req := httptest.NewRequest(http.MethodPost, "/api/jobs/job-1234567890/finalize", nil)
+	req.SetPathValue("id", "job-1234567890")
+	rec := httptest.NewRecorder()
+
+	finalizeDirectUploadHandler(store).ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusAccepted {
+		t.Fatalf("expected status 202, got %d: %s", rec.Code, rec.Body.String())
+	}
+	if !strings.Contains(rec.Body.String(), `"status":"pending"`) {
+		t.Fatalf("expected pending response, got %s", rec.Body.String())
 	}
 }

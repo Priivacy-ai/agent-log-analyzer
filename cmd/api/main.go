@@ -8,6 +8,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/robertDouglass/claude-log-analyzer/internal/analyzer"
 	"github.com/robertDouglass/claude-log-analyzer/internal/app"
@@ -28,6 +29,8 @@ func main() {
 	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
 	})
+	mux.HandleFunc("POST /api/upload-url", createDirectUploadHandler(store, maxQueueDepth(), directUploadExpiry()))
+	mux.HandleFunc("POST /api/jobs/{id}/finalize", finalizeDirectUploadHandler(store))
 	mux.HandleFunc("POST /api/jobs", createJobHandler(store, maxQueueDepth()))
 	mux.HandleFunc("GET /api/jobs/{id}", getJobHandler(store))
 	mux.HandleFunc("GET /api/reports/{id}", getReportHandler(store))
@@ -37,6 +40,54 @@ func main() {
 	if err := http.ListenAndServe(addr, logRequests(mux)); err != nil {
 		slog.Error("api stopped", "error", err)
 		os.Exit(1)
+	}
+}
+
+func createDirectUploadHandler(store app.APIStore, maxDepth int, expiresIn time.Duration) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		directStore, ok := store.(app.DirectUploadStore)
+		if !ok {
+			writeError(w, http.StatusNotImplemented, "direct upload unavailable")
+			return
+		}
+		if maxDepth > 0 {
+			depth, err := store.QueueDepth()
+			if err != nil {
+				writeError(w, http.StatusServiceUnavailable, "analysis queue unavailable")
+				return
+			}
+			if depth >= maxDepth {
+				w.Header().Set("Retry-After", "60")
+				writeJSON(w, http.StatusServiceUnavailable, map[string]any{
+					"error":       "analysis queue is busy",
+					"queue_depth": depth,
+					"retry_after": "60s",
+				})
+				return
+			}
+		}
+		id := app.NewJobID()
+		upload, err := directStore.CreateDirectUpload(id, expiresIn, maxUploadBytes)
+		if err != nil {
+			writeError(w, http.StatusInternalServerError, "could not create upload URL")
+			return
+		}
+		writeJSON(w, http.StatusCreated, upload)
+	}
+}
+
+func finalizeDirectUploadHandler(store app.APIStore) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		directStore, ok := store.(app.DirectUploadStore)
+		if !ok {
+			writeError(w, http.StatusNotImplemented, "direct upload unavailable")
+			return
+		}
+		if err := directStore.FinalizeDirectUpload(r.PathValue("id")); err != nil {
+			writeError(w, http.StatusBadRequest, "could not finalize upload")
+			return
+		}
+		writeJSON(w, http.StatusAccepted, map[string]string{"job_id": r.PathValue("id"), "status": string(app.StatusPending)})
 	}
 }
 
@@ -152,6 +203,16 @@ func getenv(key, fallback string) string {
 		return value
 	}
 	return fallback
+}
+
+func directUploadExpiry() time.Duration {
+	raw := getenv("CLAUDE_ANALYZER_DIRECT_UPLOAD_EXPIRY", "15m")
+	duration, err := time.ParseDuration(raw)
+	if err != nil || duration <= 0 || duration > 15*time.Minute {
+		slog.Warn("invalid direct upload expiry", "error_category", "configuration")
+		return 15 * time.Minute
+	}
+	return duration
 }
 
 func maxQueueDepth() int {
