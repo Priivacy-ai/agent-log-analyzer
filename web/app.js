@@ -274,11 +274,11 @@ function renderPaidCommandPreview(report) {
     }
     if (upsellCopy[1]) {
       upsellCopy[1].textContent =
-        "Paste the prompt into Claude Code. Claude should summarize the waiver and ask before running the install command.";
+        "Review the install command with Claude Code. Claude should summarize the waiver and ask before running it.";
     }
     return;
   }
-  target.textContent = "Accept the waiver and unlock to generate a one-time paid upload prompt.";
+  target.textContent = "Accept the waiver and unlock to generate the paid local-first scan commands.";
 }
 
 function parseReportRoute() {
