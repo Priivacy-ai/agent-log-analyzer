@@ -6,6 +6,7 @@ dist/
 tmp/
 .data/
 coverage.out
+.playwright-cli/
 .terraform/
 *.tfstate
 *.tfstate.*
