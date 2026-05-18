@@ -1,0 +1,7 @@
+.git
+.data
+tmp
+dist
+bin
+coverage.out
+

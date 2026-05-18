@@ -5,7 +5,13 @@ COMPOSE_PROJECT_NAME="${COMPOSE_PROJECT_NAME:-claude-log-analyzer-smoke}"
 export COMPOSE_PROJECT_NAME
 
 cleanup() {
+  status=$?
+  if [ "$status" -ne 0 ]; then
+    docker compose ps || true
+    docker compose logs --no-color || true
+  fi
   docker compose down -v >/dev/null 2>&1 || true
+  exit "$status"
 }
 trap cleanup EXIT
 
@@ -51,4 +57,3 @@ if echo "$REPORT" | grep -q 'sk-ant-'; then
 fi
 
 echo "smoke ok: $JOB_ID"
-

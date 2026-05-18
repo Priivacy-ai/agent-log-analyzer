@@ -13,7 +13,7 @@ WORKDIR /app
 COPY --from=build /out/api /usr/local/bin/claude-analyzer-api
 COPY --from=build /out/worker /usr/local/bin/claude-analyzer-worker
 COPY web ./web
+RUN mkdir -p /data && chown -R appuser:appuser /data
 USER appuser
 EXPOSE 8080
 CMD ["claude-analyzer-api"]
-
