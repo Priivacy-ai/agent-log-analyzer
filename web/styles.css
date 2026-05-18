@@ -165,6 +165,12 @@ pre {
   color: var(--muted);
 }
 
+#ecosystem,
+#receipt {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
 .report {
   margin-top: 24px;
   display: grid;

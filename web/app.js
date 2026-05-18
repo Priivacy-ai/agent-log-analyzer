@@ -252,6 +252,15 @@ function renderPaidCommandPreview(report) {
     if (copyPaidCommandButton) copyPaidCommandButton.hidden = false;
     if (unlockPaidButton) unlockPaidButton.hidden = true;
     if (waiverAccepted) waiverAccepted.closest("label").hidden = true;
+    const upsellCopy = document.querySelectorAll(".upsell p");
+    if (upsellCopy[0]) {
+      upsellCopy[0].textContent =
+        "Your paid bundle scan is complete. The optimization plugin below is generated from sanitized aggregate findings and vetted tooling recommendations.";
+    }
+    if (upsellCopy[1]) {
+      upsellCopy[1].textContent =
+        "Paste the prompt into Claude Code. Claude should summarize the waiver and ask before running the install command.";
+    }
     return;
   }
   target.textContent = "Accept the waiver and unlock to generate a one-time paid upload prompt.";
