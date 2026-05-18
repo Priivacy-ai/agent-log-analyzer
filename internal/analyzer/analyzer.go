@@ -80,26 +80,24 @@ func parseLines(input []byte) ([]parsedLine, string) {
 		if json.Unmarshal([]byte(raw), &obj) == nil {
 			parserType = "jsonl"
 			line.Text = flattenJSON(obj)
-			if t, ok := obj["type"].(string); ok {
-				if strings.Contains(strings.ToLower(t), "tool") {
-					line.IsTool = true
-				}
+			if hasJSONTypeContaining(obj, "tool") {
+				line.IsTool = true
 			}
-			if name, ok := obj["name"].(string); ok {
+			if name := firstJSONStringByKey(obj, "name"); name != "" {
 				line.ToolName = name
-				if strings.Contains(strings.ToLower(name), "tool") {
-					line.IsTool = true
-				}
 			}
-			if tool, ok := obj["tool"].(string); ok {
+			if tool := firstJSONStringByKey(obj, "tool"); tool != "" {
 				line.ToolName = tool
 				line.IsTool = true
 			}
-			if cmd, ok := obj["command"].(string); ok {
+			if cmd := firstJSONStringByKey(obj, "command"); cmd != "" {
 				line.Command = cmd
 				line.IsTool = true
 			}
-			if errText, ok := obj["error"].(string); ok && errText != "" {
+			if errText := firstJSONStringByKey(obj, "error"); errText != "" {
+				line.IsError = true
+			}
+			if firstJSONBoolByKey(obj, "is_error") {
 				line.IsError = true
 			}
 		}
@@ -139,6 +137,91 @@ func flattenJSON(obj map[string]any) string {
 	}
 	walk(obj)
 	return strings.Join(parts, " ")
+}
+
+func hasJSONTypeContaining(value any, needle string) bool {
+	needle = strings.ToLower(needle)
+	var found bool
+	var walk func(any)
+	walk = func(v any) {
+		if found {
+			return
+		}
+		switch typed := v.(type) {
+		case []any:
+			for _, item := range typed {
+				walk(item)
+			}
+		case map[string]any:
+			for key, item := range typed {
+				if key == "type" {
+					if text, ok := item.(string); ok && strings.Contains(strings.ToLower(text), needle) {
+						found = true
+						return
+					}
+				}
+				walk(item)
+			}
+		}
+	}
+	walk(value)
+	return found
+}
+
+func firstJSONStringByKey(value any, target string) string {
+	var found string
+	var walk func(any)
+	walk = func(v any) {
+		if found != "" {
+			return
+		}
+		switch typed := v.(type) {
+		case []any:
+			for _, item := range typed {
+				walk(item)
+			}
+		case map[string]any:
+			for key, item := range typed {
+				if key == target {
+					if text, ok := item.(string); ok {
+						found = text
+						return
+					}
+				}
+				walk(item)
+			}
+		}
+	}
+	walk(value)
+	return found
+}
+
+func firstJSONBoolByKey(value any, target string) bool {
+	var found bool
+	var walk func(any)
+	walk = func(v any) {
+		if found {
+			return
+		}
+		switch typed := v.(type) {
+		case []any:
+			for _, item := range typed {
+				walk(item)
+			}
+		case map[string]any:
+			for key, item := range typed {
+				if key == target {
+					if boolean, ok := item.(bool); ok && boolean {
+						found = true
+						return
+					}
+				}
+				walk(item)
+			}
+		}
+	}
+	walk(value)
+	return found
 }
 
 func extractCommand(text string) string {

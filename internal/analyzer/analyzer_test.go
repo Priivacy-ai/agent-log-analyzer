@@ -78,7 +78,7 @@ func TestSlashCommandDetectionDoesNotCountPaths(t *testing.T) {
 
 func TestEcosystemRegistryDetectsKnownPublicTools(t *testing.T) {
 	input := []byte(strings.Join([]string{
-		`{"type":"user","message":"Claude Code, Cursor, OpenCode, BMAD, OpenSpec, Spec Kit, Spec Kitty, ccusage"}`,
+		`{"type":"user","message":"Claude Code, Cursor IDE, OpenCode, BMAD, OpenSpec, Spec Kit, Spec Kitty, ccusage"}`,
 		`{"type":"tool","name":"mcp__context7__resolve-library-id","message":"mcp__playwright__browser_navigate mcp__sentry__find_issues mcp__google-drive__search"}`,
 		`{"type":"assistant","message":"Using @notion plugin, @github plugin, /plan-eng-review, /gstack-qa, pnpm-lock.yaml, uv.lock"}`,
 	}, "\n"))
@@ -118,6 +118,29 @@ func TestEcosystemRegistryDetectsKnownPublicTools(t *testing.T) {
 	}
 	if report.Ecosystem.UnknownMCPServerCount != 0 {
 		t.Fatalf("expected known MCPs not to count as unknown: %#v", report.Ecosystem)
+	}
+}
+
+func TestAnalyzeDetectsNestedClaudeToolUseAndResults(t *testing.T) {
+	input := []byte(strings.Join([]string{
+		`{"type":"assistant","message":{"content":[{"type":"tool_use","name":"Bash","input":{"command":"cat src/auth.ts"}}]}}`,
+		`{"type":"user","message":{"content":[{"type":"tool_result","content":"first output"}]}}`,
+		`{"type":"assistant","message":{"content":[{"type":"tool_use","name":"Bash","input":{"command":"cat src/auth.ts"}}]}}`,
+		`{"type":"user","message":{"content":[{"type":"tool_result","is_error":true,"content":"failed"}]}}`,
+	}, "\n"))
+
+	report, err := Analyze("job-test", input)
+	if err != nil {
+		t.Fatalf("Analyze returned error: %v", err)
+	}
+	if report.Metrics.ToolOutputTokens == 0 {
+		t.Fatalf("expected nested tool_use/tool_result to count as tool tokens: %#v", report.Metrics)
+	}
+	if report.Metrics.Rereads == 0 {
+		t.Fatalf("expected nested Bash command reread detection: %#v", report.Metrics)
+	}
+	if report.Metrics.FailedCommands == 0 {
+		t.Fatalf("expected nested is_error detection: %#v", report.Metrics)
 	}
 }
 

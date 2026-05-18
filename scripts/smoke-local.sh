@@ -3,6 +3,7 @@ set -eu
 
 COMPOSE_PROJECT_NAME="${COMPOSE_PROJECT_NAME:-claude-log-analyzer-smoke}"
 export COMPOSE_PROJECT_NAME
+FIXTURE="${CLAUDE_ANALYZER_FIXTURE:-testdata/fixtures/sample-claude.jsonl}"
 
 cleanup() {
   status=$?
@@ -26,7 +27,7 @@ done
 
 JOB_ID=$(
   curl -fsS \
-    -F "log=@testdata/fixtures/sample-claude.jsonl" \
+    -F "log=@${FIXTURE}" \
     http://127.0.0.1:8080/api/jobs |
     sed -n 's/.*"job_id":"\([^"]*\)".*/\1/p'
 )

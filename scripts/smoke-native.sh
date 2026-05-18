@@ -4,6 +4,7 @@ set -eu
 DATA_DIR="$(pwd)/.data/native-smoke"
 API_LOG="$(pwd)/.data/native-api.log"
 WORKER_LOG="$(pwd)/.data/native-worker.log"
+FIXTURE="${CLAUDE_ANALYZER_FIXTURE:-testdata/fixtures/sample-claude.jsonl}"
 rm -rf "$DATA_DIR"
 mkdir -p "$(pwd)/.data"
 
@@ -27,7 +28,7 @@ done
 
 JOB_ID=$(
   curl -fsS \
-    -F "log=@testdata/fixtures/sample-claude.jsonl" \
+    -F "log=@${FIXTURE}" \
     http://127.0.0.1:18080/api/jobs |
     sed -n 's/.*"job_id":"\([^"]*\)".*/\1/p'
 )
@@ -48,4 +49,3 @@ if echo "$REPORT" | grep -q 'sk-ant-'; then
 fi
 
 echo "native smoke ok: $JOB_ID"
-

@@ -1,14 +1,13 @@
 [
   {"id":"aider","patterns":["(?i)\\baider\\b"]},
   {"id":"claude_code","patterns":["(?i)\\bClaude Code\\b","(?i)\\.claude/"]},
-  {"id":"cline","patterns":["(?i)\\bcline\\b"]},
+  {"id":"cline","patterns":["\\bCline\\b","(?i)\\.cline/"]},
   {"id":"codex","patterns":["(?i)\\bCodex CLI\\b","(?i)codex"]},
-  {"id":"continue","patterns":["(?i)\\bcontinue\\.dev\\b","(?i)\\bContinue\\b"]},
+  {"id":"continue","patterns":["(?i)\\bcontinue\\.dev\\b","\\bContinue (?:IDE|extension|agent)\\b","(?i)\\.continue/"]},
   {"id":"copilot","patterns":["(?i)\\bGitHub Copilot\\b"]},
-  {"id":"cursor","patterns":["(?i)\\bCursor\\b"]},
+  {"id":"cursor","patterns":["\\bCursor (?:IDE|rules|agent)\\b","(?i)\\.cursor/","(?i)cursor\\.rules"]},
   {"id":"gemini_cli","patterns":["(?i)\\bGemini CLI\\b"]},
   {"id":"opencode","patterns":["(?i)\\bopencode\\b","(?i)\\bOpenCode\\b"]},
-  {"id":"roo","patterns":["(?i)\\bRoo Code\\b","(?i)\\broo\\b"]},
-  {"id":"windsurf","patterns":["(?i)\\bWindsurf\\b"]}
+  {"id":"roo","patterns":["(?i)\\bRoo Code\\b","(?i)\\.roo/"]},
+  {"id":"windsurf","patterns":["\\bWindsurf\\b","(?i)\\.windsurf/"]}
 ]
-

@@ -43,6 +43,14 @@ Current local command:
 ./scripts/load-local.sh 25
 ```
 
+Real local Claude log smoke:
+
+```bash
+go run ./cmd/local-log-smoke -limit 10
+```
+
+This command discovers `~/.claude/projects/**/*.jsonl`, analyzes the largest logs locally, and prints only aggregate-safe output: buckets, scores, finding IDs, redaction counts, and known ecosystem IDs. It must not print raw transcript text, raw tool output, file contents, or private unknown tool names.
+
 Production acceptance target before launch:
 
 ```text
