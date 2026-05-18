@@ -118,6 +118,22 @@ func (s *Store) GetJob(id string) (app.Job, error) {
 	return app.Job{}, os.ErrNotExist
 }
 
+func (s *Store) QueueDepth() (int, error) {
+	total := 0
+	for _, status := range []string{"pending", "processing"} {
+		entries, err := os.ReadDir(filepath.Join(s.root, "jobs", status))
+		if err != nil {
+			return 0, err
+		}
+		for _, entry := range entries {
+			if !entry.IsDir() && strings.HasSuffix(entry.Name(), ".json") {
+				total++
+			}
+		}
+	}
+	return total, nil
+}
+
 func (s *Store) GetReport(id string) (analyzer.Report, error) {
 	if !validID(id) {
 		return analyzer.Report{}, errors.New("invalid report id")

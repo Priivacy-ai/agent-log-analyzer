@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/robertDouglass/claude-log-analyzer/internal/analyzer"
@@ -27,7 +28,7 @@ func main() {
 	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
 	})
-	mux.HandleFunc("POST /api/jobs", createJobHandler(store))
+	mux.HandleFunc("POST /api/jobs", createJobHandler(store, maxQueueDepth()))
 	mux.HandleFunc("GET /api/jobs/{id}", getJobHandler(store))
 	mux.HandleFunc("GET /api/reports/{id}", getReportHandler(store))
 	mux.Handle("/", http.FileServer(http.Dir("web")))
@@ -39,8 +40,24 @@ func main() {
 	}
 }
 
-func createJobHandler(store app.APIStore) http.HandlerFunc {
+func createJobHandler(store app.APIStore, maxDepth int) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		if maxDepth > 0 {
+			depth, err := store.QueueDepth()
+			if err != nil {
+				writeError(w, http.StatusServiceUnavailable, "analysis queue unavailable")
+				return
+			}
+			if depth >= maxDepth {
+				w.Header().Set("Retry-After", "60")
+				writeJSON(w, http.StatusServiceUnavailable, map[string]any{
+					"error":       "analysis queue is busy",
+					"queue_depth": depth,
+					"retry_after": "60s",
+				})
+				return
+			}
+		}
 		if err := r.ParseMultipartForm(maxUploadBytes); err != nil {
 			writeError(w, http.StatusBadRequest, "invalid multipart upload")
 			return
@@ -135,4 +152,17 @@ func getenv(key, fallback string) string {
 		return value
 	}
 	return fallback
+}
+
+func maxQueueDepth() int {
+	raw := os.Getenv("CLAUDE_ANALYZER_MAX_QUEUE_DEPTH")
+	if raw == "" {
+		return 0
+	}
+	value, err := strconv.Atoi(raw)
+	if err != nil || value < 0 {
+		slog.Warn("invalid max queue depth", "error_category", "configuration")
+		return 0
+	}
+	return value
 }

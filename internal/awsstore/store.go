@@ -202,6 +202,32 @@ func (s *Store) GetJob(id string) (app.Job, error) {
 	return jobFromItem(output.Item)
 }
 
+func (s *Store) QueueDepth() (int, error) {
+	output, err := s.sqs.GetQueueAttributes(context.Background(), &sqs.GetQueueAttributesInput{
+		QueueUrl: aws.String(s.queueURL),
+		AttributeNames: []sqstypes.QueueAttributeName{
+			sqstypes.QueueAttributeNameApproximateNumberOfMessages,
+			sqstypes.QueueAttributeNameApproximateNumberOfMessagesNotVisible,
+		},
+	})
+	if err != nil {
+		return 0, err
+	}
+	total := 0
+	for _, key := range []sqstypes.QueueAttributeName{
+		sqstypes.QueueAttributeNameApproximateNumberOfMessages,
+		sqstypes.QueueAttributeNameApproximateNumberOfMessagesNotVisible,
+	} {
+		raw := output.Attributes[string(key)]
+		var value int
+		if _, err := fmt.Sscanf(raw, "%d", &value); err != nil {
+			return 0, err
+		}
+		total += value
+	}
+	return total, nil
+}
+
 func (s *Store) GetReport(id string) (analyzer.Report, error) {
 	output, err := s.s3.GetObject(context.Background(), &s3.GetObjectInput{
 		Bucket: aws.String(s.reportBucket),

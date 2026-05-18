@@ -64,6 +64,10 @@ CLAUDE_ANALYZER_BACKEND=aws   -> S3 + SQS + DynamoDB
 
 AWS mode is intended to be tested against LocalStack before real cloud resources.
 
+## Load Shedding
+
+`CLAUDE_ANALYZER_MAX_QUEUE_DEPTH` lets the API reject new uploads before reading multipart bodies when the queue is saturated. This keeps launch spikes from turning into API memory pressure.
+
 ## Scale Gates
 
 - Static pages must be CDN cacheable.

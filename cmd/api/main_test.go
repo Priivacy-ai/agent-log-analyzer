@@ -14,7 +14,8 @@ import (
 )
 
 type fakeStore struct {
-	job app.Job
+	job        app.Job
+	queueDepth int
 }
 
 func (f fakeStore) SaveUpload(jobID string, data []byte) (string, error) {
@@ -46,6 +47,10 @@ func (f fakeStore) GetJob(id string) (app.Job, error) {
 		return app.Job{}, errors.New("not found")
 	}
 	return f.job, nil
+}
+
+func (f fakeStore) QueueDepth() (int, error) {
+	return f.queueDepth, nil
 }
 
 func (f fakeStore) GetReport(id string) (analyzer.Report, error) {
@@ -93,5 +98,23 @@ func TestGetJobHandlerDoesNotReturnStoragePaths(t *testing.T) {
 	}
 	if job.UploadPath != "" || job.ReportPath != "" {
 		t.Fatalf("expected paths stripped from response: %#v", job)
+	}
+}
+
+func TestCreateJobHandlerRejectsWhenQueueIsBusyBeforeParsingUpload(t *testing.T) {
+	store := fakeStore{queueDepth: 10}
+	req := httptest.NewRequest(http.MethodPost, "/api/jobs", strings.NewReader("not multipart"))
+	rec := httptest.NewRecorder()
+
+	createJobHandler(store, 10).ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusServiceUnavailable {
+		t.Fatalf("expected 503 before multipart parsing, got %d: %s", rec.Code, rec.Body.String())
+	}
+	if rec.Header().Get("Retry-After") != "60" {
+		t.Fatalf("expected Retry-After header, got %q", rec.Header().Get("Retry-After"))
+	}
+	if !strings.Contains(rec.Body.String(), "analysis queue is busy") {
+		t.Fatalf("expected busy queue response, got %s", rec.Body.String())
 	}
 }

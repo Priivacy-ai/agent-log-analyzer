@@ -13,6 +13,7 @@ type JobQueue interface {
 	CompleteJob(job Job, report analyzer.Report) error
 	FailJob(job Job, jobErr error) error
 	GetJob(id string) (Job, error)
+	QueueDepth() (int, error)
 }
 
 type ReportStore interface {
