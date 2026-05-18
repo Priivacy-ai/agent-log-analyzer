@@ -19,6 +19,7 @@ import (
 
 type fakeStore struct {
 	job        app.Job
+	report     analyzer.Report
 	queueDepth int
 }
 
@@ -58,7 +59,10 @@ func (f fakeStore) QueueDepth() (int, error) {
 }
 
 func (f fakeStore) GetReport(id string) (analyzer.Report, error) {
-	return analyzer.Report{}, errors.New("not implemented")
+	if id != f.job.ID {
+		return analyzer.Report{}, errors.New("not found")
+	}
+	return f.report, nil
 }
 
 func TestSanitizePathRedactsDynamicIDs(t *testing.T) {
@@ -68,6 +72,7 @@ func TestSanitizePathRedactsDynamicIDs(t *testing.T) {
 		"/api/paid-uploads/job-1234567890",
 		"/api/paid-uploads/job-1234567890/finalize",
 		"/api/public-reports/job-1234567890/token-secret",
+		"/api/public-artifacts/job-1234567890/token-secret/plugin.zip",
 		"/api/jobs/job-1234567890",
 		"/r/job-1234567890/token-secret",
 	} {
@@ -75,6 +80,65 @@ func TestSanitizePathRedactsDynamicIDs(t *testing.T) {
 		if strings.Contains(got, "job-1234567890") || strings.Contains(got, "token-secret") {
 			t.Fatalf("sanitizePath leaked job id for %q: %q", path, got)
 		}
+	}
+}
+
+func TestGetPublicArtifactRequiresPaidWaiver(t *testing.T) {
+	store := fakeStore{
+		job: app.Job{
+			ID:              "job-1234567890",
+			Status:          app.StatusCompleted,
+			ScanType:        app.ScanTypeSingle,
+			ReportTokenHash: tokenHash("report-token"),
+		},
+		report: analyzer.Report{JobID: "job-1234567890", Version: "test"},
+	}
+	req := httptest.NewRequest(http.MethodGet, "/api/public-artifacts/job-1234567890/report-token/plugin.zip", nil)
+	req.SetPathValue("id", "job-1234567890")
+	req.SetPathValue("token", "report-token")
+	rec := httptest.NewRecorder()
+
+	getPublicArtifactHandler(store).ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusForbidden {
+		t.Fatalf("expected forbidden artifact status, got %d: %s", rec.Code, rec.Body.String())
+	}
+}
+
+func TestGetPublicArtifactReturnsPluginZipForPaidWaiver(t *testing.T) {
+	store := fakeStore{
+		job: app.Job{
+			ID:                   "job-1234567890",
+			Status:               app.StatusCompleted,
+			ScanType:             app.ScanTypePaidBundle,
+			ReportTokenHash:      tokenHash("report-token"),
+			WaiverAcceptedAt:     time.Now().UTC(),
+			UploadTokenExpiresAt: time.Now().UTC().Add(15 * time.Minute),
+		},
+		report: analyzer.Report{
+			JobID:   "job-1234567890",
+			Version: "test",
+			Findings: []analyzer.Finding{
+				{ID: "repeated_file_reads", Severity: "high", CostImpact: "high"},
+			},
+		},
+	}
+	req := httptest.NewRequest(http.MethodGet, "/api/public-artifacts/job-1234567890/report-token/plugin.zip", nil)
+	req.Host = "example.test"
+	req.SetPathValue("id", "job-1234567890")
+	req.SetPathValue("token", "report-token")
+	rec := httptest.NewRecorder()
+
+	getPublicArtifactHandler(store).ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected plugin zip status 200, got %d: %s", rec.Code, rec.Body.String())
+	}
+	if contentType := rec.Header().Get("Content-Type"); contentType != "application/zip" {
+		t.Fatalf("expected zip content type, got %q", contentType)
+	}
+	if !bytes.HasPrefix(rec.Body.Bytes(), []byte("PK")) {
+		t.Fatalf("expected zip response, got %q", rec.Body.String())
 	}
 }
 

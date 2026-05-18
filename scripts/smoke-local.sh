@@ -126,5 +126,11 @@ if [ -z "$PAID_SESSION_COUNT" ] || [ "$PAID_SESSION_COUNT" -lt 2 ]; then
   exit 1
 fi
 echo "$PAID_REPORT" | grep -q '"raw_transcript_sent_to_llm":false'
+PAID_ARTIFACT_API=$(echo "$PAID_REPORT_PATH" | sed 's#^/r/#/api/public-artifacts/#')/plugin.zip
+curl -fsS "http://127.0.0.1:8080$PAID_ARTIFACT_API" -o "$PAID_ROOT/plugin.zip"
+if [ "$(dd if="$PAID_ROOT/plugin.zip" bs=2 count=1 2>/dev/null)" != "PK" ]; then
+  echo "Expected paid plugin artifact to be a zip file" >&2
+  exit 1
+fi
 
 echo "smoke ok: $JOB_ID paid: $PAID_JOB_ID"

@@ -65,7 +65,7 @@ Full Docker smoke:
 ./scripts/smoke-local.sh
 ```
 
-This covers the free one-log Claude/curl path and the local waiver-gated paid bundle path with a paid token, `limit=100`, `X-Scan-Limit: 100`, tar/gzip upload, finalize, aggregate report fetch, and raw-transcript leak checks.
+This covers the free one-log Claude/curl path and the local waiver-gated paid bundle path with a paid token, `limit=100`, `X-Scan-Limit: 100`, tar/gzip upload, finalize, aggregate report fetch, tokenized plugin zip download, and raw-transcript leak checks.
 
 Production acceptance target before launch:
 

@@ -148,4 +148,4 @@ The current generator tests cover:
 
 The first implementation lives in `internal/remediation`.
 
-The package produces an in-memory `Artifact` and can write it as a zip archive. Paid bundle upload and local waiver-gated paid-session generation are implemented for Docker end-to-end testing. Stripe success handling, plugin artifact API wiring, and artifact TTL storage are tracked separately in GitHub issues #27-#31.
+The package produces an in-memory `Artifact` and can write it as a zip archive. Paid bundle upload, local waiver-gated paid-session generation, and tokenized plugin zip download are implemented for Docker end-to-end testing. Plugin artifacts are generated on demand from the sanitized paid report and expire with the report token. Stripe success handling and any future persisted artifact storage are tracked separately in GitHub issues #27-#31.

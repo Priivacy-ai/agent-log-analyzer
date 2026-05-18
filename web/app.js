@@ -149,7 +149,6 @@ async function pollReport(jobID, token) {
       return;
     }
     renderReport(await reportResponse.json());
-    renderPaidCommandPreview();
     return;
   }
 }
@@ -184,6 +183,7 @@ function renderReport(report) {
   renderTimeline(report.timeline || []);
   document.querySelector("#ecosystem").textContent = summarizeEcosystem(report.ecosystem);
   document.querySelector("#receipt").textContent = summarizeReceipt(report.security_receipt);
+  renderPaidCommandPreview(report);
 }
 
 function renderTimeline(points) {
@@ -233,9 +233,27 @@ function findingEvidence(evidence) {
   return parts.join(" | ") || "Deterministic evidence recorded.";
 }
 
-function renderPaidCommandPreview() {
+function renderPaidCommandPreview(report) {
   const target = document.querySelector("#paid-command");
   if (!target) return;
+  if (report?.aggregate_event?.parser_type === "paid_bundle" && route) {
+    const pluginURL = `${window.location.origin}/api/public-artifacts/${route.jobID}/${route.token}/plugin.zip`;
+    const command = [
+      `PLUGIN_URL="${pluginURL}"`,
+      'PLUGIN_ZIP="$(mktemp -t claude-analyzer-plugin.XXXXXX.zip)"',
+      'curl -fsS "$PLUGIN_URL" -o "$PLUGIN_ZIP"',
+      'claude --plugin-dir "$PLUGIN_ZIP"',
+    ].join("\n");
+    target.textContent =
+      "Install the generated Claude Analyzer optimization plugin for this session. Run the command below, explain what it installs, summarize the waiver, and ask for approval before executing it. Do not print plugin archive contents.\n\n```sh\n" +
+      command +
+      "\n```";
+    if (paidStatus) paidStatus.textContent = "optimization plugin ready; artifact URL expires with this report";
+    if (copyPaidCommandButton) copyPaidCommandButton.hidden = false;
+    if (unlockPaidButton) unlockPaidButton.hidden = true;
+    if (waiverAccepted) waiverAccepted.closest("label").hidden = true;
+    return;
+  }
   target.textContent = "Accept the waiver and unlock to generate a one-time paid upload prompt.";
 }
 

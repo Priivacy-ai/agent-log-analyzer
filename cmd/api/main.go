@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"crypto/rand"
 	"crypto/sha256"
 	"crypto/subtle"
@@ -18,6 +19,7 @@ import (
 	"github.com/robertDouglass/claude-log-analyzer/internal/analyzer"
 	"github.com/robertDouglass/claude-log-analyzer/internal/app"
 	"github.com/robertDouglass/claude-log-analyzer/internal/backend"
+	"github.com/robertDouglass/claude-log-analyzer/internal/remediation"
 )
 
 const maxUploadBytes = 50 * 1024 * 1024
@@ -69,6 +71,7 @@ func buildMux(store app.APIStore) http.Handler {
 	mux.HandleFunc("PUT /api/paid-uploads/{id}", paidBundleUploadHandler(store))
 	mux.HandleFunc("POST /api/paid-uploads/{id}/finalize", finalizeTokenUploadHandler(store))
 	mux.HandleFunc("GET /api/public-reports/{id}/{token}", getPublicReportHandler(store))
+	mux.HandleFunc("GET /api/public-artifacts/{id}/{token}/plugin.zip", getPublicArtifactHandler(store))
 	mux.HandleFunc("GET /r/{id}/{token}", reportPageHandler())
 	mux.HandleFunc("GET /api/jobs/{id}", getJobHandler(store))
 	mux.Handle("/", http.FileServer(http.Dir("web")))
@@ -364,6 +367,53 @@ func getPublicReportHandler(store app.APIStore) http.HandlerFunc {
 	}
 }
 
+func getPublicArtifactHandler(store app.APIStore) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		job, err := store.GetJob(r.PathValue("id"))
+		if errors.Is(err, os.ErrNotExist) {
+			writeError(w, http.StatusNotFound, "job not found")
+			return
+		}
+		if err != nil {
+			writeError(w, http.StatusBadRequest, "invalid job id")
+			return
+		}
+		if !tokenMatches(job.ReportTokenHash, r.PathValue("token")) {
+			writeError(w, http.StatusUnauthorized, "invalid report token")
+			return
+		}
+		if job.Status != app.StatusCompleted {
+			writeError(w, http.StatusConflict, "job is not completed")
+			return
+		}
+		if job.ScanType != app.ScanTypePaidBundle || job.WaiverAcceptedAt.IsZero() {
+			writeError(w, http.StatusForbidden, "plugin artifact requires paid scan waiver")
+			return
+		}
+		report, err := store.GetReport(job.ID)
+		if errors.Is(err, os.ErrNotExist) {
+			writeError(w, http.StatusNotFound, "report not found")
+			return
+		}
+		if err != nil {
+			writeError(w, http.StatusBadRequest, "invalid report id")
+			return
+		}
+		artifactURL := publicBaseURL(r) + r.URL.Path
+		artifact := remediation.Generate(report, remediation.Options{ArtifactURL: artifactURL})
+		var buffer bytes.Buffer
+		if err := remediation.WriteZip(&buffer, artifact); err != nil {
+			writeError(w, http.StatusInternalServerError, "could not generate plugin artifact")
+			return
+		}
+		w.Header().Set("Content-Type", "application/zip")
+		w.Header().Set("Content-Disposition", `attachment; filename="claude-analyzer-optimization.zip"`)
+		w.Header().Set("Cache-Control", "no-store")
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write(buffer.Bytes())
+	}
+}
+
 func reportPageHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "web/index.html")
@@ -405,6 +455,9 @@ func sanitizePath(path string) string {
 	}
 	if strings.HasPrefix(path, "/api/public-reports/") {
 		return "/api/public-reports/:id/:token"
+	}
+	if strings.HasPrefix(path, "/api/public-artifacts/") {
+		return "/api/public-artifacts/:id/:token/plugin.zip"
 	}
 	if strings.HasPrefix(path, "/api/jobs/") {
 		return "/api/jobs/:id"
