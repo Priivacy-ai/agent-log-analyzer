@@ -1,0 +1,12 @@
+{"type":"user","message":"Claude Code on macOS zsh. We are using Spec Kitty, BMAD, git, go test, and mcp__github__create_issue."}
+{"type":"assistant","message":"I will inspect the auth flow."}
+{"type":"tool","command":"cat src/auth.ts","output":"const token = process.env.ANTHROPIC_API_KEY || \"sk-ant-123456789012345678901234567890\";"}
+{"type":"tool","command":"cat src/auth.ts","output":"same file again"}
+{"type":"tool","command":"cat src/auth.ts","output":"same file third time"}
+{"type":"tool","command":"cat src/routes.ts","output":"route output"}
+{"type":"tool","command":"cat src/routes.ts","output":"route output again"}
+{"type":"tool","command":"go test ./...","error":"failed: missing mock"}
+{"type":"tool","command":"go test ./...","error":"failed: same missing mock"}
+{"type":"tool","command":"go test ./...","error":"failed: same missing mock"}
+{"type":"assistant","message":"We should stop and inspect the invariant instead of retrying."}
+

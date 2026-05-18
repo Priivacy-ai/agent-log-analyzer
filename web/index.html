@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Claude Log Analyzer</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <section class="hero">
+        <p class="eyebrow">deterministic profiler</p>
+        <h1>Find out what's wasting your Claude Code tokens.</h1>
+        <p class="subhead">Upload one session. Get a deterministic performance audit.</p>
+        <ul class="trust">
+          <li>No account required</li>
+          <li>Local Docker run stores data only on your machine</li>
+          <li>Secrets redacted before reports are written</li>
+          <li>Raw transcript is never sent to an LLM</li>
+        </ul>
+      </section>
+
+      <section class="panel">
+        <form id="upload-form">
+          <label for="log">Session log</label>
+          <input id="log" name="log" type="file" required />
+          <button type="submit">Analyze My Session</button>
+        </form>
+        <pre id="status">waiting for upload</pre>
+      </section>
+
+      <section class="report" id="report" hidden>
+        <div class="score">
+          <span id="score">--</span>
+          <small>efficiency score</small>
+        </div>
+        <div>
+          <h2>Estimated Waste</h2>
+          <p id="waste"></p>
+        </div>
+        <div>
+          <h2>Top Problems</h2>
+          <ol id="findings"></ol>
+        </div>
+        <div>
+          <h2>Ecosystem</h2>
+          <pre id="ecosystem"></pre>
+        </div>
+        <div>
+          <h2>Security Receipt</h2>
+          <pre id="receipt"></pre>
+        </div>
+      </section>
+    </main>
+    <script src="/app.js"></script>
+  </body>
+</html>
+

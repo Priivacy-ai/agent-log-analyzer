@@ -1,0 +1,32 @@
+services:
+  api:
+    build: .
+    command: claude-analyzer-api
+    environment:
+      CLAUDE_ANALYZER_ADDR: ":8080"
+      CLAUDE_ANALYZER_DATA_DIR: /data
+    ports:
+      - "8080:8080"
+    volumes:
+      - analyzer-data:/data
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8080/healthz"]
+      interval: 5s
+      timeout: 2s
+      retries: 20
+
+  worker:
+    build: .
+    command: claude-analyzer-worker
+    environment:
+      CLAUDE_ANALYZER_DATA_DIR: /data
+      CLAUDE_ANALYZER_WORKER_INTERVAL: 1s
+    volumes:
+      - analyzer-data:/data
+    depends_on:
+      api:
+        condition: service_healthy
+
+volumes:
+  analyzer-data:
+
