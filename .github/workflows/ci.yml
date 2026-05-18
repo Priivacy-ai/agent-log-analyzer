@@ -23,4 +23,12 @@ jobs:
         run: docker build .
       - name: docker compose smoke
         run: ./scripts/smoke-local.sh
-
+      - name: docker compose load smoke
+        run: |
+          COMPOSE_PROJECT_NAME=claude-log-analyzer-ci-load docker compose up --build -d
+          set +e
+          ./scripts/load-local.sh 5
+          rc=$?
+          set -e
+          COMPOSE_PROJECT_NAME=claude-log-analyzer-ci-load docker compose down -v
+          exit $rc

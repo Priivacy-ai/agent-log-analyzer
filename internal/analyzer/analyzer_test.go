@@ -59,6 +59,43 @@ func TestUnknownNamesAreCountsOnly(t *testing.T) {
 	}
 }
 
+func TestScrubberCoversCommonSecretFamilies(t *testing.T) {
+	input := []byte(strings.Join([]string{
+		`github=ghp_123456789012345678901234567890123456`,
+		`npm=npm_123456789012345678901234567890123456`,
+		`aws=AKIA1234567890ABCDEF`,
+		`google=AIza12345678901234567890123456789012345`,
+		`db=postgres://user:pass@example.com/prod`,
+		`cookie=session=supersecret`,
+		`jwt=eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjMifQ.signaturevalue`,
+		`-----BEGIN OPENSSH PRIVATE KEY-----`,
+		`private material`,
+		`-----END OPENSSH PRIVATE KEY-----`,
+	}, "\n"))
+
+	scrubbed, counts := Scrub(input)
+	output := string(scrubbed)
+	for _, leaked := range []string{
+		"ghp_",
+		"npm_",
+		"AKIA",
+		"AIza",
+		"postgres://user:pass",
+		"session=supersecret",
+		"eyJhbGci",
+		"private material",
+	} {
+		if strings.Contains(output, leaked) {
+			t.Fatalf("scrubbed output leaked %q: %s", leaked, output)
+		}
+	}
+	for _, family := range []string{"github_token", "npm_token", "aws_access_key", "google_api_key", "database_url", "cookie", "jwt", "ssh_private_key"} {
+		if counts[family] == 0 {
+			t.Fatalf("expected redaction count for %s, got %#v", family, counts)
+		}
+	}
+}
+
 func contains(values []string, want string) bool {
 	for _, value := range values {
 		if value == want {

@@ -146,6 +146,50 @@ func (s *Store) ReadUpload(path string) ([]byte, error) {
 	return os.ReadFile(cleanPath)
 }
 
+func (s *Store) SweepExpired(now time.Time, rawUploadTTL, reportTTL time.Duration) (SweepResult, error) {
+	result := SweepResult{}
+	if err := s.sweepDir(filepath.Join(s.root, "uploads"), now, rawUploadTTL, &result.UploadsDeleted); err != nil {
+		return result, err
+	}
+	if err := s.sweepDir(filepath.Join(s.root, "reports"), now, reportTTL, &result.ReportsDeleted); err != nil {
+		return result, err
+	}
+	return result, nil
+}
+
+type SweepResult struct {
+	UploadsDeleted int `json:"uploads_deleted"`
+	ReportsDeleted int `json:"reports_deleted"`
+}
+
+func (s *Store) sweepDir(dir string, now time.Time, ttl time.Duration, count *int) error {
+	if ttl <= 0 {
+		return nil
+	}
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return err
+	}
+	for _, entry := range entries {
+		if entry.IsDir() {
+			continue
+		}
+		path := filepath.Join(dir, entry.Name())
+		info, err := entry.Info()
+		if err != nil {
+			return err
+		}
+		if now.Sub(info.ModTime()) <= ttl {
+			continue
+		}
+		if err := os.Remove(path); err != nil && !errors.Is(err, os.ErrNotExist) {
+			return err
+		}
+		*count++
+	}
+	return nil
+}
+
 func (s *Store) jobPath(status, id string) string {
 	return filepath.Join(s.root, "jobs", status, id+".json")
 }

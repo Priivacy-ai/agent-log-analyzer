@@ -37,6 +37,12 @@ Local acceptance target for this repo before cloud work:
 all jobs finish or fail cleanly
 ```
 
+Current local command:
+
+```bash
+./scripts/load-local.sh 25
+```
+
 Production acceptance target before launch:
 
 ```text
@@ -60,4 +66,3 @@ worker failure rate: <1%
 - repeated tool output
 - worker timeout
 - worker memory pressure
-

@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/robertDouglass/claude-log-analyzer/internal/analyzer"
+	"github.com/robertDouglass/claude-log-analyzer/internal/app"
 	"github.com/robertDouglass/claude-log-analyzer/internal/localstore"
 )
 
@@ -28,7 +29,7 @@ func main() {
 	}
 }
 
-func processOnce(store *localstore.Store) error {
+func processOnce(store app.WorkerStore) error {
 	job, ok, err := store.ClaimNextJob()
 	if err != nil || !ok {
 		return err

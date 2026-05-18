@@ -32,6 +32,14 @@ If Docker Desktop is unavailable, the same API/worker path can be checked with:
 ./scripts/smoke-native.sh
 ```
 
+Local load gate:
+
+```bash
+COMPOSE_PROJECT_NAME=claude-log-analyzer-load docker compose up --build -d
+./scripts/load-local.sh 25
+COMPOSE_PROJECT_NAME=claude-log-analyzer-load docker compose down -v
+```
+
 ## Development
 
 ```bash

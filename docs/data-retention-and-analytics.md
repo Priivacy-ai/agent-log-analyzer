@@ -4,7 +4,7 @@
 
 ```text
 raw uploaded logs:
-  local MVP: deleted by sweeper script / test path
+  local MVP: deleted by claude-analyzer-sweeper
   production: 15 minutes max
   analytics: never
 
@@ -83,4 +83,3 @@ Unknown private names are counted, not stored:
 ```
 
 Exact unknown names require explicit opt-in.
-

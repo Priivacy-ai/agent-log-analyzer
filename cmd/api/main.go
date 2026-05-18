@@ -39,7 +39,7 @@ func main() {
 	}
 }
 
-func createJobHandler(store *localstore.Store) http.HandlerFunc {
+func createJobHandler(store app.APIStore) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if err := r.ParseMultipartForm(maxUploadBytes); err != nil {
 			writeError(w, http.StatusBadRequest, "invalid multipart upload")
@@ -71,7 +71,7 @@ func createJobHandler(store *localstore.Store) http.HandlerFunc {
 	}
 }
 
-func getJobHandler(store *localstore.Store) http.HandlerFunc {
+func getJobHandler(store app.APIStore) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		job, err := store.GetJob(r.PathValue("id"))
 		if errors.Is(err, os.ErrNotExist) {
@@ -88,7 +88,7 @@ func getJobHandler(store *localstore.Store) http.HandlerFunc {
 	}
 }
 
-func getReportHandler(store *localstore.Store) http.HandlerFunc {
+func getReportHandler(store app.APIStore) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		report, err := store.GetReport(r.PathValue("id"))
 		if errors.Is(err, os.ErrNotExist) {
