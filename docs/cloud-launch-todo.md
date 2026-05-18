@@ -17,7 +17,7 @@ This is the remaining work to move from green Docker/LocalStack gates to real cl
 - [ ] Confirm ACM certificate path:
   - [ ] Use existing cert ARN, or
   - [ ] Request a new public ACM cert in the production region.
-- [ ] Confirm container image naming and whether ECR should be created by Terraform or pre-existing.
+- [x] Confirm container image naming and whether ECR should be created by Terraform or pre-existing.
 
 ## 1. Terraform State Bootstrap
 
@@ -26,7 +26,7 @@ The current `infra/aws` scaffold uses local Terraform state. Before production a
 - [x] Create a remote Terraform state bucket.
 - [x] Create a DynamoDB lock table.
 - [x] Add `backend "s3"` config to `infra/aws/versions.tf`.
-- [ ] Run:
+- [x] Run:
 
   ```sh
   terraform -chdir=infra/aws init -migrate-state
@@ -61,49 +61,49 @@ Acceptance:
 
 Acceptance:
 
-- [ ] Plan contains only expected resources.
-- [ ] No public S3 bucket policy.
-- [ ] ECS tasks are in private subnets.
+- [x] Plan contains only expected resources.
+- [x] No public S3 bucket policy.
+- [x] ECS tasks are in private subnets.
 
 ## 3. First AWS Apply
 
-- [ ] Apply base infrastructure:
+- [x] Apply base infrastructure:
 
   ```sh
   terraform -chdir=infra/aws apply
   ```
 
-- [ ] Capture outputs:
+- [x] Capture outputs:
 
   ```sh
   terraform -chdir=infra/aws output
   ```
 
 - [ ] Confirm created resources:
-  - [ ] ECR repository.
-  - [ ] Upload bucket.
-  - [ ] Report bucket.
-  - [ ] SQS queue.
-  - [ ] DynamoDB job table.
-  - [ ] ECS cluster/services.
-  - [ ] ALB target group.
-  - [ ] CloudWatch log group.
+  - [x] ECR repository.
+  - [x] Upload bucket.
+  - [x] Report bucket.
+  - [x] SQS queue.
+  - [x] DynamoDB job table.
+  - [x] ECS cluster/services.
+  - [x] ALB target group.
+  - [x] CloudWatch log group.
 
 Acceptance:
 
-- [ ] Terraform apply exits cleanly.
-- [ ] ECS services may initially fail until the image is pushed; that is acceptable for first apply.
+- [x] Terraform apply exits cleanly.
+- [x] ECS services may initially fail until the image is pushed; that is acceptable for first apply.
 
 ## 4. Build And Push Container Image
 
-- [ ] Authenticate Docker to ECR:
+- [x] Authenticate Docker to ECR:
 
   ```sh
   aws ecr get-login-password --region <region> --profile <profile> \
     | docker login --username AWS --password-stdin <account>.dkr.ecr.<region>.amazonaws.com
   ```
 
-- [ ] Build and push:
+- [x] Build and push:
 
   ```sh
   ECR_REPO="$(terraform -chdir=infra/aws output -raw ecr_repository_url)"
@@ -111,7 +111,7 @@ Acceptance:
   docker push "$ECR_REPO:latest"
   ```
 
-- [ ] Force ECS services to pull the image:
+- [x] Force ECS services to pull the image:
 
   ```sh
   aws ecs update-service --cluster <cluster> --service <api-service> --force-new-deployment --profile <profile>
@@ -120,27 +120,27 @@ Acceptance:
 
 Acceptance:
 
-- [ ] API service reaches steady state.
-- [ ] Worker service reaches steady state.
-- [ ] No container crash loops.
+- [x] API service reaches steady state.
+- [x] Worker service reaches steady state.
+- [x] No container crash loops.
 
 ## 5. Cloud Smoke Test
 
-- [ ] Get ALB DNS:
+- [x] Get ALB DNS:
 
   ```sh
   terraform -chdir=infra/aws output -raw alb_dns_name
   ```
 
-- [ ] Verify health:
+- [x] Verify health:
 
   ```sh
   curl -fsS "http://<alb-dns>/healthz"
   ```
 
-- [ ] Upload `testdata/fixtures/sample-claude.jsonl` to the cloud API.
-- [ ] Poll job status until completed.
-- [ ] Fetch report.
+- [x] Upload `testdata/fixtures/sample-claude.jsonl` to the cloud API.
+- [x] Poll job status until completed.
+- [x] Fetch report.
 - [ ] Verify:
   - [ ] Report contains no raw secret.
   - [ ] Report contains `raw_transcript_sent_to_llm=false`.
@@ -150,7 +150,7 @@ Acceptance:
 
 Acceptance:
 
-- [ ] One full real-AWS job completes.
+- [x] One full real-AWS job completes.
 - [ ] Retention works in real AWS, not only LocalStack.
 
 ## 6. TLS, DNS, CDN, And WAF
@@ -185,7 +185,7 @@ The current cloud scaffold still accepts multipart uploads through the API. Befo
   - [x] PUT file directly to S3.
   - [x] Enqueue analysis only after upload confirmation, or add finalize endpoint.
 - [x] Update LocalStack smoke to cover signed upload flow.
-- [ ] Keep existing multipart endpoint disabled or dev-only in production.
+- [x] Keep existing multipart endpoint disabled or dev-only in production.
 
 Acceptance:
 
@@ -301,8 +301,8 @@ Acceptance:
 
 - [ ] Run full local Docker smoke.
 - [ ] Run LocalStack AWS smoke.
-- [ ] Run Terraform validate.
-- [ ] Run cloud smoke.
+- [x] Run Terraform validate.
+- [x] Run cloud smoke.
 - [ ] Run cloud load test.
 - [ ] Verify dashboards and alarms.
 - [ ] Verify support email.

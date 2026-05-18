@@ -135,6 +135,20 @@ func TestCreateJobHandlerRejectsWhenQueueIsBusyBeforeParsingUpload(t *testing.T)
 	}
 }
 
+func TestMultipartUploadDisabledHandlerRejectsUpload(t *testing.T) {
+	req := httptest.NewRequest(http.MethodPost, "/api/jobs", strings.NewReader("not multipart"))
+	rec := httptest.NewRecorder()
+
+	multipartUploadDisabledHandler().ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusGone {
+		t.Fatalf("expected status 410, got %d: %s", rec.Code, rec.Body.String())
+	}
+	if !strings.Contains(rec.Body.String(), "direct upload") {
+		t.Fatalf("expected direct upload guidance, got %s", rec.Body.String())
+	}
+}
+
 func TestCreateDirectUploadHandlerReturnsUploadSpec(t *testing.T) {
 	store := fakeStore{
 		direct: app.DirectUpload{
@@ -175,5 +189,23 @@ func TestFinalizeDirectUploadHandlerQueuesJob(t *testing.T) {
 	}
 	if !strings.Contains(rec.Body.String(), `"status":"pending"`) {
 		t.Fatalf("expected pending response, got %s", rec.Body.String())
+	}
+}
+
+func TestMultipartUploadsDisabledByDefaultForAWSBackend(t *testing.T) {
+	t.Setenv("CLAUDE_ANALYZER_BACKEND", "aws")
+	t.Setenv("CLAUDE_ANALYZER_ENABLE_MULTIPART_UPLOADS", "")
+
+	if multipartUploadsEnabled() {
+		t.Fatal("expected multipart uploads disabled for aws backend")
+	}
+}
+
+func TestMultipartUploadsCanBeExplicitlyEnabled(t *testing.T) {
+	t.Setenv("CLAUDE_ANALYZER_BACKEND", "aws")
+	t.Setenv("CLAUDE_ANALYZER_ENABLE_MULTIPART_UPLOADS", "true")
+
+	if !multipartUploadsEnabled() {
+		t.Fatal("expected explicit flag to enable multipart uploads")
 	}
 }

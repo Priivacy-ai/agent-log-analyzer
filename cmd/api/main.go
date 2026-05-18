@@ -31,7 +31,11 @@ func main() {
 	})
 	mux.HandleFunc("POST /api/upload-url", createDirectUploadHandler(store, maxQueueDepth(), directUploadExpiry()))
 	mux.HandleFunc("POST /api/jobs/{id}/finalize", finalizeDirectUploadHandler(store))
-	mux.HandleFunc("POST /api/jobs", createJobHandler(store, maxQueueDepth()))
+	if multipartUploadsEnabled() {
+		mux.HandleFunc("POST /api/jobs", createJobHandler(store, maxQueueDepth()))
+	} else {
+		mux.HandleFunc("POST /api/jobs", multipartUploadDisabledHandler())
+	}
 	mux.HandleFunc("GET /api/jobs/{id}", getJobHandler(store))
 	mux.HandleFunc("GET /api/reports/{id}", getReportHandler(store))
 	mux.Handle("/", http.FileServer(http.Dir("web")))
@@ -139,6 +143,12 @@ func createJobHandler(store app.APIStore, maxDepth int) http.HandlerFunc {
 	}
 }
 
+func multipartUploadDisabledHandler() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		writeError(w, http.StatusGone, "multipart upload disabled; use direct upload")
+	}
+}
+
 func getJobHandler(store app.APIStore) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		job, err := store.GetJob(r.PathValue("id"))
@@ -213,6 +223,19 @@ func directUploadExpiry() time.Duration {
 		return 15 * time.Minute
 	}
 	return duration
+}
+
+func multipartUploadsEnabled() bool {
+	raw := os.Getenv("CLAUDE_ANALYZER_ENABLE_MULTIPART_UPLOADS")
+	if raw != "" {
+		enabled, err := strconv.ParseBool(raw)
+		if err != nil {
+			slog.Warn("invalid multipart upload flag", "error_category", "configuration")
+			return false
+		}
+		return enabled
+	}
+	return getenv("CLAUDE_ANALYZER_BACKEND", "local") != "aws"
 }
 
 func maxQueueDepth() int {

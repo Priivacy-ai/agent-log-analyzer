@@ -138,7 +138,7 @@ resource "aws_security_group" "tasks" {
     from_port   = 443
     to_port     = 443
     protocol    = "tcp"
-    cidr_blocks = [aws_vpc.main.cidr_block]
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
   tags = local.common_tags
