@@ -55,7 +55,7 @@ func Analyze(jobID string, input []byte) (Report, error) {
 			RawTranscriptSentToLLM: false,
 			OutboundDuringAnalysis: false,
 			SecretsRedacted:        sumRedactions(redactions),
-			RawLogTTL:              "15m production target; local Docker data is developer-controlled",
+			RawLogTTL:              "15m",
 		},
 		Timeline:       timeline,
 		ImmediateFixes: immediateFixes(findings),

@@ -85,7 +85,7 @@
     "raw_transcript_sent_to_llm": false,
     "outbound_during_analysis": false,
     "secrets_redacted": 1,
-    "raw_log_ttl": "15m production target; local Docker data is developer-controlled"
+    "raw_log_ttl": "15m"
   },
   "timeline": [
     {
