@@ -29,25 +29,27 @@ type jobStatus struct {
 }
 
 type sample struct {
-	CreateMS   int64 `json:"create_ms"`
-	UploadMS   int64 `json:"upload_ms"`
-	FinalizeMS int64 `json:"finalize_ms"`
-	WaitMS     int64 `json:"wait_ms"`
-	ReportMS   int64 `json:"report_ms"`
-	TotalMS    int64 `json:"total_ms"`
+	CreateMS      int64 `json:"create_ms"`
+	UploadMS      int64 `json:"upload_ms"`
+	FinalizeMS    int64 `json:"finalize_ms"`
+	WaitMS        int64 `json:"wait_ms"`
+	ReportMS      int64 `json:"report_ms"`
+	TotalMS       int64 `json:"total_ms"`
+	UploadRetries int   `json:"upload_retries"`
 }
 
 type result struct {
-	Count       int      `json:"count"`
-	Concurrency int      `json:"concurrency"`
-	Failures    int      `json:"failures"`
-	Errors      []string `json:"errors,omitempty"`
-	CreateP95   int64    `json:"create_p95_ms"`
-	UploadP95   int64    `json:"upload_p95_ms"`
-	FinalizeP95 int64    `json:"finalize_p95_ms"`
-	WaitP95     int64    `json:"wait_p95_ms"`
-	ReportP95   int64    `json:"report_p95_ms"`
-	TotalP95    int64    `json:"total_p95_ms"`
+	Count         int      `json:"count"`
+	Concurrency   int      `json:"concurrency"`
+	Failures      int      `json:"failures"`
+	Errors        []string `json:"errors,omitempty"`
+	CreateP95     int64    `json:"create_p95_ms"`
+	UploadP95     int64    `json:"upload_p95_ms"`
+	FinalizeP95   int64    `json:"finalize_p95_ms"`
+	WaitP95       int64    `json:"wait_p95_ms"`
+	ReportP95     int64    `json:"report_p95_ms"`
+	TotalP95      int64    `json:"total_p95_ms"`
+	UploadRetries int      `json:"upload_retries"`
 }
 
 func main() {
@@ -119,11 +121,13 @@ func runJob(client *http.Client, baseURL string, data []byte, timeout time.Durat
 		return s, err
 	}
 	s.CreateMS = elapsed.Milliseconds()
-	elapsed, err = putUpload(client, upload, data)
+	var retries int
+	elapsed, retries, err = putUpload(client, upload, data)
 	if err != nil {
 		return s, err
 	}
 	s.UploadMS = elapsed.Milliseconds()
+	s.UploadRetries = retries
 	elapsed, err = finalizeUpload(client, baseURL, upload)
 	if err != nil {
 		return s, err
@@ -161,28 +165,39 @@ func createUpload(client *http.Client, baseURL string) (directUpload, time.Durat
 	return upload, time.Since(start), nil
 }
 
-func putUpload(client *http.Client, upload directUpload, data []byte) (time.Duration, error) {
+func putUpload(client *http.Client, upload directUpload, data []byte) (time.Duration, int, error) {
 	start := time.Now()
-	request, err := http.NewRequest(upload.Method, rewriteURL(upload.URL), bytes.NewReader(data))
-	if err != nil {
-		return 0, err
+	var lastErr error
+	for attempt := 0; attempt < 3; attempt++ {
+		request, err := http.NewRequest(upload.Method, rewriteURL(upload.URL), bytes.NewReader(data))
+		if err != nil {
+			return 0, attempt, err
+		}
+		for key, value := range upload.Headers {
+			request.Header.Set(key, value)
+		}
+		if request.Header.Get("Content-Type") == "" {
+			request.Header.Set("Content-Type", "application/octet-stream")
+		}
+		resp, err := client.Do(request)
+		if err != nil {
+			lastErr = err
+		} else {
+			body, _ := io.ReadAll(resp.Body)
+			resp.Body.Close()
+			if resp.StatusCode >= 200 && resp.StatusCode < 300 {
+				return time.Since(start), attempt, nil
+			}
+			lastErr = fmt.Errorf("upload status %d: %s", resp.StatusCode, string(body))
+			if resp.StatusCode < 500 && resp.StatusCode != http.StatusTooManyRequests {
+				return 0, attempt, lastErr
+			}
+		}
+		if attempt < 2 {
+			time.Sleep(time.Duration(250*(1<<attempt)) * time.Millisecond)
+		}
 	}
-	for key, value := range upload.Headers {
-		request.Header.Set(key, value)
-	}
-	if request.Header.Get("Content-Type") == "" {
-		request.Header.Set("Content-Type", "application/octet-stream")
-	}
-	resp, err := client.Do(request)
-	if err != nil {
-		return 0, err
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		body, _ := io.ReadAll(resp.Body)
-		return 0, fmt.Errorf("upload status %d: %s", resp.StatusCode, string(body))
-	}
-	return time.Since(start), nil
+	return 0, 2, lastErr
 }
 
 func finalizeUpload(client *http.Client, baseURL string, upload directUpload) (time.Duration, error) {
@@ -263,6 +278,9 @@ func summarize(count, concurrency int, samples []sample, errors []string) result
 	out.WaitP95 = p95(samples, func(s sample) int64 { return s.WaitMS })
 	out.ReportP95 = p95(samples, func(s sample) int64 { return s.ReportMS })
 	out.TotalP95 = p95(samples, func(s sample) int64 { return s.TotalMS })
+	for _, sample := range samples {
+		out.UploadRetries += sample.UploadRetries
+	}
 	return out
 }
 

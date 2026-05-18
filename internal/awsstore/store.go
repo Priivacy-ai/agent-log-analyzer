@@ -110,7 +110,11 @@ func (s *Store) FinalizeDirectUpload(jobID string) error {
 	if err != nil {
 		return err
 	}
-	if job.Status != app.StatusUploading {
+	switch job.Status {
+	case app.StatusUploading:
+	case app.StatusPending, app.StatusProcessing, app.StatusCompleted:
+		return nil
+	default:
 		return errors.New("job is not waiting for upload")
 	}
 	bucket, key, err := parseS3Path(job.UploadPath)

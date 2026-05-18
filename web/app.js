@@ -33,30 +33,32 @@ async function uploadWithBestAvailablePath(file) {
 }
 
 async function uploadDirect(file) {
-  const initResponse = await fetch("/api/upload-url", { method: "POST" });
+  const initResponse = await retryFetch(() => fetch("/api/upload-url", { method: "POST" }));
   if (!initResponse.ok) {
     throw await responseError(initResponse);
   }
   const upload = await initResponse.json();
   let uploadResponse;
   if (upload.fields && Object.keys(upload.fields).length > 0) {
-    const body = new FormData();
-    for (const [key, value] of Object.entries(upload.fields)) {
-      body.append(key, value);
-    }
-    body.append("file", file);
-    uploadResponse = await fetch(upload.url, { method: upload.method, body });
+    uploadResponse = await retryFetch(() => {
+      const body = new FormData();
+      for (const [key, value] of Object.entries(upload.fields)) {
+        body.append(key, value);
+      }
+      body.append("file", file);
+      return fetch(upload.url, { method: upload.method, body });
+    });
   } else {
-    uploadResponse = await fetch(upload.url, {
+    uploadResponse = await retryFetch(() => fetch(upload.url, {
       method: upload.method,
       headers: upload.headers || {},
       body: file,
-    });
+    }));
   }
   if (!uploadResponse.ok) {
     throw new Error(`direct upload failed: ${uploadResponse.status}`);
   }
-  const finalizeResponse = await fetch(upload.finalize_path, { method: "POST" });
+  const finalizeResponse = await retryFetch(() => fetch(upload.finalize_path, { method: "POST" }));
   if (!finalizeResponse.ok) {
     throw await responseError(finalizeResponse);
   }
@@ -76,6 +78,25 @@ async function responseError(response) {
   const error = new Error(await response.text());
   error.status = response.status;
   return error;
+}
+
+async function retryFetch(operation, attempts = 3) {
+  let lastError;
+  for (let attempt = 0; attempt < attempts; attempt++) {
+    try {
+      const response = await operation();
+      if (response.status < 500 && response.status !== 429) {
+        return response;
+      }
+      lastError = new Error(`status ${response.status}`);
+    } catch (error) {
+      lastError = error;
+    }
+    if (attempt + 1 < attempts) {
+      await new Promise((resolve) => setTimeout(resolve, 250 * 2 ** attempt));
+    }
+  }
+  throw lastError;
 }
 
 async function poll(jobID) {

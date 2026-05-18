@@ -58,6 +58,7 @@ CLAUDE_ANALYZER_URL=http://<alb-dns> go run ./cmd/direct-upload-load -n 10 -conc
 ```
 
 The load command uses fake-secret fixtures by default, exercises signed upload URL creation, S3 PUT upload, finalize, worker processing, and report fetch, then prints p95 timing summaries without job IDs or raw report bodies.
+The cloud upload step retries transient network, `429`, and `5xx` failures up to three attempts because browser-to-object-store PUTs can fail independently of the application tier.
 
 Production acceptance target before launch:
 

@@ -97,26 +97,37 @@ func postUpload(upload directUpload, fixture string) error {
 }
 
 func putUpload(upload directUpload, data []byte) error {
-	request, err := http.NewRequest(upload.Method, rewriteURL(upload.URL), bytes.NewReader(data))
-	if err != nil {
-		return err
+	var lastErr error
+	for attempt := 0; attempt < 3; attempt++ {
+		request, err := http.NewRequest(upload.Method, rewriteURL(upload.URL), bytes.NewReader(data))
+		if err != nil {
+			return err
+		}
+		for key, value := range upload.Headers {
+			request.Header.Set(key, value)
+		}
+		if request.Header.Get("Content-Type") == "" {
+			request.Header.Set("Content-Type", "application/octet-stream")
+		}
+		resp, err := http.DefaultClient.Do(request)
+		if err != nil {
+			lastErr = err
+		} else {
+			body, _ := io.ReadAll(resp.Body)
+			resp.Body.Close()
+			if resp.StatusCode >= 200 && resp.StatusCode < 300 {
+				return nil
+			}
+			lastErr = fmt.Errorf("upload status %d: %s", resp.StatusCode, string(body))
+			if resp.StatusCode < 500 && resp.StatusCode != http.StatusTooManyRequests {
+				return lastErr
+			}
+		}
+		if attempt < 2 {
+			time.Sleep(time.Duration(250*(1<<attempt)) * time.Millisecond)
+		}
 	}
-	for key, value := range upload.Headers {
-		request.Header.Set(key, value)
-	}
-	if request.Header.Get("Content-Type") == "" {
-		request.Header.Set("Content-Type", "application/octet-stream")
-	}
-	resp, err := http.DefaultClient.Do(request)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		body, _ := io.ReadAll(resp.Body)
-		return fmt.Errorf("upload status %d: %s", resp.StatusCode, string(body))
-	}
-	return nil
+	return lastErr
 }
 
 func finalizeUpload(baseURL string, upload directUpload) error {
