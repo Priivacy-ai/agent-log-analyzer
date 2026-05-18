@@ -15,10 +15,10 @@ This is the remaining work to move from green Docker/LocalStack gates to real cl
 - [x] Decide production region, default `us-east-1`.
 - [x] Confirm external DNS provider: Namecheap manages `spec-kitty.ai`.
 - [x] Confirm launch hostname: `claude-code.spec-kitty.ai`.
-- [ ] Confirm ACM certificate path:
+- [x] Confirm ACM certificate path:
   - [x] Request a new public ACM cert in the production region.
-  - [ ] Add ACM DNS validation CNAME in Namecheap.
-  - [ ] Wait for certificate status `ISSUED`.
+  - [x] Add ACM DNS validation CNAME in Namecheap.
+  - [x] Wait for certificate status `ISSUED`.
 - [x] Confirm container image naming and whether ECR should be created by Terraform or pre-existing.
 
 ## 1. Terraform State Bootstrap
@@ -144,8 +144,8 @@ Acceptance:
 - [x] Poll job status until completed.
 - [x] Fetch report.
 - [ ] Verify:
-  - [ ] Report contains no raw secret.
-  - [ ] Report contains `raw_transcript_sent_to_llm=false`.
+  - [x] Report contains no raw secret.
+  - [x] Report contains `raw_transcript_sent_to_llm=false`.
   - [ ] Raw upload object is deleted by the sweeper after TTL.
   - [ ] Report object is deleted by the sweeper after TTL.
   - [ ] Logs contain request metadata only, not raw upload/report contents.
@@ -157,20 +157,20 @@ Acceptance:
 
 ## 6. TLS, DNS, CDN, And WAF
 
-- [ ] Add or pass `certificate_arn` for HTTPS listener:
+- [x] Add or pass `certificate_arn` for HTTPS listener:
   `arn:aws:acm:us-east-1:129875099715:certificate/0620795a-f10b-49c1-b030-3f39756be44f`
-- [ ] Preserve the currently deployed image when applying TLS unless intentionally deploying a new image:
-  `129875099715.dkr.ecr.us-east-1.amazonaws.com/claude-analyzer-prod:589a07c-amd64`
+- [x] Preserve the currently deployed image when applying TLS unless intentionally deploying a new image:
+  `129875099715.dkr.ecr.us-east-1.amazonaws.com/claude-analyzer-prod:f195181-amd64`
 - [x] Configure DNS record for the launch domain:
   `claude-code.spec-kitty.ai CNAME claude-analyzer-prod-720064025.us-east-1.elb.amazonaws.com`
 - [x] Keep DNS hosted at Namecheap; do not create a Route 53 hosted zone for launch.
 - [x] Redirect ALB HTTP listener to HTTPS when `certificate_arn` is set.
-- [ ] Apply TLS after ACM is `ISSUED`:
+- [x] Apply TLS after ACM is `ISSUED`:
 
   ```sh
   AWS_PROFILE=claude-analyzer-prod AWS_REGION=us-east-1 terraform -chdir=infra/aws apply \
     -var='certificate_arn=arn:aws:acm:us-east-1:129875099715:certificate/0620795a-f10b-49c1-b030-3f39756be44f' \
-    -var='container_image=129875099715.dkr.ecr.us-east-1.amazonaws.com/claude-analyzer-prod:589a07c-amd64'
+    -var='container_image=129875099715.dkr.ecr.us-east-1.amazonaws.com/claude-analyzer-prod:f195181-amd64'
   ```
 - [ ] Put CloudFront in front of the ALB.
 - [ ] Add WAF protections:
@@ -183,7 +183,7 @@ Acceptance:
 
 Acceptance:
 
-- [ ] Public domain serves HTTPS.
+- [x] Public domain serves HTTPS.
 - [ ] Static UI is CDN-backed.
 - [ ] API endpoints are reachable and not cached incorrectly.
 
