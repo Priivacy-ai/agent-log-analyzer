@@ -62,6 +62,26 @@ func TestUnknownNamesAreCountsOnly(t *testing.T) {
 	}
 }
 
+func TestAnalyzeEmitsEmptyCollectionsInsteadOfNull(t *testing.T) {
+	input := []byte(strings.Join([]string{
+		`{"type":"user","message":"Please inspect this small focused task."}`,
+		`{"type":"assistant","message":"Done."}`,
+	}, "\n"))
+	report, err := Analyze("job-clean", input)
+	if err != nil {
+		t.Fatalf("Analyze returned error: %v", err)
+	}
+	body := mustJSON(t, report)
+	for _, leakedNull := range []string{`"findings":null`, `"timeline":null`, `"immediate_fixes":null`} {
+		if strings.Contains(body, leakedNull) {
+			t.Fatalf("report emitted null collection %s: %s", leakedNull, body)
+		}
+	}
+	if len(report.Findings) != 0 {
+		t.Fatalf("expected no findings for clean input, got %#v", report.Findings)
+	}
+}
+
 func TestSlashCommandDetectionDoesNotCountPaths(t *testing.T) {
 	input := []byte(strings.Join([]string{
 		`{"type":"user","message":"Inspect /Users/example/project and src/auth.ts before running tests."}`,

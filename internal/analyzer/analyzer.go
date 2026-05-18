@@ -60,6 +60,7 @@ func Analyze(jobID string, input []byte) (Report, error) {
 		Timeline:       timeline,
 		ImmediateFixes: immediateFixes(findings),
 	}
+	normalizeReportCollections(&report)
 	report.AggregateEvent = aggregateEvent(report, parserType, len(input))
 	return report, nil
 }
@@ -448,6 +449,43 @@ func aggregateEvent(report Report, parserType string, inputSize int) AggregateSa
 		Findings:        findings,
 		Redactions:      report.Redactions,
 		Ecosystem:       report.Ecosystem,
+	}
+}
+
+func normalizeReportCollections(report *Report) {
+	if report.Findings == nil {
+		report.Findings = []Finding{}
+	}
+	if report.Timeline == nil {
+		report.Timeline = []TimelinePoint{}
+	}
+	if report.ImmediateFixes == nil {
+		report.ImmediateFixes = []string{}
+	}
+	if report.Redactions == nil {
+		report.Redactions = map[string]int{}
+	}
+	normalizeEcosystemCollections(&report.Ecosystem)
+}
+
+func normalizeEcosystemCollections(ecosystem *Ecosystem) {
+	if ecosystem.CodingAgents == nil {
+		ecosystem.CodingAgents = []string{}
+	}
+	if ecosystem.WorkflowFrameworks == nil {
+		ecosystem.WorkflowFrameworks = []string{}
+	}
+	if ecosystem.MCPServersKnown == nil {
+		ecosystem.MCPServersKnown = []string{}
+	}
+	if ecosystem.KnownSkills == nil {
+		ecosystem.KnownSkills = []string{}
+	}
+	if ecosystem.KnownPlugins == nil {
+		ecosystem.KnownPlugins = []string{}
+	}
+	if ecosystem.PackageManagers == nil {
+		ecosystem.PackageManagers = []string{}
 	}
 }
 

@@ -56,6 +56,7 @@ func AggregateReports(jobID string, reports []Report, inputSize int) (Report, er
 		Timeline:       timeline,
 		ImmediateFixes: immediateFixes(findings),
 	}
+	normalizeReportCollections(&report)
 	report.AggregateEvent = aggregateEvent(report, "paid_bundle", inputSize)
 	return report, nil
 }
