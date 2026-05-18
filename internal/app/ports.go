@@ -24,6 +24,10 @@ type ReportStore interface {
 	GetReport(id string) (analyzer.Report, error)
 }
 
+type DirectReportStore interface {
+	CreateCompletedReport(job Job, report analyzer.Report) error
+}
+
 type APIStore interface {
 	UploadStore
 	JobQueue

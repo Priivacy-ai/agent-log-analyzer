@@ -17,26 +17,18 @@ if ! curl -fsS "$URL/healthz" >/dev/null; then
   exit 1
 fi
 
+REPORT_JSON="$tmpdir/client-report.json"
+go run ./cmd/claude-analyzer analyze --log "$FIXTURE" --out "$REPORT_JSON" >/dev/null
+
 submit_one() {
   local index="$1"
-  local session job_id token report_path
-  session="$(curl -fsS -X POST "$URL/api/analysis-sessions")"
+  local session job_id report_path
+  session="$(curl -fsS -X POST -H "Content-Type: application/json" --data-binary "@$REPORT_JSON" "$URL/api/client-reports")"
   job_id="$(echo "$session" | sed -n 's/.*"job_id":"\([^"]*\)".*/\1/p')"
-  token="$(echo "$session" | sed -n 's/.*"token":"\([^"]*\)".*/\1/p')"
   report_path="$(echo "$session" | sed -n 's/.*"report_path":"\([^"]*\)".*/\1/p')"
-  if [ -z "$job_id" ] || [ -z "$token" ] || [ -z "$report_path" ]; then
+  if [ -z "$job_id" ] || [ -z "$report_path" ]; then
     return 1
   fi
-  curl -fsS \
-    -X PUT \
-    -H "Authorization: Bearer ${token}" \
-    -H "Content-Type: application/x-ndjson" \
-    --data-binary "@${FIXTURE}" \
-    "$URL/api/uploads/$job_id" >/dev/null
-  curl -fsS \
-    -X POST \
-    -H "Authorization: Bearer ${token}" \
-    "$URL/api/uploads/$job_id/finalize" >/dev/null
   printf '%s %s\n' "$job_id" "$report_path" >"$tmpdir/job-$index"
 }
 

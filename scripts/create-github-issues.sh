@@ -17,16 +17,19 @@ create_issue() {
 }
 
 EPIC_CORE=$(create_issue "Epic: Deterministic analyzer core" "epic" "Build the parser, scrubber, metrics, findings, ecosystem detectors, and report schema. No raw logs may reach reports or aggregate analytics.")
-EPIC_SECURITY=$(create_issue "Epic: Security, retention, and privacy boundary" "epic,security" "Make raw uploads toxic by design: strict TTLs, redaction, logging allowlists, worker isolation, prompt-injection tests, and aggregate-only analytics.")
-EPIC_LOCAL=$(create_issue "Epic: 100% Docker-local runthrough" "epic,local-docker" "Everything must run locally before cloud infrastructure: API, worker, upload, queue simulation, report generation, smoke tests, and load tests.")
-EPIC_SCALE=$(create_issue "Epic: Launch-scale production architecture" "epic" "Prepare CDN/static hosting, tokenized Claude/curl uploads, object storage, queue, metadata TTL, isolated worker pool, rate limits, and load-shedding.")
+EPIC_SECURITY=$(create_issue "Epic: Security, retention, and privacy boundary" "epic,security" "Keep raw Claude Code logs on the user's machine in the public flow. Use local parsing/redaction, show-before-send sanitized report JSON, strict logging allowlists, prompt-injection tests, and aggregate-only analytics.")
+EPIC_LOCAL=$(create_issue "Epic: 100% Docker-local runthrough" "epic,local-docker" "Everything must run locally before cloud infrastructure: static UI, API, local CLI analysis, sanitized report upload, legacy token compatibility path, report generation, smoke tests, and load tests.")
+EPIC_SCALE=$(create_issue "Epic: Launch-scale production architecture" "epic" "Prepare CDN/static hosting, local-first report uploads, object storage, metadata TTL, rate limits, WAF body-size handling, and load-shedding.")
 EPIC_CI=$(create_issue "Epic: GitHub CI quality gates" "epic,ci" "Use GitHub Actions for formatting, vetting, tests, Docker build, Docker Compose smoke test, and later load/security gates.")
 EPIC_ECO=$(create_issue "Epic: Ecosystem signature research sprint" "epic" "Build the comprehensive known-name and fingerprint registry for Claude Code workflows, MCPs, plugins, skills, OS, shells, package managers, and coding agents.")
 
 create_issue "Implement parser fixtures and golden reports" "subissue" "Parent: $EPIC_CORE\n\nAdd fixtures for Claude JSONL, Codex transcripts, malformed logs, retry loops, repeated reads, and prompt injection. Golden reports must be deterministic."
+create_issue "Ship signed local analyzer CLI releases" "subissue,security" "Parent: $EPIC_SECURITY\n\nPublish versioned GitHub releases with checksums, then add Homebrew and Scoop install paths. The public flow should not depend on pasted heredoc scripts."
+create_issue "Move paid 100-log scan to local-first upload" "subissue,security" "Parent: $EPIC_SECURITY\n\nAnalyze the 100 most recent Claude Code logs locally, write a reviewable sanitized aggregate report, and upload only that report after Stripe unlock."
+create_issue "Rename launch host away from Claude-branded subdomain" "subissue,security" "Parent: $EPIC_SECURITY\n\nMove from claude-code.spec-kitty.ai to a host that does not imply Anthropic affiliation unless brand review explicitly approves the current name."
 create_issue "Expand secret scrubber detectors" "subissue,security" "Parent: $EPIC_SECURITY\n\nAdd detectors for API keys, JWTs, private keys, URL credentials, cookies, DB URLs, emails, entropy, and known provider keys."
 create_issue "Add strict operational logging allowlist" "subissue,security" "Parent: $EPIC_SECURITY\n\nEnsure logs contain only job IDs, status, buckets, durations, error categories, and redaction counts. No raw transcript strings."
-create_issue "Add local load test harness" "subissue,local-docker" "Parent: $EPIC_LOCAL\n\nExtend scripts/load-local.sh into a full concurrent upload and worker-drain test with pass/fail thresholds."
+create_issue "Add local load test harness" "subissue,local-docker" "Parent: $EPIC_LOCAL\n\nExtend scripts/load-local.sh into a full concurrent sanitized-report upload test with pass/fail thresholds."
 create_issue "Map local storage/queue to production adapters" "subissue" "Parent: $EPIC_SCALE\n\nIntroduce interfaces for upload storage, queue, metadata store, and report storage. Add S3/SQS/DynamoDB implementations after local path is stable."
 create_issue "Add production load-shedding design" "subissue" "Parent: $EPIC_SCALE\n\nDefine queue-depth thresholds, worker autoscaling rules, LLM-disable mode, and user-facing wait estimates."
 create_issue "Harden GitHub Actions smoke test" "subissue,ci" "Parent: $EPIC_CI\n\nKeep Docker Compose smoke test in CI and add artifact upload for logs on failure."

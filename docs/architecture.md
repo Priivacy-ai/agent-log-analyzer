@@ -7,22 +7,20 @@ CloudFront/CDN
   |
   +--> static landing page, sample reports, report shell
   |
+local CLI
+  |
+  +--> parse/scrub/analyze on the user's machine
+  +--> write reviewable sanitized report JSON
+  +--> upload sanitized report only
+  |
 API Gateway / tiny Go control plane
   |
-  +--> one-time upload token
-  +--> tokenized curl upload endpoint
+  +--> sanitized report intake
   +--> short-lived job/report metadata
-  +--> analysis queue
-  |
-isolated workers, no outbound internet
-  |
-  +--> read upload
-  +--> parse/scrub/analyze
-  +--> write sanitized report JSON
-  +--> delete raw/intermediate data
+  +--> short-lived report storage
 ```
 
-The launch architecture must keep static traffic, upload traffic, and analysis work on separate failure domains. The only public upload UX is the Claude/prompt/curl flow; there is no browser file upload form and no public multipart upload endpoint.
+The launch architecture keeps raw Claude Code logs on the user's machine. The public upload UX is local CLI analysis plus sanitized-report upload; there is no browser file upload form, no public multipart upload endpoint, and no public raw-log upload prompt.
 
 ## Local Target
 
@@ -34,19 +32,12 @@ browser
   v
 api container
   |
-  +--> one-time token/session creation
-  +--> curl PUT upload
-  +--> /data/uploads
-  +--> /data/jobs/pending
-  |
-  v
-worker container
-  |
-  +--> /data/jobs/processing
+  +--> sanitized report intake
+  +--> /data/jobs/completed
   +--> /data/reports
 ```
 
-This is deliberately simpler than production but preserves the important product boundary: upload is asynchronous, analysis is done by a separate worker, and reports are sanitized artifacts.
+This is deliberately simpler than production but preserves the important product boundary: the raw log is analyzed locally, the server receives only a sanitized report artifact, and reports are short-lived.
 
 ## Production Mapping
 
@@ -77,23 +68,21 @@ The first AWS deployment scaffold lives in `infra/aws`. It provisions the S3/SQS
 
 Free scan:
 
-- one-time token
-- 15 minute token TTL
-- one latest Claude Code JSONL log
+- local CLI analyzes one latest Claude Code JSONL log
+- user reviews `claude-analyzer-report.json`
+- server receives sanitized report JSON only
 - tokenized report URL
 
 Paid scan:
 
-- separate paid upload token after Stripe unlock
-- command includes `CLAUDE_ANALYZER_SCAN_LIMIT=100`
-- upload request includes `limit=100` and `X-Scan-Limit: 100`
-- command bundles the 100 most recent `~/.claude/projects/**/*.jsonl` files
+- local CLI analyzes the 100 most recent `~/.claude/projects/**/*.jsonl` files after Stripe unlock
+- user reviews a sanitized aggregate report
+- server receives sanitized aggregate report JSON only
 - paid artifact retention is separate from the free report TTL
 
 ## Scale Gates
 
 - Static pages must be CDN cacheable.
-- API upload endpoints must be horizontally scalable and isolated from report/static traffic.
-- Analysis must never be synchronous.
-- Worker backlog must degrade into wait time, not API failure.
+- API report intake must be horizontally scalable and isolated from report/static traffic.
+- Raw-log analysis must not be required for the public cloud path.
 - Optional LLM interpretation must be load-sheddable.

@@ -4,24 +4,24 @@ Deterministic performance profiler for AI coding workflows.
 
 This repo starts with a Docker-local, end-to-end implementation:
 
-- generate a one-time upload token
-- copy a Claude-native prompt or curl command
-- upload one Claude Code JSONL log through the tokenized curl path
-- parse and scrub it deterministically
+- run the analyzer locally against one Claude Code JSONL log
+- write a sanitized report JSON that the user can inspect before upload
+- upload only the sanitized report JSON
 - detect waste patterns and ecosystem fingerprints
 - generate an ephemeral report JSON
 - view the report in a static local web UI
 
-The production target is CDN + tokenized curl upload + object storage + queue + isolated workers. Local development intentionally avoids cloud dependencies so the complete flow can be tested before any infrastructure is provisioned.
+The production target is CDN + local deterministic CLI + report-only upload + short-lived report storage. Local development intentionally avoids cloud dependencies so the complete flow can be tested before any infrastructure is provisioned.
 
-There is intentionally no browser upload form. Claude Code logs live under `~/.claude`, which is awkward for Finder/browser upload flows and pushes users away from the native Claude Code workflow. The public upload path is:
+There is intentionally no browser upload form. Claude Code logs live under `~/.claude`, which is awkward for Finder/browser upload flows. The public launch path is local-first:
 
-1. `POST /api/analysis-sessions` creates a one-time token and short-lived report URL.
-2. The user pastes the generated prompt into Claude Code or runs the generated curl command.
-3. The command uploads one latest JSONL log with `PUT /api/uploads/{job_id}` and finalizes it with `POST /api/uploads/{job_id}/finalize`.
-4. The report is opened at `/r/{job_id}/{report_token}` and expires on the retention schedule.
+1. The user installs the open-source CLI with `go install github.com/robertDouglass/claude-log-analyzer/cmd/claude-analyzer@latest`.
+2. `claude-analyzer analyze --out ./claude-analyzer-report.json` finds the latest Claude Code JSONL log, parses and redacts it locally, and writes a sanitized report.
+3. The user reviews the JSON with `jq . ./claude-analyzer-report.json`.
+4. `claude-analyzer upload ./claude-analyzer-report.json` sends only the sanitized report to `POST /api/client-reports`.
+5. The short-lived report is opened at `/r/{job_id}/{report_token}` and expires on the retention schedule.
 
-The paid scan will use a separate paid token and a different command parameter set: `CLAUDE_ANALYZER_SCAN_LIMIT=100`, `limit=100`, and `X-Scan-Limit: 100`. That command uploads a tar/gzip bundle of the 100 most recent Claude Code JSONL logs after Stripe unlock.
+Legacy raw-log token upload endpoints still exist for internal Docker smoke coverage while the paid scan is moved to the same local-first model. They are not the public onboarding path.
 
 Paid delivery contract: [docs/remediation/plugin-artifacts.md](docs/remediation/plugin-artifacts.md).
 
@@ -31,7 +31,7 @@ Paid delivery contract: [docs/remediation/plugin-artifacts.md](docs/remediation/
 docker compose up --build
 ```
 
-Open `http://localhost:8080`, click `Generate Claude Prompt`, and use the generated prompt/curl flow. The smoke scripts exercise the same path with `testdata/fixtures/sample-claude.jsonl`.
+Open `http://localhost:8080`, click `Generate Local Commands`, and use the generated local analyze/review/upload flow. The smoke scripts still exercise the legacy token path with `testdata/fixtures/sample-claude.jsonl` for backend compatibility.
 
 Smoke test:
 
@@ -75,7 +75,7 @@ Useful local env vars:
 
 ## Privacy Posture
 
-Raw uploads are treated as toxic. The analyzer redacts secrets before reports are written, emits aggregate-safe ecosystem IDs only, and forbids raw prompt/tool text in operational logs.
+Raw logs are treated as toxic. The launch UX parses and redacts locally, emits aggregate-safe ecosystem IDs only, and uploads only sanitized report JSON. Operational logs forbid raw prompt/tool text.
 
 See [docs/data-retention-and-analytics.md](docs/data-retention-and-analytics.md).
 

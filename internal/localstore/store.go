@@ -130,6 +130,22 @@ func (s *Store) CompleteJob(job app.Job, report analyzer.Report) error {
 	return os.Rename(processingPath, s.jobPath("completed", job.ID))
 }
 
+func (s *Store) CreateCompletedReport(job app.Job, report analyzer.Report) error {
+	reportPath := filepath.Join(s.root, "reports", job.ID+".json")
+	if err := writeJSON(reportPath, report); err != nil {
+		return err
+	}
+	now := time.Now().UTC()
+	if job.CreatedAt.IsZero() {
+		job.CreatedAt = now
+	}
+	job.Status = app.StatusCompleted
+	job.ReportPath = reportPath
+	job.UpdatedAt = now
+	job.CompletedAt = now
+	return s.writeJob("completed", job)
+}
+
 func (s *Store) FailJob(job app.Job, jobErr error) error {
 	processingPath := s.jobPath("processing", job.ID)
 	job.Status = app.StatusFailed

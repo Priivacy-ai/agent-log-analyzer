@@ -187,15 +187,25 @@ Acceptance:
 - [ ] Static UI is CDN-backed.
 - [ ] API endpoints are reachable and not cached incorrectly.
 
-## 7. Claude/Curl Upload Path
+## 7. Local-First Report Upload Path
 
-The public upload UX is Claude/prompt/curl only. There is no browser file upload form, no public multipart upload endpoint, and no direct browser-to-S3 upload surface.
+The public upload UX is local CLI analysis plus sanitized-report upload. Raw Claude Code logs stay on the user's machine. There is no browser file upload form, no public multipart upload endpoint, and no direct browser-to-S3 upload surface.
+
+- [x] Add local CLI command to analyze the latest Claude Code JSONL log.
+- [x] Write reviewable sanitized report JSON before upload.
+- [x] Add API endpoint to accept sanitized client reports only.
+- [x] Serve reports only through tokenized `/r/{job_id}/{report_token}` URLs.
+- [ ] Publish signed CLI releases and package-manager install paths.
+- [ ] Move paid 100-log scan to the same local-first sanitized-report upload path.
+- [x] Add `/security` and `/privacy` pages with data-flow diagrams and named controls.
+- [ ] Rename public host away from `claude-code.*` before broad launch unless Anthropic brand review says it is acceptable.
+
+Legacy/internal token path:
 
 - [x] Add API endpoint to create a one-time analysis session token.
 - [x] Set upload token expiry to 15 minutes or less.
 - [x] Upload one free-scan JSONL log with `PUT /api/uploads/{job_id}` and `Authorization: Bearer <token>`.
 - [x] Enqueue analysis only after `POST /api/uploads/{job_id}/finalize`.
-- [x] Serve reports only through tokenized `/r/{job_id}/{report_token}` URLs.
 - [x] Update LocalStack smoke to cover the token/curl flow.
 - [x] Add paid bundle upload endpoint for paid-token jobs.
 - [x] Enforce paid scan upload contract: `limit=100` and `X-Scan-Limit: 100`.
@@ -210,8 +220,8 @@ The public upload UX is Claude/prompt/curl only. There is no browser file upload
 Acceptance:
 
 - [x] Browser upload and direct-upload routes are not mounted.
-- [x] Docker smoke covers free one-log upload, paid 100-log bundle upload, and paid plugin artifact download.
-- [ ] API upload tasks autoscale separately enough to survive Product Hunt/HN upload spikes.
+- [x] Docker smoke covers local sanitized-report upload, legacy free one-log upload, paid 100-log bundle upload, and paid plugin artifact download.
+- [ ] API report intake tasks autoscale separately enough to survive Product Hunt/HN upload spikes.
 
 ## 8. Observability Without Privacy Leakage
 

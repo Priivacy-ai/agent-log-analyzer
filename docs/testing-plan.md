@@ -21,19 +21,16 @@ Target launch model:
 ```text
 500k landing/report page views in 24h
 50k analyze clicks
-20k analysis-session requests
-10k completed uploads
-1k queued analyses at once
-100-300 concurrent worker jobs in production
+20k local CLI report uploads
+10k completed report views
 ```
 
 Local acceptance target for this repo before cloud work:
 
 ```text
-100 sequential token/curl uploads through Docker Compose
-25 concurrent uploads through Docker Compose
+100 sequential sanitized report uploads through Docker Compose
+25 concurrent sanitized report uploads through Docker Compose
 0 raw secret leaks in reports
-0 worker crashes
 all jobs finish or fail cleanly
 ```
 
@@ -51,13 +48,13 @@ go run ./cmd/local-log-smoke -limit 10
 
 This command discovers `~/.claude/projects/**/*.jsonl`, analyzes the largest logs locally, and prints only aggregate-safe output: buckets, scores, finding IDs, redaction counts, and known ecosystem IDs. It must not print raw transcript text, raw tool output, file contents, or private unknown tool names.
 
-Cloud token/curl load smoke:
+Cloud report-upload load smoke:
 
 ```bash
 CLAUDE_ANALYZER_URL=http://<alb-dns> ./scripts/load-local.sh 25
 ```
 
-The load command uses fake-secret fixtures by default and exercises analysis-session creation, tokenized curl upload, finalize, worker processing, and tokenized report fetch. It prints only aggregate pass/fail status and checks that raw fake secrets do not leak into reports.
+The load command must use fake-secret fixtures by default and exercise local analysis, sanitized report upload, and tokenized report fetch. It prints only aggregate pass/fail status and checks that raw fake secrets do not leak into reports.
 
 Full Docker smoke:
 
@@ -65,19 +62,15 @@ Full Docker smoke:
 ./scripts/smoke-local.sh
 ```
 
-This covers the free one-log Claude/curl path and the local waiver-gated paid bundle path with a paid token, `limit=100`, `X-Scan-Limit: 100`, tar/gzip upload, finalize, aggregate report fetch, tokenized plugin zip download, and raw-transcript leak checks.
+This covers the local sanitized-report upload path plus the legacy free one-log token path and local waiver-gated paid bundle path kept for compatibility. It verifies aggregate report fetch, tokenized plugin zip download, and raw-transcript leak checks.
 
 Production acceptance target before launch:
 
 ```text
 static landing p95: <300ms from CDN
-upload-init p95: <250ms
-tokenized upload acceptance p95: <2s for fixture-sized logs
+sanitized report upload p95: <500ms
 report shell p95: <500ms from CDN
-normal analysis p95: <3 min
-burst queue wait p95: <20 min
 API 5xx rate: <0.1%
-worker failure rate: <1%
 ```
 
 ## Hostile Upload Tests

@@ -224,6 +224,33 @@ func (s *Store) CompleteJob(job app.Job, report analyzer.Report) error {
 	return s.deleteQueueMessage(job)
 }
 
+func (s *Store) CreateCompletedReport(job app.Job, report analyzer.Report) error {
+	reportKey := "reports/" + job.ID + ".json"
+	data, err := json.MarshalIndent(report, "", "  ")
+	if err != nil {
+		return err
+	}
+	_, err = s.s3.PutObject(context.Background(), &s3.PutObjectInput{
+		Bucket:               aws.String(s.reportBucket),
+		Key:                  aws.String(reportKey),
+		Body:                 bytes.NewReader(data),
+		ServerSideEncryption: "AES256",
+		ContentType:          aws.String("application/json"),
+	})
+	if err != nil {
+		return err
+	}
+	now := time.Now().UTC()
+	if job.CreatedAt.IsZero() {
+		job.CreatedAt = now
+	}
+	job.Status = app.StatusCompleted
+	job.ReportPath = "s3://" + s.reportBucket + "/" + reportKey
+	job.UpdatedAt = now
+	job.CompletedAt = now
+	return s.putJob(job)
+}
+
 func (s *Store) FailJob(job app.Job, jobErr error) error {
 	job.Status = app.StatusFailed
 	job.Error = jobErr.Error()

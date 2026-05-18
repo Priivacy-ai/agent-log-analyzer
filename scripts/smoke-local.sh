@@ -25,6 +25,18 @@ for _ in $(seq 1 60); do
   sleep 1
 done
 
+CLIENT_REPORT="$(mktemp -t claude-analyzer-client.XXXXXX.json)"
+go run ./cmd/claude-analyzer analyze --log "$FIXTURE" --out "$CLIENT_REPORT" >/dev/null
+CLIENT_UPLOAD=$(go run ./cmd/claude-analyzer upload --base-url http://127.0.0.1:8080 "$CLIENT_REPORT")
+CLIENT_REPORT_URL=$(printf '%s\n' "$CLIENT_UPLOAD" | sed -n 's/^Report: //p')
+if [ -z "$CLIENT_REPORT_URL" ]; then
+  echo "failed to upload sanitized client report"
+  exit 1
+fi
+CLIENT_REPORT_API=$(printf '%s' "$CLIENT_REPORT_URL" | sed 's#^http://127.0.0.1:8080/r/#/api/public-reports/#')
+CLIENT_REPORT_BODY=$(curl -fsS "http://127.0.0.1:8080$CLIENT_REPORT_API")
+echo "$CLIENT_REPORT_BODY" | grep -q '"raw_log_ttl":"not uploaded"'
+
 SESSION=$(curl -fsS -X POST http://127.0.0.1:8080/api/analysis-sessions)
 JOB_ID=$(echo "$SESSION" | sed -n 's/.*"job_id":"\([^"]*\)".*/\1/p')
 TOKEN=$(echo "$SESSION" | sed -n 's/.*"token":"\([^"]*\)".*/\1/p')

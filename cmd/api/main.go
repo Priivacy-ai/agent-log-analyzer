@@ -24,6 +24,7 @@ import (
 
 const maxUploadBytes = 50 * 1024 * 1024
 const maxPaidUploadBytes = 250 * 1024 * 1024
+const maxClientReportBytes = 1024 * 1024
 
 type analysisSessionResponse struct {
 	JobID        string    `json:"job_id"`
@@ -66,6 +67,7 @@ func buildMux(store app.APIStore) http.Handler {
 	})
 	mux.HandleFunc("POST /api/analysis-sessions", createAnalysisSessionHandler(store, maxQueueDepth(), uploadTokenTTL()))
 	mux.HandleFunc("POST /api/paid-sessions", createPaidSessionHandler(store, uploadTokenTTL()))
+	mux.HandleFunc("POST /api/client-reports", createClientReportHandler(store, reportTTL()))
 	mux.HandleFunc("PUT /api/uploads/{id}", tokenUploadHandler(store))
 	mux.HandleFunc("POST /api/uploads/{id}/finalize", finalizeTokenUploadHandler(store))
 	mux.HandleFunc("PUT /api/paid-uploads/{id}", paidBundleUploadHandler(store))
@@ -76,6 +78,75 @@ func buildMux(store app.APIStore) http.Handler {
 	mux.HandleFunc("GET /api/jobs/{id}", getJobHandler(store))
 	mux.Handle("/", http.FileServer(http.Dir("web")))
 	return mux
+}
+
+func createClientReportHandler(store app.APIStore, expiresIn time.Duration) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		reportStore, ok := store.(app.DirectReportStore)
+		if !ok {
+			writeError(w, http.StatusNotImplemented, "direct report upload unavailable")
+			return
+		}
+		data, err := analyzer.ReadAllLimited(r.Body, maxClientReportBytes)
+		if err != nil {
+			writeError(w, http.StatusRequestEntityTooLarge, "sanitized report too large")
+			return
+		}
+		var report analyzer.Report
+		if err := json.NewDecoder(bytes.NewReader(data)).Decode(&report); err != nil {
+			writeError(w, http.StatusBadRequest, "invalid sanitized report JSON")
+			return
+		}
+		if err := validateClientReport(report); err != nil {
+			writeError(w, http.StatusBadRequest, err.Error())
+			return
+		}
+		reportToken, err := newToken()
+		if err != nil {
+			writeError(w, http.StatusInternalServerError, "could not create report token")
+			return
+		}
+		now := time.Now().UTC()
+		jobID := app.NewJobID()
+		report.JobID = jobID
+		job := app.Job{
+			ID:              jobID,
+			Status:          app.StatusCompleted,
+			ScanType:        app.ScanTypeSingle,
+			ReportTokenHash: tokenHash(reportToken),
+			CreatedAt:       now,
+			UpdatedAt:       now,
+			CompletedAt:     now,
+		}
+		if err := reportStore.CreateCompletedReport(job, report); err != nil {
+			writeError(w, http.StatusInternalServerError, "could not store sanitized report")
+			return
+		}
+		reportPath := "/r/" + jobID + "/" + reportToken
+		writeJSON(w, http.StatusCreated, analysisSessionResponse{
+			JobID:      jobID,
+			ReportPath: reportPath,
+			ReportURL:  publicBaseURL(r) + reportPath,
+			ExpiresAt:  now.Add(expiresIn),
+			MaxBytes:   maxClientReportBytes,
+		})
+	}
+}
+
+func validateClientReport(report analyzer.Report) error {
+	if report.Version == "" {
+		return errors.New("sanitized report missing analyzer version")
+	}
+	if report.Metrics.Turns <= 0 {
+		return errors.New("sanitized report missing parsed turns")
+	}
+	if report.SecurityReceipt.RawTranscriptSentToLLM {
+		return errors.New("sanitized report cannot claim raw transcript was sent to an LLM")
+	}
+	if report.SecurityReceipt.OutboundDuringAnalysis {
+		return errors.New("sanitized report cannot claim outbound network during local analysis")
+	}
+	return nil
 }
 
 func createPaidSessionHandler(store app.APIStore, expiresIn time.Duration) http.HandlerFunc {
@@ -609,11 +680,11 @@ func paidShellCommand(baseURL string, response analysisSessionResponse) string {
 }
 
 func claudePrompt(command string) string {
-	return "Find my most recent Claude Code JSONL session log, show me the path and byte size, ask for my approval, then run this exact shell command to upload one log for deterministic analysis. Do not print the log contents.\n\n```sh\n" + command + "\n```"
+	return "Review this shell command for me, but do not run it. It finds my most recent Claude Code JSONL session log, asks for approval, uploads that raw log to my own analyzer endpoint, finalizes the analysis, and opens the report. Explain the data-exposure risk and tell me to run it myself only if I trust that endpoint.\n\n```sh\n" + command + "\n```"
 }
 
 func paidClaudePrompt(command string) string {
-	return "Find my 100 most recent Claude Code JSONL session logs under ~/.claude/projects, show me only the count and total bundle size, ask for my approval, then run this exact shell command to upload the bundle for paid deterministic analysis. Do not print log contents or file paths.\n\n```sh\n" + command + "\n```"
+	return "Review this shell command for me, but do not run it. It bundles my 100 most recent Claude Code JSONL logs, asks for approval, uploads the raw bundle to my own analyzer endpoint, finalizes the analysis, and opens the report. Explain the data-exposure risk and tell me to run it myself only if I trust that endpoint.\n\n```sh\n" + command + "\n```"
 }
 
 func shellQuote(value string) string {
@@ -632,6 +703,16 @@ func uploadTokenTTL() time.Duration {
 	duration, err := time.ParseDuration(raw)
 	if err != nil || duration <= 0 || duration > 15*time.Minute {
 		slog.Warn("invalid upload token ttl", "error_category", "configuration")
+		return 15 * time.Minute
+	}
+	return duration
+}
+
+func reportTTL() time.Duration {
+	raw := getenv("CLAUDE_ANALYZER_REPORT_TTL", "15m")
+	duration, err := time.ParseDuration(raw)
+	if err != nil || duration <= 0 {
+		slog.Warn("invalid report ttl", "error_category", "configuration")
 		return 15 * time.Minute
 	}
 	return duration

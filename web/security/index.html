@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Security - Claude Log Analyzer</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="shell doc-page">
+      <p class="eyebrow">security</p>
+      <h1>Raw Claude Code logs stay on your machine.</h1>
+      <p class="subhead">The launch flow is local-first: parse, redact, and summarize locally; upload only the sanitized report JSON you can inspect first.</p>
+
+      <section class="panel">
+        <h2>Data Flow</h2>
+        <pre>~/.claude/projects/*.jsonl
+  -> claude-analyzer CLI on your machine
+  -> local secret scrubber and deterministic parser
+  -> ./claude-analyzer-report.json
+  -> optional user review with jq/cat
+  -> POST /api/client-reports
+  -> short-lived report URL</pre>
+      </section>
+
+      <section class="panel">
+        <h2>Controls</h2>
+        <ul>
+          <li>No browser file picker and no hidden access to `~/.claude`.</li>
+          <li>No one-time bearer token pasted into a web-provided shell snippet for the public flow.</li>
+          <li>No raw transcript is sent to an LLM.</li>
+          <li>No model tools, browsing, shell, filesystem, memory, or MCP access are used for interpretation.</li>
+          <li>Server intake is bounded to sanitized report JSON and rejects reports that claim raw transcript LLM exposure.</li>
+          <li>Operational logs are allowlisted to metadata, timings, status, buckets, and error categories.</li>
+        </ul>
+      </section>
+
+      <section class="panel">
+        <h2>Threat Model</h2>
+        <p>We assume Claude Code logs are sensitive and may contain source code, command output, API responses, secrets, hostnames, usernames, and customer data. The primary mitigation is to keep raw logs local. Server-side retention and redaction are defense in depth, not the primary trust boundary.</p>
+      </section>
+    </main>
+  </body>
+</html>

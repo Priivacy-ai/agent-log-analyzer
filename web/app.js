@@ -26,23 +26,13 @@ if (route) {
 
 generateButton?.addEventListener("click", async () => {
   generateButton.disabled = true;
-  generateButton.textContent = "Generating prompt...";
+  generateButton.textContent = "Generating commands...";
   setSessionStatus("", true);
-  try {
-    const session = await createSession();
-    promptBlock.textContent = session.prompt;
-    commandBlock.textContent = session.command;
-    sessionPanel.hidden = false;
-    launchPanel.hidden = true;
-    setSessionStatus(
-      `Token expires ${new Date(session.expires_at).toLocaleTimeString()}. Paste Step 1 into Claude Code; this page will update automatically.`
-    );
-    pollJob(session.job_id, session.report_path);
-  } catch (error) {
-    setSessionStatus(`Could not create session: ${error.message}`);
-    generateButton.disabled = false;
-    generateButton.textContent = "Generate Claude Prompt";
-  }
+  promptBlock.textContent = analyzeCommand();
+  commandBlock.textContent = uploadCommand();
+  sessionPanel.hidden = false;
+  launchPanel.hidden = true;
+  setSessionStatus("No upload token. Step 1 writes a local sanitized report; Step 2 uploads only that report JSON.");
 });
 
 copyPromptButton?.addEventListener("click", () => copyText(promptBlock.textContent, copyPromptButton));
@@ -57,7 +47,7 @@ unlockPaidButton?.addEventListener("click", async () => {
     paidCommand.textContent = session.prompt;
     copyPaidCommandButton.hidden = false;
     paidStatus.textContent =
-      `paid token expires ${new Date(session.expires_at).toLocaleTimeString()} - paste the prompt into Claude Code`;
+      `paid token expires ${new Date(session.expires_at).toLocaleTimeString()} - review this legacy command before running it`;
     pollPaidJob(session.job_id, session.report_path);
   } catch (error) {
     paidStatus.textContent = `could not unlock paid scan: ${error.message}`;
@@ -71,6 +61,26 @@ async function createSession() {
     throw await responseError(response);
   }
   return response.json();
+}
+
+function analyzeCommand() {
+  return [
+    "go install \\",
+    "  github.com/robertDouglass/claude-log-analyzer/cmd/claude-analyzer@latest",
+    "claude-analyzer analyze --out ./claude-analyzer-report.json",
+  ].join("\n");
+}
+
+function uploadCommand() {
+  const baseURL = window.location.origin && window.location.origin !== "null"
+    ? window.location.origin
+    : "https://claude-code.spec-kitty.ai";
+  return [
+    "jq . ./claude-analyzer-report.json",
+    "claude-analyzer upload \\",
+    `  --base-url ${baseURL} \\`,
+    "  ./claude-analyzer-report.json",
+  ].join("\n");
 }
 
 async function createPaidSession() {
@@ -114,7 +124,7 @@ async function pollPaidJob(jobID, reportPath) {
     const response = await fetch(`/api/jobs/${jobID}`);
     const job = await response.json();
     if (job.status === "uploading") {
-      paidStatus.textContent = "waiting for Claude Code paid bundle upload";
+      paidStatus.textContent = "waiting for paid scan upload";
     } else if (job.status === "pending" || job.status === "processing") {
       paidStatus.textContent = "analyzing paid scan bundle";
     } else if (job.status === "completed") {

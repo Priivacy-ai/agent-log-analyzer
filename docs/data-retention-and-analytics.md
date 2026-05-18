@@ -4,18 +4,17 @@
 
 ```text
 raw uploaded logs:
-  local MVP: deleted by claude-analyzer-sweeper
-  production free scan: 15 minutes max
-  production paid scan: short paid-scan TTL, stored separately from free uploads
+  launch CLI flow: never received by the server
+  legacy internal token flow: deleted by claude-analyzer-sweeper
   analytics: never
 
 intermediate parsed transcript:
-  local MVP: memory only
-  production: worker memory or short-lived encrypted temp
+  launch CLI flow: local process memory only
+  legacy internal token flow: worker memory or short-lived encrypted temp
   analytics: never
 
 sanitized report JSON:
-  local MVP: stored under /data/reports
+  local MVP: stored under /data/reports after explicit upload
   production: 15 minutes free, 24 hours paid artifact
   analytics: never as raw JSON
 
@@ -87,6 +86,6 @@ Exact unknown names require explicit opt-in.
 
 ## Upload Scope
 
-Free scan uploads exactly one Claude Code JSONL session selected by the generated command.
+Free scan analyzes exactly one Claude Code JSONL session selected by the local CLI. The server receives only the generated sanitized report JSON after the user has had a chance to inspect it.
 
-Paid scan uses a separate post-payment token and uploads at most the 100 most recent Claude Code JSONL sessions. Aggregate analytics from paid scans must still use the same allowlist: known public ecosystem IDs, counts, buckets, timing, parser status, and redaction totals. Raw logs, raw paths, unknown private names, and report JSON are not retained as analytics.
+Paid scan must use the same local-first model for at most the 100 most recent Claude Code JSONL sessions. Aggregate analytics from paid scans must still use the same allowlist: known public ecosystem IDs, counts, buckets, timing, parser status, and redaction totals. Raw logs, raw paths, unknown private names, and report JSON are not retained as analytics.

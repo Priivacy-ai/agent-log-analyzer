@@ -43,6 +43,20 @@ resource "aws_wafv2_web_acl" "alb" {
                     field_to_match {
                       uri_path {}
                     }
+                    positional_constraint = "EXACTLY"
+                    search_string         = "/api/client-reports"
+                    text_transformation {
+                      priority = 0
+                      type     = "NONE"
+                    }
+                  }
+                }
+
+                statement {
+                  byte_match_statement {
+                    field_to_match {
+                      uri_path {}
+                    }
                     positional_constraint = "STARTS_WITH"
                     search_string         = "/api/paid-uploads/"
                     text_transformation {
@@ -89,6 +103,20 @@ resource "aws_wafv2_web_acl" "alb" {
                     }
                     positional_constraint = "STARTS_WITH"
                     search_string         = "/api/uploads/"
+                    text_transformation {
+                      priority = 0
+                      type     = "NONE"
+                    }
+                  }
+                }
+
+                statement {
+                  byte_match_statement {
+                    field_to_match {
+                      uri_path {}
+                    }
+                    positional_constraint = "EXACTLY"
+                    search_string         = "/api/client-reports"
                     text_transformation {
                       priority = 0
                       type     = "NONE"

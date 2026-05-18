@@ -32,6 +32,16 @@ body {
   padding: 56px 0;
 }
 
+.doc-page {
+  display: grid;
+  gap: 20px;
+}
+
+.doc-page h1,
+.doc-page .panel {
+  max-width: 860px;
+}
+
 .hero {
   max-width: 760px;
   margin-bottom: 32px;
@@ -89,6 +99,16 @@ h2 {
 .trust li {
   border-left: 2px solid var(--line);
   padding-left: 12px;
+}
+
+.trust-links {
+  display: flex;
+  gap: 16px;
+  margin: 16px 0 0;
+}
+
+.trust-links a {
+  color: var(--green);
 }
 
 .panel,
@@ -174,6 +194,11 @@ pre {
   border-radius: 6px;
   background: #080b10;
   color: var(--muted);
+}
+
+.command-panel pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 
 #ecosystem,

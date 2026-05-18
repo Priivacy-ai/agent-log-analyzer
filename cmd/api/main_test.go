@@ -265,6 +265,86 @@ func TestAnalysisSessionCurlFlow(t *testing.T) {
 	}
 }
 
+func TestClientReportUploadStoresSanitizedReportOnly(t *testing.T) {
+	store, err := localstore.New(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	report := analyzer.Report{
+		JobID:   "local",
+		Version: analyzer.Version,
+		Score:   72,
+		Metrics: analyzer.Metrics{Turns: 12, EstimatedTokens: 2400},
+		SecurityReceipt: analyzer.SecurityReceipt{
+			RawTranscriptSentToLLM: false,
+			OutboundDuringAnalysis: false,
+			SecretsRedacted:        2,
+			RawLogTTL:              "not uploaded",
+		},
+		AggregateEvent: analyzer.AggregateSafeEvent{Event: "analysis_completed", ParserType: "jsonl"},
+	}
+	body, err := json.Marshal(report)
+	if err != nil {
+		t.Fatal(err)
+	}
+	req := httptest.NewRequest(http.MethodPost, "/api/client-reports", bytes.NewReader(body))
+	req.Host = "example.test"
+	rec := httptest.NewRecorder()
+
+	createClientReportHandler(store, 15*time.Minute).ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusCreated {
+		t.Fatalf("expected client report status 201, got %d: %s", rec.Code, rec.Body.String())
+	}
+	var session analysisSessionResponse
+	if err := json.Unmarshal(rec.Body.Bytes(), &session); err != nil {
+		t.Fatalf("response is not valid session JSON: %v", err)
+	}
+	if session.Token != "" || session.UploadPath != "" || !strings.Contains(session.ReportURL, "/r/") {
+		t.Fatalf("expected report-only response, got %#v", session)
+	}
+	stored, err := store.GetReport(session.JobID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if stored.JobID != session.JobID || stored.SecurityReceipt.RawLogTTL != "not uploaded" {
+		t.Fatalf("stored report mismatch: %#v", stored)
+	}
+	job, err := store.GetJob(session.JobID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if job.Status != app.StatusCompleted || job.UploadPath != "" || job.UploadTokenHash != "" {
+		t.Fatalf("expected completed report-only job, got %#v", job)
+	}
+}
+
+func TestClientReportUploadRejectsUnsafeReceipt(t *testing.T) {
+	store, err := localstore.New(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	report := analyzer.Report{
+		Version: analyzer.Version,
+		Metrics: analyzer.Metrics{Turns: 1},
+		SecurityReceipt: analyzer.SecurityReceipt{
+			RawTranscriptSentToLLM: true,
+		},
+	}
+	body, err := json.Marshal(report)
+	if err != nil {
+		t.Fatal(err)
+	}
+	req := httptest.NewRequest(http.MethodPost, "/api/client-reports", bytes.NewReader(body))
+	rec := httptest.NewRecorder()
+
+	createClientReportHandler(store, 15*time.Minute).ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected unsafe report status 400, got %d: %s", rec.Code, rec.Body.String())
+	}
+}
+
 func TestPaidBundleUploadRequiresPaidTokenAndLimit(t *testing.T) {
 	store, err := localstore.New(t.TempDir())
 	if err != nil {

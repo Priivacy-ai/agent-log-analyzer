@@ -12,7 +12,7 @@
       <section class="hero" id="onboarding">
         <p class="eyebrow">deterministic profiler</p>
         <h1>Find out what's wasting your Claude Code tokens.</h1>
-        <p class="subhead">Paste one prompt into Claude Code. Get a deterministic performance audit.</p>
+        <p class="subhead">Analyze one session locally. Upload only the sanitized report.</p>
         <ul class="proof">
           <li>Detect context bloat</li>
           <li>Find retry loops and wasted reads</li>
@@ -20,13 +20,14 @@
         </ul>
         <ul class="trust">
           <li>No account required</li>
-          <li>Logs auto-delete after 15 minutes</li>
+          <li>Raw logs never leave your machine</li>
           <li>Never used for training</li>
-          <li>Secrets redacted automatically</li>
+          <li>Secrets redacted before upload</li>
         </ul>
+        <p class="trust-links"><a href="/security/">Security</a> <a href="/privacy/">Privacy</a></p>
 
         <section class="panel" id="launch-panel">
-          <button id="generate-session" type="button">Generate Claude Prompt</button>
+          <button id="generate-session" type="button">Generate Local Commands</button>
         </section>
 
         <section class="panel command-panel" id="session-panel" hidden>
@@ -34,18 +35,18 @@
           <div class="panel-heading">
             <div>
               <p class="eyebrow">step 1</p>
-              <h2>Paste this into Claude Code</h2>
+              <h2>Analyze locally</h2>
             </div>
-            <button id="copy-prompt" type="button">Copy Prompt</button>
+            <button id="copy-prompt" type="button">Copy Analyze Command</button>
           </div>
           <pre id="claude-prompt"></pre>
 
           <div class="panel-heading">
             <div>
               <p class="eyebrow">step 2</p>
-              <h2>Transparent curl protocol</h2>
+              <h2>Review, then upload sanitized JSON</h2>
             </div>
-            <button id="copy-command" type="button">Copy Command</button>
+            <button id="copy-command" type="button">Copy Upload Command</button>
           </div>
           <pre id="curl-command"></pre>
         </section>
@@ -84,7 +85,7 @@
         <div class="upsell">
           <h2>Install the optimization pack generated from this analysis</h2>
           <p>Unlock a waiver-gated paid scan across your 100 most recent Claude Code logs, then install a generated optimization pack with vetted context, retrieval, telemetry, and CLAUDE.md recommendations.</p>
-          <p>The paid scan uses a separate token and uploads the 100 most recent Claude Code session logs for deeper calibration.</p>
+          <p>The paid scan will use the same local-first model: analyze the 100 most recent Claude Code sessions locally, review the sanitized aggregate, then upload only the generated report JSON.</p>
           <label class="waiver">
             <input id="waiver-accepted" type="checkbox" />
             I understand that Claude Analyzer provides deterministic analysis and vetted setup recommendations, but any installation or code change is executed by Claude Code, my package manager, or third-party tools with my approval and at my own risk.
