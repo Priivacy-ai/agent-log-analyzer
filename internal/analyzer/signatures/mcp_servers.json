@@ -1,0 +1,27 @@
+[
+  {"id":"browser","patterns":["mcp__browser__","(?i)\\bmcp.*browser\\b"]},
+  {"id":"brave_search","patterns":["mcp__brave[_-]?search__","(?i)\\bmcp.*brave"]},
+  {"id":"context7","patterns":["mcp__context7__","(?i)\\bcontext7\\b"]},
+  {"id":"docker","patterns":["mcp__docker__","(?i)\\bmcp.*docker\\b"]},
+  {"id":"fetch","patterns":["mcp__fetch__","(?i)\\bmcp.*fetch\\b"]},
+  {"id":"figma","patterns":["mcp__figma__","(?i)\\bmcp.*figma\\b"]},
+  {"id":"filesystem","patterns":["mcp__filesystem__","(?i)\\bmcp.*filesystem\\b"]},
+  {"id":"git","patterns":["mcp__git__","(?i)\\bmcp.*git\\b"]},
+  {"id":"github","patterns":["mcp__github__","(?i)\\bmcp.*github\\b"]},
+  {"id":"gitlab","patterns":["mcp__gitlab__","(?i)\\bmcp.*gitlab\\b"]},
+  {"id":"gmail","patterns":["mcp__gmail__","(?i)\\bmcp.*gmail\\b"]},
+  {"id":"google_drive","patterns":["mcp__google[_-]?drive__","(?i)\\bmcp.*google drive\\b"]},
+  {"id":"jira","patterns":["mcp__jira__","(?i)\\bmcp.*jira\\b"]},
+  {"id":"kubernetes","patterns":["mcp__kubernetes__","mcp__k8s__","(?i)\\bmcp.*kubernetes\\b"]},
+  {"id":"linear","patterns":["mcp__linear__","(?i)\\bmcp.*linear\\b"]},
+  {"id":"memory","patterns":["mcp__memory__","(?i)\\bmcp.*memory\\b"]},
+  {"id":"notion","patterns":["mcp__notion__","(?i)\\bmcp.*notion\\b"]},
+  {"id":"playwright","patterns":["mcp__playwright__","(?i)\\bmcp.*playwright\\b"]},
+  {"id":"postgres","patterns":["mcp__postgres__","mcp__postgresql__","(?i)\\bmcp.*postgres\\b"]},
+  {"id":"puppeteer","patterns":["mcp__puppeteer__","(?i)\\bmcp.*puppeteer\\b"]},
+  {"id":"sentry","patterns":["mcp__sentry__","(?i)\\bmcp.*sentry\\b"]},
+  {"id":"sequential_thinking","patterns":["mcp__sequential[_-]?thinking__","(?i)\\bsequential thinking\\b"]},
+  {"id":"slack","patterns":["mcp__slack__","(?i)\\bmcp.*slack\\b"]},
+  {"id":"supabase","patterns":["mcp__supabase__","(?i)\\bmcp.*supabase\\b"]}
+]
+

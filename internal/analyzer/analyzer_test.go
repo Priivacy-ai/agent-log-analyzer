@@ -59,6 +59,51 @@ func TestUnknownNamesAreCountsOnly(t *testing.T) {
 	}
 }
 
+func TestEcosystemRegistryDetectsKnownPublicTools(t *testing.T) {
+	input := []byte(strings.Join([]string{
+		`{"type":"user","message":"Claude Code, Cursor, OpenCode, BMAD, OpenSpec, Spec Kit, Spec Kitty, ccusage"}`,
+		`{"type":"tool","name":"mcp__context7__resolve-library-id","message":"mcp__playwright__browser_navigate mcp__sentry__find_issues mcp__google-drive__search"}`,
+		`{"type":"assistant","message":"Using @notion plugin, @github plugin, /plan-eng-review, /gstack-qa, pnpm-lock.yaml, uv.lock"}`,
+	}, "\n"))
+	report, err := Analyze("job-test", input)
+	if err != nil {
+		t.Fatalf("Analyze returned error: %v", err)
+	}
+	for _, want := range []string{"claude_code", "cursor", "opencode"} {
+		if !contains(report.Ecosystem.CodingAgents, want) {
+			t.Fatalf("expected coding agent %s in %#v", want, report.Ecosystem.CodingAgents)
+		}
+	}
+	for _, want := range []string{"bmad", "openspec", "spec_kit", "spec_kitty", "ccusage"} {
+		if !contains(report.Ecosystem.WorkflowFrameworks, want) {
+			t.Fatalf("expected framework %s in %#v", want, report.Ecosystem.WorkflowFrameworks)
+		}
+	}
+	for _, want := range []string{"context7", "playwright", "sentry", "google_drive"} {
+		if !contains(report.Ecosystem.MCPServersKnown, want) {
+			t.Fatalf("expected MCP %s in %#v", want, report.Ecosystem.MCPServersKnown)
+		}
+	}
+	for _, want := range []string{"github", "notion"} {
+		if !contains(report.Ecosystem.KnownPlugins, want) {
+			t.Fatalf("expected plugin %s in %#v", want, report.Ecosystem.KnownPlugins)
+		}
+	}
+	for _, want := range []string{"plan_eng_review", "qa"} {
+		if !contains(report.Ecosystem.KnownSkills, want) {
+			t.Fatalf("expected skill %s in %#v", want, report.Ecosystem.KnownSkills)
+		}
+	}
+	for _, want := range []string{"pnpm", "uv"} {
+		if !contains(report.Ecosystem.PackageManagers, want) {
+			t.Fatalf("expected package manager %s in %#v", want, report.Ecosystem.PackageManagers)
+		}
+	}
+	if report.Ecosystem.UnknownMCPServerCount != 0 {
+		t.Fatalf("expected known MCPs not to count as unknown: %#v", report.Ecosystem)
+	}
+}
+
 func TestScrubberCoversCommonSecretFamilies(t *testing.T) {
 	input := []byte(strings.Join([]string{
 		`github=ghp_123456789012345678901234567890123456`,

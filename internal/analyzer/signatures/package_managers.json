@@ -1,0 +1,13 @@
+[
+  {"id":"bun","patterns":["\\bbun\\b","bun\\.lockb?"]},
+  {"id":"cargo","patterns":["\\bcargo\\b","Cargo\\.toml"]},
+  {"id":"composer","patterns":["\\bcomposer\\b","composer\\.json"]},
+  {"id":"go","patterns":["\\bgo test\\b","go\\.mod"]},
+  {"id":"npm","patterns":["\\bnpm\\b","package-lock\\.json"]},
+  {"id":"pip","patterns":["\\bpip\\b","requirements\\.txt"]},
+  {"id":"pnpm","patterns":["\\bpnpm\\b","pnpm-lock\\.yaml"]},
+  {"id":"poetry","patterns":["\\bpoetry\\b","poetry\\.lock"]},
+  {"id":"uv","patterns":["\\buv\\b","uv\\.lock"]},
+  {"id":"yarn","patterns":["\\byarn\\b","yarn\\.lock"]}
+]
+

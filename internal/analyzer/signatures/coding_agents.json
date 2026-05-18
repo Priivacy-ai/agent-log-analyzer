@@ -1,0 +1,14 @@
+[
+  {"id":"aider","patterns":["(?i)\\baider\\b"]},
+  {"id":"claude_code","patterns":["(?i)\\bClaude Code\\b","(?i)\\.claude/"]},
+  {"id":"cline","patterns":["(?i)\\bcline\\b"]},
+  {"id":"codex","patterns":["(?i)\\bCodex CLI\\b","(?i)codex"]},
+  {"id":"continue","patterns":["(?i)\\bcontinue\\.dev\\b","(?i)\\bContinue\\b"]},
+  {"id":"copilot","patterns":["(?i)\\bGitHub Copilot\\b"]},
+  {"id":"cursor","patterns":["(?i)\\bCursor\\b"]},
+  {"id":"gemini_cli","patterns":["(?i)\\bGemini CLI\\b"]},
+  {"id":"opencode","patterns":["(?i)\\bopencode\\b","(?i)\\bOpenCode\\b"]},
+  {"id":"roo","patterns":["(?i)\\bRoo Code\\b","(?i)\\broo\\b"]},
+  {"id":"windsurf","patterns":["(?i)\\bWindsurf\\b"]}
+]
+

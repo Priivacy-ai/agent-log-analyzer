@@ -1,0 +1,14 @@
+[
+  {"id":"agent_sessions","patterns":["(?i)\\bAgent Sessions\\b","(?i)agent-sessions"]},
+  {"id":"aider","patterns":["(?i)\\baider\\b","(?i)\\.aider"]},
+  {"id":"bmad","patterns":["(?i)\\bBMAD\\b","(?i)bmad-method"]},
+  {"id":"ccusage","patterns":["(?i)\\bccusage\\b"]},
+  {"id":"claude_code_hooks","patterns":["(?i)\\.claude/(settings|hooks)","(?i)Claude Code hooks?"]},
+  {"id":"codex_transcript_viewer","patterns":["(?i)codex-transcript-viewer"]},
+  {"id":"context_engineering","patterns":["(?i)context engineering","(?i)context-engineering"]},
+  {"id":"openspec","patterns":["(?i)\\bOpenSpec\\b","(?i)\\bopenspec\\b"]},
+  {"id":"spec_kit","patterns":["(?i)\\bSpec Kit\\b","(?i)\\bspec-kit\\b"]},
+  {"id":"spec_kitty","patterns":["(?i)\\bSpec Kitty\\b","(?i)\\bspec-kitty\\b","(?i)\\.spec-kitty"]},
+  {"id":"superpowers","patterns":["(?i)\\bsuperpowers\\b","(?i)obra/superpowers"]}
+]
+

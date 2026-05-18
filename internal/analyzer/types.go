@@ -49,6 +49,7 @@ type FindingEvidence struct {
 
 type Ecosystem struct {
 	Client                string   `json:"client"`
+	CodingAgents          []string `json:"coding_agents"`
 	OperatingSystem       string   `json:"operating_system"`
 	Shell                 string   `json:"shell"`
 	WorkflowFrameworks    []string `json:"workflow_frameworks"`

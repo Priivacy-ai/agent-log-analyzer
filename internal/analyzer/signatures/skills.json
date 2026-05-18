@@ -1,0 +1,12 @@
+[
+  {"id":"benchmark","patterns":["(?i)(^|\\s)/(benchmark|gstack-benchmark)\\b"]},
+  {"id":"design_review","patterns":["(?i)(^|\\s)/(design-review|gstack-design-review)\\b"]},
+  {"id":"investigate","patterns":["(?i)(^|\\s)/(investigate|gstack-investigate)\\b"]},
+  {"id":"plan_ceo_review","patterns":["(?i)(^|\\s)/(plan-ceo-review|gstack-plan-ceo-review)\\b"]},
+  {"id":"plan_eng_review","patterns":["(?i)(^|\\s)/(plan-eng-review|gstack-plan-eng-review)\\b"]},
+  {"id":"qa","patterns":["(?i)(^|\\s)/(qa|gstack-qa)\\b","(?i)\\bskill.?qa\\b"]},
+  {"id":"review","patterns":["(?i)(^|\\s)/(review|gstack-review)\\b","(?i)\\bskill.?review\\b"]},
+  {"id":"security","patterns":["(?i)(^|\\s)/(security|security-review|cso|gstack-cso)\\b"]},
+  {"id":"ship","patterns":["(?i)(^|\\s)/(ship|gstack-ship)\\b","(?i)\\bskill.?ship\\b"]}
+]
+

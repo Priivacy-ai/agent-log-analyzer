@@ -1,0 +1,13 @@
+[
+  {"id":"browser","patterns":["(?i)\\bplugin.?browser\\b","(?i)@browser"]},
+  {"id":"canva","patterns":["(?i)\\bplugin.?canva\\b","(?i)@canva"]},
+  {"id":"figma","patterns":["(?i)\\bplugin.?figma\\b","(?i)@figma"]},
+  {"id":"github","patterns":["(?i)\\bplugin.?github\\b","(?i)@github"]},
+  {"id":"gmail","patterns":["(?i)\\bplugin.?gmail\\b","(?i)@gmail"]},
+  {"id":"google_calendar","patterns":["(?i)\\bplugin.?google-calendar\\b","(?i)@google-calendar"]},
+  {"id":"google_drive","patterns":["(?i)\\bplugin.?google-drive\\b","(?i)@google-drive"]},
+  {"id":"linear","patterns":["(?i)\\bplugin.?linear\\b","(?i)@linear"]},
+  {"id":"notion","patterns":["(?i)\\bplugin.?notion\\b","(?i)@notion"]},
+  {"id":"slack","patterns":["(?i)\\bplugin.?slack\\b","(?i)@slack"]}
+]
+
