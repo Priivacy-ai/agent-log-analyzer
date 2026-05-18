@@ -27,3 +27,13 @@ output "job_table" {
   description = "DynamoDB job table name."
   value       = aws_dynamodb_table.jobs.name
 }
+
+output "cloudwatch_dashboard_name" {
+  description = "Launch operations dashboard."
+  value       = aws_cloudwatch_dashboard.launch.dashboard_name
+}
+
+output "waf_web_acl_arn" {
+  description = "Regional WAF web ACL associated with the public ALB."
+  value       = aws_wafv2_web_acl.alb.arn
+}

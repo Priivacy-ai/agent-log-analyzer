@@ -34,7 +34,7 @@ func processOnce(store app.WorkerStore) error {
 	if err != nil || !ok {
 		return err
 	}
-	slog.Info("job claimed", "job_id", job.ID)
+	slog.Info("job claimed")
 	data, err := store.ReadUpload(job.UploadPath)
 	if err != nil {
 		_ = store.FailJob(job, err)
@@ -48,7 +48,17 @@ func processOnce(store app.WorkerStore) error {
 	if err := store.CompleteJob(job, report); err != nil {
 		return err
 	}
-	slog.Info("job completed", "job_id", job.ID, "score_bucket", report.AggregateEvent.ScoreBucket)
+	slog.Info(
+		"job completed",
+		"parser_type", report.AggregateEvent.ParserType,
+		"input_size_bucket", report.AggregateEvent.InputSizeBucket,
+		"turn_bucket", report.AggregateEvent.TurnBucket,
+		"score_bucket", report.AggregateEvent.ScoreBucket,
+		"waste_bucket", report.AggregateEvent.WasteBucket,
+		"findings", report.AggregateEvent.Findings,
+		"redactions", report.AggregateEvent.Redactions,
+		"ecosystem", report.AggregateEvent.Ecosystem,
+	)
 	return nil
 }
 

@@ -159,9 +159,9 @@ Acceptance:
 - [ ] Configure DNS record for the launch domain.
 - [ ] Put CloudFront in front of the ALB.
 - [ ] Add WAF protections:
-  - [ ] Managed common rule set.
-  - [ ] Rate-based rule for upload/job endpoints.
-  - [ ] Body size limits aligned with app max upload size.
+  - [x] Managed common rule set.
+  - [x] Rate-based rule for upload/job endpoints.
+  - [x] Body size limits aligned with app max upload size.
   - [ ] Bot-control only if cost is acceptable.
 - [ ] Cache static assets aggressively.
 - [ ] Do not cache job or report JSON unless report URLs are made unguessable and TTL-safe.
@@ -194,27 +194,27 @@ Acceptance:
 
 ## 8. Observability Without Privacy Leakage
 
-- [ ] Add CloudWatch dashboards:
-  - [ ] ALB 5xx/4xx.
-  - [ ] API target response time.
-  - [ ] ECS CPU/memory.
-  - [ ] SQS visible and not-visible depth.
-  - [ ] SQS oldest message age.
-  - [ ] Worker completed/failed counts.
-  - [ ] Sweeper deleted object counts.
-- [ ] Add alarms:
-  - [ ] API 5xx > 0.1%.
-  - [ ] Worker failures > 1%.
-  - [ ] Queue age > target threshold.
-  - [ ] ECS tasks unhealthy.
-  - [ ] Sweeper not running.
+- [x] Add CloudWatch dashboards:
+  - [x] ALB 5xx/4xx.
+  - [x] API target response time.
+  - [x] ECS CPU/memory.
+  - [x] SQS visible and not-visible depth.
+  - [x] SQS oldest message age.
+  - [x] Worker completed/failed counts.
+  - [x] Sweeper deleted object counts.
+- [x] Add alarms:
+  - [x] API 5xx > 0.1%.
+  - [x] Worker failures > 1%.
+  - [x] Queue age > target threshold.
+  - [x] ECS tasks unhealthy.
+  - [x] Sweeper not running.
 - [ ] Add structured aggregate metrics only:
-  - [ ] Score bucket.
-  - [ ] Waste bucket.
-  - [ ] Finding IDs/severities.
-  - [ ] Redaction family counts.
-  - [ ] Public ecosystem IDs.
-  - [ ] Unknown private-name counts only.
+  - [x] Score bucket.
+  - [x] Waste bucket.
+  - [x] Finding IDs/severities.
+  - [x] Redaction family counts.
+  - [x] Public ecosystem IDs.
+  - [x] Unknown private-name counts only.
 - [ ] Confirm logs do not include:
   - [ ] Raw uploads.
   - [ ] Raw report JSON.

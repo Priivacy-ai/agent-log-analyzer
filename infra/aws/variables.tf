@@ -57,3 +57,15 @@ variable "upload_cors_allowed_origins" {
   description = "Origins allowed to submit direct browser uploads to the quarantine bucket."
   default     = ["*"]
 }
+
+variable "alarm_sns_topic_arn" {
+  type        = string
+  description = "Optional SNS topic ARN for CloudWatch alarm notifications. Leave empty to create alarms without actions."
+  default     = ""
+}
+
+variable "waf_rate_limit_per_5m" {
+  type        = number
+  description = "Maximum requests per source IP per five-minute WAF window."
+  default     = 2000
+}

@@ -51,6 +51,14 @@ go run ./cmd/local-log-smoke -limit 10
 
 This command discovers `~/.claude/projects/**/*.jsonl`, analyzes the largest logs locally, and prints only aggregate-safe output: buckets, scores, finding IDs, redaction counts, and known ecosystem IDs. It must not print raw transcript text, raw tool output, file contents, or private unknown tool names.
 
+Cloud direct-upload load smoke:
+
+```bash
+CLAUDE_ANALYZER_URL=http://<alb-dns> go run ./cmd/direct-upload-load -n 10 -concurrency 5
+```
+
+The load command uses fake-secret fixtures by default, exercises signed upload URL creation, S3 PUT upload, finalize, worker processing, and report fetch, then prints p95 timing summaries without job IDs or raw report bodies.
+
 Production acceptance target before launch:
 
 ```text
