@@ -21,7 +21,7 @@ Target launch model:
 ```text
 500k landing/report page views in 24h
 50k analyze clicks
-20k upload-init requests
+20k analysis-session requests
 10k completed uploads
 1k queued analyses at once
 100-300 concurrent worker jobs in production
@@ -30,7 +30,7 @@ Target launch model:
 Local acceptance target for this repo before cloud work:
 
 ```text
-100 sequential uploads through Docker Compose
+100 sequential token/curl uploads through Docker Compose
 25 concurrent uploads through Docker Compose
 0 raw secret leaks in reports
 0 worker crashes
@@ -51,21 +51,20 @@ go run ./cmd/local-log-smoke -limit 10
 
 This command discovers `~/.claude/projects/**/*.jsonl`, analyzes the largest logs locally, and prints only aggregate-safe output: buckets, scores, finding IDs, redaction counts, and known ecosystem IDs. It must not print raw transcript text, raw tool output, file contents, or private unknown tool names.
 
-Cloud direct-upload load smoke:
+Cloud token/curl load smoke:
 
 ```bash
-CLAUDE_ANALYZER_URL=http://<alb-dns> go run ./cmd/direct-upload-load -n 10 -concurrency 5
+CLAUDE_ANALYZER_URL=http://<alb-dns> ./scripts/load-local.sh 25
 ```
 
-The load command uses fake-secret fixtures by default, exercises signed upload URL creation, S3 PUT upload, finalize, worker processing, and report fetch, then prints p95 timing summaries without job IDs or raw report bodies.
-The cloud upload step retries transient network, `429`, and `5xx` failures up to three attempts because browser-to-object-store PUTs can fail independently of the application tier.
+The load command uses fake-secret fixtures by default and exercises analysis-session creation, tokenized curl upload, finalize, worker processing, and tokenized report fetch. It prints only aggregate pass/fail status and checks that raw fake secrets do not leak into reports.
 
 Production acceptance target before launch:
 
 ```text
 static landing p95: <300ms from CDN
 upload-init p95: <250ms
-job creation p95: <300ms
+tokenized upload acceptance p95: <2s for fixture-sized logs
 report shell p95: <500ms from CDN
 normal analysis p95: <3 min
 burst queue wait p95: <20 min
@@ -83,3 +82,4 @@ worker failure rate: <1%
 - repeated tool output
 - worker timeout
 - worker memory pressure
+- paid-scan tar/gzip bundle with 100 JSONL files

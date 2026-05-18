@@ -19,11 +19,12 @@ fi
 
 submit_one() {
   local index="$1"
-  local session job_id token
+  local session job_id token report_path
   session="$(curl -fsS -X POST "$URL/api/analysis-sessions")"
   job_id="$(echo "$session" | sed -n 's/.*"job_id":"\([^"]*\)".*/\1/p')"
   token="$(echo "$session" | sed -n 's/.*"token":"\([^"]*\)".*/\1/p')"
-  if [ -z "$job_id" ] || [ -z "$token" ]; then
+  report_path="$(echo "$session" | sed -n 's/.*"report_path":"\([^"]*\)".*/\1/p')"
+  if [ -z "$job_id" ] || [ -z "$token" ] || [ -z "$report_path" ]; then
     return 1
   fi
   curl -fsS \
@@ -36,7 +37,7 @@ submit_one() {
     -X POST \
     -H "Authorization: Bearer ${token}" \
     "$URL/api/uploads/$job_id/finalize" >/dev/null
-  printf '%s\n' "$job_id" >"$tmpdir/job-$index"
+  printf '%s %s\n' "$job_id" "$report_path" >"$tmpdir/job-$index"
 }
 
 for i in $(seq 1 "$COUNT"); do
@@ -55,7 +56,7 @@ deadline=$((SECONDS + TIMEOUT_SECONDS))
 while [ "$SECONDS" -lt "$deadline" ]; do
   completed=0
   failed=0
-  while read -r job_id; do
+  while read -r job_id report_path; do
     status="$(curl -fsS "$URL/api/jobs/$job_id" | sed -n 's/.*"status":"\([^"]*\)".*/\1/p')"
     case "$status" in
       completed) completed=$((completed + 1)) ;;
@@ -77,8 +78,9 @@ if [ "$completed" -ne "$COUNT" ]; then
   exit 1
 fi
 
-while read -r job_id; do
-  report="$(curl -fsS "$URL/api/reports/$job_id")"
+while read -r job_id report_path; do
+  report_api="$(echo "$report_path" | sed 's#^/r/#/api/public-reports/#')"
+  report="$(curl -fsS "$URL$report_api")"
   echo "$report" | grep -q '"raw_transcript_sent_to_llm":false'
   echo "$report" | grep -q '"spec_kitty"'
   if echo "$report" | grep -q 'sk-ant-'; then

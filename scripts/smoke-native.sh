@@ -26,12 +26,27 @@ for _ in $(seq 1 40); do
   sleep .25
 done
 
-JOB_ID=$(
-  curl -fsS \
-    -F "log=@${FIXTURE}" \
-    http://127.0.0.1:18080/api/jobs |
-    sed -n 's/.*"job_id":"\([^"]*\)".*/\1/p'
-)
+SESSION=$(curl -fsS -X POST http://127.0.0.1:18080/api/analysis-sessions)
+JOB_ID=$(echo "$SESSION" | sed -n 's/.*"job_id":"\([^"]*\)".*/\1/p')
+TOKEN=$(echo "$SESSION" | sed -n 's/.*"token":"\([^"]*\)".*/\1/p')
+REPORT_PATH=$(echo "$SESSION" | sed -n 's/.*"report_path":"\([^"]*\)".*/\1/p')
+
+if [ -z "$JOB_ID" ] || [ -z "$TOKEN" ] || [ -z "$REPORT_PATH" ]; then
+  echo "failed to create analysis session"
+  exit 1
+fi
+
+curl -fsS \
+  -X PUT \
+  -H "Authorization: Bearer ${TOKEN}" \
+  -H "Content-Type: application/x-ndjson" \
+  --data-binary "@${FIXTURE}" \
+  "http://127.0.0.1:18080/api/uploads/${JOB_ID}" >/dev/null
+
+curl -fsS \
+  -X POST \
+  -H "Authorization: Bearer ${TOKEN}" \
+  "http://127.0.0.1:18080/api/uploads/${JOB_ID}/finalize" >/dev/null
 
 for _ in $(seq 1 40); do
   STATUS=$(curl -fsS "http://127.0.0.1:18080/api/jobs/$JOB_ID" | sed -n 's/.*"status":"\([^"]*\)".*/\1/p')
@@ -40,7 +55,8 @@ for _ in $(seq 1 40); do
   sleep .25
 done
 
-REPORT=$(curl -fsS "http://127.0.0.1:18080/api/reports/$JOB_ID")
+REPORT_API=$(echo "$REPORT_PATH" | sed 's#^/r/#/api/public-reports/#')
+REPORT=$(curl -fsS "http://127.0.0.1:18080$REPORT_API")
 echo "$REPORT" | grep -q '"raw_transcript_sent_to_llm":false'
 echo "$REPORT" | grep -q '"spec_kitty"'
 if echo "$REPORT" | grep -q 'sk-ant-'; then

@@ -36,4 +36,5 @@ Production notes:
 - Pass `certificate_arn` to enable the HTTPS listener.
 - Keep `force_destroy_buckets=false` in production.
 - Put CloudFront and WAF in front of the ALB before a public launch.
-- Replace the API-proxied multipart upload with signed direct-to-S3 upload before very large launch traffic.
+- The public upload UX is Claude/prompt/curl only. There is no browser multipart upload form.
+- Scale tokenized upload traffic by isolating the API upload path behind the ALB, keeping workers asynchronous, and autoscaling API tasks independently from workers.

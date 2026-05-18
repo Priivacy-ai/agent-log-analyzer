@@ -19,7 +19,7 @@ create_issue() {
 EPIC_CORE=$(create_issue "Epic: Deterministic analyzer core" "epic" "Build the parser, scrubber, metrics, findings, ecosystem detectors, and report schema. No raw logs may reach reports or aggregate analytics.")
 EPIC_SECURITY=$(create_issue "Epic: Security, retention, and privacy boundary" "epic,security" "Make raw uploads toxic by design: strict TTLs, redaction, logging allowlists, worker isolation, prompt-injection tests, and aggregate-only analytics.")
 EPIC_LOCAL=$(create_issue "Epic: 100% Docker-local runthrough" "epic,local-docker" "Everything must run locally before cloud infrastructure: API, worker, upload, queue simulation, report generation, smoke tests, and load tests.")
-EPIC_SCALE=$(create_issue "Epic: Launch-scale production architecture" "epic" "Prepare CDN/static hosting, signed uploads, object storage, queue, metadata TTL, isolated worker pool, rate limits, and load-shedding.")
+EPIC_SCALE=$(create_issue "Epic: Launch-scale production architecture" "epic" "Prepare CDN/static hosting, tokenized Claude/curl uploads, object storage, queue, metadata TTL, isolated worker pool, rate limits, and load-shedding.")
 EPIC_CI=$(create_issue "Epic: GitHub CI quality gates" "epic,ci" "Use GitHub Actions for formatting, vetting, tests, Docker build, Docker Compose smoke test, and later load/security gates.")
 EPIC_ECO=$(create_issue "Epic: Ecosystem signature research sprint" "epic" "Build the comprehensive known-name and fingerprint registry for Claude Code workflows, MCPs, plugins, skills, OS, shells, package managers, and coding agents.")
 
@@ -35,4 +35,3 @@ create_issue "Build signature research crawler" "subissue" "Parent: $EPIC_ECO\n\
 create_issue "Add privacy tests for ecosystem telemetry" "subissue,security" "Parent: $EPIC_ECO\n\nUnknown MCP/plugin/skill/private command names must never appear in aggregate events by default."
 
 printf 'Created epics:\n%s\n%s\n%s\n%s\n%s\n%s\n' "$EPIC_CORE" "$EPIC_SECURITY" "$EPIC_LOCAL" "$EPIC_SCALE" "$EPIC_CI" "$EPIC_ECO"
-

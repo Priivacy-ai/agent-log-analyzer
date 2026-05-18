@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"net/http"
 	"os"
 	"strconv"
 	"strings"
@@ -25,7 +24,6 @@ import (
 
 type Store struct {
 	s3           *s3.Client
-	presign      *s3.PresignClient
 	sqs          *sqs.Client
 	dynamodb     *dynamodb.Client
 	uploadBucket string
@@ -56,7 +54,6 @@ func NewFromEnv() (*Store, error) {
 			o.UsePathStyle = true
 		}
 	})
-	store.presign = s3.NewPresignClient(store.s3)
 	store.sqs = sqs.NewFromConfig(cfg, func(o *sqs.Options) {
 		if endpoint != "" {
 			o.BaseEndpoint = aws.String(endpoint)
@@ -68,41 +65,6 @@ func NewFromEnv() (*Store, error) {
 		}
 	})
 	return store, nil
-}
-
-func (s *Store) CreateDirectUpload(jobID string, expiresIn time.Duration, maxBytes int64) (app.DirectUpload, error) {
-	now := time.Now().UTC()
-	key := "uploads/" + jobID + ".log"
-	job := app.Job{
-		ID:             jobID,
-		Status:         app.StatusUploading,
-		UploadPath:     "s3://" + s.uploadBucket + "/" + key,
-		MaxUploadBytes: maxBytes,
-		CreatedAt:      now,
-		UpdatedAt:      now,
-	}
-	if err := s.putJob(job); err != nil {
-		return app.DirectUpload{}, err
-	}
-	request, err := s.presign.PresignPutObject(context.Background(), &s3.PutObjectInput{
-		Bucket:      aws.String(s.uploadBucket),
-		Key:         aws.String(key),
-		ContentType: aws.String("application/octet-stream"),
-	}, func(options *s3.PresignOptions) {
-		options.Expires = expiresIn
-	})
-	if err != nil {
-		return app.DirectUpload{}, err
-	}
-	return app.DirectUpload{
-		JobID:        jobID,
-		Method:       request.Method,
-		URL:          request.URL,
-		Headers:      signedHeaders(request.SignedHeader),
-		ExpiresAt:    now.Add(expiresIn),
-		MaxBytes:     maxBytes,
-		FinalizePath: "/api/jobs/" + jobID + "/finalize",
-	}, nil
 }
 
 func (s *Store) CreateUploadSession(job app.Job) error {
@@ -135,42 +97,6 @@ func (s *Store) FinalizeUploadSession(job app.Job) error {
 	}
 	if job.UploadPath == "" {
 		return errors.New("upload missing")
-	}
-	return s.enqueueJob(job)
-}
-
-func (s *Store) FinalizeDirectUpload(jobID string) error {
-	job, err := s.GetJob(jobID)
-	if err != nil {
-		return err
-	}
-	switch job.Status {
-	case app.StatusUploading:
-	case app.StatusPending, app.StatusProcessing, app.StatusCompleted:
-		return nil
-	default:
-		return errors.New("job is not waiting for upload")
-	}
-	bucket, key, err := parseS3Path(job.UploadPath)
-	if err != nil {
-		return err
-	}
-	if bucket != s.uploadBucket {
-		return errors.New("upload bucket mismatch")
-	}
-	head, err := s.s3.HeadObject(context.Background(), &s3.HeadObjectInput{
-		Bucket: aws.String(bucket),
-		Key:    aws.String(key),
-	})
-	if err != nil {
-		return err
-	}
-	if job.MaxUploadBytes > 0 && head.ContentLength != nil && *head.ContentLength > job.MaxUploadBytes {
-		_, _ = s.s3.DeleteObject(context.Background(), &s3.DeleteObjectInput{
-			Bucket: aws.String(bucket),
-			Key:    aws.String(key),
-		})
-		return errors.New("upload exceeds maximum size")
 	}
 	return s.enqueueJob(job)
 }
@@ -410,16 +336,6 @@ func (s *Store) sweepS3Prefix(ctx context.Context, bucket, prefix string, now ti
 		}
 	}
 	return deleted, nil
-}
-
-func signedHeaders(headers http.Header) map[string]string {
-	out := map[string]string{}
-	for key, values := range headers {
-		if len(values) > 0 {
-			out[key] = values[0]
-		}
-	}
-	return out
 }
 
 func (s *Store) putJob(job app.Job) error {

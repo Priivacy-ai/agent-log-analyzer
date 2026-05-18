@@ -235,18 +235,6 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "reports" {
   }
 }
 
-resource "aws_s3_bucket_cors_configuration" "uploads" {
-  bucket = aws_s3_bucket.uploads.id
-
-  cors_rule {
-    allowed_headers = ["*"]
-    allowed_methods = ["PUT"]
-    allowed_origins = var.upload_cors_allowed_origins
-    expose_headers  = ["ETag"]
-    max_age_seconds = 300
-  }
-}
-
 resource "aws_s3_bucket_lifecycle_configuration" "uploads" {
   bucket = aws_s3_bucket.uploads.id
 

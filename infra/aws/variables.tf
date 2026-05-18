@@ -52,12 +52,6 @@ variable "force_destroy_buckets" {
   default     = false
 }
 
-variable "upload_cors_allowed_origins" {
-  type        = list(string)
-  description = "Origins allowed to submit direct browser uploads to the quarantine bucket."
-  default     = ["*"]
-}
-
 variable "alarm_sns_topic_arn" {
   type        = string
   description = "Optional SNS topic ARN for CloudWatch alarm notifications. Leave empty to create alarms without actions."

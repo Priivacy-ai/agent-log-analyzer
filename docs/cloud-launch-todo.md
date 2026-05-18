@@ -172,25 +172,23 @@ Acceptance:
 - [ ] Static UI is CDN-backed.
 - [ ] API endpoints are reachable and not cached incorrectly.
 
-## 7. Direct-To-S3 Upload Cutover
+## 7. Claude/Curl Upload Path
 
-The current cloud scaffold still accepts multipart uploads through the API. Before serious HN/ProductHunt traffic, replace this with signed direct-to-S3 upload URLs.
+The public upload UX is Claude/prompt/curl only. There is no browser file upload form, no public multipart upload endpoint, and no direct browser-to-S3 upload surface.
 
-- [x] Add API endpoint to create upload job and return short-lived signed S3 PUT URL.
-- [x] Set signed URL expiry to 15 minutes or less.
-- [x] Restrict key prefix to `uploads/<job_id>.log`.
-- [x] Enforce content length and content type constraints where possible.
-- [x] Update frontend upload flow:
-  - [x] Create job.
-  - [x] PUT file directly to S3.
-  - [x] Enqueue analysis only after upload confirmation, or add finalize endpoint.
-- [x] Update LocalStack smoke to cover signed upload flow.
-- [x] Keep existing multipart endpoint disabled or dev-only in production.
+- [x] Add API endpoint to create a one-time analysis session token.
+- [x] Set upload token expiry to 15 minutes or less.
+- [x] Upload one free-scan JSONL log with `PUT /api/uploads/{job_id}` and `Authorization: Bearer <token>`.
+- [x] Enqueue analysis only after `POST /api/uploads/{job_id}/finalize`.
+- [x] Serve reports only through tokenized `/r/{job_id}/{report_token}` URLs.
+- [x] Update LocalStack smoke to cover the token/curl flow.
+- [ ] Add the Stripe-gated paid-session endpoint that issues a separate paid token.
+- [ ] Enforce paid scan limit of 100 most recent Claude Code JSONL logs.
 
 Acceptance:
 
-- [x] Large upload traffic no longer consumes API memory/bandwidth.
-- [ ] API can survive landing-page spikes and upload-init spikes separately.
+- [x] Browser upload and direct-upload routes are not mounted.
+- [ ] API upload tasks autoscale separately enough to survive Product Hunt/HN upload spikes.
 
 ## 8. Observability Without Privacy Leakage
 

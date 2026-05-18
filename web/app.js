@@ -91,6 +91,7 @@ async function pollReport(jobID, token) {
       return;
     }
     renderReport(await reportResponse.json());
+    renderPaidCommandPreview();
     return;
   }
 }
@@ -172,6 +173,34 @@ function findingEvidence(evidence) {
   if (evidence.token_share_pct) parts.push(`token share: ${evidence.token_share_pct}%`);
   if (evidence.top_files && evidence.top_files.length) parts.push(`top files: ${evidence.top_files.join(", ")}`);
   return parts.join(" | ") || "Deterministic evidence recorded.";
+}
+
+function renderPaidCommandPreview() {
+  const target = document.querySelector("#paid-command");
+  if (!target) return;
+  target.textContent = [
+    "# Generated after Stripe unlock with a separate paid token.",
+    "CLAUDE_ANALYZER_SCAN_LIMIT=100",
+    "PAID_TOKEN=\"<paid-upload-token>\"",
+    "PAID_SESSION=\"<paid-session-id>\"",
+    "BUNDLE=\"$(mktemp -t claude-analyzer-logs.XXXXXX.tar.gz)\"",
+    "LIST=\"$(mktemp -t claude-analyzer-logs.XXXXXX.txt)\"",
+    "python3 - <<'PY' > \"$LIST\"",
+    "from pathlib import Path",
+    "home = Path.home()",
+    "logs = sorted(home.glob('.claude/projects/**/*.jsonl'), key=lambda p: p.stat().st_mtime, reverse=True)[:100]",
+    "if not logs:",
+    "    raise SystemExit('No Claude Code JSONL logs found under ~/.claude/projects')",
+    "for path in logs:",
+    "    print(path.relative_to(home))",
+    "PY",
+    "tar -C \"$HOME\" -czf \"$BUNDLE\" -T \"$LIST\"",
+    `curl -fsS -X PUT '${window.location.origin}/api/paid-uploads/$PAID_SESSION?limit=100' \\`,
+    "  -H \"Authorization: Bearer $PAID_TOKEN\" \\",
+    "  -H 'Content-Type: application/gzip' \\",
+    "  -H 'X-Scan-Limit: 100' \\",
+    "  --data-binary \"@$BUNDLE\"",
+  ].join("\n");
 }
 
 function parseReportRoute() {

@@ -5,7 +5,8 @@
 ```text
 raw uploaded logs:
   local MVP: deleted by claude-analyzer-sweeper
-  production: 15 minutes max
+  production free scan: 15 minutes max
+  production paid scan: short paid-scan TTL, stored separately from free uploads
   analytics: never
 
 intermediate parsed transcript:
@@ -83,3 +84,9 @@ Unknown private names are counted, not stored:
 ```
 
 Exact unknown names require explicit opt-in.
+
+## Upload Scope
+
+Free scan uploads exactly one Claude Code JSONL session selected by the generated command.
+
+Paid scan uses a separate post-payment token and uploads at most the 100 most recent Claude Code JSONL sessions. Aggregate analytics from paid scans must still use the same allowlist: known public ecosystem IDs, counts, buckets, timing, parser status, and redaction totals. Raw logs, raw paths, unknown private names, and report JSON are not retained as analytics.

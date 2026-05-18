@@ -43,31 +43,27 @@ func main() {
 		os.Exit(1)
 	}
 
-	mux := http.NewServeMux()
-	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, r *http.Request) {
-		writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
-	})
-	mux.HandleFunc("POST /api/analysis-sessions", createAnalysisSessionHandler(store, maxQueueDepth(), directUploadExpiry()))
-	mux.HandleFunc("PUT /api/uploads/{id}", tokenUploadHandler(store))
-	mux.HandleFunc("POST /api/uploads/{id}/finalize", finalizeTokenUploadHandler(store))
-	mux.HandleFunc("GET /api/public-reports/{id}/{token}", getPublicReportHandler(store))
-	mux.HandleFunc("GET /r/{id}/{token}", reportPageHandler())
-	mux.HandleFunc("POST /api/upload-url", createDirectUploadHandler(store, maxQueueDepth(), directUploadExpiry()))
-	mux.HandleFunc("POST /api/jobs/{id}/finalize", finalizeDirectUploadHandler(store))
-	if multipartUploadsEnabled() {
-		mux.HandleFunc("POST /api/jobs", createJobHandler(store, maxQueueDepth()))
-	} else {
-		mux.HandleFunc("POST /api/jobs", multipartUploadDisabledHandler())
-	}
-	mux.HandleFunc("GET /api/jobs/{id}", getJobHandler(store))
-	mux.HandleFunc("GET /api/reports/{id}", getReportHandler(store))
-	mux.Handle("/", http.FileServer(http.Dir("web")))
-
+	mux := buildMux(store)
 	slog.Info("api listening", "addr", addr)
 	if err := http.ListenAndServe(addr, logRequests(mux)); err != nil {
 		slog.Error("api stopped", "error", err)
 		os.Exit(1)
 	}
+}
+
+func buildMux(store app.APIStore) http.Handler {
+	mux := http.NewServeMux()
+	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, r *http.Request) {
+		writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
+	})
+	mux.HandleFunc("POST /api/analysis-sessions", createAnalysisSessionHandler(store, maxQueueDepth(), uploadTokenTTL()))
+	mux.HandleFunc("PUT /api/uploads/{id}", tokenUploadHandler(store))
+	mux.HandleFunc("POST /api/uploads/{id}/finalize", finalizeTokenUploadHandler(store))
+	mux.HandleFunc("GET /api/public-reports/{id}/{token}", getPublicReportHandler(store))
+	mux.HandleFunc("GET /r/{id}/{token}", reportPageHandler())
+	mux.HandleFunc("GET /api/jobs/{id}", getJobHandler(store))
+	mux.Handle("/", http.FileServer(http.Dir("web")))
+	return mux
 }
 
 func createAnalysisSessionHandler(store app.APIStore, maxDepth int, expiresIn time.Duration) http.HandlerFunc {
@@ -237,108 +233,6 @@ func reportPageHandler() http.HandlerFunc {
 	}
 }
 
-func createDirectUploadHandler(store app.APIStore, maxDepth int, expiresIn time.Duration) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		directStore, ok := store.(app.DirectUploadStore)
-		if !ok {
-			writeError(w, http.StatusNotImplemented, "direct upload unavailable")
-			return
-		}
-		if maxDepth > 0 {
-			depth, err := store.QueueDepth()
-			if err != nil {
-				writeError(w, http.StatusServiceUnavailable, "analysis queue unavailable")
-				return
-			}
-			if depth >= maxDepth {
-				w.Header().Set("Retry-After", "60")
-				writeJSON(w, http.StatusServiceUnavailable, map[string]any{
-					"error":       "analysis queue is busy",
-					"queue_depth": depth,
-					"retry_after": "60s",
-				})
-				return
-			}
-		}
-		id := app.NewJobID()
-		upload, err := directStore.CreateDirectUpload(id, expiresIn, maxUploadBytes)
-		if err != nil {
-			writeError(w, http.StatusInternalServerError, "could not create upload URL")
-			return
-		}
-		writeJSON(w, http.StatusCreated, upload)
-	}
-}
-
-func finalizeDirectUploadHandler(store app.APIStore) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		directStore, ok := store.(app.DirectUploadStore)
-		if !ok {
-			writeError(w, http.StatusNotImplemented, "direct upload unavailable")
-			return
-		}
-		if err := directStore.FinalizeDirectUpload(r.PathValue("id")); err != nil {
-			writeError(w, http.StatusBadRequest, "could not finalize upload")
-			return
-		}
-		writeJSON(w, http.StatusAccepted, map[string]string{"job_id": r.PathValue("id"), "status": string(app.StatusPending)})
-	}
-}
-
-func createJobHandler(store app.APIStore, maxDepth int) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		if maxDepth > 0 {
-			depth, err := store.QueueDepth()
-			if err != nil {
-				writeError(w, http.StatusServiceUnavailable, "analysis queue unavailable")
-				return
-			}
-			if depth >= maxDepth {
-				w.Header().Set("Retry-After", "60")
-				writeJSON(w, http.StatusServiceUnavailable, map[string]any{
-					"error":       "analysis queue is busy",
-					"queue_depth": depth,
-					"retry_after": "60s",
-				})
-				return
-			}
-		}
-		if err := r.ParseMultipartForm(maxUploadBytes); err != nil {
-			writeError(w, http.StatusBadRequest, "invalid multipart upload")
-			return
-		}
-		file, _, err := r.FormFile("log")
-		if err != nil {
-			writeError(w, http.StatusBadRequest, "missing log file")
-			return
-		}
-		defer file.Close()
-		data, err := analyzer.ReadAllLimited(file, maxUploadBytes)
-		if err != nil {
-			writeError(w, http.StatusRequestEntityTooLarge, "upload too large")
-			return
-		}
-		id := app.NewJobID()
-		uploadPath, err := store.SaveUpload(id, data)
-		if err != nil {
-			writeError(w, http.StatusInternalServerError, "could not store upload")
-			return
-		}
-		job := app.Job{ID: id, UploadPath: uploadPath}
-		if err := store.CreateJob(job); err != nil {
-			writeError(w, http.StatusInternalServerError, "could not create job")
-			return
-		}
-		writeJSON(w, http.StatusAccepted, map[string]string{"job_id": id, "status": string(app.StatusPending)})
-	}
-}
-
-func multipartUploadDisabledHandler() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		writeError(w, http.StatusGone, "multipart upload disabled; use direct upload")
-	}
-}
-
 func getJobHandler(store app.APIStore) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		job, err := store.GetJob(r.PathValue("id"))
@@ -358,21 +252,6 @@ func getJobHandler(store app.APIStore) http.HandlerFunc {
 	}
 }
 
-func getReportHandler(store app.APIStore) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		report, err := store.GetReport(r.PathValue("id"))
-		if errors.Is(err, os.ErrNotExist) {
-			writeError(w, http.StatusNotFound, "report not found")
-			return
-		}
-		if err != nil {
-			writeError(w, http.StatusBadRequest, "invalid report id")
-			return
-		}
-		writeJSON(w, http.StatusOK, report)
-	}
-}
-
 func logRequests(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		slog.Info("request", "method", r.Method, "path", sanitizePath(r.URL.Path))
@@ -389,9 +268,6 @@ func sanitizePath(path string) string {
 	}
 	if strings.HasPrefix(path, "/api/jobs/") {
 		return "/api/jobs/:id"
-	}
-	if strings.HasPrefix(path, "/api/reports/") {
-		return "/api/reports/:id"
 	}
 	if strings.HasPrefix(path, "/r/") {
 		return "/r/:id/:token"
@@ -518,27 +394,14 @@ func getenv(key, fallback string) string {
 	return fallback
 }
 
-func directUploadExpiry() time.Duration {
-	raw := getenv("CLAUDE_ANALYZER_DIRECT_UPLOAD_EXPIRY", "15m")
+func uploadTokenTTL() time.Duration {
+	raw := getenv("CLAUDE_ANALYZER_UPLOAD_TOKEN_TTL", "15m")
 	duration, err := time.ParseDuration(raw)
 	if err != nil || duration <= 0 || duration > 15*time.Minute {
-		slog.Warn("invalid direct upload expiry", "error_category", "configuration")
+		slog.Warn("invalid upload token ttl", "error_category", "configuration")
 		return 15 * time.Minute
 	}
 	return duration
-}
-
-func multipartUploadsEnabled() bool {
-	raw := os.Getenv("CLAUDE_ANALYZER_ENABLE_MULTIPART_UPLOADS")
-	if raw != "" {
-		enabled, err := strconv.ParseBool(raw)
-		if err != nil {
-			slog.Warn("invalid multipart upload flag", "error_category", "configuration")
-			return false
-		}
-		return enabled
-	}
-	return getenv("CLAUDE_ANALYZER_BACKEND", "local") != "aws"
 }
 
 func maxQueueDepth() int {

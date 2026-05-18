@@ -4,13 +4,24 @@ Deterministic performance profiler for AI coding workflows.
 
 This repo starts with a Docker-local, end-to-end implementation:
 
-- upload one Claude/Codex-style log
+- generate a one-time upload token
+- copy a Claude-native prompt or curl command
+- upload one Claude Code JSONL log through the tokenized curl path
 - parse and scrub it deterministically
 - detect waste patterns and ecosystem fingerprints
 - generate an ephemeral report JSON
 - view the report in a static local web UI
 
-The production target is CDN + signed uploads + object storage + queue + isolated workers. Local development intentionally avoids cloud dependencies so the complete flow can be tested before any infrastructure is provisioned.
+The production target is CDN + tokenized curl upload + object storage + queue + isolated workers. Local development intentionally avoids cloud dependencies so the complete flow can be tested before any infrastructure is provisioned.
+
+There is intentionally no browser upload form. Claude Code logs live under `~/.claude`, which is awkward for Finder/browser upload flows and pushes users away from the native Claude Code workflow. The public upload path is:
+
+1. `POST /api/analysis-sessions` creates a one-time token and short-lived report URL.
+2. The user pastes the generated prompt into Claude Code or runs the generated curl command.
+3. The command uploads one latest JSONL log with `PUT /api/uploads/{job_id}` and finalizes it with `POST /api/uploads/{job_id}/finalize`.
+4. The report is opened at `/r/{job_id}/{report_token}` and expires on the retention schedule.
+
+The paid scan will use a separate paid token and a different command parameter set: `CLAUDE_ANALYZER_SCAN_LIMIT=100`, `limit=100`, and `X-Scan-Limit: 100`. That command uploads a tar/gzip bundle of the 100 most recent Claude Code JSONL logs after Stripe unlock.
 
 ## Local Runthrough
 
@@ -18,7 +29,7 @@ The production target is CDN + signed uploads + object storage + queue + isolate
 docker compose up --build
 ```
 
-Open `http://localhost:8080`, upload `testdata/fixtures/sample-claude.jsonl`, and wait for the report.
+Open `http://localhost:8080`, click `Generate Claude Prompt`, and use the generated prompt/curl flow. The smoke scripts exercise the same path with `testdata/fixtures/sample-claude.jsonl`.
 
 Smoke test:
 
