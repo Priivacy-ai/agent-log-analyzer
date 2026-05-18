@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/robertDouglass/claude-log-analyzer/internal/analyzer"
-	"github.com/robertDouglass/claude-log-analyzer/internal/app"
+	"github.com/robertdouglass/claude-log-analyzer/internal/analyzer"
+	"github.com/robertdouglass/claude-log-analyzer/internal/app"
 )
 
 type Store struct {

@@ -16,10 +16,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/robertDouglass/claude-log-analyzer/internal/analyzer"
-	"github.com/robertDouglass/claude-log-analyzer/internal/app"
-	"github.com/robertDouglass/claude-log-analyzer/internal/backend"
-	"github.com/robertDouglass/claude-log-analyzer/internal/remediation"
+	"github.com/robertdouglass/claude-log-analyzer/internal/analyzer"
+	"github.com/robertdouglass/claude-log-analyzer/internal/app"
+	"github.com/robertdouglass/claude-log-analyzer/internal/backend"
+	"github.com/robertdouglass/claude-log-analyzer/internal/remediation"
 )
 
 const maxUploadBytes = 50 * 1024 * 1024

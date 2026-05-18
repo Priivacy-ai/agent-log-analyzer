@@ -14,7 +14,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/robertDouglass/claude-log-analyzer/internal/analyzer"
+	"github.com/robertdouglass/claude-log-analyzer/internal/analyzer"
 )
 
 const defaultBaseURL = "https://claude-code.spec-kitty.ai"

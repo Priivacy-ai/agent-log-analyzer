@@ -15,7 +15,7 @@ The production target is CDN + local deterministic CLI + report-only upload + sh
 
 There is intentionally no browser upload form. Claude Code logs live under `~/.claude`, which is awkward for Finder/browser upload flows. The public launch path is local-first:
 
-1. The user installs the open-source CLI with `go install github.com/robertDouglass/claude-log-analyzer/cmd/claude-analyzer@latest`.
+1. The user installs the open-source CLI with `go install github.com/robertdouglass/claude-log-analyzer/cmd/claude-analyzer@v0.1.0`.
 2. `claude-analyzer analyze --out ./claude-analyzer-report.json` finds the latest Claude Code JSONL log, parses and redacts it locally, and writes a sanitized report.
 3. The user reviews the JSON with `jq . ./claude-analyzer-report.json`.
 4. `claude-analyzer upload ./claude-analyzer-report.json` sends only the sanitized report to `POST /api/client-reports`.

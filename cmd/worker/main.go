@@ -5,10 +5,10 @@ import (
 	"os"
 	"time"
 
-	"github.com/robertDouglass/claude-log-analyzer/internal/analyzer"
-	"github.com/robertDouglass/claude-log-analyzer/internal/app"
-	"github.com/robertDouglass/claude-log-analyzer/internal/backend"
-	"github.com/robertDouglass/claude-log-analyzer/internal/paidscan"
+	"github.com/robertdouglass/claude-log-analyzer/internal/analyzer"
+	"github.com/robertdouglass/claude-log-analyzer/internal/app"
+	"github.com/robertdouglass/claude-log-analyzer/internal/backend"
+	"github.com/robertdouglass/claude-log-analyzer/internal/paidscan"
 )
 
 func main() {

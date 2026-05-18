@@ -9,7 +9,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/robertDouglass/claude-log-analyzer/internal/analyzer"
+	"github.com/robertdouglass/claude-log-analyzer/internal/analyzer"
 )
 
 type candidate struct {

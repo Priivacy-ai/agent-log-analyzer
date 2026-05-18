@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/robertDouglass/claude-log-analyzer/internal/analyzer"
+	"github.com/robertdouglass/claude-log-analyzer/internal/analyzer"
 )
 
 const GeneratorVersion = "0.1.0"

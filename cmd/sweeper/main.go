@@ -5,7 +5,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/robertDouglass/claude-log-analyzer/internal/backend"
+	"github.com/robertdouglass/claude-log-analyzer/internal/backend"
 )
 
 func main() {

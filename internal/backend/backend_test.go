@@ -3,7 +3,7 @@ package backend
 import (
 	"testing"
 
-	"github.com/robertDouglass/claude-log-analyzer/internal/localstore"
+	"github.com/robertdouglass/claude-log-analyzer/internal/localstore"
 )
 
 func TestNewAPIStoreDefaultsToLocal(t *testing.T) {

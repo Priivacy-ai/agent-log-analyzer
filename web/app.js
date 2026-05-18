@@ -66,7 +66,7 @@ async function createSession() {
 function analyzeCommand() {
   return [
     "go install \\",
-    "  github.com/robertDouglass/claude-log-analyzer/cmd/claude-analyzer@latest",
+    "  github.com/robertdouglass/claude-log-analyzer/cmd/claude-analyzer@v0.1.0",
     "claude-analyzer analyze --out ./claude-analyzer-report.json",
   ].join("\n");
 }

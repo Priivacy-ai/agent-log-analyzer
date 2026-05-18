@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/robertDouglass/claude-log-analyzer/internal/app"
-	"github.com/robertDouglass/claude-log-analyzer/internal/awsstore"
-	"github.com/robertDouglass/claude-log-analyzer/internal/localstore"
+	"github.com/robertdouglass/claude-log-analyzer/internal/app"
+	"github.com/robertdouglass/claude-log-analyzer/internal/awsstore"
+	"github.com/robertdouglass/claude-log-analyzer/internal/localstore"
 )
 
 func NewAPIStore() (app.APIStore, error) {

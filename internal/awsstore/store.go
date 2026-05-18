@@ -18,8 +18,8 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
 	sqstypes "github.com/aws/aws-sdk-go-v2/service/sqs/types"
-	"github.com/robertDouglass/claude-log-analyzer/internal/analyzer"
-	"github.com/robertDouglass/claude-log-analyzer/internal/app"
+	"github.com/robertdouglass/claude-log-analyzer/internal/analyzer"
+	"github.com/robertdouglass/claude-log-analyzer/internal/app"
 )
 
 type Store struct {
