@@ -120,3 +120,4 @@ prompt.
 
 - 2026-05-19T06:35:00Z -- system -- Prompt created.
 - 2026-05-19T07:58:45Z – claude:opus-4.7:implementer-ivan:implementer – shell_pid=23806 – Started implementation via action command
+- 2026-05-19T08:04:19Z – claude:opus-4.7:implementer-ivan:implementer – shell_pid=23806 – Kiro + BMAD detectors shipped (verified, second-ring tier). GSD deferred per FR-013: WP04 research marked it research_needed (no canonical upstream repo identified). T028 intentionally left in planned — scope decision (C-001 / A-04) awaiting mission-review. Tests pass: go test ./internal/analyzer/sdd/... green; cross-negative matrix holds across first-class + second-ring registry; generic_only.txt still triggers zero fingerprints. (Note: TestGoldenSampleReport in internal/analyzer was already failing on the WP05 base commit a25a5b2 — pre-existing, unrelated to WP06; sample-report.json is not WP06-owned.)
