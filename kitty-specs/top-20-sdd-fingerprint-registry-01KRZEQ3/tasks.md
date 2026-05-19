@@ -29,11 +29,11 @@
 | T018 | Research and fill: Spec Workflow MCP, SDD Pilot, Spec-Driven Develop, spec2ship, ChatDev, PAUL | WP04 | [D] |
 | T019 | Research and fill: fspec, whenwords, Intent, Cognition/Devin, Microsoft Agent Framework, Tessl, Agentic Code, CodeSpeak | WP04 | [D] |
 | T020 | Add `docs/sdd-fingerprint-registry.md` cross-linking per-tool research files | WP04 | | [D] |
-| T021 | Seed `spec_kitty` entry in `sdd_detectors.json` | WP05 | |
-| T022 | Seed `github_spec_kit` entry | WP05 | |
-| T023 | Seed `openspec` entry | WP05 | |
-| T024 | Add `testdata/fixtures/{spec_kitty,github_spec_kit,openspec,generic_only}.txt` | WP05 | |
-| T025 | Add 3×3 cross-negative + generic-only assertions to `evaluator_test.go` (NFR-004, FR-012) | WP05 | |
+| T021 | Seed `spec_kitty` entry in `sdd_detectors.json` | WP05 | | [D] |
+| T022 | Seed `github_spec_kit` entry | WP05 | | [D] |
+| T023 | Seed `openspec` entry | WP05 | | [D] |
+| T024 | Add `testdata/fixtures/{spec_kitty,github_spec_kit,openspec,generic_only}.txt` | WP05 | | [D] |
+| T025 | Add 3×3 cross-negative + generic-only assertions to `evaluator_test.go` (NFR-004, FR-012) | WP05 | | [D] |
 | T026 | Seed `kiro` entry + fixture | WP06 | [P] |
 | T027 | Seed `bmad` entry + fixture | WP06 | [P] |
 | T028 | Seed `gsd` entry + fixture | WP06 | [P] |
