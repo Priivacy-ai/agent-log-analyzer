@@ -182,3 +182,4 @@ the end with at least the two new bullets.
 - 2026-05-19T09:38:51Z – claude:opus-4-7:curator-carla:curator – shell_pid=47016 – Additive cross-references in matrix + plugin-artifacts docs; new Registry cross-reference and Recommendation embedding sections; See also links updated; no existing content modified
 - 2026-05-19T09:39:06Z – claude:opus-4-7:reviewer-rina:reviewer – shell_pid=47410 – Started review via action command
 - 2026-05-19T09:39:59Z – claude:opus-4-7:reviewer-rina:reviewer – shell_pid=47410 – Review passed: purely additive (28 insertions, 0 deletions) across both owned docs; new Registry cross-reference and Token-saving recommendation embedding sections present with correct registry path, ≤1+≤1 contract, active_high skip note, and bidirectional See also links.
+- 2026-05-19T10:03:10Z – claude:opus-4-7:reviewer-rina:reviewer – shell_pid=47410 – Moved to done
