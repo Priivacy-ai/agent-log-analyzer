@@ -1,0 +1,12 @@
+{
+  "created_at": "2026-05-19T17:01:36.934052+00:00",
+  "friendly_name": "Token-Saving Recommendation Phase B",
+  "mission_id": "01KS0JZ495XV0PCKSVBNDVAY16",
+  "mission_number": null,
+  "mission_slug": "token-saving-recommendation-phase-b-01KS0JZ4",
+  "mission_type": "software-dev",
+  "purpose_context": "Phase A built the deterministic recommendation engine in isolation. Phase B turns that engine into visible product value by deriving signals from real analyzer findings, building a safe tool-state map from detected fingerprints and utilization data, calling the frozen Recommend entry point, surfacing a bounded recommendation object in both the free web report and the paid plugin artifact, and respecting the active-tool dedupe and MCP-bloat-prune-first rules the engine already enforces.",
+  "purpose_tldr": "Wire the deterministic Phase A token-saving recommendation engine into free reports and the paid plugin artifact so users see a bounded, privacy-safe next-best action.",
+  "slug": "token-saving-recommendation-phase-b-01KS0JZ4",
+  "target_branch": "main"
+}
