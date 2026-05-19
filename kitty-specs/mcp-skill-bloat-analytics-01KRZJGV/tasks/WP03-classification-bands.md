@@ -7,7 +7,7 @@ requirement_refs:
 - FR-005
 planning_base_branch: main
 merge_target_branch: main
-branch_strategy: Lane worktree branches from WP01's lane head; runs in parallel with WP02.
+branch_strategy: Planning artifacts for this mission were generated on main. During /spec-kitty.implement this WP may branch from a dependency-specific base, but completed changes must merge back into main unless the human explicitly redirects the landing branch.
 subtasks:
 - T010
 - T011
