@@ -29,12 +29,12 @@ The `[P]` markers indicate concerns that touch different surfaces (separate JS f
 
 #### Included subtasks
 
-- [ ] T001 Add `<section id="workflow-fingerprints">` and `<section id="tooling-utilization">` markup to `web/index.html` (WP01)
-- [ ] T002 Implement `renderWorkflowFingerprints(report)` per contracts/render-workflow-fingerprints.md (WP01)
-- [ ] T003 Implement `renderToolingUtilization(report)` per contracts/render-tooling-utilization.md (WP01)
-- [ ] T004 Wire both renderers into `applyReport(report)` (WP01)
-- [ ] T005 Add scoped CSS for new sections to `web/styles.css` (WP01)
-- [ ] T006 Add `internal/analyzer/view_render_inputs_test.go` hostile-fixture leak test (WP01)
+- [x] T001 Add `<section id="workflow-fingerprints">` and `<section id="tooling-utilization">` markup to `web/index.html` (WP01)
+- [x] T002 Implement `renderWorkflowFingerprints(report)` per contracts/render-workflow-fingerprints.md (WP01)
+- [x] T003 Implement `renderToolingUtilization(report)` per contracts/render-tooling-utilization.md (WP01)
+- [x] T004 Wire both renderers into `applyReport(report)` (WP01)
+- [x] T005 Add scoped CSS for new sections to `web/styles.css` (WP01)
+- [x] T006 Add `internal/analyzer/view_render_inputs_test.go` hostile-fixture leak test (WP01)
 
 #### Implementation sketch
 

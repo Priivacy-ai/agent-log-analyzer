@@ -15,6 +15,9 @@ requirement_refs:
 planning_base_branch: main
 merge_target_branch: main
 branch_strategy: Planning artifacts for this mission were generated on main. During /spec-kitty.implement this WP may branch from a dependency-specific base, but completed changes must merge back into main unless the human explicitly redirects the landing branch.
+base_branch: kitty/mission-report-intelligence-ux-01KS070G
+base_commit: 2d040ad6a77c63b5f884c7b3c1d9ff7b93b0ca34
+created_at: '2026-05-19T14:08:24.761679+00:00'
 subtasks:
 - T001
 - T002
@@ -22,7 +25,8 @@ subtasks:
 - T004
 - T005
 - T006
-agent: claude
+agent: "claude:opus-4-7:reviewer-renata:reviewer"
+shell_pid: "80149"
 history:
 - timestamp: '2026-05-19T13:47:54Z'
   event: drafted
@@ -484,3 +488,10 @@ go test ./internal/analyzer/ -run "TestRenderInputs|TestReportSerializationConta
 ```bash
 spec-kitty agent action implement WP01 --agent claude --mission report-intelligence-ux-01KS070G
 ```
+
+## Activity Log
+
+- 2026-05-19T14:08:25Z – claude:opus-4-7:frontend-freddy:implementer – shell_pid=79012 – Assigned agent via action command
+- 2026-05-19T14:16:04Z – claude:opus-4-7:frontend-freddy:implementer – shell_pid=79012 – Ready for review — all six subtasks complete, go tests pass, four owned files only
+- 2026-05-19T14:16:37Z – claude:opus-4-7:reviewer-renata:reviewer – shell_pid=80149 – Started review via action command
+- 2026-05-19T14:18:59Z – claude:opus-4-7:reviewer-renata:reviewer – shell_pid=80149 – Review passed: all 9 FRs verified by diff + tests. Lane diff strictly within 4 owned files (web/index.html, web/app.js, web/styles.css, internal/analyzer/view_render_inputs_test.go); types.go/analyzer.go/ecosystem.go/leak_test.go untouched. ADVICE_LOOKUP has exactly 4 keys (mcp.severe/high, skill.severe/high) structurally enforcing FR-006. Skill row uses only Skill fields (no MCP-only unique_known_called_ids/unique_unknown_called_count). innerHTML count unchanged (6==6, no new innerHTML in new renderers). Renderers defensive (null/empty -> hidden), use textContent + replaceChildren, idempotent. 4 *_bloat_* IDs present. TestRenderInputs_NoCanaryInRendererJSON covers all 16 leak_test.go canaries + 3 WP01 canaries across Findings/WorkflowFingerprints/ToolingUtilization. TestPruningAdviceRecommendations_BytewiseEqualToConstants byte-matches analyzer.go:381-393. TestBandFindingPairings_DrivenByAnalyze pins INV-6 (exactly-one for severe/high, zero for watch/normal/unknown) end-to-end. gofmt clean, go vet clean, go test ./... green, terraform fmt clean, no new fetch/XHR/model invocations, no package.json/bundler, no next-best-recommendation/paid-pack/Stripe changes.
