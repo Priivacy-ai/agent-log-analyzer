@@ -1,0 +1,32 @@
+{
+  "version": 1,
+  "mission_slug": "report-intelligence-ux-01KS070G",
+  "mission_id": "01KS070GDSG3W56YBCS2C8SHVY",
+  "mission_branch": "kitty/mission-report-intelligence-ux-01KS070G",
+  "target_branch": "main",
+  "lanes": [
+    {
+      "lane_id": "lane-a",
+      "wp_ids": [
+        "WP01"
+      ],
+      "write_scope": [
+        "internal/analyzer/view_render_inputs_test.go",
+        "web/app.js",
+        "web/index.html",
+        "web/styles.css"
+      ],
+      "predicted_surfaces": [
+        "api",
+        "artifact-rendering",
+        "legacy-cleanup",
+        "workspace"
+      ],
+      "depends_on_lanes": [],
+      "parallel_group": 0
+    }
+  ],
+  "computed_at": "2026-05-19T13:52:34.127476+00:00",
+  "computed_from": "dependency_graph+ownership",
+  "planning_artifact_wps": []
+}
