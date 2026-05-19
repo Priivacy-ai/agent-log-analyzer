@@ -148,13 +148,13 @@ None outside WP02 itself. WP02 internal sequence: T006 → T007 → T008 → T01
 
 ### Included subtasks
 
-- [ ] T012 Add merge helpers in `aggregate.go` (WP03)
-- [ ] T013 Extend `mergeEcosystems` to call the three field-level helpers (WP03)
-- [ ] T014 Add `aggregate_test.go` cases for FR-007 / FR-008 + invariants (WP03)
-- [ ] T015 Extend `leak_test.go` privacy canary across merged ecosystem / paid artifact / aggregate event (WP03)
-- [ ] T016 Update `golden_test.go` to assert merged `WorkflowFingerprints` instead of nilling them (WP03)
-- [ ] T017 Add `internal/remediation/artifact_test.go` case proving artifact consumes merged data (WP03)
-- [ ] T018 Add timing test for NFR-005 (100-input merge < 5s) (WP03)
+- [x] T012 Add merge helpers in `aggregate.go` (WP03)
+- [x] T013 Extend `mergeEcosystems` to call the three field-level helpers (WP03)
+- [x] T014 Add `aggregate_test.go` cases for FR-007 / FR-008 + invariants (WP03)
+- [x] T015 Extend `leak_test.go` privacy canary across merged ecosystem / paid artifact / aggregate event (WP03)
+- [x] T016 Update `golden_test.go` to assert merged `WorkflowFingerprints` instead of nilling them (WP03)
+- [x] T017 Add `internal/remediation/artifact_test.go` case proving artifact consumes merged data (WP03)
+- [x] T018 Add timing test for NFR-005 (100-input merge < 5s) (WP03)
 
 ### Implementation sketch
 
