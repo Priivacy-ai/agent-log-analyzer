@@ -150,3 +150,4 @@ prompt.
 - 2026-05-19T08:06:26Z – claude:opus-4.7:implementer-ivan:implementer – shell_pid=24848 – Started implementation via action command
 - 2026-05-19T08:14:23Z – claude:opus-4.7:implementer-ivan:implementer – shell_pid=24848 – 4 verified long-tail detectors shipped; 10 deferred per FR-013. Total registry: 3 first-class + 2 second-ring + 4 long-tail = 9 detectors. C-001 scope decision pending at mission-review.
 - 2026-05-19T08:15:01Z – claude:opus-4.7:reviewer-renata:reviewer – shell_pid=25752 – Started review via action command
+- 2026-05-19T08:16:33Z – claude:opus-4.7:reviewer-renata:reviewer – shell_pid=25752 – Review passed: 4 verified long-tail detectors (spec_workflow_mcp, chatdev, cognition_devin, microsoft_agent_framework); generic-name false-positive risks mitigated via tool-specific anchors; cross-negative matrix vs prior 5 detectors holds; 10 unverified tools properly deferred per FR-013. Scope decision pending at mission-review.
