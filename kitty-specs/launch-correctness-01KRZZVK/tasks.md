@@ -100,12 +100,12 @@ None.
 
 ### Included subtasks
 
-- [ ] T006 Add `byteRange` type and `HeaderRanges` field to `mcpExposure` / `skillExposure` (WP02)
-- [ ] T007 Populate `HeaderRanges` in `detectMCPExposureFromHeaders` and skill exposure detector (WP02)
-- [ ] T008 Add `maskedOffset` helper; apply mask inside `detectMCPCallsFromToolUse` raw-byte rescan (WP02)
-- [ ] T009 Create fixture `internal/analyzer/testdata/tooling/08-header-only-zero-calls.log` (WP02)
-- [ ] T010 Extend `tooling_detect_test.go`: add fixture-08 case + unit test for masking primitive (WP02)
-- [ ] T011 Verify C-006 no-op stability across fixtures 00..06; update golden snapshot for fixture 07 only if header double-counts existed (WP02)
+- [x] T006 Add `byteRange` type and `HeaderRanges` field to `mcpExposure` / `skillExposure` (WP02)
+- [x] T007 Populate `HeaderRanges` in `detectMCPExposureFromHeaders` and skill exposure detector (WP02)
+- [x] T008 Add `maskedOffset` helper; apply mask inside `detectMCPCallsFromToolUse` raw-byte rescan (WP02)
+- [x] T009 Create fixture `internal/analyzer/testdata/tooling/08-header-only-zero-calls.log` (WP02)
+- [x] T010 Extend `tooling_detect_test.go`: add fixture-08 case + unit test for masking primitive (WP02)
+- [x] T011 Verify C-006 no-op stability across fixtures 00..06; update golden snapshot for fixture 07 only if header double-counts existed (WP02)
 
 ### Implementation sketch
 
