@@ -232,3 +232,4 @@ research.md, data-model.md, contracts/.
 - 2026-05-19T09:33:48Z – claude:opus-4-7:curator-carla:curator – shell_pid=44798 – New engine doc covering classes, allowlist policy, state model, recommendation contract, risk/policy, waiver, privacy, Phase B plan
 - 2026-05-19T09:34:24Z – claude:opus-4-7:reviewer-rina:reviewer – shell_pid=45984 – Started review via action command
 - 2026-05-19T09:35:45Z – claude:opus-4-7:reviewer-rina:reviewer – shell_pid=45984 – Review passed: doc covers all FR-022 sections at 392 lines; every enum verbatim against data-model.md; conflict precedence and 8-step rule order correct; cross-refs resolve; no source duplication; no emojis.
+- 2026-05-19T10:03:08Z – claude:opus-4-7:reviewer-rina:reviewer – shell_pid=45984 – Moved to done
