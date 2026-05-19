@@ -8,7 +8,7 @@ requirement_refs:
 - FR-003
 planning_base_branch: main
 merge_target_branch: main
-branch_strategy: Planning base main; the work-branch and lane assignment come from lanes.json after finalize-tasks.
+branch_strategy: Planning artifacts for this mission were generated on main. During /spec-kitty.implement this WP may branch from a dependency-specific base, but completed changes must merge back into main unless the human explicitly redirects the landing branch.
 subtasks:
 - T001
 - T002
@@ -17,7 +17,7 @@ subtasks:
 - T005
 agent: claude
 history:
-- 2026-05-19: created from mission token-saving-recommendation-engine-phase-a-01KRZKCJ
+- '2026-05-19': created from mission token-saving-recommendation-engine-phase-a-01KRZKCJ
 agent_profile: implementer-ivan
 authoritative_surface: internal/analyzer/token_saving_tools
 execution_mode: code_change

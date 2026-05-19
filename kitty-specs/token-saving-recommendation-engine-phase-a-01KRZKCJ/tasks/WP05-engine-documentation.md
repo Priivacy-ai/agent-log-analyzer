@@ -1,12 +1,13 @@
 ---
 work_package_id: WP05
 title: Engine documentation (new doc)
-dependencies: []
+dependencies:
+- WP01
 requirement_refs:
 - FR-022
 planning_base_branch: main
 merge_target_branch: main
-branch_strategy: Planning base main; can run in parallel with WP01 per lanes.json (independent owned_files).
+branch_strategy: Planning artifacts for this mission were generated on main. During /spec-kitty.implement this WP may branch from a dependency-specific base, but completed changes must merge back into main unless the human explicitly redirects the landing branch.
 subtasks:
 - T026
 - T027
@@ -15,7 +16,7 @@ subtasks:
 - T030
 agent: claude
 history:
-- 2026-05-19: created from mission token-saving-recommendation-engine-phase-a-01KRZKCJ
+- '2026-05-19': created from mission token-saving-recommendation-engine-phase-a-01KRZKCJ
 agent_profile: curator-carla
 authoritative_surface: docs/remediation/token-saving-recommendation-engine.md
 execution_mode: planning_artifact

@@ -8,14 +8,14 @@ requirement_refs:
 - FR-021
 planning_base_branch: main
 merge_target_branch: main
-branch_strategy: Planning base main; depends on WP05 for the engine doc target. Lane assignment from lanes.json.
+branch_strategy: Planning artifacts for this mission were generated on main. During /spec-kitty.implement this WP may branch from a dependency-specific base, but completed changes must merge back into main unless the human explicitly redirects the landing branch.
 subtasks:
 - T031
 - T032
 - T033
 agent: claude
 history:
-- 2026-05-19: created from mission token-saving-recommendation-engine-phase-a-01KRZKCJ
+- '2026-05-19': created from mission token-saving-recommendation-engine-phase-a-01KRZKCJ
 agent_profile: curator-carla
 authoritative_surface: docs/remediation/token-saving-tooling-matrix.md
 execution_mode: planning_artifact
