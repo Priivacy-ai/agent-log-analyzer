@@ -13,6 +13,9 @@ requirement_refs:
 planning_base_branch: main
 merge_target_branch: main
 branch_strategy: Planning artifacts for this mission were generated on main. During /spec-kitty.implement this WP may branch from a dependency-specific base, but completed changes must merge back into main unless the human explicitly redirects the landing branch.
+base_branch: kitty/mission-launch-correctness-01KRZZVK
+base_commit: 40cd62a890ea7a542711898032b685237e955e6f
+created_at: '2026-05-19T12:21:33.774696+00:00'
 subtasks:
 - T001
 - T002
@@ -22,6 +25,7 @@ subtasks:
 phase: Phase 1 — Launch Correctness
 assignee: ''
 agent: claude
+shell_pid: '46226'
 history:
 - at: '2026-05-19T11:55:54Z'
   actor: system
