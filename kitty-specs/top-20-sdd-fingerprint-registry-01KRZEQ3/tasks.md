@@ -9,11 +9,11 @@
 
 | ID | Description | WP | Parallel |
 | --- | --- | --- | --- |
-| T001 | Create `internal/analyzer/sdd/detector.go` with typed registry record (`SDDDetector`, `SourceClass`, `Confidence`, `Status`, `Marker`, `ConfidenceRule`, `SourceRef`) | WP01 | |
-| T002 | Create `internal/analyzer/sdd/registry.go` with embed loader and startup validation | WP01 | |
-| T003 | Add `WorkflowFingerprints []EcosystemFingerprint` to `analyzer.Ecosystem` and define `EcosystemFingerprint` type | WP01 | |
-| T004 | Add `detector_test.go` covering loader validation, enum rejection, regex compile failure handling | WP01 | |
-| T005 | `gofmt` + `go test ./...` runs green with empty registry | WP01 | |
+| T001 | Create `internal/analyzer/sdd/detector.go` with typed registry record (`SDDDetector`, `SourceClass`, `Confidence`, `Status`, `Marker`, `ConfidenceRule`, `SourceRef`) | WP01 | | [D] |
+| T002 | Create `internal/analyzer/sdd/registry.go` with embed loader and startup validation | WP01 | | [D] |
+| T003 | Add `WorkflowFingerprints []EcosystemFingerprint` to `analyzer.Ecosystem` and define `EcosystemFingerprint` type | WP01 | | [D] |
+| T004 | Add `detector_test.go` covering loader validation, enum rejection, regex compile failure handling | WP01 | | [D] |
+| T005 | `gofmt` + `go test ./...` runs green with empty registry | WP01 | | [D] |
 | T006 | Create `internal/analyzer/sdd/probe.go` with `CLIProbe` interface, `RealProbe`, `FakeProbe` | WP02 | |
 | T007 | Create `internal/analyzer/sdd/version_bucket.go` with `normalizeVersionBucket` | WP02 | [P] |
 | T008 | Add `probe_test.go` + `version_bucket_test.go` (FakeProbe + one safe RealProbe integration test) | WP02 | |
