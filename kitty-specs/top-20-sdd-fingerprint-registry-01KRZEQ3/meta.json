@@ -8,5 +8,7 @@
   "purpose_context": "Spec-driven development is becoming a crowded ecosystem and users carry growing piles of MCP servers, skills, and CLI tooling. The analyzer needs to know which named tools (Spec Kitty, GitHub Spec Kit, OpenSpec, Kiro, BMAD, GSD, and the long tail) are actually configured without ever exfiltrating private identifiers, paths, or content. This epic seeds a verified detector registry for the top-20 SDD tools so future bloat and adoption analytics rest on deterministic, aggregate-safe evidence rather than guessed names.",
   "purpose_tldr": "Make the analyzer a privacy-safe profiler that deterministically identifies which of the top-20 spec-driven-development tools are present and active in a Claude Code workspace, with zero raw private content leaving the local machine.",
   "slug": "top-20-sdd-fingerprint-registry-01KRZEQ3",
-  "target_branch": "main"
+  "target_branch": "main",
+  "vcs": "git",
+  "vcs_locked_at": "2026-05-19T07:26:07.846097+00:00"
 }
