@@ -346,3 +346,4 @@ spec-kitty agent tasks move-task WP03 --to <status> --note "message"
 
 All WP files live in a flat `tasks/` directory.
 - 2026-05-19T12:30:57Z – claude:opus-4-7:implementer-ivan:implementer – shell_pid=50013 – Started implementation via action command
+- 2026-05-19T12:42:02Z – claude:opus-4-7:implementer-ivan:implementer – shell_pid=50013 – Ready for review. mergeEcosystems extended with sorted-union/max-rank helpers; 6 invariants asserted; privacy canary across merged ecosystem + artifact + aggregate event; T017 proves artifact consumes merged data; NFR-005 timing test green. evidence_count=sum locked per C-007.
