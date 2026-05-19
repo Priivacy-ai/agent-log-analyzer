@@ -148,3 +148,4 @@ prompt.
 
 - 2026-05-19T06:35:00Z -- system -- Prompt created.
 - 2026-05-19T08:06:26Z – claude:opus-4.7:implementer-ivan:implementer – shell_pid=24848 – Started implementation via action command
+- 2026-05-19T08:14:23Z – claude:opus-4.7:implementer-ivan:implementer – shell_pid=24848 – 4 verified long-tail detectors shipped; 10 deferred per FR-013. Total registry: 3 first-class + 2 second-ring + 4 long-tail = 9 detectors. C-001 scope decision pending at mission-review.
