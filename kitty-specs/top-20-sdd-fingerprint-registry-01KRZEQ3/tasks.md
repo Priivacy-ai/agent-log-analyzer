@@ -34,10 +34,10 @@
 | T023 | Seed `openspec` entry | WP05 | | [D] |
 | T024 | Add `testdata/fixtures/{spec_kitty,github_spec_kit,openspec,generic_only}.txt` | WP05 | | [D] |
 | T025 | Add 3×3 cross-negative + generic-only assertions to `evaluator_test.go` (NFR-004, FR-012) | WP05 | | [D] |
-| T026 | Seed `kiro` entry + fixture | WP06 | [P] |
-| T027 | Seed `bmad` entry + fixture | WP06 | [P] |
+| T026 | Seed `kiro` entry + fixture | WP06 | [D] |
+| T027 | Seed `bmad` entry + fixture | WP06 | [D] |
 | T028 | Seed `gsd` entry + fixture | WP06 | [P] |
-| T029 | Extend evaluator tests with positive cases for Kiro/BMAD/GSD; assert no cross-trigger with first-class | WP06 | |
+| T029 | Extend evaluator tests with positive cases for Kiro/BMAD/GSD; assert no cross-trigger with first-class | WP06 | | [D] |
 | T030 | Seed 7 entries + fixtures: Spec Workflow MCP, SDD Pilot, Spec-Driven Develop, spec2ship, ChatDev, PAUL, fspec | WP07 | |
 | T031 | Seed 7 entries + fixtures: whenwords, Intent, Cognition/Devin, Microsoft Agent Framework, Tessl, Agentic Code, CodeSpeak | WP07 | |
 | T032 | Add positive-detection tests for all 14 long-tail tools | WP07 | |
