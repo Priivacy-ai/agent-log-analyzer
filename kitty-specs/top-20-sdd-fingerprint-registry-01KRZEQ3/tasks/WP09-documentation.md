@@ -16,7 +16,8 @@ subtasks:
 - T040
 - T041
 phase: Phase 5 — Docs
-agent: claude
+agent: "claude:opus-4.7:curator-carla:curator"
+shell_pid: "10970"
 history:
 - at: '2026-05-19T06:35:00Z'
   actor: system
@@ -126,3 +127,4 @@ No code tests. The acceptance criterion is "a new maintainer can land a new dete
 ## Activity Log
 
 - 2026-05-19T06:35:00Z -- system -- Prompt created.
+- 2026-05-19T07:37:44Z – claude:opus-4.7:curator-carla:curator – shell_pid=10970 – Started implementation via action command
