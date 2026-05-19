@@ -15,6 +15,9 @@ requirement_refs:
 planning_base_branch: main
 merge_target_branch: main
 branch_strategy: Planning artifacts for this mission were generated on main. During /spec-kitty.implement this WP may branch from a dependency-specific base, but completed changes must merge back into main unless the human explicitly redirects the landing branch.
+base_branch: kitty/mission-report-intelligence-ux-01KS070G
+base_commit: 2d040ad6a77c63b5f884c7b3c1d9ff7b93b0ca34
+created_at: '2026-05-19T14:08:24.761679+00:00'
 subtasks:
 - T001
 - T002
@@ -23,6 +26,7 @@ subtasks:
 - T005
 - T006
 agent: claude
+shell_pid: '79012'
 history:
 - timestamp: '2026-05-19T13:47:54Z'
   event: drafted
