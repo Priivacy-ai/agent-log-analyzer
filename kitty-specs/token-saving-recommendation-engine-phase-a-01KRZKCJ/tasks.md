@@ -132,13 +132,13 @@ small public lookup API and a test that locks the registry's invariants.
 
 **Included subtasks**
 
-- [ ] T012 Create `internal/analyzer/token_saving_recommendations.go` with `package analyzer` and the file header comment. (WP03)
-- [ ] T013 Encode the fixed 8-step rule precedence list (research.md §3) as a package-level `var rulePrecedence = []ruleSpec{…}` slice. (WP03)
-- [ ] T014 Implement `signalsForRule` lookup and a helper that returns the firing rules for a given input signal set, in precedence order. (WP03)
-- [ ] T015 Implement candidate selection: filter registry by `RecommendationClass`, sort by `ClassRank`, exclude `research_only` / `reference_only` entries from default emission, return the first eligible tool plus a fallback chain. (WP03)
-- [ ] T016 Implement the per-rule state machine: for the selected candidate, produce `(Reason, SkipNote?)` for each `ToolState` branch per FR-009 … FR-015. (WP03)
-- [ ] T017 Implement secondary-tool selection: scan the remaining firing rules, skip any whose class matches the primary's class, repeat candidate selection. Enforce the ≤ 1 primary + ≤ 1 secondary invariant. (WP03)
-- [ ] T018 Implement the `Recommend` entry point: dedupe and sort signals, validate against the registered `Signal` enum (unknown signals counted into `UnknownIDCount`), run conflict resolution per tool, drive the rule loop, assemble `RecommendationSet{Primary, Secondary, Skipped, …}` with sorted slice fields. (WP03)
+- [x] T012 Create `internal/analyzer/token_saving_recommendations.go` with `package analyzer` and the file header comment. (WP03)
+- [x] T013 Encode the fixed 8-step rule precedence list (research.md §3) as a package-level `var rulePrecedence = []ruleSpec{…}` slice. (WP03)
+- [x] T014 Implement `signalsForRule` lookup and a helper that returns the firing rules for a given input signal set, in precedence order. (WP03)
+- [x] T015 Implement candidate selection: filter registry by `RecommendationClass`, sort by `ClassRank`, exclude `research_only` / `reference_only` entries from default emission, return the first eligible tool plus a fallback chain. (WP03)
+- [x] T016 Implement the per-rule state machine: for the selected candidate, produce `(Reason, SkipNote?)` for each `ToolState` branch per FR-009 … FR-015. (WP03)
+- [x] T017 Implement secondary-tool selection: scan the remaining firing rules, skip any whose class matches the primary's class, repeat candidate selection. Enforce the ≤ 1 primary + ≤ 1 secondary invariant. (WP03)
+- [x] T018 Implement the `Recommend` entry point: dedupe and sort signals, validate against the registered `Signal` enum (unknown signals counted into `UnknownIDCount`), run conflict resolution per tool, drive the rule loop, assemble `RecommendationSet{Primary, Secondary, Skipped, …}` with sorted slice fields. (WP03)
 
 **Implementation sketch**: a small typed state machine driven by a static rule table. All map iteration goes through the deterministic helpers from WP02.
 
