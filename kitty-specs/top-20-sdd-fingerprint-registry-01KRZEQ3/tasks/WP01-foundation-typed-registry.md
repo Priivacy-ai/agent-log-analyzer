@@ -248,3 +248,4 @@ Tests are required: see T004 above. No table-driven testing convention is enforc
 
 - 2026-05-19T06:35:00Z -- system -- Prompt created.
 - 2026-05-19T07:26:09Z – claude:opus-4.7:implementer-ivan:implementer – shell_pid=1018 – Assigned agent via action command
+- 2026-05-19T07:29:56Z – claude:opus-4.7:implementer-ivan:implementer – shell_pid=1018 – Foundation types, loader, EcosystemFingerprint, glob across sdd_detectors*.json
