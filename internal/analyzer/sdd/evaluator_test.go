@@ -250,3 +250,49 @@ func TestEvaluateActiveRequiresRuntimeTouch(t *testing.T) {
 		t.Errorf("Active: want false (no runtime-touch source), got true")
 	}
 }
+
+// TestEvaluateSlashHitsFallback exercises the slashHits fallback path:
+// a slash_command marker that does NOT appear in the raw text but DOES
+// appear in the caller-extracted slashHits slice must still fire. This
+// is the RISK-3 regression — earlier versions of Evaluate discarded
+// slashHits entirely, so the marker silently never matched.
+func TestEvaluateSlashHitsFallback(t *testing.T) {
+	registry := mustBuildDetectors(t, `[{
+        "id": "tool_slash",
+        "display_name": "Tool Slash",
+        "category": "spec_driven_workflow",
+        "competitor_priority": 1,
+        "status": "verified",
+        "source_references": [{"kind":"docs","url":"https://x"}],
+        "markers": [
+            {"source_class":"slash_command","pattern":"(?i)/tool-slash\\.do"}
+        ],
+        "confidence_rules": [
+            {"confidence":"medium","requires_any_of":["slash_command"]}
+        ]
+    }]`)
+
+	// Raw transcript text does NOT contain the slash invocation. A
+	// normalizing parser stripped it out and surfaced the token via
+	// slashHits instead.
+	const text = "unrelated transcript prose with no slash invocation"
+	slashHits := []string{"/tool-slash.do"}
+
+	got := Evaluate(context.Background(), text, slashHits, FakeProbe{}, registry)
+	if len(got) != 1 {
+		t.Fatalf("expected 1 fingerprint via slashHits fallback, got %d: %+v", len(got), got)
+	}
+	fp := got[0]
+	if fp.ID != "tool_slash" {
+		t.Errorf("ID: want tool_slash, got %q", fp.ID)
+	}
+	if fp.Confidence != "medium" {
+		t.Errorf("Confidence: want medium, got %q", fp.Confidence)
+	}
+
+	// Sanity check: without slashHits, the same input must NOT fire.
+	got = Evaluate(context.Background(), text, nil, FakeProbe{}, registry)
+	if len(got) != 0 {
+		t.Fatalf("expected 0 fingerprints when slashHits is nil, got %d: %+v", len(got), got)
+	}
+}
