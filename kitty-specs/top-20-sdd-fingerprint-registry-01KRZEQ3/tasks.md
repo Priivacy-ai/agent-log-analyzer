@@ -38,10 +38,10 @@
 | T027 | Seed `bmad` entry + fixture | WP06 | [D] |
 | T028 | Seed `gsd` entry + fixture | WP06 | [P] |
 | T029 | Extend evaluator tests with positive cases for Kiro/BMAD/GSD; assert no cross-trigger with first-class | WP06 | | [D] |
-| T030 | Seed 7 entries + fixtures: Spec Workflow MCP, SDD Pilot, Spec-Driven Develop, spec2ship, ChatDev, PAUL, fspec | WP07 | |
-| T031 | Seed 7 entries + fixtures: whenwords, Intent, Cognition/Devin, Microsoft Agent Framework, Tessl, Agentic Code, CodeSpeak | WP07 | |
-| T032 | Add positive-detection tests for all 14 long-tail tools | WP07 | |
-| T033 | Cross-negative assertions: no long-tail tool triggers a first-class or second-ring detector | WP07 | |
+| T030 | Seed 7 entries + fixtures: Spec Workflow MCP, SDD Pilot, Spec-Driven Develop, spec2ship, ChatDev, PAUL, fspec | WP07 | | [D] |
+| T031 | Seed 7 entries + fixtures: whenwords, Intent, Cognition/Devin, Microsoft Agent Framework, Tessl, Agentic Code, CodeSpeak | WP07 | | [D] |
+| T032 | Add positive-detection tests for all 14 long-tail tools | WP07 | | [D] |
+| T033 | Cross-negative assertions: no long-tail tool triggers a first-class or second-ring detector | WP07 | | [D] |
 | T034 | Add `internal/analyzer/sdd/leak_test.go` with 16-category canary fixture | WP08 | |
 | T035 | Extend `internal/analyzer/analyzer_test.go` for end-to-end unknown-count + fingerprint privacy | WP08 | |
 | T036 | Structural test: `Ecosystem.WorkflowFingerprints` sorted, deduplicated, bounded keys (NFR-003) | WP08 | |
