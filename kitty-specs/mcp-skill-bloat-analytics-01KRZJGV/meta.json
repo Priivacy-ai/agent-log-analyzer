@@ -1,0 +1,12 @@
+{
+  "created_at": "2026-05-19T07:34:34.756916+00:00",
+  "friendly_name": "MCP and Skill Bloat Analytics",
+  "mission_id": "01KRZJGVG3MCCCY9MKB1YRDBQR",
+  "mission_number": null,
+  "mission_slug": "mcp-skill-bloat-analytics-01KRZJGV",
+  "mission_type": "software-dev",
+  "purpose_context": "Some Claude Code users expose many MCPs and skills but execute few of them, creating hidden context overhead, slower tool choice, and noisy sessions. This mission adds inventory counts, utilization ratios, footprint and context buckets, deterministic warning bands, and remediation wording to the analyzer report without ever uploading private MCP/skill names, schemas, or skill text.",
+  "purpose_tldr": "Quantify whether exposed MCPs and skills are actually used, with deterministic warnings and privacy-safe aggregates.",
+  "slug": "mcp-skill-bloat-analytics-01KRZJGV",
+  "target_branch": "main"
+}
