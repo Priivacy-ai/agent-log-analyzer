@@ -15,7 +15,8 @@ subtasks:
 - T007
 - T008
 phase: Phase 1 — Foundation
-agent: claude
+agent: "claude:opus-4.7:implementer-ivan:implementer"
+shell_pid: "5177"
 history:
 - at: '2026-05-19T06:35:00Z'
   actor: system
@@ -201,3 +202,4 @@ See T008. Run `go test ./internal/analyzer/sdd/...` and confirm:
 ## Activity Log
 
 - 2026-05-19T06:35:00Z -- system -- Prompt created.
+- 2026-05-19T07:32:12Z – claude:opus-4.7:implementer-ivan:implementer – shell_pid=5177 – Started implementation via action command
