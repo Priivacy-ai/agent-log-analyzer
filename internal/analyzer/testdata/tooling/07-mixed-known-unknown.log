@@ -1,0 +1,19 @@
+system: Available MCP servers:
+- github
+- notion
+- acme_internal_test_mcp_a
+- acme_internal_test_mcp_b
+- acme_internal_test_mcp_c
+- acme_internal_test_mcp_d
+- private_corp_mcp_one
+- private_corp_mcp_two
+
+system: The following skills are available:
+- review
+- private_corp_skill_one
+- private_corp_skill_two
+
+user: please inspect /etc/passwd and /var/log/syslog
+user: also look at /home/user/file.txt and report findings
+assistant: tool_use mcp__github__create_issue title="example"
+assistant: tool_use mcp__notion__create_page

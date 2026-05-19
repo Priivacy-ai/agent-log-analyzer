@@ -1,0 +1,57 @@
+system: Available MCP servers:
+- acme_internal_test_mcp_a
+- acme_internal_test_mcp_b
+- acme_internal_test_mcp_c
+- acme_internal_test_mcp_d
+- acme_internal_test_mcp_e
+- acme_internal_test_mcp_f
+- acme_internal_test_mcp_g
+- acme_internal_test_mcp_h
+- acme_internal_test_mcp_i
+- acme_internal_test_mcp_j
+- acme_internal_test_mcp_k
+- acme_internal_test_mcp_l
+- acme_internal_test_mcp_m
+- acme_internal_test_mcp_n
+- acme_internal_test_mcp_o
+- acme_internal_test_mcp_p
+- acme_internal_test_mcp_q
+- acme_internal_test_mcp_r
+- acme_internal_test_mcp_s
+- acme_internal_test_mcp_t
+- acme_internal_test_mcp_u
+- acme_internal_test_mcp_v
+- acme_internal_test_mcp_w
+- acme_internal_test_mcp_x
+- acme_internal_test_mcp_y
+- acme_internal_test_mcp_z
+- fake_company_tool_alpha
+- fake_company_tool_beta
+- fake_company_tool_gamma
+- fake_company_tool_delta
+
+assistant: tool_use mcp__acme_internal_test_mcp_a__action_one
+assistant: tool_use mcp__acme_internal_test_mcp_b__action_one
+assistant: tool_use mcp__acme_internal_test_mcp_c__action_one
+assistant: tool_use mcp__acme_internal_test_mcp_d__action_one
+assistant: tool_use mcp__acme_internal_test_mcp_e__action_one
+assistant: tool_use mcp__acme_internal_test_mcp_f__action_one
+assistant: tool_use mcp__acme_internal_test_mcp_g__action_one
+assistant: tool_use mcp__acme_internal_test_mcp_h__action_one
+assistant: tool_use mcp__acme_internal_test_mcp_i__action_one
+assistant: tool_use mcp__acme_internal_test_mcp_j__action_one
+assistant: tool_use mcp__acme_internal_test_mcp_k__action_one
+assistant: tool_use mcp__acme_internal_test_mcp_l__action_one
+assistant: tool_use mcp__acme_internal_test_mcp_m__action_one
+assistant: tool_use mcp__acme_internal_test_mcp_n__action_one
+assistant: tool_use mcp__acme_internal_test_mcp_o__action_one
+assistant: tool_use mcp__acme_internal_test_mcp_p__action_one
+assistant: tool_use mcp__acme_internal_test_mcp_q__action_one
+assistant: tool_use mcp__acme_internal_test_mcp_r__action_one
+assistant: tool_use mcp__acme_internal_test_mcp_s__action_one
+assistant: tool_use mcp__acme_internal_test_mcp_t__action_one
+assistant: tool_use mcp__acme_internal_test_mcp_u__action_one
+assistant: tool_use mcp__acme_internal_test_mcp_v__action_one
+assistant: tool_use mcp__acme_internal_test_mcp_w__action_one
+assistant: tool_use mcp__acme_internal_test_mcp_x__action_one
+assistant: tool_use mcp__acme_internal_test_mcp_y__action_one
