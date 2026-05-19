@@ -24,8 +24,8 @@ subtasks:
 - T018
 phase: Phase 1 — Launch Correctness
 assignee: ''
-agent: "claude:opus-4-7:implementer-ivan:implementer"
-shell_pid: "50013"
+agent: "claude:opus-4-7:reviewer-renata:reviewer"
+shell_pid: "52554"
 history:
 - at: '2026-05-19T11:55:54Z'
   actor: system
@@ -347,3 +347,4 @@ spec-kitty agent tasks move-task WP03 --to <status> --note "message"
 All WP files live in a flat `tasks/` directory.
 - 2026-05-19T12:30:57Z – claude:opus-4-7:implementer-ivan:implementer – shell_pid=50013 – Started implementation via action command
 - 2026-05-19T12:42:02Z – claude:opus-4-7:implementer-ivan:implementer – shell_pid=50013 – Ready for review. mergeEcosystems extended with sorted-union/max-rank helpers; 6 invariants asserted; privacy canary across merged ecosystem + artifact + aggregate event; T017 proves artifact consumes merged data; NFR-005 timing test green. evidence_count=sum locked per C-007.
+- 2026-05-19T12:42:40Z – claude:opus-4-7:reviewer-renata:reviewer – shell_pid=52554 – Started review via action command
