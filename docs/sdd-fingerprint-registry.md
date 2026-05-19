@@ -40,7 +40,7 @@ one of these files via its `source_references`.
 | 2 | GitHub Spec Kit            | `github_spec_kit`           | verified          | [`github-spec-kit.md`](research/sdd-fingerprints/github-spec-kit.md) |
 | 3 | OpenSpec                   | `openspec`                  | verified          | [`openspec.md`](research/sdd-fingerprints/openspec.md) |
 | 4 | Kiro                       | `kiro`                      | verified          | [`kiro.md`](research/sdd-fingerprints/kiro.md) |
-| 5 | BMAD-METHOD                | `bmad_method`               | verified          | [`bmad.md`](research/sdd-fingerprints/bmad.md) |
+| 5 | BMAD-METHOD                | `bmad`                      | verified          | [`bmad.md`](research/sdd-fingerprints/bmad.md) |
 | 6 | GSD                        | `gsd`                       | research_needed   | [`gsd.md`](research/sdd-fingerprints/gsd.md) |
 | 7 | Spec Workflow MCP          | `spec_workflow_mcp`         | verified          | [`spec-workflow-mcp.md`](research/sdd-fingerprints/spec-workflow-mcp.md) |
 | 8 | SDD Pilot                  | `sdd_pilot`                 | research_needed   | [`sdd-pilot.md`](research/sdd-fingerprints/sdd-pilot.md) |

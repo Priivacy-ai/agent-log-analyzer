@@ -3,7 +3,14 @@ package sdd
 import (
 	"context"
 	"sort"
+	"strings"
+	"time"
 )
+
+// perProbeTimeout bounds each individual cli_version_probe invocation so a
+// detector with multiple version probes cannot exhaust the parent context
+// and starve later probes (NFR-002 — see RISK-1 mission-review finding).
+const perProbeTimeout = 2 * time.Second
 
 // Fingerprint mirrors analyzer.EcosystemFingerprint field-for-field. Defined
 // locally in this package so the evaluator can return a typed result without
@@ -38,10 +45,12 @@ var runtimeTouchSources = map[SourceClass]struct{}{
 // already does this. The returned slice is sorted by
 // (competitor_priority asc, ID asc).
 //
-// slashHits is provided for future-proofing per research.md §R-10 (call site).
-// In WP03 slash_command markers are matched against text, since slash command
-// invocations also appear inline in transcript text; slashHits is not required
-// for correctness here.
+// slashHits is the slice of slash tokens the caller has already extracted
+// from parsed transcript lines (see analyzer.extractSlashTokens). Slash-
+// command markers are matched against both the raw text AND the joined
+// slashHits list — slashHits catches cases where the upstream parser has
+// normalized or split a slash invocation into a token that no longer
+// appears verbatim in `text`. See research.md §R-10 (call site).
 func Evaluate(
 	ctx context.Context,
 	text string,
@@ -51,6 +60,11 @@ func Evaluate(
 ) []Fingerprint {
 	out := make([]Fingerprint, 0, len(registry))
 	priorities := make(map[string]int, len(registry))
+
+	// Pre-join slashHits with newlines so regex anchors (\b, ^, $ in multi-
+	// line mode) behave reasonably. The empty case yields "" — which
+	// MatchString tolerates and never matches positive slash patterns.
+	slashCorpus := strings.Join(slashHits, "\n")
 
 	for _, d := range registry {
 		priorities[d.ID] = d.CompetitorPriority
@@ -83,7 +97,9 @@ func Evaluate(
 				if !cliBinaryHit[m.Binary] {
 					continue
 				}
-				raw, ok := probe.Version(ctx, m.Binary, m.VersionArgs)
+				probeCtx, cancel := context.WithTimeout(ctx, perProbeTimeout)
+				raw, ok := probe.Version(probeCtx, m.Binary, m.VersionArgs)
+				cancel()
 				if !ok {
 					continue
 				}
@@ -99,6 +115,10 @@ func Evaluate(
 					continue
 				}
 				if re.MatchString(text) {
+					hit = true
+				} else if m.SourceClass == SourceSlashCommand && slashCorpus != "" && re.MatchString(slashCorpus) {
+					// Fallback to caller-extracted slash tokens for cases
+					// where the raw transcript text has been normalized.
 					hit = true
 				}
 			}
@@ -146,9 +166,6 @@ func Evaluate(
 			VersionBucket: versionBucket,
 		})
 	}
-
-	// Suppress unused warning for slashHits while documenting intent.
-	_ = slashHits
 
 	sort.SliceStable(out, func(i, j int) bool {
 		pi, pj := priorities[out[i].ID], priorities[out[j].ID]

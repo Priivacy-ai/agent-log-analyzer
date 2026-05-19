@@ -79,8 +79,15 @@ func LoadRegistry() []SDDDetector {
 }
 
 // LookupBinaries returns every cli_binary marker name across all loaded,
-// verified detectors. Used by the allowlist that gates CLI version probes
-// at runtime.
+// verified detectors. This is an introspection helper for tooling and
+// tests that need to know which binary names the analyzer will probe —
+// for example, a sandbox that wants to pre-stage allowlisted binaries.
+//
+// Note: the runtime allowlist invariant is enforced structurally, not by
+// consulting this function. Evaluate() iterates only over markers from
+// the loaded registry, so every cli_binary name it sees is by construction
+// on the allowlist. This function exists as the canonical exported view
+// of that allowlist for callers outside Evaluate's scope.
 func LookupBinaries() []string {
 	LoadRegistry()
 	out := make([]string, len(registryBinaries))
