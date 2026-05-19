@@ -1,0 +1,13 @@
+project:
+  uuid: b5924009-4a3e-4b33-920c-195166a474a6
+  slug: claude-log-analyzer
+  node_id: d036a097a835
+  build_id: 3f31165d-e89e-4b3c-8c3b-651544b315f9
+vcs:
+  type: git
+agents:
+  available:
+  - claude
+  - opencode
+  - codex
+  auto_commit: true

@@ -1,0 +1,104 @@
+{
+  "entries": [
+    {
+      "agents": [
+        "codex"
+      ],
+      "content_hash": "a9896884095113bf1385847e5b7959bb3d33e8d97bfe6754ec6b0b4eba23bf9a",
+      "installed_at": "2026-05-19T06:25:26.742535+00:00",
+      "path": ".agents/skills/spec-kitty.analyze/SKILL.md",
+      "spec_kitty_version": "3.2.0rc12"
+    },
+    {
+      "agents": [
+        "codex"
+      ],
+      "content_hash": "86fd4dd2454c213d4b1f21bb9a6c25e44c018628d6f421cd90a5e01479ec95f8",
+      "installed_at": "2026-05-19T06:25:26.743228+00:00",
+      "path": ".agents/skills/spec-kitty.charter/SKILL.md",
+      "spec_kitty_version": "3.2.0rc12"
+    },
+    {
+      "agents": [
+        "codex"
+      ],
+      "content_hash": "b5e0d0e2fa69fcaddcca2e1f3715803de83448a6076ac69a9ce304ad8d103973",
+      "installed_at": "2026-05-19T06:25:26.743997+00:00",
+      "path": ".agents/skills/spec-kitty.implement/SKILL.md",
+      "spec_kitty_version": "3.2.0rc12"
+    },
+    {
+      "agents": [
+        "codex"
+      ],
+      "content_hash": "1003b40c9e6ca26d35f8cea174ad77cde5e2b32c13f0abd8b847c6bd20aaad19",
+      "installed_at": "2026-05-19T06:25:26.744841+00:00",
+      "path": ".agents/skills/spec-kitty.plan/SKILL.md",
+      "spec_kitty_version": "3.2.0rc12"
+    },
+    {
+      "agents": [
+        "codex"
+      ],
+      "content_hash": "127411d831419b1f60feb2526388f48efef520543136179ebf024fac66bf3a59",
+      "installed_at": "2026-05-19T06:25:26.745303+00:00",
+      "path": ".agents/skills/spec-kitty.research/SKILL.md",
+      "spec_kitty_version": "3.2.0rc12"
+    },
+    {
+      "agents": [
+        "codex"
+      ],
+      "content_hash": "5b7196293fe309064f9d58ca828017d559abfd00ac8b81602e9bfcffd220ebb8",
+      "installed_at": "2026-05-19T06:25:26.745831+00:00",
+      "path": ".agents/skills/spec-kitty.review/SKILL.md",
+      "spec_kitty_version": "3.2.0rc12"
+    },
+    {
+      "agents": [
+        "codex"
+      ],
+      "content_hash": "cc7acabdc7262f15e9302f85d7ad6707d56e1db86f5bdabd5ed241c79efa43bd",
+      "installed_at": "2026-05-19T06:25:26.746761+00:00",
+      "path": ".agents/skills/spec-kitty.specify/SKILL.md",
+      "spec_kitty_version": "3.2.0rc12"
+    },
+    {
+      "agents": [
+        "codex"
+      ],
+      "content_hash": "86e20f896231a1ddf4c9bed850f74665021747952d62fd45f240230658dd6d85",
+      "installed_at": "2026-05-19T06:25:26.748847+00:00",
+      "path": ".agents/skills/spec-kitty.tasks-finalize/SKILL.md",
+      "spec_kitty_version": "3.2.0rc12"
+    },
+    {
+      "agents": [
+        "codex"
+      ],
+      "content_hash": "b04dec3c0ef3119579361cf855d4a38445ef4a23c07369bbbb9aa2397fc537ef",
+      "installed_at": "2026-05-19T06:25:26.749493+00:00",
+      "path": ".agents/skills/spec-kitty.tasks-outline/SKILL.md",
+      "spec_kitty_version": "3.2.0rc12"
+    },
+    {
+      "agents": [
+        "codex"
+      ],
+      "content_hash": "afddaf44e5fa685c68a06d78a4f93315f8070015598c261c2039871e03d1ceaa",
+      "installed_at": "2026-05-19T06:25:26.750332+00:00",
+      "path": ".agents/skills/spec-kitty.tasks-packages/SKILL.md",
+      "spec_kitty_version": "3.2.0rc12"
+    },
+    {
+      "agents": [
+        "codex"
+      ],
+      "content_hash": "797f33e98e84a91788c02dd426363c0b659d5e6468ce2cefc3a016a0b6ebb081",
+      "installed_at": "2026-05-19T06:25:26.747988+00:00",
+      "path": ".agents/skills/spec-kitty.tasks/SKILL.md",
+      "spec_kitty_version": "3.2.0rc12"
+    }
+  ],
+  "schema_version": 1
+}
