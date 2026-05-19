@@ -130,3 +130,4 @@ No code tests. The acceptance criterion is "a new maintainer can land a new dete
 - 2026-05-19T07:37:44Z – claude:opus-4.7:curator-carla:curator – shell_pid=10970 – Started implementation via action command
 - 2026-05-19T07:42:30Z – claude:opus-4.7:curator-carla:curator – shell_pid=10970 – Maintainer-facing registry doc + 3 related-doc updates + GH issue comment template
 - 2026-05-19T07:42:51Z – claude:opus-4.7:reviewer-renata:reviewer – shell_pid=14321 – Started review via action command
+- 2026-05-19T07:45:02Z – claude:opus-4.7:reviewer-renata:reviewer – shell_pid=14321 – Review passed: registry doc covers 9 sections; top-20 table reflects 9 verified / 11 research_needed; cross-product docs link to it; GH comment templates ready for WP10.
