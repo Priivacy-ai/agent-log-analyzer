@@ -1,0 +1,238 @@
+schema_version: 1.0.0
+mission: software-dev
+profile: comprehensive
+answers:
+  project_intent: |
+    Claude Log Analyzer is a deterministic performance profiler for AI coding
+    workflows. It is one-shot, local-first, ephemeral, and CLI-native: a user
+    runs the source-available CLI against a Claude Code JSONL log, inspects
+    the sanitized report locally, and may optionally upload only the sanitized
+    aggregate JSON for a short-lived report or paid remediation pack.
+
+    It is NOT AI observability, LLM analytics, prompt-engineering consulting,
+    a dashboard SaaS, team/collab software, or an AI copilot. The product
+    helps users lower spend, reduce degraded sessions and retries, stabilize
+    workflows, and gain confidence they are using Claude Code well.
+
+    The current mission scope is "launch completion": ship the remaining work
+    needed to take the product to a launch-ready state across correctness
+    bugs, report intelligence UX, recommendation engine Phase B, paid pack
+    completion, privacy/aggregate analytics hardening, trust/distribution,
+    and cloud launch hardening. See start-here.md handoff and the open GitHub
+    issues listed there as the source of truth.
+
+  languages_frameworks: |
+    Primary language: Go (services + CLI under cmd/ and internal/).
+    Frontend: static HTML/CSS/vanilla JS under web/ (no SPA framework).
+    Infrastructure: Terraform under infra/aws targeting AWS us-east-1.
+    Containers: Docker + docker compose for local and AWS-flavored smoke.
+    Scripts: bash under scripts/ (smoke-local, smoke-native, smoke-aws-local,
+    load-local).
+    Doc format: Markdown under docs/.
+    The web UI must remain profiler-like, compact, CLI-native, and
+    framework-free; do not introduce a JS framework or build pipeline.
+
+  testing_requirements: |
+    Verification baseline (must pass before any final response on a change):
+      gofmt -w $(find . -name '*.go' -not -path './.git/*')
+      go test ./...
+      go vet ./...
+      terraform -chdir=infra/aws fmt -check -recursive
+      ./scripts/smoke-local.sh
+    After report/API-facing changes also run:
+      ./scripts/load-local.sh 25
+    For frontend/report UX changes, also run `docker compose up --build` and
+    perform browser QA against the local report flow.
+
+    Test categories that must exist and stay green:
+      - Unit tests in internal/** (analyzer, remediation, backend, awsstore).
+      - Privacy/leak tests (internal/analyzer/leak_test.go and equivalents
+        for paid artifact + aggregate event payloads).
+      - Golden fixtures for MCP/skill bloat and SDD fingerprint scenarios.
+      - CLI tests for cmd/claude-analyzer covering positional arg handling
+        and the analyze/upload flows.
+      - Recommendation engine tests covering active / rejected /
+        configured-unused / bloat-prune-first behavior.
+      - Aggregate merge tests covering WorkflowFingerprints and
+        MCP/Skill utilization preservation across multi-report aggregation.
+
+  quality_gates: |
+    Non-negotiable gates before merging any PR:
+      - Verification baseline above passes locally.
+      - GitHub Actions CI is green (gofmt, vet, tests, Terraform
+        validate/fmt, Docker build, Docker smoke, load smoke).
+      - Privacy gates: no raw prompts, raw transcripts, raw tool inputs/
+        outputs, raw paths, repo URLs, branch names, usernames, hostnames,
+        emails, session IDs, MCP schemas, MCP server URLs, auth scopes,
+        private MCP/skill/plugin names, raw `which`/`exec.LookPath`
+        paths, raw version output, or stable hashes of private strings in
+        any uploaded payload, generated paid artifact, server log, or
+        analytics event.
+      - Bounded-cardinality gates on upload schema + analytics storage:
+        only allowlisted public IDs, closed enums, bounded buckets,
+        numeric counts, and confidence/source-class/recommendation/
+        install-policy enums.
+      - No new infra `terraform apply` without explicit user approval; PRs
+        that change Terraform must ship with `plan` output reviewed.
+      - go vet clean, gofmt clean, terraform fmt clean.
+      - For UI changes: manual browser QA must be performed and noted in
+        the PR; type/test checks alone do not verify feature correctness.
+
+  review_policy: |
+    PR sequencing is intentional and small. Use a sequence of focused PRs,
+    not one giant PR. Recommended branch sequence (add timestamp suffix if a
+    name already exists):
+      1. codex/launch-correctness   — issues #74, #70, #72
+      2. codex/report-intelligence-ux — issues #62, #63, #41
+      3. codex/recommendation-phase-b — issues #73, #56, #64
+      4. codex/privacy-analytics-gates — issues #58, #59, #60, #61, #65
+      5. codex/paid-distribution    — issues #24, #27, #30, #31, #33, #34, #35
+      6. codex/cloud-launch-hardening — issues #25, #36, #37, cloud-launch
+         checklist
+
+    GitHub issue hygiene:
+      - Comment on every issue touched when work starts.
+      - Comment again when ready for review (files changed, tests run,
+        remaining work).
+      - Do not close parent epics unless all child acceptance criteria are
+        met.
+      - For mostly-complete prior epics, comment what remains and only
+        close if true.
+
+    Code review focus areas: privacy/leak surface, bounded-cardinality
+    fields, redaction completeness, fixture coverage, deterministic
+    behavior of detectors and recommendation logic.
+
+  performance_targets: |
+    Production launch SLOs (must be confirmed before declaring launch-ready):
+      - API 5xx rate < 0.1%
+      - Report upload p95 < 500ms
+      - Report shell (page render) p95 < 500ms
+      - Workers drain the queue under expected HN / Product Hunt spike
+      - No raw content in CloudWatch / operational logs
+      - TTL deletion of raw upload/report objects confirmed end-to-end
+
+    Load gates:
+      Local:
+        ./scripts/load-local.sh 25
+        ./scripts/smoke-local.sh
+        go run ./cmd/local-log-smoke -limit 10
+      Cloud:
+        CLAUDE_ANALYZER_URL=https://<launch-host> ./scripts/load-local.sh 25
+
+  deployment_constraints: |
+    Cloud: AWS, us-east-1, profile `claude-analyzer-prod`. Always export
+    AWS_PROFILE/AWS_REGION before Terraform/AWS commands. Never paste
+    AWS access keys or secret access keys into chat, docs, commits, or
+    logs. Local `.env` may contain profile/region selectors only — never
+    credentials.
+
+    Do not run `terraform apply` casually while iterating. Batch minor
+    changes locally; deploy only when a release bundle is ready and the
+    user has explicitly approved the apply. PRs that touch infra ship
+    with `terraform plan` output reviewed first.
+
+    Distribution: source-available CLI via `go install` and (planned)
+    GitHub Releases signed/checksummed binaries plus Homebrew tap.
+    Users must not be asked to paste suspicious shell exfiltration
+    scripts as the install path.
+
+    Hosting: launch hostname must be brand-safe. The current
+    `claude-code.spec-kitty.ai` may imply Anthropic affiliation; replace
+    with `analyzer.spec-kitty.ai`, `profiler.spec-kitty.ai`, or a
+    product-specific domain before launch (#36). Update Terraform/domain
+    config, CLI default base URL, and web/docs/security/privacy pages.
+
+  documentation_policy: |
+    Documentation is part of the product trust story. Required behaviors:
+      - Update README.md, docs/data-retention-and-analytics.md,
+        docs/logging-policy.md, docs/ecosystem-signatures.md,
+        docs/cloud-launch-todo.md, and docs/remediation/* whenever the
+        corresponding behavior changes.
+      - Privacy stance and local-first show-before-upload flow must be
+        explainable to a skeptical reader by inspection.
+      - The CLI should print repo/source/version on `--version`.
+      - Public docs must explain the local-first flow and the exact
+        sanitized fields that ever leave the machine.
+
+    Terminology that must stay precise across docs/specs/code:
+      "sanitized report", "raw log", "aggregate event", "paid plugin
+      artifact", "ecosystem fingerprint", "workflow fingerprint",
+      "MCP utilization ratio", "skill utilization ratio", "warning band",
+      "warning-band rank: severe > high > watch > normal > unknown",
+      "confidence rank: high > medium > low",
+      "next-best recommendation", "install policy".
+    Avoid overloaded synonyms ("scan" vs "analyze" — prefer "analyze" for
+    the local CLI step and "scan" only for the paid 100-log flow).
+
+  risk_boundaries: |
+    Privacy stance is NON-NEGOTIABLE. Raw logs stay local for the public
+    launch flow. The server receives only sanitized aggregate report
+    JSON after the user can inspect it locally.
+
+    Never emit, upload, persist, log, or use for aggregate analytics:
+      user prompts; task descriptions; raw transcripts and excerpts;
+      raw tool inputs and outputs; command arguments; file contents;
+      raw file paths; repo URLs; branch names; usernames; hostnames;
+      emails; session IDs; transcript paths; MCP schemas / descriptions
+      / arguments; MCP server URLs; auth scopes; private MCP names;
+      private skill names; private plugin names; raw `which` /
+      `exec.LookPath` paths; raw version command output; stable hashes
+      of private strings.
+
+    Allowed only: known public allowlisted IDs; unknown counts only;
+    closed enums; bounded buckets; numeric counts; confidence enum;
+    source-class enum; recommendation enum; install-policy enum;
+    normalized version bucket only when safe.
+
+    Unknown/private names are counted only — never stored, logged,
+    uploaded, hashed, or shown.
+
+    Most-costly failure mode: privacy breach (raw user content
+    appearing in upload, generated paid artifact, server log,
+    analytics event, or report URL). Wrong behavior and downtime are
+    secondary. Sharpen reviews accordingly.
+
+    Trust/distribution risks tracked: brand-confusable hostname (#36),
+    unsigned binaries / curl-pipe-bash install (#34), paid scan still
+    raw-log (#35), waiver-gated install missing (#33).
+
+  amendment_process: |
+    The charter, privacy stance, verification baseline, and quality gates
+    are amended only by explicit user approval in chat. Agents must not
+    relax these rules unilaterally.
+
+    To propose an amendment: open a PR that updates `.kittify/charter/`
+    and the affected docs in the same change, link the open GitHub
+    issue(s) driving the amendment, and call out the rule being changed
+    in the PR title. The user explicitly approves the amendment before
+    merge.
+
+  exception_policy: |
+    Strict — no exceptions without explicit user approval. This applies
+    to the privacy stance (no waivers under any circumstance), the
+    verification baseline (all five commands must pass), the bounded-
+    cardinality upload schema, the no-casual-`terraform apply` rule,
+    and the GitHub issue hygiene rules.
+
+    If an agent believes a deviation is justified (e.g. a smoke script
+    is broken for unrelated reasons), the agent must stop, surface the
+    blocker in chat, and wait for the user to authorize the deviation
+    explicitly. Deviations are recorded in the PR body.
+
+    For UI/feature work, type-check and test-suite success does NOT
+    substitute for browser-based feature verification; the agent must
+    explicitly state when it could not test the UI rather than claim
+    success.
+
+selected_paradigms:
+  - domain-driven-design
+selected_directives: []
+available_tools:
+  - git
+  - go
+  - gofmt
+  - terraform
+  - docker
+  - bash
+  - github-cli
