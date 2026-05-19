@@ -150,7 +150,7 @@ use them consistently.
 | NFR-001  | The full charter verification baseline passes locally before the PR is opened: `gofmt -w $(find . -name '*.go' -not -path './.git/*')`, `go test ./...` (zero failures), `go vet ./...` (zero issues), `terraform -chdir=infra/aws fmt -check -recursive` (clean), `./scripts/smoke-local.sh` (exit 0). | Required |
 | NFR-002  | Privacy leak tests confirm that after multi-report aggregation, zero private MCP names, private skill names, private plugin names, raw paths, repo URLs, branch names, usernames, hostnames, emails, session IDs, transcript paths, MCP server URLs, raw `which`/`exec.LookPath` paths, raw version command output, or stable hashes of private strings appear in: (a) the merged paid report JSON, (b) the generated paid plugin artifact, (c) any server-bound aggregate event payload. | Required |
 | NFR-003  | After the #70 fix is in place, the MCP exposure-header call false-positive rate measured across the full bundled golden fixture set drops to exactly 0 (no fixture reports a call that is actually a header token). | Required |
-| NFR-004  | The CLI changes for #74 do not increase the time-to-completion of a single-log `claude-analyzer analyze` invocation by more than 5% on the bundled `internal/analyzer/testdata` fixtures (measured as wall-clock of the existing CLI integration test). | Required |
+| NFR-004  | The CLI changes for #74 introduce no measurable parse-time overhead. Specifically: the new positional-argument resolution adds only a single `len(fs.Args())` check and at most one bounds-comparison per invocation. The new `cmd/claude-analyzer/main_test.go` (created in this mission as the first CLI test surface) is the baseline going forward; future PRs that alter `runAnalyze` must keep its total wall time within 5% of the previous commit's measurement on the same fixtures. | Required |
 | NFR-005  | The aggregate merge for #72 completes in under 5 seconds for a 100-input paid scan composed of the largest bundled golden fixtures, on a developer laptop equivalent to the CI runner. | Required |
 
 ## Constraints
@@ -248,6 +248,31 @@ max) are revisited, they will land in a follow-up mission per C-007.
 - Trust and distribution changes (signed releases, hostname rename, WASM
   demo — issues #34, #36, #37).
 - Any infrastructure `apply`, AWS resource changes, or DNS changes.
+
+## Reviewer Checklist (procedural constraints)
+
+Constraints C-001..C-005 are review-gated rather than test-gated. The reviewer
+of the mission PR must explicitly confirm each before merge:
+
+- [ ] **C-001** No new upload-schema or paid-aggregate field outside the
+      bounded-cardinality shape (allowlisted IDs, closed enums, bounded
+      buckets, numeric counts, recommendation/install-policy/confidence/
+      source-class enums).
+- [ ] **C-002** No private name, raw path, raw URL, raw transcript fragment,
+      or stable hash of a private string appears in any new field, log line,
+      test output, or merged artifact introduced by this mission.
+- [ ] **C-003** All implementation lands on a single branch
+      `codex/launch-correctness` (or timestamped variant) and is delivered
+      as one PR.
+- [ ] **C-004** Issues #74, #70, #72 are closed only when their per-issue
+      acceptance criteria from `start-here.md` are demonstrably satisfied.
+      Parent epics (#38, #39, #40, #41) remain open if any sibling acceptance
+      item is unmet.
+- [ ] **C-005** No `terraform apply` performed. If Terraform files changed,
+      only `terraform plan` output is in the PR description.
+
+C-006 and C-007 are operationally enforced inside WP02 and WP03 respectively;
+the reviewer does not need to re-verify them by hand.
 
 ## References
 
