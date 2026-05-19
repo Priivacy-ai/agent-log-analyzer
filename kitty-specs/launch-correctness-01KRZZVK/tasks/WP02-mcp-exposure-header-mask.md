@@ -23,8 +23,8 @@ subtasks:
 - T011
 phase: Phase 1 — Launch Correctness
 assignee: ''
-agent: claude
-shell_pid: '46373'
+agent: "claude:opus-4-7:implementer-ivan:implementer"
+shell_pid: "46373"
 history:
 - at: '2026-05-19T11:55:54Z'
   actor: system
@@ -273,3 +273,4 @@ spec-kitty agent tasks move-task WP02 --to <status> --note "message"
 ### File Structure
 
 All WP files live in a flat `tasks/` directory.
+- 2026-05-19T12:21:45Z – claude:opus-4-7:implementer-ivan:implementer – shell_pid=46373 – Assigned agent via action command
