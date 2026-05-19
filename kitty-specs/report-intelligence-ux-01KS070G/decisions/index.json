@@ -1,0 +1,28 @@
+{
+  "entries": [
+    {
+      "created_at": "2026-05-19T13:38:34.340566Z",
+      "decision_id": "01KS07BB74NVJX9A3VYDY2GM84",
+      "final_answer": "Confirm and proceed",
+      "input_key": "engineering_alignment_confirmed",
+      "mission_id": "01KS070GDSG3W56YBCS2C8SHVY",
+      "mission_slug": "report-intelligence-ux-01KS070G",
+      "options": [
+        "Confirm and proceed",
+        "Adjust"
+      ],
+      "origin_flow": "plan",
+      "other_answer": false,
+      "question": "Confirm engineering alignment for Report Intelligence UX plan.",
+      "rationale": null,
+      "resolved_at": "2026-05-19T13:40:28.028653Z",
+      "resolved_by": null,
+      "slot_key": "plan.alignment.confirm-engineering-direction",
+      "status": "resolved",
+      "step_id": null,
+      "summary_json": null
+    }
+  ],
+  "mission_id": "01KS070GDSG3W56YBCS2C8SHVY",
+  "version": 1
+}
