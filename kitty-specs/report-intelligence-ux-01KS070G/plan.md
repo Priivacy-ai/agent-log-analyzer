@@ -112,9 +112,9 @@ Phase 1 is complete:
 
 ## Work Package Outline (drafted; finalized in /spec-kitty.tasks)
 
-Two work packages, parallel-safe.
+**Revision during /spec-kitty.tasks**: the original two-WP split was collapsed to a single 6-subtask WP because both proposed WPs would have needed to own `web/index.html`, `web/app.js`, and `web/styles.css` — the finalizer rejects overlapping `owned_files`. The merged WP still covers both issues (#62 and #63) and stays within the 3–7 subtask ideal range.
 
-### WP01 — Workflow Fingerprints section (issue #62)
+### WP01 — Workflow Fingerprints section (issue #62) — superseded by merged WP below
 
 **Scope**:
 - `web/index.html`: add `<section id="workflow-fingerprints" hidden>` block above the existing `Ecosystem` block. Markup follows the contract's row shape (id, confidence, sources badges, evidence count, active/installed indicators, optional version_bucket).
@@ -146,21 +146,30 @@ Two work packages, parallel-safe.
 
 **Mapped FRs**: FR-003, FR-004, FR-005, FR-006, FR-007, FR-008.
 
-### FR Coverage Matrix
+### Merged WP01 — Report Intelligence UX sections (issues #62 + #63)
 
-| FR | WP01 | WP02 |
-|---|---|---|
-| FR-001 | ✓ | |
-| FR-002 | ✓ | |
-| FR-003 | | ✓ |
-| FR-004 | | ✓ |
-| FR-005 | | ✓ |
-| FR-006 | | ✓ |
-| FR-007 | | ✓ |
-| FR-008 | ✓ | ✓ |
-| FR-009 | ✓ | ✓ |
+Owns the entire `web/` UI delta for this mission plus the renderer-input leak test.
 
-Every FR is owned by at least one WP. NFR/C invariants are honored by both WPs collectively.
+- `web/index.html`: both `<section id="workflow-fingerprints">` and `<section id="tooling-utilization">` blocks (initially `hidden`).
+- `web/app.js`: `renderWorkflowFingerprints(report)`, `renderToolingUtilization(report)`, wiring into `applyReport(report)`.
+- `web/styles.css`: scoped styles for fingerprint rows, utilization rows, band-chip variants, advice block.
+- `internal/analyzer/view_render_inputs_test.go` (new): renderer-input leak canary covering fingerprint + utilization input fields + all 5 band permutations.
+
+### FR Coverage Matrix (single merged WP)
+
+| FR | WP01 |
+|---|---|
+| FR-001 | ✓ |
+| FR-002 | ✓ |
+| FR-003 | ✓ |
+| FR-004 | ✓ |
+| FR-005 | ✓ |
+| FR-006 | ✓ |
+| FR-007 | ✓ |
+| FR-008 | ✓ |
+| FR-009 | ✓ |
+
+Every FR is owned by the merged WP. NFR/C invariants are honored within it.
 
 ## Risks & Mitigations
 
