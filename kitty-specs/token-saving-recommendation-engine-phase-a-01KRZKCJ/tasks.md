@@ -201,11 +201,11 @@ plan.
 
 **Included subtasks**
 
-- [ ] T026 [P] Create `docs/remediation/token-saving-recommendation-engine.md` with the document header, audience, and table of contents. (WP05)
-- [ ] T027 [P] Document the eight `RecommendationClass` values + the full allowlist with one-line rationales (cross-reference the registry source file, do not duplicate field-by-field tables). (WP05)
-- [ ] T028 [P] Document the state model (six `ToolState` values, conflict precedence) and the recommendation contract (fixed rule precedence, skip behaviour, ≤ 1 + ≤ 1 invariant, secondary-class rule). (WP05)
-- [ ] T029 [P] Document risk levels (`low`/`medium`/`high`), install policies (five values), and the waiver gate (when `recommend_with_waiver` is required and how callers must enforce it). (WP05)
-- [ ] T030 [P] Document privacy constraints (allowlisted enum strings only, positive-list scan) and the Phase B integration plan for issues #38 and #39 (fingerprint + utilization → `ToolStateMap`). (WP05)
+- [x] T026 [P] Create `docs/remediation/token-saving-recommendation-engine.md` with the document header, audience, and table of contents. (WP05)
+- [x] T027 [P] Document the eight `RecommendationClass` values + the full allowlist with one-line rationales (cross-reference the registry source file, do not duplicate field-by-field tables). (WP05)
+- [x] T028 [P] Document the state model (six `ToolState` values, conflict precedence) and the recommendation contract (fixed rule precedence, skip behaviour, ≤ 1 + ≤ 1 invariant, secondary-class rule). (WP05)
+- [x] T029 [P] Document risk levels (`low`/`medium`/`high`), install policies (five values), and the waiver gate (when `recommend_with_waiver` is required and how callers must enforce it). (WP05)
+- [x] T030 [P] Document privacy constraints (allowlisted enum strings only, positive-list scan) and the Phase B integration plan for issues #38 and #39 (fingerprint + utilization → `ToolStateMap`). (WP05)
 
 **Implementation sketch**: single new Markdown file, narrative + small tables, no code-block heroics.
 
