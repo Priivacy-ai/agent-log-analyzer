@@ -26,7 +26,8 @@ subtasks:
 - T016
 - T017
 - T018
-agent: claude
+agent: "claude:opus-4-7:implementer-ivan:implementer"
+shell_pid: "46766"
 history:
 - '2026-05-19': created from mission token-saving-recommendation-engine-phase-a-01KRZKCJ
 agent_profile: implementer-ivan
@@ -338,3 +339,7 @@ succeeds. The acceptance suite is in WP04.
 - All types and helpers live in WP02.
 - The registry literal lives in WP01.
 - Docs live in WP05/WP06.
+
+## Activity Log
+
+- 2026-05-19T09:35:47Z – claude:opus-4-7:implementer-ivan:implementer – shell_pid=46766 – Started implementation via action command
