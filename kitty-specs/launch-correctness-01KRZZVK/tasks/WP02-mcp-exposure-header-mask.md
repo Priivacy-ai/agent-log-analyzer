@@ -274,3 +274,4 @@ spec-kitty agent tasks move-task WP02 --to <status> --note "message"
 
 All WP files live in a flat `tasks/` directory.
 - 2026-05-19T12:21:45Z – claude:opus-4-7:implementer-ivan:implementer – shell_pid=46373 – Assigned agent via action command
+- 2026-05-19T12:28:25Z – claude:opus-4-7:implementer-ivan:implementer – shell_pid=46373 – Ready for review. Header byte ranges captured in mcpExposure/skillExposure; insideAny mask applied in detectMCPCallsFromToolUse; fixture 08 added with 6 mcp__server__tool header tokens and zero tool_use records; fixtures 00..06 unchanged (TestGoldenToolingFixtures all green); fixture 07 unchanged; TestGoldenSampleReport unchanged (no per-report shift, no hand-off needed for WP03); diff-scoped lint sweep: 0 issues.
