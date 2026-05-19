@@ -247,3 +247,4 @@ spec-kitty agent tasks move-task WP01 --to <status> --note "message"
 
 All WP files live in a flat `tasks/` directory.
 - 2026-05-19T12:21:35Z – claude:opus-4-7:implementer-ivan:implementer – shell_pid=46226 – Assigned agent via action command
+- 2026-05-19T12:25:31Z – claude:opus-4-7:implementer-ivan:implementer – shell_pid=46226 – Ready for review. CLI parser accepts positional, refuses conflict/multiplicity. 6 test cases pass. gofmt+vet clean. Diff-scoped lint sweep: 0 issues.
