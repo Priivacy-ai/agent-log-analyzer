@@ -8,5 +8,7 @@
   "purpose_context": "Three correctness defects in the launch handoff could each cause a skeptical developer to lose trust in the profiler before they finish inspecting its privacy story. This mission ships them as one focused PR so the remaining launch sequence (report UX, recommendation Phase B, privacy gates, paid distribution, cloud hardening) builds on a correct foundation.",
   "purpose_tldr": "Fix three correctness bugs blocking launch: CLI positional log handling (#74), MCP exposure-header double-counting (#70), and paid aggregate merge dropping ecosystem fields (#72).",
   "slug": "launch-correctness-01KRZZVK",
-  "target_branch": "main"
+  "source_description": "Phase 1 of the launch-completion handoff in ../start-here.md: GitHub issues #74 (CLI positional log path), #70 (MCP exposure-header double-counting), #72 (paid aggregate merge drops fingerprints/utilization).",
+  "target_branch": "main",
+  "vcs": "git"
 }
