@@ -1,7 +1,7 @@
 {
-  "event_count": 5,
-  "last_event_id": "01KS02YAZ013MYD2T076J11WGC",
-  "materialized_at": "2026-05-19T12:21:33.791914+00:00",
+  "event_count": 7,
+  "last_event_id": "01KS02YMY6G51GFH3A84RB2E35",
+  "materialized_at": "2026-05-19T12:21:44.006406+00:00",
   "mission_number": "",
   "mission_slug": "launch-correctness-01KRZZVK",
   "mission_type": "software-dev",
@@ -12,9 +12,9 @@
     "claimed": 0,
     "done": 0,
     "for_review": 0,
-    "in_progress": 1,
+    "in_progress": 2,
     "in_review": 0,
-    "planned": 2
+    "planned": 1
   },
   "work_packages": {
     "WP01": {
@@ -25,11 +25,11 @@
       "last_transition_at": "2026-05-19T12:21:33.791914+00:00"
     },
     "WP02": {
-      "actor": "finalize-tasks",
+      "actor": "claude:opus-4-7:implementer-ivan:implementer",
       "force_count": 1,
-      "lane": "planned",
-      "last_event_id": "01KS01V18AXF9TJM1BZ12G7Y5H",
-      "last_transition_at": "2026-05-19T12:02:16.970541+00:00"
+      "lane": "in_progress",
+      "last_event_id": "01KS02YMY6G51GFH3A84RB2E35",
+      "last_transition_at": "2026-05-19T12:21:44.006406+00:00"
     },
     "WP03": {
       "actor": "finalize-tasks",
