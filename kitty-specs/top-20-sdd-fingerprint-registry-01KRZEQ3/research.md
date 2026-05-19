@@ -250,6 +250,6 @@ surface. See `docs/research/sdd-fingerprints/README.md` for per-tool reasons.
 **Alternatives considered.**
 - Calling the evaluator from `Analyze()`. Rejected — `DetectEcosystem` is the natural seam, and `Analyze` shouldn't know about CLI probing.
 
-## Outstanding [NEEDS CLARIFICATION]
+## Outstanding clarifications
 
 None. All Phase 0 questions resolved.
