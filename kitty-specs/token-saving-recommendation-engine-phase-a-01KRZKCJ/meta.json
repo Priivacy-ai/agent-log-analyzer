@@ -8,5 +8,7 @@
   "purpose_context": "Generic 'install another tool' advice wastes user tokens and erodes trust in the analyzer when the user already has the right tool active. Phase A delivers an additive Go registry, tool-state model, and deterministic decision policy that emits at most one primary and one secondary recommendation, never stacking and never re-recommending an active tool. The output stays additive so the parallel issue #38 (fingerprint registry) and issue #39 (MCP/skill utilization) work can land independently and be wired in cleanly during Phase B.",
   "purpose_tldr": "Build a deterministic, privacy-safe token-saving tool recommendation engine that diagnoses the dominant waste pattern and recommends the highest-impact next step while skipping tools already active.",
   "slug": "token-saving-recommendation-engine-phase-a-01KRZKCJ",
-  "target_branch": "main"
+  "source_description": "Brief at start-here.md in workspace root (issue robertDouglass/claude-log-analyzer#68, Phase A).",
+  "target_branch": "main",
+  "vcs": "git"
 }
