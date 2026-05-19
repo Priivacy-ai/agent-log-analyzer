@@ -8,5 +8,7 @@
   "purpose_context": "Some Claude Code users expose many MCPs and skills but execute few of them, creating hidden context overhead, slower tool choice, and noisy sessions. This mission adds inventory counts, utilization ratios, footprint and context buckets, deterministic warning bands, and remediation wording to the analyzer report without ever uploading private MCP/skill names, schemas, or skill text.",
   "purpose_tldr": "Quantify whether exposed MCPs and skills are actually used, with deterministic warnings and privacy-safe aggregates.",
   "slug": "mcp-skill-bloat-analytics-01KRZJGV",
-  "target_branch": "main"
+  "target_branch": "main",
+  "vcs": "git",
+  "source_description": "Brief at ../start-here.md describing GitHub Epic #39 'MCP and skill bloat utilization analytics' with required child issues #51-#57. Out of scope per user confirmation: #41, #58, #65."
 }
