@@ -172,21 +172,19 @@ func computeToolingUtilization(input []byte, lines []parsedLine, metrics Metrics
 	}
 	mcpTokens, mcpTokensKnown := estimateMCPFootprintTokens(mcpExp.SchemaTextBytes, serverCount, toolCount)
 
-	// Utilization ratio: callers as proxy for utilized exposure. Guard
-	// against division-by-zero and clamp to [0,100].
+	// Utilization ratio: distinct servers called / distinct servers exposed.
+	// Domain-consistent (mission-review RISK-1 fix, Option A): numerator and
+	// denominator both on the server domain. The bands separately gate on
+	// ExposedToolCountBucket via countAtLeast(..., "26-50") in classifyMCPBand,
+	// so the tool-count signal is not lost. Guarded against division-by-zero
+	// and clamped to [0, 100].
 	mcpRatio := 0
-	if mcpExposureKnown {
-		denom := toolCount
-		if denom <= 0 {
-			denom = serverCount
+	if mcpExposureKnown && serverCount > 0 {
+		numer := mcpCalls.UniqueServerCount
+		if numer > serverCount {
+			numer = serverCount
 		}
-		if denom > 0 {
-			numer := mcpCalls.UniqueServerCount
-			if numer > denom {
-				numer = denom
-			}
-			mcpRatio = numer * 100 / denom
-		}
+		mcpRatio = numer * 100 / serverCount
 	}
 
 	mcpTokensField := tokenBucket(mcpTokens, mcpExposureKnown && mcpTokensKnown)
