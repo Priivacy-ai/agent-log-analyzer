@@ -1,0 +1,10 @@
+Sanitized transcript excerpt — Cognition Devin (hosted) reference.
+
+user: Our team is piloting Devin AI for autonomous ticket execution.
+assistant: Acknowledged. Devin AI is the hosted product from Cognition; the web app lives at https://app.devin.ai/sessions/example-session-01.
+assistant: Documentation reference: https://docs.devin.ai/repo-integration covers how Cognition Devin links to a repo workspace.
+user: Compare it with our current setup before we commit.
+assistant: Cognition Devin runs server-side, so there is no local CLI to fingerprint. Markers are limited to URL and product-qualified mentions.
+user: Note the vendor distinction in our internal write-up.
+assistant: Will record that "Devin AI" is the product, "Cognition" is the vendor company, and the canonical session URL pattern is https://app.devin.ai/sessions/<id>.
+assistant: For tracking, I'll cite https://app.devin.ai/ as the hosted app entry point.

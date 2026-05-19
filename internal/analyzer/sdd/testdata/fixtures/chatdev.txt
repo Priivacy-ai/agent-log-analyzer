@@ -1,0 +1,12 @@
+Sanitized transcript excerpt — OpenBMB ChatDev multi-agent framework.
+
+user: We're experimenting with OpenBMB/ChatDev for a multi-agent build pipeline.
+assistant: Cloning the framework. Reference repo: OpenBMB/ChatDev.
+assistant: The driver entry point is /repo/run.py invoked as python3 run.py --task "..." --name "...".
+assistant: Each run writes its output under /repo/WareHouse/example_project_default_20260519/ following the documented company-name plus timestamp convention.
+assistant: Per-company customization lives under /repo/CompanyConfig/. I'll bootstrap a "Default" company.
+assistant: The trio of JSON configs is /repo/CompanyConfig/Default/ChatChainConfig.json, /repo/CompanyConfig/Default/PhaseConfig.json, and /repo/CompanyConfig/Default/RoleConfig.json.
+user: Switch to the Art preset.
+assistant: Loading /repo/CompanyConfig/Art/ChatChainConfig.json and /repo/CompanyConfig/Art/PhaseConfig.json.
+user: Document customization options.
+assistant: Pointing at the wiki page for ChatChainConfig.json, PhaseConfig.json, and RoleConfig.json customization.

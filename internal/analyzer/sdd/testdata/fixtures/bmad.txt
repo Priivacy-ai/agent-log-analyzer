@@ -1,0 +1,12 @@
+Sanitized claude-code transcript excerpt — BMAD-METHOD workspace.
+
+user: Let's bootstrap the project with BMAD. Run `npx bmad-method install`.
+assistant: Running npx bmad-method install. This creates /repo/.bmad-core/ with agents, templates, checklists, and tasks.
+assistant: Reading /repo/.bmad-core/core-config.yaml to load the BMAD configuration.
+assistant: Agent role definitions are under /repo/.bmad-core/agents/. I see /repo/.bmad-core/agents/dev.md and /repo/.bmad-core/agents/qa.md.
+assistant: Templates and checklists live in /repo/.bmad-core/templates/ and /repo/.bmad-core/checklists/.
+user: Add bmad-method to devDependencies so contributors pick it up automatically.
+assistant: Adding "bmad-method": "^4.0.0" to package.json devDependencies.
+assistant: Package source: https://www.npmjs.com/package/bmad-method.
+user: After install, refresh the agent bundles.
+assistant: Running bmad-method update to pull the latest agent definitions.

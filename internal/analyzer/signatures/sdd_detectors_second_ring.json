@@ -1,0 +1,64 @@
+[
+  {
+    "id": "kiro",
+    "display_name": "Kiro",
+    "aliases": ["kiro", "Kiro IDE", "AWS Kiro"],
+    "category": "sdd",
+    "competitor_priority": 4,
+    "status": "verified",
+    "source_references": [
+      {"kind": "official_docs", "url": "https://kiro.dev/", "note": "Kiro product home page"},
+      {"kind": "docs", "url": "https://kiro.dev/docs/specs/concepts", "note": "Documents the .kiro/ workspace and spec workflow"},
+      {"kind": "docs", "url": "https://kiro.dev/docs/specs/best-practices", "note": "Documents requirements.md / design.md / tasks.md triplet under .kiro/specs/<feature>/"},
+      {"kind": "docs", "url": "https://kiro.dev/docs/steering", "note": "Documents .kiro/steering/ rule files"}
+    ],
+    "markers": [
+      {"source_class": "config_dir", "pattern": "(?i)(^|[\\s/'\"`(\\[])\\.kiro/", "note": ".kiro workspace dir at repo root"},
+      {"source_class": "config_dir", "pattern": "(?i)\\.kiro/(specs|steering)/", "note": ".kiro subdirectories for specs and steering rules"},
+      {"source_class": "config_file", "pattern": "(?i)\\.kiro/specs/[a-z0-9_\\-]+/(requirements|design|tasks)\\.md", "note": "Kiro per-feature spec triplet"},
+      {"source_class": "config_file", "pattern": "(?i)\\.kiro/steering/[a-z0-9_\\-]+\\.md", "note": "Kiro steering rule file"},
+      {"source_class": "command_name", "pattern": "(?i)\\bkiro\\.dev\\b", "note": "kiro.dev URL or domain reference"},
+      {"source_class": "config_dir", "pattern": "(?i)(^|[\\s/'\"`(\\[])\\.kittify/", "negative": true, "note": "Spec Kitty workspace; vetoes Kiro"},
+      {"source_class": "config_dir", "pattern": "(?i)(^|[\\s/'\"`(\\[])kitty-specs/", "negative": true, "note": "Spec Kitty mission dir; vetoes Kiro"},
+      {"source_class": "config_dir", "pattern": "(?i)(^|[\\s/'\"`(\\[])\\.specify/", "negative": true, "note": "GitHub Spec Kit workspace; vetoes Kiro"},
+      {"source_class": "config_dir", "pattern": "(?i)(^|[\\s/'\"`(\\[])openspec/", "negative": true, "note": "OpenSpec workspace; vetoes Kiro"}
+    ],
+    "confidence_rules": [
+      {"confidence": "high", "requires_distinct_classes": 2},
+      {"confidence": "medium", "requires_any_of": ["config_dir", "config_file"]},
+      {"confidence": "low", "requires_any_of": ["command_name"]}
+    ]
+  },
+  {
+    "id": "bmad",
+    "display_name": "BMAD-METHOD",
+    "aliases": ["bmad-method", "BMAD-METHOD", "BMAD"],
+    "category": "sdd",
+    "competitor_priority": 5,
+    "status": "verified",
+    "source_references": [
+      {"kind": "official_repo", "url": "https://github.com/bmad-code-org/bmad-method", "note": "Official BMAD-METHOD repository; README documents .bmad-core/ layout"},
+      {"kind": "package_registry", "url": "https://www.npmjs.com/package/bmad-method", "note": "npm package distributed via npx bmad-method install"},
+      {"kind": "docs", "url": "https://github.com/bmad-code-org/bmad-method/blob/main/docs/installation.md", "note": "Installation guide describing .bmad-core/ contents"}
+    ],
+    "markers": [
+      {"source_class": "config_dir", "pattern": "(?i)(^|[\\s/'\"`(\\[])\\.bmad-core/", "note": ".bmad-core workspace dir created by npx bmad-method install"},
+      {"source_class": "config_dir", "pattern": "(?i)\\.bmad-core/(agents|templates|checklists|tasks)/", "note": ".bmad-core subdirectories"},
+      {"source_class": "config_file", "pattern": "(?i)\\.bmad-core/core-config\\.yaml", "note": "BMAD primary configuration file"},
+      {"source_class": "config_file", "pattern": "(?i)\\.bmad-core/agents/(analyst|pm|architect|dev|qa|sm|po)\\.md", "note": "BMAD per-role agent definition files"},
+      {"source_class": "package_manifest", "pattern": "(?i)(\"bmad-method\"\\s*:|npmjs\\.com/package/bmad-method|npx\\s+bmad-method)", "note": "bmad-method npm package reference or install invocation"},
+      {"source_class": "command_name", "pattern": "(?i)\\bbmad-method\\s+(install|update)\\b", "note": "bmad-method CLI verb (typically via npx)"},
+      {"source_class": "cli_binary", "binary": "bmad-method", "note": "bmad-method CLI binary (usually via npx; allowlist with low priority)"},
+      {"source_class": "cli_version_probe", "binary": "bmad-method", "version_args": ["--version"], "note": "version probe"},
+      {"source_class": "config_dir", "pattern": "(?i)(^|[\\s/'\"`(\\[])\\.kittify/", "negative": true, "note": "Spec Kitty workspace; vetoes BMAD"},
+      {"source_class": "config_dir", "pattern": "(?i)(^|[\\s/'\"`(\\[])kitty-specs/", "negative": true, "note": "Spec Kitty mission dir; vetoes BMAD"},
+      {"source_class": "config_dir", "pattern": "(?i)(^|[\\s/'\"`(\\[])\\.specify/", "negative": true, "note": "GitHub Spec Kit workspace; vetoes BMAD"},
+      {"source_class": "config_dir", "pattern": "(?i)(^|[\\s/'\"`(\\[])openspec/", "negative": true, "note": "OpenSpec workspace; vetoes BMAD"}
+    ],
+    "confidence_rules": [
+      {"confidence": "high", "requires_distinct_classes": 2},
+      {"confidence": "medium", "requires_any_of": ["cli_binary", "package_manifest"]},
+      {"confidence": "low", "requires_any_of": ["command_name"]}
+    ]
+  }
+]

@@ -49,19 +49,34 @@ type FindingEvidence struct {
 }
 
 type Ecosystem struct {
-	Client                string   `json:"client"`
-	CodingAgents          []string `json:"coding_agents"`
-	OperatingSystem       string   `json:"operating_system"`
-	Shell                 string   `json:"shell"`
-	WorkflowFrameworks    []string `json:"workflow_frameworks"`
-	MCPServersKnown       []string `json:"mcp_servers_known"`
-	UnknownMCPServerCount int      `json:"unknown_mcp_server_count"`
-	KnownSkills           []string `json:"known_skills"`
-	UnknownSkillCount     int      `json:"unknown_skill_count"`
-	KnownPlugins          []string `json:"known_plugins"`
-	UnknownPluginCount    int      `json:"unknown_plugin_count"`
-	PackageManagers       []string `json:"package_managers"`
-	VersionControl        string   `json:"version_control"`
+	Client                string                 `json:"client"`
+	CodingAgents          []string               `json:"coding_agents"`
+	OperatingSystem       string                 `json:"operating_system"`
+	Shell                 string                 `json:"shell"`
+	WorkflowFrameworks    []string               `json:"workflow_frameworks"`
+	MCPServersKnown       []string               `json:"mcp_servers_known"`
+	UnknownMCPServerCount int                    `json:"unknown_mcp_server_count"`
+	KnownSkills           []string               `json:"known_skills"`
+	UnknownSkillCount     int                    `json:"unknown_skill_count"`
+	KnownPlugins          []string               `json:"known_plugins"`
+	UnknownPluginCount    int                    `json:"unknown_plugin_count"`
+	PackageManagers       []string               `json:"package_managers"`
+	VersionControl        string                 `json:"version_control"`
+	WorkflowFingerprints  []EcosystemFingerprint `json:"workflow_fingerprints,omitempty"`
+}
+
+// EcosystemFingerprint is the report-emitted record for a single
+// spec-driven-development tool detected on a transcript. The shape is
+// intentionally bounded — no free-text fields, no map values — so the
+// privacy invariants in NFR-001 are enforceable structurally.
+type EcosystemFingerprint struct {
+	ID            string   `json:"id"`
+	Confidence    string   `json:"confidence"`
+	Sources       []string `json:"sources"`
+	EvidenceCount int      `json:"evidence_count"`
+	Active        bool     `json:"active,omitempty"`
+	Installed     bool     `json:"installed,omitempty"`
+	VersionBucket string   `json:"version_bucket,omitempty"`
 }
 
 type SecurityReceipt struct {

@@ -1,0 +1,16 @@
+Sanitized claude-code transcript excerpt — OpenSpec workspace.
+
+user: Bootstrap the project with openspec. Run `openspec init` to scaffold the workspace.
+assistant: Running openspec init. This creates /repo/openspec/ with project.md and AGENTS.md.
+assistant: I see /repo/openspec/project.md describes the project context.
+assistant: Agent instructions are in /repo/openspec/AGENTS.md.
+user: Add a change proposal. Use openspec list to see existing changes.
+assistant: Running openspec list to enumerate change directories under openspec/changes/.
+assistant: New proposal scaffolded at /repo/openspec/changes/example-change-01/proposal.md and /repo/openspec/changes/example-change-01/tasks.md.
+user: Validate the proposal.
+assistant: Running openspec validate. Then openspec show example-change-01 to inspect.
+assistant: Canonical capability specs live under /repo/openspec/specs/.
+assistant: The openspec CLI installs via npm @fission-ai/openspec from https://www.npmjs.com/package/@fission-ai/openspec.
+user: After implementation, run openspec archive to seal the change.
+assistant: Acknowledged. openspec archive example-change-01 will move it to the archive.
+assistant: Project documentation references https://github.com/Fission-AI/OpenSpec for the full CLI reference.

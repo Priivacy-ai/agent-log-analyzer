@@ -1,0 +1,11 @@
+Sanitized claude-code transcript excerpt — Kiro IDE workspace.
+
+user: We're using Kiro for this project. The workspace is set up under /repo/.kiro/.
+assistant: Reading /repo/.kiro/specs/example-feature-01/requirements.md to understand the requirements.
+assistant: The companion design doc lives at /repo/.kiro/specs/example-feature-01/design.md.
+assistant: The breakdown is captured in /repo/.kiro/specs/example-feature-01/tasks.md per Kiro's spec triplet convention.
+user: Also load the steering rules.
+assistant: Reading /repo/.kiro/steering/style-guide.md and /repo/.kiro/steering/architecture.md.
+assistant: Documentation for this layout is at https://kiro.dev/docs/specs/concepts and https://kiro.dev/docs/steering.
+user: Good. Let's keep refining the requirements doc.
+assistant: Updating /repo/.kiro/specs/example-feature-01/requirements.md with the new acceptance criteria.

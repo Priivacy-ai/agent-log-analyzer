@@ -2,14 +2,27 @@ package analyzer
 
 import (
 	"bytes"
+	"context"
 	"regexp"
 	"sort"
 	"strings"
+	"time"
+
+	"github.com/robertdouglass/claude-log-analyzer/internal/analyzer/sdd"
 )
 
 type signature struct {
 	id       string
 	patterns []*regexp.Regexp
+}
+
+// init wires the SDD chunk loader so the sdd package can read the embedded
+// signatures without importing analyzer (which would create an import cycle
+// because this file now imports sdd). Assigning ChunksProvider here is the
+// single source of truth; tests in the sdd package leave it nil and rely on
+// the empty-registry path.
+func init() {
+	sdd.ChunksProvider = SDDDetectorChunks
 }
 
 func DetectEcosystem(input []byte, lines []parsedLine) Ecosystem {
@@ -30,7 +43,61 @@ func DetectEcosystem(input []byte, lines []parsedLine) Ecosystem {
 	}
 	eco.UnknownMCPServerCount = countUnknownMCP(input, eco.MCPServersKnown)
 	eco.UnknownSkillCount = countUnknownSlashCommands(lines, registry.KnownSlashCommandIDs())
+
+	// SDD fingerprint pass (WP03). The probe call site is bounded by a 5s
+	// ceiling per NFR-002; individual probe.Version invocations should set
+	// tighter per-call deadlines as the registry grows.
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	probe := sdd.NewRealProbe()
+	slashHits := extractSlashTokens(lines)
+	sddFps := sdd.Evaluate(ctx, text, slashHits, probe, sdd.LoadRegistry())
+	if len(sddFps) > 0 {
+		fps := make([]EcosystemFingerprint, len(sddFps))
+		for i, f := range sddFps {
+			fps[i] = EcosystemFingerprint{
+				ID:            f.ID,
+				Confidence:    f.Confidence,
+				Sources:       f.Sources,
+				EvidenceCount: f.EvidenceCount,
+				Active:        f.Active,
+				Installed:     f.Installed,
+				VersionBucket: f.VersionBucket,
+			}
+		}
+		eco.WorkflowFingerprints = fps
+	}
+
 	return eco
+}
+
+// extractSlashTokens walks parsed lines and returns the deduplicated,
+// lowercased list of slash-prefixed command tokens (e.g. "/specify" → "specify").
+// Modeled on countUnknownSlashCommands but returns the tokens instead of a
+// count, for use by the SDD evaluator's slash_command markers. Tool-emitted
+// lines are skipped to keep this aligned with the user-text surface.
+func extractSlashTokens(lines []parsedLine) []string {
+	re := regexp.MustCompile(`(?:^|[\s"'(:])/(?:[A-Za-z][A-Za-z0-9_-]{2,})`)
+	seen := map[string]bool{}
+	for _, line := range lines {
+		if line.IsTool {
+			continue
+		}
+		for _, raw := range re.FindAllString(line.Text, -1) {
+			raw = strings.TrimLeft(raw, " \t\n\r\"'(:")
+			name := strings.TrimPrefix(strings.ToLower(raw), "/")
+			if name == "" {
+				continue
+			}
+			seen[name] = true
+		}
+	}
+	out := make([]string, 0, len(seen))
+	for k := range seen {
+		out = append(out, k)
+	}
+	sort.Strings(out)
+	return out
 }
 
 func detectMany(text string, signatures []signature) []string {

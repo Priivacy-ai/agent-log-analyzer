@@ -3,12 +3,38 @@ package analyzer
 import (
 	"embed"
 	"encoding/json"
+	"fmt"
+	"io/fs"
 	"regexp"
+	"sort"
 	"sync"
 )
 
 //go:embed signatures/*.json
 var signatureFS embed.FS
+
+// SDDDetectorChunks returns the raw bytes of every embedded JSON file
+// matching `signatures/sdd_detectors*.json`, ordered by filename. Each
+// chunk is expected to decode as a JSON array of detector records; the
+// `sdd` package concatenates them at load time. Exposing this as a sibling
+// of `signatureFS` keeps a single source of truth for the embed pattern
+// rather than re-embedding inside `sdd`.
+func SDDDetectorChunks() [][]byte {
+	matches, err := fs.Glob(signatureFS, "signatures/sdd_detectors*.json")
+	if err != nil {
+		panic(fmt.Errorf("sdd: glob embedded signatures: %w", err))
+	}
+	sort.Strings(matches)
+	chunks := make([][]byte, 0, len(matches))
+	for _, path := range matches {
+		data, err := signatureFS.ReadFile(path)
+		if err != nil {
+			panic(fmt.Errorf("sdd: read embedded %s: %w", path, err))
+		}
+		chunks = append(chunks, data)
+	}
+	return chunks
+}
 
 type signatureRegistry struct {
 	Frameworks      []signature

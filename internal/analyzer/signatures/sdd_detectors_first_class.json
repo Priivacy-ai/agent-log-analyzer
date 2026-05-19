@@ -1,0 +1,98 @@
+[
+  {
+    "id": "spec_kitty",
+    "display_name": "Spec Kitty",
+    "aliases": ["spec-kitty", "kittify", "kitty-specs"],
+    "category": "sdd",
+    "competitor_priority": 1,
+    "status": "verified",
+    "source_references": [
+      {"kind": "official_repo", "url": "https://github.com/spec-kitty/spec-kitty", "note": "Spec Kitty product home"},
+      {"kind": "docs", "url": "https://spec-kitty.ai/", "note": "Documents the .kittify/ workspace, CLI, and skills"},
+      {"kind": "package_registry", "url": "https://pypi.org/project/spec-kitty/", "note": "Python CLI distribution"}
+    ],
+    "markers": [
+      {"source_class": "config_dir", "pattern": "(?i)(^|[\\s/'\"`(\\[])\\.kittify/", "note": ".kittify workspace dir at repo root"},
+      {"source_class": "config_dir", "pattern": "(?i)(^|[\\s/'\"`(\\[])kitty-specs/", "note": "kitty-specs mission planning dir"},
+      {"source_class": "config_file", "pattern": "(?i)\\.kittify/(config\\.yaml|skills-manifest\\.json|command-skills-manifest\\.json)", "note": "Spec Kitty config files"},
+      {"source_class": "config_file", "pattern": "(?i)kitty-specs/[a-z0-9_\\-]+/(spec|plan|tasks|research)\\.md", "note": "mission planning artifacts"},
+      {"source_class": "package_manifest", "pattern": "(?i)pypi\\.org/project/spec-kitty|pip install\\s+spec-kitty", "note": "PyPI package reference"},
+      {"source_class": "command_name", "pattern": "(?i)\\bspec-kitty\\s+(setup|charter|agent|tasks|next|status|review|merge|accept|dashboard)\\b", "note": "spec-kitty CLI verb invocation"},
+      {"source_class": "slash_command", "pattern": "(?i)/?\\bspec-kitty\\.(specify|plan|tasks|implement|review|merge|accept|dashboard|status|charter|tasks-packages|tasks-outline|tasks-finalize|analyze|research)\\b", "note": "spec-kitty.* slash command namespace"},
+      {"source_class": "skill_name", "pattern": "(?i)\\bspec-kitty-(glossary-context|bulk-edit-classification|git-workflow|orchestrator-api-operator|charter-doctrine|implement-review|program-orchestrate|runtime-next|runtime-review|spdd-reasons|mission-review|setup-doctor|mission-system)\\b", "note": "spec-kitty-* Claude skill family"},
+      {"source_class": "cli_binary", "binary": "spec-kitty", "note": "primary CLI binary"},
+      {"source_class": "cli_version_probe", "binary": "spec-kitty", "version_args": ["--version"], "note": "version probe"},
+      {"source_class": "config_dir", "pattern": "(?i)(^|[\\s/'\"`(\\[])\\.specify/", "negative": true, "note": "GitHub Spec Kit artifact; presence vetoes Spec Kitty"},
+      {"source_class": "config_dir", "pattern": "(?i)(^|[\\s/'\"`(\\[])openspec/", "negative": true, "note": "OpenSpec workspace dir; presence vetoes Spec Kitty"}
+    ],
+    "confidence_rules": [
+      {"confidence": "high", "requires_distinct_classes": 2},
+      {"confidence": "medium", "requires_any_of": ["cli_binary", "slash_command"]},
+      {"confidence": "low", "requires_any_of": ["command_name"]}
+    ]
+  },
+  {
+    "id": "github_spec_kit",
+    "display_name": "GitHub Spec Kit",
+    "aliases": ["spec-kit", "github/spec-kit", "Specify CLI", "specify"],
+    "category": "sdd",
+    "competitor_priority": 2,
+    "status": "verified",
+    "source_references": [
+      {"kind": "official_repo", "url": "https://github.com/github/spec-kit", "note": "GitHub Spec Kit repo"},
+      {"kind": "docs", "url": "https://github.com/github/spec-kit#readme", "note": "README documents .specify/ layout and /speckit.* slash commands"},
+      {"kind": "package_registry", "url": "https://pypi.org/project/specify-cli/", "note": "specify CLI on PyPI"}
+    ],
+    "markers": [
+      {"source_class": "config_dir", "pattern": "(?i)(^|[\\s/'\"`(\\[])\\.specify/", "note": ".specify/ dir created by specify init"},
+      {"source_class": "config_dir", "pattern": "(?i)\\.specify/(memory|templates|scripts)/", "note": ".specify subdirectories"},
+      {"source_class": "config_file", "pattern": "(?i)\\.specify/memory/constitution\\.md", "note": "Spec Kit constitution file"},
+      {"source_class": "config_file", "pattern": "(?i)\\.specify/scripts/(bash|powershell)/setup-plan\\.(sh|ps1)", "note": "Spec Kit setup scripts"},
+      {"source_class": "package_manifest", "pattern": "(?i)pypi\\.org/project/specify-cli|uvx\\s+--from\\s+git\\+https://github\\.com/github/spec-kit", "note": "PyPI/uvx package reference"},
+      {"source_class": "command_name", "pattern": "(?i)\\bspecify\\s+(init|check)\\b", "note": "specify CLI verb"},
+      {"source_class": "slash_command", "pattern": "(?i)/speckit\\.(constitution|specify|clarify|plan|tasks|analyze|implement|checklist)\\b", "note": "/speckit.* slash command namespace"},
+      {"source_class": "cli_binary", "binary": "specify", "note": "specify CLI binary"},
+      {"source_class": "cli_version_probe", "binary": "specify", "version_args": ["--version"], "note": "version probe"},
+      {"source_class": "config_dir", "pattern": "(?i)(^|[\\s/'\"`(\\[])\\.kittify/", "negative": true, "note": "Spec Kitty workspace; vetoes GitHub Spec Kit"},
+      {"source_class": "config_dir", "pattern": "(?i)(^|[\\s/'\"`(\\[])kitty-specs/", "negative": true, "note": "Spec Kitty mission dir; vetoes GitHub Spec Kit"},
+      {"source_class": "config_dir", "pattern": "(?i)(^|[\\s/'\"`(\\[])openspec/", "negative": true, "note": "OpenSpec workspace; vetoes GitHub Spec Kit"}
+    ],
+    "confidence_rules": [
+      {"confidence": "high", "requires_distinct_classes": 2},
+      {"confidence": "medium", "requires_any_of": ["cli_binary", "slash_command"]},
+      {"confidence": "low", "requires_any_of": ["command_name"]}
+    ]
+  },
+  {
+    "id": "openspec",
+    "display_name": "OpenSpec",
+    "aliases": ["openspec", "@fission-ai/openspec"],
+    "category": "sdd",
+    "competitor_priority": 3,
+    "status": "verified",
+    "source_references": [
+      {"kind": "official_repo", "url": "https://github.com/Fission-AI/OpenSpec", "note": "OpenSpec repo by Fission AI"},
+      {"kind": "docs", "url": "https://github.com/Fission-AI/OpenSpec#readme", "note": "README documents openspec/ layout and CLI"},
+      {"kind": "package_registry", "url": "https://www.npmjs.com/package/@fission-ai/openspec", "note": "npm package"}
+    ],
+    "markers": [
+      {"source_class": "config_dir", "pattern": "(?i)(^|[\\s/'\"`(\\[])openspec/", "note": "openspec/ workspace dir at repo root"},
+      {"source_class": "config_dir", "pattern": "(?i)openspec/(changes|specs)/", "note": "openspec change and spec subdirs"},
+      {"source_class": "config_file", "pattern": "(?i)openspec/(project|AGENTS)\\.md", "note": "OpenSpec project context and agent instructions"},
+      {"source_class": "config_file", "pattern": "(?i)openspec/changes/[a-z0-9_\\-]+/(proposal|tasks)\\.md", "note": "per-change artifacts"},
+      {"source_class": "package_manifest", "pattern": "(?i)@fission-ai/openspec|npmjs\\.com/package/@fission-ai/openspec", "note": "npm package reference"},
+      {"source_class": "command_name", "pattern": "(?i)\\bopenspec\\s+(init|validate|list|show|archive)\\b", "note": "openspec CLI verb"},
+      {"source_class": "slash_command", "pattern": "(?i)/openspec[-.](proposal|specify|plan|tasks|implement)\\b", "note": "/openspec-* or /openspec.* slash commands per agent integration"},
+      {"source_class": "cli_binary", "binary": "openspec", "note": "openspec CLI binary"},
+      {"source_class": "cli_version_probe", "binary": "openspec", "version_args": ["--version"], "note": "version probe"},
+      {"source_class": "config_dir", "pattern": "(?i)(^|[\\s/'\"`(\\[])\\.kittify/", "negative": true, "note": "Spec Kitty workspace; vetoes OpenSpec"},
+      {"source_class": "config_dir", "pattern": "(?i)(^|[\\s/'\"`(\\[])kitty-specs/", "negative": true, "note": "Spec Kitty mission dir; vetoes OpenSpec"},
+      {"source_class": "config_dir", "pattern": "(?i)(^|[\\s/'\"`(\\[])\\.specify/", "negative": true, "note": "GitHub Spec Kit workspace; vetoes OpenSpec"}
+    ],
+    "confidence_rules": [
+      {"confidence": "high", "requires_distinct_classes": 2},
+      {"confidence": "medium", "requires_any_of": ["cli_binary", "slash_command"]},
+      {"confidence": "low", "requires_any_of": ["command_name"]}
+    ]
+  }
+]

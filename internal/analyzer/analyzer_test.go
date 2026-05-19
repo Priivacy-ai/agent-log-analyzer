@@ -1,6 +1,7 @@
 package analyzer
 
 import (
+	"encoding/json"
 	"strings"
 	"testing"
 )
@@ -198,6 +199,43 @@ func TestScrubberCoversCommonSecretFamilies(t *testing.T) {
 		if counts[family] == 0 {
 			t.Fatalf("expected redaction count for %s, got %#v", family, counts)
 		}
+	}
+}
+
+// TestUnknownMCPRemainsCountOnlyAfterFingerprintPass regression-tests the
+// NFR-001 invariant: when a transcript references an unknown (non-allowlisted)
+// MCP server, the analyzer must record only its count, never the name itself,
+// and the fingerprint pass must not resurrect the name into
+// Ecosystem.WorkflowFingerprints.
+func TestUnknownMCPRemainsCountOnlyAfterFingerprintPass(t *testing.T) {
+	input := []byte(`{"type":"tool","name":"mcp__company_private_42__do_thing"}` + "\n")
+	rep, err := Analyze("job-unknown-mcp", input)
+	if err != nil {
+		t.Fatalf("Analyze: %v", err)
+	}
+
+	if rep.Ecosystem.UnknownMCPServerCount != 1 {
+		t.Errorf("expected UnknownMCPServerCount=1, got %d", rep.Ecosystem.UnknownMCPServerCount)
+	}
+
+	// No fingerprint should match the unknown private MCP name.
+	for _, fp := range rep.Ecosystem.WorkflowFingerprints {
+		if strings.Contains(fp.ID, "company_private_42") {
+			t.Errorf("private MCP name leaked into fingerprint ID %q", fp.ID)
+		}
+	}
+
+	// The serialized report must contain the count but NOT the name.
+	b, err := json.Marshal(rep)
+	if err != nil {
+		t.Fatalf("marshal: %v", err)
+	}
+	s := string(b)
+	if !strings.Contains(s, `"unknown_mcp_server_count":1`) {
+		t.Errorf("expected serialized report to include unknown_mcp_server_count:1; got %s", s)
+	}
+	if strings.Contains(s, "company_private_42") {
+		t.Errorf("private MCP name leaked into serialized report: %s", s)
 	}
 }
 

@@ -1,0 +1,13 @@
+Sanitized claude-code transcript excerpt — Spec Workflow MCP server.
+
+user: Add the Pimzino Spec Workflow MCP server to this project so we can drive requirements-design-tasks flows through MCP.
+assistant: Installing via npx @pimzino/spec-workflow-mcp. Reference: https://www.npmjs.com/package/@pimzino/spec-workflow-mcp.
+assistant: The server creates a /repo/.spec-workflow/ workspace for specs and steering rules.
+user: Scaffold a new feature.
+assistant: Calling mcp__spec-workflow__create-spec-doc to bootstrap the per-feature directory.
+assistant: I see /repo/.spec-workflow/specs/example-feature-01/requirements.md and /repo/.spec-workflow/specs/example-feature-01/design.md were generated.
+assistant: Also reading /repo/.spec-workflow/specs/example-feature-01/tasks.md per the documented triple.
+user: List the steering rules.
+assistant: Calling mcp__spec-workflow__get-steering-context. Steering rules live under /repo/.spec-workflow/steering/.
+user: Request approval before we move on.
+assistant: Calling mcp__spec-workflow__request-approval with the current spec context.

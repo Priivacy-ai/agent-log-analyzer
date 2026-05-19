@@ -1,0 +1,12 @@
+Sanitized transcript excerpt — generic SDD-adjacent terminology only.
+
+user: I want to set up a spec-driven workflow for this project.
+assistant: Sure. We can keep specs under specs/ at the repo root.
+assistant: Each feature can have its own tasks.md and design.md.
+user: Add a requirements.md alongside the design doc.
+assistant: Good idea. We can also stash project STATE.md so contributors know where things stand.
+assistant: Pre-commit hooks can lint the docs before they land.
+user: Let's keep the workflow lightweight — no extra tooling.
+assistant: Agreed. Plain markdown in specs/feature-x/{requirements,design,tasks}.md is enough.
+assistant: STATE.md will summarize cross-feature status.
+user: hooks for formatting are fine, but let's avoid adding a new CLI.

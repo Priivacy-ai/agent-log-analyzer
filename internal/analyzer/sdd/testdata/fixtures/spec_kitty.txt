@@ -1,0 +1,15 @@
+Sanitized claude-code transcript excerpt — Spec Kitty workspace.
+
+user: Let's keep working on the mission. Run `spec-kitty status` to see where we are.
+assistant: Reading /repo/.kittify/config.yaml to load the workspace config.
+assistant: The skills manifest at /repo/.kittify/skills-manifest.json lists the spec-kitty-runtime-next skill.
+assistant: Mission planning artifacts live at /repo/kitty-specs/example-mission-01/spec.md and kitty-specs/example-mission-01/tasks.md.
+user: Please advance via /spec-kitty.tasks then /spec-kitty.implement.
+assistant: Invoking spec-kitty.tasks now.
+tool_call: spec-kitty agent tasks move-task WP02 --to in_progress
+assistant: I also notice the spec-kitty-implement-review skill applies here.
+assistant: Reading /repo/kitty-specs/example-mission-01/plan.md for context.
+assistant: The command-skills mapping in /repo/.kittify/command-skills-manifest.json wires this together.
+user: Great. After implementation, run /spec-kitty.review then /spec-kitty.merge.
+assistant: Acknowledged. The spec-kitty CLI is the canonical entry point; pip install spec-kitty installs it from https://pypi.org/project/spec-kitty/.
+assistant: Mission research lives at kitty-specs/example-mission-01/research.md.

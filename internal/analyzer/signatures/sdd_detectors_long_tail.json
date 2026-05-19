@@ -1,0 +1,132 @@
+[
+  {
+    "id": "spec_workflow_mcp",
+    "display_name": "Spec Workflow MCP",
+    "aliases": ["spec-workflow-mcp", "@pimzino/spec-workflow-mcp", "Spec Workflow MCP"],
+    "category": "sdd",
+    "competitor_priority": 7,
+    "status": "verified",
+    "source_references": [
+      {"kind": "official_repo", "url": "https://github.com/Pimzino/spec-workflow-mcp", "note": "Official Spec Workflow MCP repository; README documents the .spec-workflow/ workspace and MCP tool names"},
+      {"kind": "package_registry", "url": "https://www.npmjs.com/package/@pimzino/spec-workflow-mcp", "note": "npm package; documented runner is npx @pimzino/spec-workflow-mcp"},
+      {"kind": "docs", "url": "https://github.com/Pimzino/spec-workflow-mcp#documents", "note": "Documents the requirements/design/tasks triple inside .spec-workflow/specs/<feature>/"}
+    ],
+    "markers": [
+      {"source_class": "mcp_server_name", "pattern": "(?i)mcp__spec[_-]workflow__[a-z0-9_\\-]+", "note": "MCP tool call namespace mcp__spec-workflow__<tool> (or underscore variant)"},
+      {"source_class": "config_dir", "pattern": "(?i)(^|[\\s/'\"`(\\[])\\.spec-workflow/", "note": ".spec-workflow workspace dir created by the MCP server"},
+      {"source_class": "config_dir", "pattern": "(?i)\\.spec-workflow/(specs|steering)/", "note": ".spec-workflow subdirectories"},
+      {"source_class": "config_file", "pattern": "(?i)\\.spec-workflow/specs/[a-z0-9_\\-]+/(requirements|design|tasks)\\.md", "note": "per-feature spec triple inside .spec-workflow/specs/<feature>/"},
+      {"source_class": "package_manifest", "pattern": "(?i)@pimzino/spec-workflow-mcp|npmjs\\.com/package/@pimzino/spec-workflow-mcp", "note": "npm package reference"},
+      {"source_class": "config_dir", "pattern": "(?i)(^|[\\s/'\"`(\\[])\\.kittify/", "negative": true, "note": "Spec Kitty workspace; vetoes Spec Workflow MCP"},
+      {"source_class": "config_dir", "pattern": "(?i)(^|[\\s/'\"`(\\[])kitty-specs/", "negative": true, "note": "Spec Kitty mission dir; vetoes Spec Workflow MCP"},
+      {"source_class": "config_dir", "pattern": "(?i)(^|[\\s/'\"`(\\[])\\.specify/", "negative": true, "note": "GitHub Spec Kit workspace; vetoes Spec Workflow MCP"},
+      {"source_class": "config_dir", "pattern": "(?i)(^|[\\s/'\"`(\\[])openspec/", "negative": true, "note": "OpenSpec workspace; vetoes Spec Workflow MCP"},
+      {"source_class": "config_dir", "pattern": "(?i)(^|[\\s/'\"`(\\[])\\.kiro/", "negative": true, "note": "Kiro workspace; vetoes Spec Workflow MCP"},
+      {"source_class": "config_dir", "pattern": "(?i)(^|[\\s/'\"`(\\[])\\.bmad-core/", "negative": true, "note": "BMAD workspace; vetoes Spec Workflow MCP"},
+      {"source_class": "package_manifest", "pattern": "(?i)\"bmad-method\"\\s*:|npx\\s+bmad-method", "negative": true, "note": "BMAD package reference; vetoes Spec Workflow MCP"}
+    ],
+    "confidence_rules": [
+      {"confidence": "high", "requires_distinct_classes": 2},
+      {"confidence": "medium", "requires_any_of": ["cli_binary", "slash_command", "mcp_server_name", "package_manifest"]},
+      {"confidence": "low", "requires_any_of": ["command_name"]}
+    ]
+  },
+  {
+    "id": "chatdev",
+    "display_name": "ChatDev",
+    "aliases": ["ChatDev", "chatdev", "OpenBMB ChatDev"],
+    "category": "sdd",
+    "competitor_priority": 8,
+    "status": "verified",
+    "source_references": [
+      {"kind": "official_repo", "url": "https://github.com/OpenBMB/ChatDev", "note": "Official ChatDev repository; README documents run.py, WareHouse/, CompanyConfig/ structure"},
+      {"kind": "docs", "url": "https://github.com/OpenBMB/ChatDev/wiki/Customization", "note": "Wiki documents ChatChainConfig.json, PhaseConfig.json, RoleConfig.json"},
+      {"kind": "docs", "url": "https://github.com/OpenBMB/ChatDev#-quickstart", "note": "Quickstart documents WareHouse/ output dir and run.py invocation"}
+    ],
+    "markers": [
+      {"source_class": "config_dir", "pattern": "(^|[\\s/'\"`(\\[])WareHouse/", "note": "ChatDev project output directory (case-sensitive; the repo uses CamelCase)"},
+      {"source_class": "config_dir", "pattern": "(^|[\\s/'\"`(\\[])CompanyConfig/", "note": "ChatDev per-company configuration directory (case-sensitive)"},
+      {"source_class": "config_file", "pattern": "(?i)CompanyConfig/[a-z0-9_\\-]+/ChatChainConfig\\.json", "note": "ChatDev chain-of-phases config (per-company)"},
+      {"source_class": "config_file", "pattern": "(?i)CompanyConfig/[a-z0-9_\\-]+/PhaseConfig\\.json", "note": "ChatDev phase configuration (per-company)"},
+      {"source_class": "config_file", "pattern": "(?i)CompanyConfig/[a-z0-9_\\-]+/RoleConfig\\.json", "note": "ChatDev role configuration (per-company)"},
+      {"source_class": "command_name", "pattern": "OpenBMB/ChatDev", "note": "Canonical OpenBMB/ChatDev repo path mention (case-sensitive)"},
+      {"source_class": "config_dir", "pattern": "(?i)(^|[\\s/'\"`(\\[])\\.kittify/", "negative": true, "note": "Spec Kitty workspace; vetoes ChatDev"},
+      {"source_class": "config_dir", "pattern": "(?i)(^|[\\s/'\"`(\\[])kitty-specs/", "negative": true, "note": "Spec Kitty mission dir; vetoes ChatDev"},
+      {"source_class": "config_dir", "pattern": "(?i)(^|[\\s/'\"`(\\[])\\.specify/", "negative": true, "note": "GitHub Spec Kit workspace; vetoes ChatDev"},
+      {"source_class": "config_dir", "pattern": "(?i)(^|[\\s/'\"`(\\[])openspec/", "negative": true, "note": "OpenSpec workspace; vetoes ChatDev"},
+      {"source_class": "config_dir", "pattern": "(?i)(^|[\\s/'\"`(\\[])\\.kiro/", "negative": true, "note": "Kiro workspace; vetoes ChatDev"},
+      {"source_class": "config_dir", "pattern": "(?i)(^|[\\s/'\"`(\\[])\\.bmad-core/", "negative": true, "note": "BMAD workspace; vetoes ChatDev"},
+      {"source_class": "package_manifest", "pattern": "(?i)\"bmad-method\"\\s*:|npx\\s+bmad-method", "negative": true, "note": "BMAD package reference; vetoes ChatDev"}
+    ],
+    "confidence_rules": [
+      {"confidence": "high", "requires_distinct_classes": 2},
+      {"confidence": "medium", "requires_any_of": ["cli_binary", "slash_command", "mcp_server_name", "package_manifest"]},
+      {"confidence": "low", "requires_any_of": ["command_name"]}
+    ]
+  },
+  {
+    "id": "cognition_devin",
+    "display_name": "Cognition Devin",
+    "aliases": ["Devin", "Devin AI", "Cognition", "Cognition Devin"],
+    "category": "sdd",
+    "competitor_priority": 9,
+    "status": "verified",
+    "source_references": [
+      {"kind": "docs", "url": "https://docs.devin.ai/", "note": "Official Devin product documentation"},
+      {"kind": "official_docs", "url": "https://www.cognition.ai/", "note": "Cognition AI corporate site (Devin's vendor)"},
+      {"kind": "docs", "url": "https://app.devin.ai/", "note": "Hosted Devin web application; URL pattern is the most fingerprintable signal"}
+    ],
+    "markers": [
+      {"source_class": "command_name", "pattern": "(?i)https?://app\\.devin\\.ai(/[A-Za-z0-9_\\-/]*)?", "note": "Devin web app URL pattern (most fingerprintable signal per research)"},
+      {"source_class": "command_name", "pattern": "(?i)https?://docs\\.devin\\.ai(/[A-Za-z0-9_\\-/]*)?", "note": "Devin documentation URL"},
+      {"source_class": "command_name", "pattern": "(?i)\\bCognition Devin\\b", "note": "Vendor-qualified mention (case-insensitive)"},
+      {"source_class": "command_name", "pattern": "(?i)\\bDevin AI\\b", "note": "Product-qualified mention (case-insensitive)"},
+      {"source_class": "config_dir", "pattern": "(?i)(^|[\\s/'\"`(\\[])\\.kittify/", "negative": true, "note": "Spec Kitty workspace; vetoes Cognition Devin"},
+      {"source_class": "config_dir", "pattern": "(?i)(^|[\\s/'\"`(\\[])kitty-specs/", "negative": true, "note": "Spec Kitty mission dir; vetoes Cognition Devin"},
+      {"source_class": "config_dir", "pattern": "(?i)(^|[\\s/'\"`(\\[])\\.specify/", "negative": true, "note": "GitHub Spec Kit workspace; vetoes Cognition Devin"},
+      {"source_class": "config_dir", "pattern": "(?i)(^|[\\s/'\"`(\\[])openspec/", "negative": true, "note": "OpenSpec workspace; vetoes Cognition Devin"},
+      {"source_class": "config_dir", "pattern": "(?i)(^|[\\s/'\"`(\\[])\\.kiro/", "negative": true, "note": "Kiro workspace; vetoes Cognition Devin"},
+      {"source_class": "config_dir", "pattern": "(?i)(^|[\\s/'\"`(\\[])\\.bmad-core/", "negative": true, "note": "BMAD workspace; vetoes Cognition Devin"},
+      {"source_class": "package_manifest", "pattern": "(?i)\"bmad-method\"\\s*:|npx\\s+bmad-method", "negative": true, "note": "BMAD package reference; vetoes Cognition Devin"}
+    ],
+    "confidence_rules": [
+      {"confidence": "high", "requires_distinct_classes": 2},
+      {"confidence": "medium", "requires_any_of": ["cli_binary", "slash_command", "mcp_server_name", "package_manifest"]},
+      {"confidence": "low", "requires_any_of": ["command_name"]}
+    ]
+  },
+  {
+    "id": "microsoft_agent_framework",
+    "display_name": "Microsoft Agent Framework",
+    "aliases": ["Microsoft Agent Framework", "agent-framework", "Microsoft.AgentFramework"],
+    "category": "sdd",
+    "competitor_priority": 10,
+    "status": "verified",
+    "source_references": [
+      {"kind": "official_repo", "url": "https://github.com/microsoft/agent-framework", "note": "Official Microsoft Agent Framework repository"},
+      {"kind": "docs", "url": "https://learn.microsoft.com/agent-framework/", "note": "Official Microsoft Learn documentation"},
+      {"kind": "package_registry", "url": "https://www.nuget.org/packages?q=Microsoft.AgentFramework", "note": "NuGet listings for Microsoft.AgentFramework.* packages"},
+      {"kind": "package_registry", "url": "https://pypi.org/project/agent-framework/", "note": "Python agent-framework package on PyPI"}
+    ],
+    "markers": [
+      {"source_class": "package_manifest", "pattern": "<PackageReference\\s+Include=\"Microsoft\\.AgentFramework(\\.[A-Za-z0-9_\\-]+)?\"", "note": "NuGet PackageReference in .csproj (case-sensitive; matches official package family)"},
+      {"source_class": "package_manifest", "pattern": "(?i)nuget\\.org/packages\\?q=Microsoft\\.AgentFramework", "note": "NuGet package listing URL"},
+      {"source_class": "package_manifest", "pattern": "(?i)pypi\\.org/project/agent-framework(/|\\b)", "note": "PyPI agent-framework package URL"},
+      {"source_class": "package_manifest", "pattern": "(?i)^\\s*agent-framework\\s*[=><~!]", "note": "agent-framework pin in requirements.txt / pyproject.toml dependency list"},
+      {"source_class": "command_name", "pattern": "(?i)\\bMicrosoft Agent Framework\\b", "note": "Vendor-qualified product mention"},
+      {"source_class": "command_name", "pattern": "(?i)github\\.com/microsoft/agent-framework", "note": "Canonical GitHub repo path"},
+      {"source_class": "config_dir", "pattern": "(?i)(^|[\\s/'\"`(\\[])\\.kittify/", "negative": true, "note": "Spec Kitty workspace; vetoes Microsoft Agent Framework"},
+      {"source_class": "config_dir", "pattern": "(?i)(^|[\\s/'\"`(\\[])kitty-specs/", "negative": true, "note": "Spec Kitty mission dir; vetoes Microsoft Agent Framework"},
+      {"source_class": "config_dir", "pattern": "(?i)(^|[\\s/'\"`(\\[])\\.specify/", "negative": true, "note": "GitHub Spec Kit workspace; vetoes Microsoft Agent Framework"},
+      {"source_class": "config_dir", "pattern": "(?i)(^|[\\s/'\"`(\\[])openspec/", "negative": true, "note": "OpenSpec workspace; vetoes Microsoft Agent Framework"},
+      {"source_class": "config_dir", "pattern": "(?i)(^|[\\s/'\"`(\\[])\\.kiro/", "negative": true, "note": "Kiro workspace; vetoes Microsoft Agent Framework"},
+      {"source_class": "config_dir", "pattern": "(?i)(^|[\\s/'\"`(\\[])\\.bmad-core/", "negative": true, "note": "BMAD workspace; vetoes Microsoft Agent Framework"},
+      {"source_class": "package_manifest", "pattern": "(?i)\"bmad-method\"\\s*:|npx\\s+bmad-method", "negative": true, "note": "BMAD package reference; vetoes Microsoft Agent Framework"}
+    ],
+    "confidence_rules": [
+      {"confidence": "high", "requires_distinct_classes": 2},
+      {"confidence": "medium", "requires_any_of": ["cli_binary", "slash_command", "mcp_server_name", "package_manifest"]},
+      {"confidence": "low", "requires_any_of": ["command_name"]}
+    ]
+  }
+]

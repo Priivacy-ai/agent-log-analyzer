@@ -1,0 +1,12 @@
+Sanitized transcript excerpt — Microsoft Agent Framework adoption.
+
+user: Stand up a .NET agent host using the Microsoft Agent Framework.
+assistant: Acknowledged. Pulling NuGet packages from https://www.nuget.org/packages?q=Microsoft.AgentFramework.
+assistant: Adding <PackageReference Include="Microsoft.AgentFramework" Version="1.0.0-preview" /> to AgentHost.csproj.
+assistant: Also adding <PackageReference Include="Microsoft.AgentFramework.OpenAI" Version="1.0.0-preview" /> for the OpenAI binding.
+assistant: For the Python orchestration script we'll pin agent-framework >=0.3 in pyproject.toml.
+user: Reference the source repo in the README.
+assistant: Linking github.com/microsoft/agent-framework as the canonical Microsoft Agent Framework repository.
+user: Add the A2A connector too.
+assistant: Adding <PackageReference Include="Microsoft.AgentFramework.A2A" Version="1.0.0-preview" />.
+assistant: Documentation lives at https://learn.microsoft.com/agent-framework/quickstart for the Microsoft Agent Framework getting-started flow.

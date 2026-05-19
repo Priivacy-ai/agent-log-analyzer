@@ -1,0 +1,15 @@
+Sanitized claude-code transcript excerpt — GitHub Spec Kit workspace.
+
+user: Initialize the project. Run `specify init` and let's set up the constitution.
+assistant: Running specify init in /repo. This creates /repo/.specify/ with memory, templates, and scripts.
+assistant: I see /repo/.specify/memory/constitution.md was generated.
+assistant: Templates landed in /repo/.specify/templates/ and scripts in /repo/.specify/scripts/bash/setup-plan.sh.
+user: Use /speckit.constitution to author the project constitution.
+assistant: Invoking /speckit.constitution now.
+user: Then /speckit.specify followed by /speckit.plan and /speckit.tasks.
+assistant: Acknowledged. Slash command namespace is /speckit.<verb>.
+tool_call: specify check
+assistant: The specify CLI ships via https://pypi.org/project/specify-cli/; install it with uvx --from git+https://github.com/github/spec-kit.git specify init.
+assistant: After /speckit.tasks I will run /speckit.analyze and /speckit.implement.
+assistant: The /speckit.checklist verb generates a checklist artifact.
+assistant: Project memory is now persisted under /repo/.specify/memory/.
