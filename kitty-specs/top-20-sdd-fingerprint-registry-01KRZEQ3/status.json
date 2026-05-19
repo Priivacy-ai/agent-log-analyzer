@@ -1,19 +1,19 @@
 {
-  "event_count": 23,
-  "last_event_id": "01KRZJKQ8EVN01AFYCYJW23MTE",
-  "materialized_at": "2026-05-19T07:36:08.718428+00:00",
+  "event_count": 24,
+  "last_event_id": "01KRZJP07E473S4RQPJ29V5M3X",
+  "materialized_at": "2026-05-19T07:37:23.438629+00:00",
   "mission_number": "",
   "mission_slug": "top-20-sdd-fingerprint-registry-01KRZEQ3",
   "mission_type": "software-dev",
   "summary": {
-    "approved": 1,
+    "approved": 2,
     "blocked": 0,
     "canceled": 0,
     "claimed": 0,
     "done": 0,
     "for_review": 0,
     "in_progress": 0,
-    "in_review": 2,
+    "in_review": 1,
     "planned": 7
   },
   "work_packages": {
@@ -39,11 +39,11 @@
       "last_transition_at": "2026-05-19T07:03:57.060015+00:00"
     },
     "WP04": {
-      "actor": "claude:opus-4.7:reviewer-renata:reviewer",
+      "actor": "user",
       "force_count": 1,
-      "lane": "in_review",
-      "last_event_id": "01KRZJKBFKPV0DZZSRAXM4Z2TY",
-      "last_transition_at": "2026-05-19T07:35:56.660028+00:00"
+      "lane": "approved",
+      "last_event_id": "01KRZJP07E473S4RQPJ29V5M3X",
+      "last_transition_at": "2026-05-19T07:37:23.438629+00:00"
     },
     "WP05": {
       "actor": "finalize-tasks",
