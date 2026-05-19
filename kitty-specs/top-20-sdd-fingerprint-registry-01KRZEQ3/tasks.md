@@ -23,12 +23,12 @@
 | T012 | Implement `Marker.Negative` veto logic | WP03 | |
 | T013 | Wire `internal/analyzer/ecosystem.go` to call `sdd.Evaluate` and assign `Ecosystem.WorkflowFingerprints` | WP03 | |
 | T014 | Add `evaluator_test.go` with synthetic detectors verifying scoring, ordering, Active | WP03 | |
-| T015 | Scaffold `docs/research/sdd-fingerprints/` + per-tool stubs + `README.md` | WP04 | |
-| T016 | Research and fill: Spec Kitty, GitHub Spec Kit, OpenSpec | WP04 | [P] |
-| T017 | Research and fill: Kiro, BMAD-METHOD, GSD | WP04 | [P] |
-| T018 | Research and fill: Spec Workflow MCP, SDD Pilot, Spec-Driven Develop, spec2ship, ChatDev, PAUL | WP04 | [P] |
-| T019 | Research and fill: fspec, whenwords, Intent, Cognition/Devin, Microsoft Agent Framework, Tessl, Agentic Code, CodeSpeak | WP04 | [P] |
-| T020 | Add `docs/sdd-fingerprint-registry.md` cross-linking per-tool research files | WP04 | |
+| T015 | Scaffold `docs/research/sdd-fingerprints/` + per-tool stubs + `README.md` | WP04 | | [D] |
+| T016 | Research and fill: Spec Kitty, GitHub Spec Kit, OpenSpec | WP04 | [D] |
+| T017 | Research and fill: Kiro, BMAD-METHOD, GSD | WP04 | [D] |
+| T018 | Research and fill: Spec Workflow MCP, SDD Pilot, Spec-Driven Develop, spec2ship, ChatDev, PAUL | WP04 | [D] |
+| T019 | Research and fill: fspec, whenwords, Intent, Cognition/Devin, Microsoft Agent Framework, Tessl, Agentic Code, CodeSpeak | WP04 | [D] |
+| T020 | Add `docs/sdd-fingerprint-registry.md` cross-linking per-tool research files | WP04 | | [D] |
 | T021 | Seed `spec_kitty` entry in `sdd_detectors.json` | WP05 | |
 | T022 | Seed `github_spec_kit` entry | WP05 | |
 | T023 | Seed `openspec` entry | WP05 | |
