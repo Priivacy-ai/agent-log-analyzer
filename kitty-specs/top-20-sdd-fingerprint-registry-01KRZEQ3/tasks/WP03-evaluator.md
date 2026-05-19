@@ -169,3 +169,4 @@ match for this work package's `task_type` and `authoritative_surface`.
 
 - 2026-05-19T06:35:00Z -- system -- Prompt created.
 - 2026-05-19T07:38:30Z – claude:opus-4.7:implementer-ivan:implementer – shell_pid=11958 – Started implementation via action command
+- 2026-05-19T07:45:17Z – claude:opus-4.7:implementer-ivan:implementer – shell_pid=11958 – Evaluator + confidence scoring + negative veto + ecosystem wiring; WorkflowFingerprints empty until WP05 lands detector entries. Note: registry.go's analyzer import had to be replaced with an injectable ChunksProvider to break the analyzer<->sdd import cycle introduced by this WP's wiring; ecosystem.go init() supplies the provider.
