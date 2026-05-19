@@ -54,11 +54,11 @@ MVP scope: any one of the three lanes; correctness story requires all three WPs.
 
 ### Included subtasks
 
-- [ ] T001 Implement positional argument resolution in `runAnalyze` (WP01)
-- [ ] T002 Update `usage()` text to document positional form (WP01)
-- [ ] T003 Create `cmd/claude-analyzer/main_test.go` with FR-001..FR-003 tests (WP01)
-- [ ] T004 Update `README.md` and `docs/testing-plan.md` for positional form (WP01)
-- [ ] T005 Update `web/app.js` command generator copy if it advertises `--log` only (WP01)
+- [x] T001 Implement positional argument resolution in `runAnalyze` (WP01)
+- [x] T002 Update `usage()` text to document positional form (WP01)
+- [x] T003 Create `cmd/claude-analyzer/main_test.go` with FR-001..FR-003 tests (WP01)
+- [x] T004 Update `README.md` and `docs/testing-plan.md` for positional form (WP01)
+- [x] T005 Update `web/app.js` command generator copy if it advertises `--log` only (WP01)
 
 ### Implementation sketch
 
