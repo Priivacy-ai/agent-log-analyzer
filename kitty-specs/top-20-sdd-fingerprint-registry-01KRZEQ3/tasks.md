@@ -14,9 +14,9 @@
 | T003 | Add `WorkflowFingerprints []EcosystemFingerprint` to `analyzer.Ecosystem` and define `EcosystemFingerprint` type | WP01 | | [D] |
 | T004 | Add `detector_test.go` covering loader validation, enum rejection, regex compile failure handling | WP01 | | [D] |
 | T005 | `gofmt` + `go test ./...` runs green with empty registry | WP01 | | [D] |
-| T006 | Create `internal/analyzer/sdd/probe.go` with `CLIProbe` interface, `RealProbe`, `FakeProbe` | WP02 | |
-| T007 | Create `internal/analyzer/sdd/version_bucket.go` with `normalizeVersionBucket` | WP02 | [P] |
-| T008 | Add `probe_test.go` + `version_bucket_test.go` (FakeProbe + one safe RealProbe integration test) | WP02 | |
+| T006 | Create `internal/analyzer/sdd/probe.go` with `CLIProbe` interface, `RealProbe`, `FakeProbe` | WP02 | | [D] |
+| T007 | Create `internal/analyzer/sdd/version_bucket.go` with `normalizeVersionBucket` | WP02 | [D] |
+| T008 | Add `probe_test.go` + `version_bucket_test.go` (FakeProbe + one safe RealProbe integration test) | WP02 | | [D] |
 | T009 | Add `version_args` deny-list enforcement to registry loader | WP02 | [P] |
 | T010 | Create `internal/analyzer/sdd/evaluator.go` with `Evaluate(text, lines, probe, registry) []EcosystemFingerprint` | WP03 | |
 | T011 | Implement `ConfidenceRule` scoring and `Active` derivation | WP03 | |
