@@ -1,0 +1,74 @@
+{
+  "version": 1,
+  "mission_slug": "launch-correctness-01KRZZVK",
+  "mission_id": "01KRZZVKHQK6V1R4B0ZABWTFCJ",
+  "mission_branch": "kitty/mission-launch-correctness-01KRZZVK",
+  "target_branch": "main",
+  "lanes": [
+    {
+      "lane_id": "lane-a",
+      "wp_ids": [
+        "WP01"
+      ],
+      "write_scope": [
+        "README.md",
+        "cmd/claude-analyzer/**",
+        "docs/testing-plan.md",
+        "web/app.js"
+      ],
+      "predicted_surfaces": [
+        "api",
+        "artifact-rendering",
+        "legacy-cleanup",
+        "workspace"
+      ],
+      "depends_on_lanes": [],
+      "parallel_group": 0
+    },
+    {
+      "lane_id": "lane-b",
+      "wp_ids": [
+        "WP02",
+        "WP03"
+      ],
+      "write_scope": [
+        "internal/analyzer/aggregate.go",
+        "internal/analyzer/aggregate_test.go",
+        "internal/analyzer/golden_test.go",
+        "internal/analyzer/leak_test.go",
+        "internal/analyzer/testdata/tooling/**",
+        "internal/analyzer/tooling_detect.go",
+        "internal/analyzer/tooling_detect_test.go",
+        "internal/remediation/artifact.go",
+        "internal/remediation/artifact_test.go",
+        "testdata/golden/**"
+      ],
+      "predicted_surfaces": [
+        "api",
+        "artifact-rendering",
+        "legacy-cleanup",
+        "workspace"
+      ],
+      "depends_on_lanes": [],
+      "parallel_group": 0
+    }
+  ],
+  "computed_at": "2026-05-19T12:16:13.972782+00:00",
+  "computed_from": "dependency_graph+ownership",
+  "planning_artifact_wps": [],
+  "collapse_report": {
+    "events": [
+      {
+        "wp_a": "WP03",
+        "wp_b": "WP02",
+        "rule": "dependency",
+        "evidence": "WP03 depends on WP02"
+      }
+    ],
+    "total_merges": 1,
+    "independent_wps_collapsed": 0,
+    "by_rule": {
+      "dependency": 1
+    }
+  }
+}

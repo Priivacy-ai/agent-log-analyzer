@@ -174,6 +174,140 @@ func TestGenerateDoesNotLeakPrivateNamesOrSecrets(t *testing.T) {
 	}
 }
 
+// TestGenerate_MergedAggregate_FlowsToArtifact locks FR-009: the paid plugin
+// artifact must consume merged ToolingUtilization and WorkflowFingerprints
+// values produced by analyzer.AggregateReports, not pre-merge values from any
+// single input report.
+//
+// Strategy: build two synthetic input reports whose ecosystems each carry
+// distinct allowlisted IDs in ToolingUtilization.MCP.KnownServerIDs and
+// WorkflowFingerprints. Aggregate them, generate the artifact from the merged
+// report, and assert the artifact's KnownEcosystem (and the same data surfaced
+// through the artifact's JSON) reflects the union of both inputs — not just
+// one of them.
+func TestGenerate_MergedAggregate_FlowsToArtifact(t *testing.T) {
+	// Report A: github MCP server, spec_kitty framework fingerprint, call
+	// count 5.
+	reportA := analyzer.Report{
+		Version: "0.1.0",
+		Ecosystem: analyzer.Ecosystem{
+			ToolingUtilization: analyzer.ToolingUtilization{
+				MCP: analyzer.MCPUtilization{
+					KnownServerIDs:       []string{"github"},
+					UniqueKnownCalledIDs: []string{"github"},
+					CallCount:            5,
+					KnownCallCount:       5,
+					WarningBand:          analyzer.WarningBandNormal,
+				},
+				Skill: analyzer.SkillUtilization{
+					KnownExposedIDs:  []string{"qa"},
+					KnownExecutedIDs: []string{"qa"},
+					ExecutedCount:    1,
+					WarningBand:      analyzer.WarningBandNormal,
+				},
+			},
+			WorkflowFingerprints: []analyzer.EcosystemFingerprint{
+				{
+					ID:            "spec_kitty",
+					Confidence:    "high",
+					Sources:       []string{"binary_present"},
+					EvidenceCount: 3,
+					Installed:     true,
+				},
+			},
+		},
+	}
+	// Report B: linear MCP server, openspec framework fingerprint,
+	// call count 7. No overlap on the unique IDs with A — so the merged
+	// artifact must include BOTH or the test fails (proving the artifact
+	// reads from the merged result, not from a single input).
+	reportB := analyzer.Report{
+		Version: "0.1.0",
+		Ecosystem: analyzer.Ecosystem{
+			ToolingUtilization: analyzer.ToolingUtilization{
+				MCP: analyzer.MCPUtilization{
+					KnownServerIDs:       []string{"linear"},
+					UniqueKnownCalledIDs: []string{"linear"},
+					CallCount:            7,
+					KnownCallCount:       7,
+					WarningBand:          analyzer.WarningBandHigh,
+				},
+				Skill: analyzer.SkillUtilization{
+					KnownExposedIDs:  []string{"review"},
+					KnownExecutedIDs: []string{"review"},
+					ExecutedCount:    2,
+					WarningBand:      analyzer.WarningBandWatch,
+				},
+			},
+			WorkflowFingerprints: []analyzer.EcosystemFingerprint{
+				{
+					ID:            "openspec",
+					Confidence:    "medium",
+					Sources:       []string{"transcript_command"},
+					EvidenceCount: 4,
+					Active:        true,
+				},
+			},
+		},
+	}
+
+	merged, err := analyzer.AggregateReports("artifact-merge-test", []analyzer.Report{reportA, reportB}, 2048)
+	if err != nil {
+		t.Fatalf("AggregateReports: %v", err)
+	}
+	// Sanity-check that the merge populated the fields (otherwise the
+	// downstream artifact assertion below would silently degrade to checking
+	// nothing useful).
+	if merged.Ecosystem.ToolingUtilization.MCP.CallCount != 12 {
+		t.Fatalf("merge precondition failed: CallCount=%d want 12 (5+7)",
+			merged.Ecosystem.ToolingUtilization.MCP.CallCount)
+	}
+	if len(merged.Ecosystem.WorkflowFingerprints) != 2 {
+		t.Fatalf("merge precondition failed: WorkflowFingerprints len=%d want 2 (%v)",
+			len(merged.Ecosystem.WorkflowFingerprints), merged.Ecosystem.WorkflowFingerprints)
+	}
+
+	// Generate the paid artifact from the merged report.
+	artifact := Generate(merged, Options{
+		GeneratedAt: time.Date(2026, 5, 19, 0, 0, 0, 0, time.UTC),
+	})
+	known := artifact.Source.KnownEcosystem
+	knownSet := map[string]bool{}
+	for _, id := range known {
+		knownSet[id] = true
+	}
+
+	// FR-009 assertions: the artifact's KnownEcosystem must include the
+	// merged-ID tokens from BOTH input reports. If safeKnownEcosystem
+	// dropped ToolingUtilization or WorkflowFingerprints, these fail.
+	wantTokens := []string{
+		"mcp:github",           // from A.ToolingUtilization.MCP.KnownServerIDs
+		"mcp:linear",           // from B.ToolingUtilization.MCP.KnownServerIDs
+		"skill:qa",             // from A.ToolingUtilization.Skill.KnownExposedIDs
+		"skill:review",         // from B.ToolingUtilization.Skill.KnownExposedIDs
+		"framework:spec_kitty", // from A.WorkflowFingerprints
+		"framework:openspec",   // from B.WorkflowFingerprints
+	}
+	for _, tok := range wantTokens {
+		if !knownSet[tok] {
+			t.Errorf("FR-009: artifact KnownEcosystem missing merged token %q (got %v)", tok, known)
+		}
+	}
+
+	// Whole-artifact bytes assertion: serialize the entire artifact and
+	// confirm both fingerprint IDs and both MCP IDs are reachable in
+	// content the consumer reads (not just the Source struct).
+	body, err := json.Marshal(artifact)
+	if err != nil {
+		t.Fatalf("marshal artifact: %v", err)
+	}
+	for _, tok := range wantTokens {
+		if !strings.Contains(string(body), tok) {
+			t.Errorf("FR-009: artifact JSON missing merged token %q (artifact does not consume merged data)", tok)
+		}
+	}
+}
+
 func hasFile(artifact Artifact, path string) bool {
 	for _, file := range artifact.Files {
 		if file.Path == path {

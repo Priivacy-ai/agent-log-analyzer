@@ -27,6 +27,20 @@ Paid delivery contract: [docs/remediation/plugin-artifacts.md](docs/remediation/
 
 ## Local Runthrough
 
+The `analyze` subcommand accepts a log path either as a positional argument or
+via the `--log` flag. The two forms are mutually exclusive; passing both, or
+passing more than one positional, fails fast with a non-zero exit:
+
+```bash
+# positional form (equivalent to using --log):
+claude-analyzer analyze ~/.claude/projects/some-session.jsonl --out ./report.json
+
+# explicit --log form:
+claude-analyzer analyze --log ~/.claude/projects/some-session.jsonl --out ./report.json
+```
+
+If neither form is supplied, the latest log under `~/.claude/projects/` is used.
+
 ```bash
 docker compose up --build
 ```

@@ -55,6 +55,18 @@ func TestGoldenSampleReport(t *testing.T) {
 	// Both Ecosystem.WorkflowFingerprints (the report-level copy) and
 	// AggregateEvent.Ecosystem.WorkflowFingerprints (the aggregate copy)
 	// must be cleared; the aggregator deep-copies from the same source.
+	//
+	// WP03 NOTE (FR-007 coverage): the aggregate-merge change in WP03
+	// populates WorkflowFingerprints deterministically across N input
+	// reports (mergeWorkflowFingerprints in aggregate.go), but this golden
+	// test runs the *single-report* Analyze() path — which never invokes
+	// the merge function. The merge behavior is locked instead by
+	// aggregate_test.go (row-by-row FR-007 cases, identity/commutativity/
+	// associativity/coverage/bounded-cardinality invariants) and by
+	// remediation/artifact_test.go::TestGenerate_MergedAggregate_FlowsToArtifact
+	// (FR-009 end-to-end through the paid artifact). Keeping the nilling
+	// here preserves cross-host reproducibility of the single-report
+	// golden without sacrificing aggregate-merge coverage.
 	report.Ecosystem.WorkflowFingerprints = nil
 	report.AggregateEvent.Ecosystem.WorkflowFingerprints = nil
 

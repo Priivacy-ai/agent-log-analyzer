@@ -511,11 +511,19 @@ func sourceSummary(report analyzer.Report) SourceSummary {
 }
 
 func safeKnownEcosystem(ecosystem analyzer.Ecosystem) []string {
+	seen := map[string]bool{}
 	var out []string
+	addID := func(token string) {
+		if seen[token] {
+			return
+		}
+		seen[token] = true
+		out = append(out, token)
+	}
 	add := func(prefix string, values []string) {
 		for _, value := range values {
 			if safePublicID(prefix, value) {
-				out = append(out, prefix+":"+value)
+				addID(prefix + ":" + value)
 			}
 		}
 	}
@@ -535,7 +543,26 @@ func safeKnownEcosystem(ecosystem analyzer.Ecosystem) []string {
 		{"vcs", ecosystem.VersionControl},
 	} {
 		if safeIdentifier(value.raw) {
-			out = append(out, value.prefix+":"+value.raw)
+			addID(value.prefix + ":" + value.raw)
+		}
+	}
+	// FR-009: surface the merged ToolingUtilization and WorkflowFingerprints
+	// IDs through the same allowlisted-prefix space so the paid artifact
+	// reflects values from `AggregateReports`. Every token here passes the
+	// same publicEcosystemIDs / safeValueRE gate as the existing fields, so
+	// the privacy stance (NFR-002) is preserved structurally — unknown names
+	// are caught by safePublicID and silently dropped.
+	add("mcp", ecosystem.ToolingUtilization.MCP.KnownServerIDs)
+	add("mcp", ecosystem.ToolingUtilization.MCP.UniqueKnownCalledIDs)
+	add("skill", ecosystem.ToolingUtilization.Skill.KnownExposedIDs)
+	add("skill", ecosystem.ToolingUtilization.Skill.KnownExecutedIDs)
+	for _, fp := range ecosystem.WorkflowFingerprints {
+		// Fingerprint IDs come from the SDD detector's allowlist
+		// (internal/analyzer/sdd/), but we still require safePublicID under
+		// the "framework" prefix — that is the closed-enum space where SDD
+		// IDs live.
+		if safePublicID("framework", fp.ID) {
+			addID("framework:" + fp.ID)
 		}
 	}
 	return out

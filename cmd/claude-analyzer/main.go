@@ -42,17 +42,36 @@ func run(args []string) error {
 	}
 }
 
+// latestClaudeLogFn is a package-level indirection so tests can shim the
+// "find the latest log under ~/.claude/projects" behavior without touching
+// the user's real home directory.
+var latestClaudeLogFn = latestClaudeLog
+
 func runAnalyze(args []string) error {
 	fs := flag.NewFlagSet("analyze", flag.ContinueOnError)
 	out := fs.String("out", "claude-analyzer-report.json", "path to write sanitized report JSON")
 	logPath := fs.String("log", "", "explicit Claude Code JSONL log path")
-	if err := fs.Parse(args); err != nil {
+	orderedArgs := reorderAnalyzeArgs(args)
+	if err := fs.Parse(orderedArgs); err != nil {
 		return err
 	}
 
+	positional := fs.Args()
+	// FR-002 takes precedence over FR-003 when both a positional and --log
+	// are supplied alongside extra positional arguments.
+	if len(positional) >= 1 && *logPath != "" {
+		return errors.New("claude-analyzer analyze: cannot combine positional log path with --log flag")
+	}
+	if len(positional) >= 2 {
+		return fmt.Errorf("claude-analyzer analyze: unexpected extra argument %q", positional[1])
+	}
+
 	path := *logPath
+	if path == "" && len(positional) == 1 {
+		path = positional[0]
+	}
 	if path == "" {
-		latest, err := latestClaudeLog()
+		latest, err := latestClaudeLogFn()
 		if err != nil {
 			return err
 		}
@@ -83,6 +102,30 @@ func runAnalyze(args []string) error {
 	fmt.Printf("Review before upload: jq . %s\n", shellQuote(*out))
 	fmt.Printf("Upload sanitized report: claude-analyzer upload %s\n", shellQuote(*out))
 	return nil
+}
+
+func reorderAnalyzeArgs(args []string) []string {
+	flags := make([]string, 0, len(args))
+	positionals := make([]string, 0, len(args))
+	for i := 0; i < len(args); i++ {
+		arg := args[i]
+		switch {
+		case arg == "--out" || arg == "-out" || arg == "--log" || arg == "-log":
+			flags = append(flags, arg)
+			if i+1 < len(args) {
+				i++
+				flags = append(flags, args[i])
+			}
+		case strings.HasPrefix(arg, "--out=") || strings.HasPrefix(arg, "-out=") ||
+			strings.HasPrefix(arg, "--log=") || strings.HasPrefix(arg, "-log="):
+			flags = append(flags, arg)
+		case strings.HasPrefix(arg, "-"):
+			flags = append(flags, arg)
+		default:
+			positionals = append(positionals, arg)
+		}
+	}
+	return append(flags, positionals...)
 }
 
 func runUpload(args []string) error {
@@ -179,7 +222,13 @@ func shellQuote(value string) string {
 }
 
 func usage() {
-	fmt.Fprintln(os.Stderr, "usage:")
-	fmt.Fprintln(os.Stderr, "  claude-analyzer analyze [--log path] [--out claude-analyzer-report.json]")
+	fmt.Fprintln(os.Stderr, "usage: claude-analyzer analyze [<log-path>] [--log <path>] [--out <path>] ...")
+	fmt.Fprintln(os.Stderr, "")
+	fmt.Fprintln(os.Stderr, "  <log-path>     path to a Claude Code JSONL log; mutually exclusive with --log.")
+	fmt.Fprintln(os.Stderr, "                 if neither is supplied, the latest log in ~/.claude/projects/")
+	fmt.Fprintln(os.Stderr, "                 is used.")
+	fmt.Fprintln(os.Stderr, "  --log <path>   explicit log path; mutually exclusive with a positional <log-path>.")
+	fmt.Fprintln(os.Stderr, "  --out <path>   output path for the sanitized report JSON (default: ./claude-analyzer-report.json).")
+	fmt.Fprintln(os.Stderr, "")
 	fmt.Fprintln(os.Stderr, "  claude-analyzer upload <sanitized-report.json> [--base-url https://claude-code.spec-kitty.ai]")
 }

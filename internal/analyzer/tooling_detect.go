@@ -14,6 +14,15 @@ import (
 	"strings"
 )
 
+// byteRange is a [Start, End) byte offset pair inside a parsed log buffer.
+// In-memory only — never written to disk, JSON, logs, or telemetry. Used by
+// the call detector to skip raw-byte rescan matches whose offsets fall inside
+// an exposure-header block (see issue #70 / FR-005).
+type byteRange struct {
+	Start int
+	End   int
+}
+
 // mcpExposure summarises MCP servers/tools exposed in a transcript header.
 // Unknown names are counted but never stored.
 type mcpExposure struct {
@@ -23,6 +32,11 @@ type mcpExposure struct {
 	ExposedToolKnown bool // true when a header block was parsed
 	SchemaTextBytes  int  // bytes of header block; 0 if no header
 	InferenceSource  string
+	// HeaderRanges records the byte offsets of detected exposure-header blocks
+	// in the original input. In-memory only; no JSON tag, no serialization.
+	// Consumed by detectMCPCallsFromToolUse to mask raw-byte rescan matches
+	// that fall inside a header (see FR-005). Empty slice ⇒ rescan unchanged.
+	HeaderRanges []byteRange
 }
 
 // skillExposure summarises skills exposed in a transcript header.
@@ -32,6 +46,11 @@ type skillExposure struct {
 	UnknownCount    int
 	SchemaTextBytes int
 	InferenceSource string
+	// HeaderRanges records the byte offsets of detected skill exposure-header
+	// blocks in the original input. In-memory only; defensive symmetry with
+	// mcpExposure.HeaderRanges so the call detector can mask candidate offsets
+	// against the combined MCP+skill range set.
+	HeaderRanges []byteRange
 }
 
 // mcpCalls summarises MCP tool invocations observed across the transcript.
@@ -103,12 +122,21 @@ func detectMCPExposureFromHeaders(input []byte, registry signatureRegistry) mcpE
 	exposedTools := map[string]bool{}
 	matched := false
 	totalBytes := 0
+	var headerRanges []byteRange
 
 	for _, pattern := range mcpHeaderPatterns {
 		for _, loc := range pattern.FindAllIndex(input, -1) {
 			matched = true
 			block := extractHeaderBlock(input, loc[1])
 			totalBytes += len(block)
+			// Record the block's byte range in the original input. The block
+			// starts immediately after the matched header phrase (loc[1]) and
+			// runs for len(block) bytes. Used downstream by the call detector
+			// to suppress double-counting of mcp__server__tool tokens that
+			// only appear because they're advertised inside this header.
+			if len(block) > 0 {
+				headerRanges = append(headerRanges, byteRange{Start: loc[1], End: loc[1] + len(block)})
+			}
 
 			// Count mcp__server__tool tokens inside the block.
 			for _, m := range mcpCallPairRe.FindAllSubmatch(block, -1) {
@@ -154,6 +182,7 @@ func detectMCPExposureFromHeaders(input []byte, registry signatureRegistry) mcpE
 	out.InferenceSource = InferenceSourceHeader
 	out.ExposedToolKnown = true
 	out.ExposedToolCount = len(exposedTools)
+	out.HeaderRanges = headerRanges
 	// Discard unknownIDs map before return — names never leave this function.
 	return out
 }
@@ -170,12 +199,21 @@ func detectSkillExposureFromHeaders(input []byte, registry signatureRegistry) sk
 	unknownIDs := map[string]bool{}
 	matched := false
 	totalBytes := 0
+	var headerRanges []byteRange
 
 	for _, pattern := range skillHeaderPatterns {
 		for _, loc := range pattern.FindAllIndex(input, -1) {
 			matched = true
 			block := extractHeaderBlock(input, loc[1])
 			totalBytes += len(block)
+			// Defensive symmetry with detectMCPExposureFromHeaders: record the
+			// block's byte range so the call detector can mask any candidate
+			// mcp__server__tool offsets that happen to fall inside a skill
+			// exposure header (today's skill headers don't carry such tokens,
+			// but a future schema change could).
+			if len(block) > 0 {
+				headerRanges = append(headerRanges, byteRange{Start: loc[1], End: loc[1] + len(block)})
+			}
 
 			for _, raw := range bytes.Split(block, []byte("\n")) {
 				lower := bytes.ToLower(bytes.TrimRight(raw, "\r"))
@@ -206,11 +244,39 @@ func detectSkillExposureFromHeaders(input []byte, registry signatureRegistry) sk
 	out.UnknownCount = len(unknownIDs)
 	out.SchemaTextBytes = totalBytes
 	out.InferenceSource = InferenceSourceHeader
+	out.HeaderRanges = headerRanges
 	return out
+}
+
+// insideAny reports whether off lies inside any range in ranges. The check is
+// half-open: an offset equal to a range's End is NOT inside it. Runs in
+// O(len(ranges)); header range count is bounded and small (typically 0..3),
+// so this stays cheap inside the per-match hot loop of the call detector.
+//
+// When ranges is empty, the result is always false, so the masked rescan is
+// byte-identical to an unmasked rescan. This is the load-bearing C-006 no-op
+// guarantee for fixtures without exposure headers.
+func insideAny(off int, ranges []byteRange) bool {
+	for _, r := range ranges {
+		if off >= r.Start && off < r.End {
+			return true
+		}
+	}
+	return false
 }
 
 // detectMCPCallsFromToolUse counts MCP server/tool invocations across the raw
 // input and via parsed tool-use lines.
+//
+// Raw-byte rescan matches whose start offsets fall inside an MCP or skill
+// exposure-header byte range are masked out: those tokens are advertisements
+// (the header enumerating which tools are available), not actual calls. This
+// fixes the issue #70 double-count where a `mcp__server__tool` identifier
+// announced in a "Following deferred tools are now available" block was
+// counted as a call even when zero tool_use records existed (FR-005).
+//
+// Parsed-line tool-use scans are outside header bytes by construction and
+// remain unmasked.
 func detectMCPCallsFromToolUse(input []byte, lines []parsedLine, registry signatureRegistry) mcpCalls {
 	out := mcpCalls{}
 	known := normalizedAllowlistSet(idsFromSignatures(registry.MCPServers))
@@ -238,12 +304,36 @@ func detectMCPCallsFromToolUse(input []byte, lines []parsedLine, registry signat
 		}
 	}
 
-	// 1. Scan raw input for mcp__server__tool patterns.
-	for _, m := range mcpCallPairRe.FindAllSubmatch(input, -1) {
-		if len(m) < 3 {
+	// Compute the combined exposure-header byte-range set once per call. We
+	// re-run the header detectors here (rather than threading them through the
+	// signature) so this fix stays contained to tooling_detect.go. The header
+	// detectors are linear in len(input) and run at most a handful of regex
+	// passes; the cost is negligible against the existing scan budget.
+	//
+	// If no exposure headers are present, combined is empty and insideAny
+	// trivially returns false for every offset — preserving C-006 no-op
+	// stability against the current behavior.
+	mcpEx := detectMCPExposureFromHeaders(input, registry)
+	skillEx := detectSkillExposureFromHeaders(input, registry)
+	combined := make([]byteRange, 0, len(mcpEx.HeaderRanges)+len(skillEx.HeaderRanges))
+	combined = append(combined, mcpEx.HeaderRanges...)
+	combined = append(combined, skillEx.HeaderRanges...)
+
+	// 1. Scan raw input for mcp__server__tool patterns. We use
+	// FindAllSubmatchIndex (not FindAllSubmatch) so we have each match's
+	// start offset and can mask matches that fall inside an exposure header.
+	for _, idx := range mcpCallPairRe.FindAllSubmatchIndex(input, -1) {
+		if len(idx) < 6 {
 			continue
 		}
-		record(string(m[1]), string(m[2]))
+		// Mask: skip raw-byte matches whose start offset lies inside any
+		// exposure-header range. This is the actual fix for issue #70.
+		if insideAny(idx[0], combined) {
+			continue
+		}
+		server := input[idx[2]:idx[3]]
+		tool := input[idx[4]:idx[5]]
+		record(string(server), string(tool))
 	}
 
 	// 2. Scan parsed tool-use lines where ToolName starts with mcp__.
