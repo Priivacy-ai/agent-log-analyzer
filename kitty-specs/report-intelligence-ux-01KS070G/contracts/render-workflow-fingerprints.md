@@ -62,4 +62,4 @@ interface ReportLike {
 | C2: renders all bounded fields | unit-style assertion against a synthetic report with one fingerprint per confidence band |
 | C3: no XSS path | renderer uses `textContent` only — verified by source inspection |
 | C4: idempotent re-render | call twice with different inputs; assert DOM matches second input only |
-| C5: leak canary | hostile-fixture leak test asserts no canary string ever reaches the JSON consumed by this renderer |
+| C5: allowlist invariant on fingerprint IDs | hostile-fixture leak test (WP01 T006 — `TestRenderInputs_NoCanaryInRendererJSON`) asserts no canary string ever reaches the JSON consumed by this renderer **and** that every `EcosystemFingerprint.id` produced for the hostile input is from the public SDD allowlist (i.e. the detector cannot fabricate a private name into the fingerprint surface). |

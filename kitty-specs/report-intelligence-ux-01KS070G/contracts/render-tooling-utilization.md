@@ -56,13 +56,27 @@ interface ReportLike {
    - If `report.ecosystem.tooling_utilization` is missing → section `#tooling-utilization` is hidden, function returns.
    - Otherwise → section is shown with two rows in fixed order: **MCP** first, then **Skill**.
 
-2. **Row content** (applies to both MCP and Skill):
-   - Show the bucket labels: `server_count_bucket` / `exposed_count_bucket`, `exposed_tool_count_bucket` (MCP only), `context_token_bucket`, `context_efficiency_bucket`.
-   - Show the call/execution counts: `call_count` and split `known_call_count` / `unknown_call_count` (MCP); `executed_count` / `unknown_executed_count` (Skill). Counts are numeric only — never names.
-   - Show the unknown surface count (`unknown_server_count` for MCP; `unknown_exposed_count` for Skill).
-   - Show the warning-band chip using its enum value (verbatim). Apply a CSS class per band so styling can distinguish `severe`/`high`/`watch`/`normal`/`unknown` (style is implementation detail — band labels are the contract).
-   - If `exposure_known === true`: render the utilization ratio as `<utilization_ratio_pct>%`.
-   - If `exposure_known === false`: render `inferred from: <inference_source>` and suppress the ratio.
+2. **Row content** (field names below are the exact JSON tags from `internal/analyzer/types.go` lines 88–119):
+
+   **MCP row** (`tu.mcp`, struct `MCPUtilization`):
+   - Bucket labels: `server_count_bucket`, `exposed_tool_count_bucket`, `context_token_bucket`, `context_efficiency_bucket`.
+   - Counts (numeric only — never names): `call_count`, `known_call_count`, `unknown_call_count`, `unknown_server_count`, `unique_unknown_called_count`. Plus `known_server_ids.length` and `unique_known_called_ids.length` (count of allowlisted arrays — never their contents).
+   - Warning-band chip: render `warning_band` after normalization (see rule 2a below). Apply a CSS class per band.
+   - Ratio cell (FR-007 gating): if `exposure_known === true` render `<utilization_ratio_pct>%`; else render `inferred from: <inference_source>` and suppress the ratio.
+
+   **Skill row** (`tu.skill`, struct `SkillUtilization`) — note Skill has **no** equivalent of `unique_known_called_ids` or `unique_unknown_called_count`; those are MCP-only:
+   - Bucket labels: `exposed_count_bucket`, `context_token_bucket`, `context_efficiency_bucket`. (No `exposed_tool_count_bucket` on Skill.)
+   - Counts: `executed_count`, `unknown_exposed_count`, `unknown_executed_count`. Plus `known_exposed_ids.length` and `known_executed_ids.length`.
+   - Warning-band chip: same normalization rule.
+   - Ratio cell: same `exposure_known` gate.
+
+   **2a. Warning-band normalization**: a single `normalizeBand(b)` helper maps:
+   - exactly one of `"severe"`, `"high"`, `"watch"`, `"normal"` → that value verbatim
+   - anything else (including `""`, `undefined`, `null`, or an unknown enum value) → `"unknown"`
+
+   This matches `internal/analyzer/tooling_classify.go` lines 149–151 / 191–193, which guarantee `warning_band === "unknown"` when `exposure_known === false`, and is robust against a partially-defaulted struct value.
+
+   **2b. Duplicate-finding handling**: `findingById(report, id)` returns the **first** match (no synthesis, no aggregation). The upstream invariant INV-6 (`data-model.md`) requires each of the four advice IDs to appear at most once per report; the band-pairing test in WP01 T006 pins this. If a future change emits the same ID twice, the test fails before the UI silently hides a row.
 
 3. **Advice block (FR-005 / FR-006)**:
    - Lookup table (by surface):

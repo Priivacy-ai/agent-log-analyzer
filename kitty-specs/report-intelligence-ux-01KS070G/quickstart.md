@@ -54,12 +54,39 @@ Then in a browser at `http://localhost:8080`:
 **Privacy verification** (per NFR-001 / C-002):
 
 ```bash
-# In the browser, View Source on the report page.
-# Save the rendered HTML to a temp file, then:
+# In the browser, View Source on the report page (or use DevTools > Elements > "..." > Copy outer HTML).
+# Save the rendered HTML to /tmp/report.html (this exact path is referenced by the WP01 Definition of Done).
 grep -Eo 'mcp__[A-Za-z0-9_-]+|skill__[A-Za-z0-9_-]+|plugin__[A-Za-z0-9_-]+' /tmp/report.html | sort -u
 ```
 
 The expected output is empty OR contains only IDs from the public allowlist (Spec Kitty, OpenSpec, GitHub Spec Kit, etc.). Any other name is a regression.
+
+> **Note on grep coverage**: the regex above only catches `mcp__` / `skill__` / `plugin__` prefixes — these are the highest-risk surfaces for the new sections. The other 13 hostile-canary categories (paths, branches, hostnames, etc.) are caught by the Go-side `TestRenderInputs_NoCanaryInRendererJSON` test in WP01 T006 at the JSON-serialization level. DOM-grep is the narrow visual confirmation; Go test is the structural backstop.
+
+**FR-009 non-regression QA** (per `plan.md` requirement coverage matrix):
+
+After verifying the two new sections, scroll to the existing `Ecosystem` block (the `<pre id="ecosystem">` summary) and confirm all of today's fields still render for the same fixture:
+
+- `Client: …`
+- `OS: …`
+- `Frameworks: …`
+- `MCPs: …`
+
+If any of these regressed, FR-009 fails and the WP cannot be accepted.
+
+**NFR-005 measurement**:
+
+Once during browser QA, wrap the `renderReport(report)` call in `performance.now()` deltas:
+
+```js
+// Paste at the top of renderReport in DevTools Console (don't commit):
+const _t0 = performance.now();
+// ... let the report render normally ...
+const _t1 = performance.now();
+console.log("renderReport delta:", _t1 - _t0, "ms");
+```
+
+Capture two measurements: one against `main` (before this WP) and one against the WP branch (after). Paste both numbers into the PR description. Budget: the **delta of deltas** (after minus before) for the two new renderers combined should stay under 5 ms on a developer laptop.
 
 ## Test-Only Local Smoke
 

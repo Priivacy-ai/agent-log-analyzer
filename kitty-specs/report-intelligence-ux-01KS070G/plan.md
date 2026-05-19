@@ -110,66 +110,48 @@ Phase 1 is complete:
 - **`contracts/render-tooling-utilization.md`** specifies the WP02 renderer's input shape, behavior including the band → finding-ID lookup table, prohibitions (P1..P5), and verification checks (C1..C10).
 - **`quickstart.md`** documents the full verification recipe including the Docker browser-QA gate and an explicit privacy-grep over rendered HTML.
 
-## Work Package Outline (drafted; finalized in /spec-kitty.tasks)
+## Work Package Outline
 
-**Revision during /spec-kitty.tasks**: the original two-WP split was collapsed to a single 6-subtask WP because both proposed WPs would have needed to own `web/index.html`, `web/app.js`, and `web/styles.css` — the finalizer rejects overlapping `owned_files`. The merged WP still covers both issues (#62 and #63) and stays within the 3–7 subtask ideal range.
+> **History note**: The plan originally proposed two WPs (one per issue). Both would have needed to own `web/index.html`, `web/app.js`, and `web/styles.css`, which the finalizer rejects as overlapping `owned_files`. Collapsed to a single 6-subtask WP that stays within the 3–7 ideal range. The collapsed shape was confirmed by pre-implementation review (Architect Alphonso + Reviewer Renata, 2026-05-19) and the review findings are folded into the artifact set below.
 
-### WP01 — Workflow Fingerprints section (issue #62) — superseded by merged WP below
-
-**Scope**:
-- `web/index.html`: add `<section id="workflow-fingerprints" hidden>` block above the existing `Ecosystem` block. Markup follows the contract's row shape (id, confidence, sources badges, evidence count, active/installed indicators, optional version_bucket).
-- `web/app.js`: implement `renderWorkflowFingerprints(report)` per `contracts/render-workflow-fingerprints.md`. Wire it into the existing `applyReport(report)` flow alongside the current renderers.
-- `web/styles.css`: add scoped styles for the new section (`.fingerprint-row`, `.fingerprint-sources`, `.fingerprint-indicator`, confidence-label variants).
-- Tests: small Go-side fixture test that loads a synthetic report JSON with one fingerprint per confidence band and asserts the renderer prohibitions hold at the data layer (`textContent`-only would be a JS check — backstop with a hostile-fixture leak assertion).
-
-**Acceptance**:
-- FR-001, FR-002 satisfied
-- NFR-001, NFR-002, NFR-004, NFR-006 satisfied
-- C-001, C-002 honored
-- All five verification checks (C1..C5) in the contract pass.
-
-**Mapped FRs**: FR-001, FR-002, FR-008 (graceful handling), FR-009 (preserve existing ecosystem block).
-
-### WP02 — MCP & Skill Utilization section + pruning advice (issue #63)
-
-**Scope**:
-- `web/index.html`: add `<section id="tooling-utilization" hidden>` block above the existing `Ecosystem` block (below WP01's section). Sub-blocks for MCP row and Skill row, each with bucket cells, count cells, warning-band chip slot, and an advice-block slot.
-- `web/app.js`: implement `renderToolingUtilization(report)` per `contracts/render-tooling-utilization.md`. Includes the band → finding-ID lookup (4 keys) and `exposure_known` gating for the ratio.
-- `web/styles.css`: scoped styles for utilization rows, band-chip variants (`.band-severe`, `.band-high`, `.band-watch`, `.band-normal`, `.band-unknown`), advice-block container.
-- Tests: small Go-side fixture test with five band-permutation fixtures + a hostile-fixture leak assertion proving no canary string would reach the renderer input.
-
-**Acceptance**:
-- FR-003 .. FR-007 satisfied
-- NFR-001 .. NFR-007 satisfied
-- C-001 .. C-007 honored
-- All ten verification checks (C1..C10) in the contract pass.
-
-**Mapped FRs**: FR-003, FR-004, FR-005, FR-006, FR-007, FR-008.
-
-### Merged WP01 — Report Intelligence UX sections (issues #62 + #63)
+### WP01 — Report Intelligence UX sections (issues #62 + #63)
 
 Owns the entire `web/` UI delta for this mission plus the renderer-input leak test.
 
 - `web/index.html`: both `<section id="workflow-fingerprints">` and `<section id="tooling-utilization">` blocks (initially `hidden`).
-- `web/app.js`: `renderWorkflowFingerprints(report)`, `renderToolingUtilization(report)`, wiring into `applyReport(report)`.
+- `web/app.js`: `renderWorkflowFingerprints(report)`, `renderToolingUtilization(report)`, wiring into `renderReport(report)`.
 - `web/styles.css`: scoped styles for fingerprint rows, utilization rows, band-chip variants, advice block.
 - `internal/analyzer/view_render_inputs_test.go` (new): renderer-input leak canary covering fingerprint + utilization input fields + all 5 band permutations.
 
-### FR Coverage Matrix (single merged WP)
+### Requirement Coverage Matrix
 
-| FR | WP01 |
-|---|---|
-| FR-001 | ✓ |
-| FR-002 | ✓ |
-| FR-003 | ✓ |
-| FR-004 | ✓ |
-| FR-005 | ✓ |
-| FR-006 | ✓ |
-| FR-007 | ✓ |
-| FR-008 | ✓ |
-| FR-009 | ✓ |
+| Requirement | WP01 subtask(s) | Verification artifact |
+|---|---|---|
+| FR-001 | T001, T002 | renderer hidden when array empty; manual browser QA |
+| FR-002 | T002 | row content matches fingerprint contract C1..C5; manual browser QA |
+| FR-003 | T001, T003 | renderer hidden when block missing; manual browser QA |
+| FR-004 | T003 | bucket/count/band cells match utilization contract C2; manual browser QA |
+| FR-005 | T003 | advice block renders for `high`/`severe` (C3, C4); manual browser QA |
+| FR-006 | T003 | no advice for `watch`/`normal`/`unknown` (C5, C6, C7); source grep on `ADVICE_LOOKUP`; T006 band-pairing test |
+| FR-007 | T003 | `exposure_known === false` → no ratio shown (C8); manual browser QA |
+| FR-008 | T002, T003 | renderer no-throw on missing inputs; defensive entry verified in source |
+| FR-009 | T001, T004 | existing `Ecosystem` block intact; DoD non-regression checkbox |
+| NFR-001 | T002, T003, T006 | T006 `TestRenderInputs_NoCanaryInRendererJSON` + manual DOM grep |
+| NFR-002 | All | DoD: `git diff main -- internal/analyzer/types.go` is empty |
+| NFR-003 | T003 | DoD: source grep shows no new `fetch`/HTTP/model call in `web/app.js` |
+| NFR-004 | All | DoD: `git diff main -- web/` introduces no `package.json` / bundler |
+| NFR-005 | T004 | DoD: `performance.now()` delta pasted into PR (< 5 ms budget) |
+| NFR-006 | T002, T003 | bucket/enum/count fields enumerated in `data-model.md` |
+| NFR-007 | T006 | byte-equal pin of advice strings to `analyzer.go:381-393` constants |
+| C-001 | All | DoD: `types.go` diff empty |
+| C-002 | T002, T003, T006 | renderer prohibitions P1; T006 canary scan over all findings |
+| C-003 | T003, T006 | advice sourced only from existing findings; T006 byte-equal pin |
+| C-004 | scope reviews | scope reminders in WP file and quickstart (no Phase 3 work) |
+| C-005 | scope reviews | scope reminders in WP file and quickstart (no Phase 4+ work) |
+| C-006 | All | DoD: no Terraform apply, no production deploy |
+| C-007 | T002 | renderer never reads `evidence` field; fingerprint contract P1 |
 
-Every FR is owned by the merged WP. NFR/C invariants are honored within it.
+Every FR, NFR, and Constraint has at least one subtask owner and at least one verification artifact.
 
 ## Risks & Mitigations
 

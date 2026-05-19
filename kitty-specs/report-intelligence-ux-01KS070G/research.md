@@ -43,7 +43,8 @@ None. The spec carries no `[NEEDS CLARIFICATION]` markers; the one alignment dec
 ### D3. Frontend test strategy — Go-side fixture render assertions
 
 - **Decision**: The new tests are Go-side, using a JSON fixture and a small renderer-shape contract verified at the Go layer. Specifically:
-  - Extend `internal/analyzer/leak_test.go` (or a sibling `view_leak_test.go`) to assert that no string outside the public allowlist would reach the renderer's input for a hostile fixture. This is a JSON-level assertion (no JS execution needed) because privacy is enforced by the server-side bounded shape: if the JSON contains no unknown name, the renderer cannot render one.
+  - Add a **new sibling test file** `internal/analyzer/view_render_inputs_test.go` (do NOT edit `leak_test.go` — it is outside WP01's `owned_files`). The sibling holds three tests: a renderer-input canary across the full findings slice, a byte-equal pin on the four `*_bloat_*` recommendation strings, and an `Analyze`-driven band-pairing test that asserts the band → finding-ID contract end-to-end (and pins INV-6 / single-emission).
+  - Privacy is enforced by the server-side bounded shape: if the JSON contains no unknown name, the renderer cannot render one.
   - Manual browser QA is the final user-visible gate (per the handoff's UI verification rule).
 - **Rationale**:
   - The charter (and NFR-004) forbids introducing a JS test runner / build pipeline.

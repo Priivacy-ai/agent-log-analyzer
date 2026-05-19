@@ -26,7 +26,7 @@ Source: `internal/analyzer/types.go` lines 73–81.
 | `evidence_count` | int | non-negative | numeric count | bounded-count |
 | `active` | bool | — | indicator | safe-bool |
 | `installed` | bool | — | indicator | safe-bool |
-| `version_bucket` | string (optional) | bounded enum | label (when present) | bounded-enum |
+| `version_bucket` | string (optional) | detector-controlled bounded vocabulary (no type-level enum in Go) | label (when present) | bounded-string emitted by detector (detector MUST NOT write user-controlled text into this field; verified by leak canary in WP01 T006) |
 
 **Invariants surfaced in UI**:
 - `id` is always in the public allowlist — guaranteed by `safePublicID` (`internal/remediation/artifact.go`).
@@ -84,9 +84,10 @@ If a matching finding exists, its `recommendation` string is rendered in the adv
 |---|---|---|
 | INV-1 | No unknown private MCP/skill/plugin name reaches the renderer. | Server-side bounded shape; verified by hostile-fixture leak test. |
 | INV-2 | No new serialized field is introduced. | Code review + V3 in research.md. |
-| INV-3 | Pruning advice renders only when `warning_band ∈ {high, severe}`. | Structural — analyzer emits no finding outside those bands. |
-| INV-4 | All displayed strings are either enum values, integer-derived counts/percentages, or vetted advice copy from the four allowlisted findings. | Renderer code shape (no template interpolation of raw fields). |
-| INV-5 | When `exposure_known == false`, the utilization ratio is not displayed. | Renderer gate (FR-007). |
+| INV-3 | Pruning advice renders only when `warning_band ∈ {high, severe}`. | Two-sided: (a) analyzer emits no `*_bloat_*` finding outside `{high, severe}` (verified by WP01 T006 band-pairing test); (b) renderer `ADVICE_LOOKUP` has no keys for `watch`/`normal`/`unknown` (verified by source grep in WP01 reviewer quick-check). |
+| INV-4 | All displayed strings are either enum values, integer-derived counts/percentages, or vetted advice copy from the four allowlisted findings. | Renderer code shape (no template interpolation of raw fields); reviewer quick-check confirms `textContent`-only usage. |
+| INV-5 | When `exposure_known == false`, the utilization ratio is not displayed. | Renderer gate (FR-007); analyzer concurrently guarantees `warning_band == "unknown"` in this case (`tooling_classify.go:149-151 / 191-193`). |
+| INV-6 | Each of the four advice IDs (`mcp_bloat_severe`, `mcp_bloat_high`, `skill_bloat_severe`, `skill_bloat_high`) appears **at most once** in `report.findings[]` per report. | WP01 T006 band-pairing test asserts exactly-one when the corresponding band is `severe`/`high`, exactly-zero otherwise. Protects the renderer's `findingById` first-match semantics. |
 
 ## Field Reference Index (renderer ↔ field)
 

@@ -52,13 +52,13 @@ Before reading anything else, load your assigned agent profile so your role, sco
 /ad-hoc-profile-load frontend-freddy
 ```
 
-If `/ad-hoc-profile-load` is unavailable in your harness, use the equivalent CLI:
+If `/ad-hoc-profile-load` is unavailable in your harness, the equivalent CLI is `list` (this Spec Kitty build has no `show` subcommand). Pull the single profile with a filter:
 
 ```bash
-spec-kitty agent profile show frontend-freddy --json
+spec-kitty agent profile list --json | python3 -c "import sys,json; [print(json.dumps(p,indent=2)) for p in json.load(sys.stdin) if p['profile_id']=='frontend-freddy']"
 ```
 
-Read the profile's `initialization_declaration`, internalize the role boundaries (you are an **implementer** for **frontend** code — HTML, vanilla JS, CSS), and acknowledge those boundaries before touching any code.
+Read the profile's identity, internalize the role boundaries (you are an **implementer** for **frontend** code — HTML, vanilla JS, CSS), and acknowledge those boundaries before touching any code.
 
 ## Objective
 
@@ -226,27 +226,40 @@ You **must not** modify:
      return list.find((f) => f && f.id === id) || null;
    }
    ```
-5. Render two rows in fixed order — MCP first, then Skill. For each surface:
-   - Header cell: `surface name` (`MCP` or `Skill`).
-   - Bucket cells: server/exposed count bucket, exposed-tool count bucket (MCP only), context-token bucket, context-efficiency bucket. Render each via `textContent`.
-   - Counts: `call_count` / `executed_count`, `known_…_count`, `unknown_…_count`, `unique_unknown_called_count` / `unknown_executed_count`. Counts are numeric only — never names.
-   - Unknown surface count: `unknown_server_count` (MCP) or `unknown_exposed_count` (Skill).
-   - Band chip: `<span class="band-chip band-${tu.mcp.warning_band}">${tu.mcp.warning_band}</span>` with `textContent` for the band label.
-   - Ratio cell (FR-007 gating):
-     - If `tu.mcp.exposure_known === true`: render `${tu.mcp.utilization_ratio_pct}%` via `textContent`.
-     - Else: render `inferred from: ${tu.mcp.inference_source}` and **do not** render the percentage.
-   - Advice block (FR-005/006):
+5. **Normalize band before chip/lookup**:
+   ```js
+   // Empty/missing warning_band → render as "unknown" (matches analyzer
+   // guarantee in tooling_classify.go:149-151 / 191-193 when exposure_known
+   // is false; also tolerates a future struct-default zero-value).
+   function normalizeBand(b) {
+     const v = typeof b === "string" ? b : "";
+     return (v === "severe" || v === "high" || v === "watch" || v === "normal") ? v : "unknown";
+   }
+   ```
+6. Render the MCP row using exactly these field names from `internal/analyzer/types.go` lines 88–104 (do not invent any field):
+   - **Bucket cells**: `mcp.server_count_bucket`, `mcp.exposed_tool_count_bucket`, `mcp.context_token_bucket`, `mcp.context_efficiency_bucket`.
+   - **Counts** (numeric only, never names): `mcp.call_count`, `mcp.known_call_count`, `mcp.unknown_call_count`, `mcp.unknown_server_count`, `mcp.unique_unknown_called_count`. Also display `mcp.unique_known_called_ids.length` and `mcp.known_server_ids.length` (counts of allowlisted arrays — never their contents).
+   - **Band chip**: `<span class="band-chip band-${normalizeBand(mcp.warning_band)}">${normalizeBand(mcp.warning_band)}</span>` with `textContent` for the band label.
+   - **Ratio cell** (FR-007 gating):
+     - If `mcp.exposure_known === true`: render `${mcp.utilization_ratio_pct}%` via `textContent`.
+     - Else: render `inferred from: ${mcp.inference_source}` and **do not** render the percentage. (Analyzer guarantees the band is `unknown` in this case — see `tooling_classify.go:149`.)
+   - **Advice block (FR-005/006)**:
      ```js
-     const adviceId = ADVICE_LOOKUP.mcp[mcp.warning_band];  // undefined for watch/normal/unknown
-     const finding = adviceId ? findingById(report, adviceId) : null;
+     const adviceId = ADVICE_LOOKUP.mcp[normalizeBand(mcp.warning_band)]; // undefined for watch/normal/unknown
+     const finding  = adviceId ? findingById(report, adviceId) : null;
      if (finding && typeof finding.recommendation === "string" && finding.recommendation.length > 0) {
        // render <p class="band-advice">finding.recommendation</p> via textContent
      }
      ```
-     The advice block is suppressed automatically for `watch`/`normal`/`unknown` (no lookup key) and for `high`/`severe` when the matching finding is somehow absent (defense in depth).
-6. **Do not** render `known_server_ids[]` or `unique_known_called_ids[]` or `known_exposed_ids[]` or `known_executed_ids[]` as names. The V2 UI shows their `length` only. (The data is allowlisted and would be safe to print, but the section's privacy posture is uniform: counts only.)
-7. Skill row repeats the same pattern with skill-scoped field names (`known_exposed_ids`, `executed_count`, `unknown_exposed_count`, `unknown_executed_count`, `known_executed_ids`). Use `ADVICE_LOOKUP.skill[band]` for advice resolution.
-8. Add a brief comment above the lookup pointing to the upstream source:
+     Suppressed automatically for `watch`/`normal`/`unknown` (no lookup key) and for `high`/`severe` when no matching finding exists (defense in depth — analyzer single-emission invariant INV-6 in `data-model.md` makes this rare).
+7. Render the Skill row using exactly these field names from `internal/analyzer/types.go` lines 106–119 (note: Skill has **no** equivalent of `unique_known_called_ids` or `unique_unknown_called_count` — those are MCP-only):
+   - **Bucket cells**: `skill.exposed_count_bucket`, `skill.context_token_bucket`, `skill.context_efficiency_bucket`. (No `exposed_tool_count_bucket` on Skill.)
+   - **Counts**: `skill.executed_count`, `skill.unknown_exposed_count`, `skill.unknown_executed_count`. Also display `skill.known_exposed_ids.length` and `skill.known_executed_ids.length` (counts only).
+   - **Band chip**: same `normalizeBand(skill.warning_band)` pattern.
+   - **Ratio cell**: same `exposure_known` gate; use `skill.inference_source` in the inferred case.
+   - **Advice block**: use `ADVICE_LOOKUP.skill[normalizeBand(skill.warning_band)]`.
+8. **Do not** render `known_server_ids[]`, `unique_known_called_ids[]`, `known_exposed_ids[]`, or `known_executed_ids[]` as names. The V2 UI shows their `length` only. (The data is allowlisted and would be safe to print, but the section's privacy posture is uniform: counts only.)
+9. Add a brief comment above the lookup pointing to the upstream source:
    ```js
    // The four allowlisted advice IDs are emitted by internal/analyzer/analyzer.go:368-394.
    // If those IDs change, this UI must be updated in lockstep.
@@ -268,14 +281,14 @@ You **must not** modify:
 
 ---
 
-### Subtask T004 — Wire renderers into `applyReport(report)`
+### Subtask T004 — Wire renderers into `renderReport(report)`
 
 **Purpose**: Call the new renderers from the existing report-display orchestrator. They should render **before** the existing `summarizeEcosystem` text dump so the structured intelligence reads first.
 
 **Steps**:
 
-1. In `web/app.js`, find the `applyReport(report)` function (currently sets `#score`, `#waste`, builds `#findings`, etc., and ends with `renderTimeline(...)`, `document.querySelector("#ecosystem").textContent = summarizeEcosystem(...)`, `summarizeReceipt(...)`, `renderPaidCommandPreview(...)`).
-2. Insert two new calls immediately before the `summarizeEcosystem` assignment:
+1. In `web/app.js`, find the `renderReport(report)` function (starts around line 173; currently sets `#score`, `#waste`, builds `#findings`, etc., and ends with `renderTimeline(...)`, `document.querySelector("#ecosystem").textContent = summarizeEcosystem(...)` (around line 201), `summarizeReceipt(...)`, `renderPaidCommandPreview(...)`).
+2. Insert two new calls immediately before the `summarizeEcosystem` assignment (around line 201):
    ```js
    renderWorkflowFingerprints(report);
    renderToolingUtilization(report);
@@ -284,11 +297,11 @@ You **must not** modify:
 
 **Files**:
 
-- `web/app.js` — 2 new lines inside `applyReport`.
+- `web/app.js` — 2 new lines inside `renderReport`.
 
 **Validation**:
 
-- [ ] Both renderers are called from `applyReport`.
+- [ ] Both renderers are called from `renderReport`.
 - [ ] Existing `summarizeEcosystem`, `summarizeReceipt`, `renderTimeline`, `renderPaidCommandPreview` calls are intact and in original relative order.
 - [ ] Manual browser QA: loading any report does not produce a JS console error from this code path.
 
@@ -379,45 +392,49 @@ You **must not** modify:
 
 1. Create `internal/analyzer/view_render_inputs_test.go`. Use the same `package analyzer_test` as `leak_test.go`. Import the project's analyzer package via the same module path used in `leak_test.go` (`github.com/robertdouglass/claude-log-analyzer/internal/analyzer`).
 
-2. Add a test `TestRenderInputs_NoCanaryInFingerprintOrUtilizationFields`:
-   - Reuse the `buildHostileInput` helper pattern from `leak_test.go` (you may move it to a small `_helpers_test.go` if needed, but a self-contained local clone is also acceptable).
-   - Build a hostile input that includes the canaries enumerated in `leak_test.go` plus three new ones tagged for this WP:
+2. Add `TestRenderInputs_NoCanaryInRendererJSON` — extends the existing leak canary to **all** fields the renderers consume:
+   - Reuse the `buildHostileInput` helper pattern from `leak_test.go` (clone it locally to avoid editing `leak_test.go`, which is not in `owned_files`).
+   - Build the canary list as the union of `leak_test.go`'s 16 canary strings plus these three explicitly tagged for this WP:
      ```
      "mcp__renderprivate__rogue",
      "skill__renderprivate__rogue",
      "plugin__renderprivate__rogue",
      ```
    - Call `analyzer.Analyze("job-render-1", input)`.
-   - Marshal `rep.Ecosystem.WorkflowFingerprints` and `rep.Ecosystem.ToolingUtilization` separately to JSON. Assert neither contains any canary substring. Use `strings.Contains` like `leak_test.go` does.
-   - Also marshal `rep.Findings` filtered to the four `*_bloat_*` IDs and assert none of those findings' Recommendation strings contain any canary substring (defensive — these strings are vetted static copy today, but the test pins that property).
+   - Marshal each of these renderer-input surfaces separately to JSON and assert no canary substring appears in any of them:
+     - `rep.Ecosystem.WorkflowFingerprints`
+     - `rep.Ecosystem.ToolingUtilization`
+     - `rep.Findings` — the **entire** findings slice, not just the four `*_bloat_*` IDs (the renderer reads all of `report.findings[]` when resolving advice; any current or future finding whose recommendation could carry private text must be caught here).
+   - Failure messages should name the surface and the canary so a regression is easy to bisect.
 
-3. Add a test `TestRenderInputs_BandFindingPairings`:
-   - For each of the five band values (`severe`, `high`, `watch`, `normal`, `unknown`), build a minimal synthetic `analyzer.Report` value (or use the test-helper pattern in existing tests) where `Ecosystem.ToolingUtilization.MCP.WarningBand` and `.Skill.WarningBand` are set to the value. Don't try to drive the analyzer pipeline for this test — just construct the `Report` value directly.
-   - Assertion table (use a Go `for _, tc := range`):
+3. Add `TestPruningAdviceRecommendations_BytewiseEqualToConstants` — pin the four advice strings as static copy and prevent silent drift:
+   - Drive `analyzer.Analyze` over a hostile input crafted to land MCP and Skill in `severe` and `high` bands (you may need two or three Analyze invocations to cover all four IDs across configurations).
+   - For each emission of `mcp_bloat_severe`, `mcp_bloat_high`, `skill_bloat_severe`, `skill_bloat_high`, assert the `Recommendation` field equals the literal string emitted by `internal/analyzer/analyzer.go` lines 381–393 (copy the four strings into the test as `const` values, verbatim).
+   - Rationale: locks the advice copy as static; any reword in `analyzer.go` requires updating this test, which forces a contemporaneous review of NFR-007 (no private-name leakage in advice text).
 
-     | band | mcp_bloat ID expected in findings | skill_bloat ID expected in findings |
-     |---|---|---|
-     | `severe` | `mcp_bloat_severe` | `skill_bloat_severe` |
-     | `high` | `mcp_bloat_high` | `skill_bloat_high` |
-     | `watch` | (none) | (none) |
-     | `normal` | (none) | (none) |
-     | `unknown` | (none) | (none) |
+4. Add `TestBandFindingPairings_DrivenByAnalyze` — pin the band→finding-ID contract end-to-end:
+   - Build a small fixture set: at least one hostile input that produces MCP `severe`, one that produces MCP `high`, and one that produces neither (so the absence assertion is exercised). Same for Skill if practically separable; otherwise rely on the analyzer's independent classification per surface.
+   - For each fixture, run `analyzer.Analyze` and collect `report.Findings`.
+   - Assert the pairing table (per surface):
+     - When `rep.Ecosystem.ToolingUtilization.MCP.WarningBand == "severe"` → `findings[]` contains exactly one entry with `id == "mcp_bloat_severe"`.
+     - When `rep.Ecosystem.ToolingUtilization.MCP.WarningBand == "high"` → exactly one `mcp_bloat_high`.
+     - When `rep.Ecosystem.ToolingUtilization.MCP.WarningBand ∈ {watch, normal, unknown}` → zero entries whose `id` starts with `mcp_bloat_`.
+     - Same rules for Skill (`skill_bloat_*`).
+   - "Exactly one" pins INV-6 (each of the four advice IDs appears at most once per report). The UI lookup uses `.find()` (first match), so duplicate emissions would silently hide one — pinning single-emission protects that invariant.
+   - Use the exported constants `analyzer.WarningBandSevere`, `WarningBandHigh`, `WarningBandWatch`, `WarningBandNormal`, `WarningBandUnknown` from `internal/analyzer/tooling_buckets.go` lines 90–94.
 
-   - This test does NOT run the analyzer; it asserts the **expected upstream behavior** so the UI's lookup contract is documented in code. If a future change removes one of the four findings, this test will fail loudly. Use `analyzer.WarningBandSevere`, `WarningBandHigh`, `WarningBandWatch`, `WarningBandNormal` constants if they are exported (see `internal/analyzer/tooling_buckets.go:90-94`).
-
-   > **Implementation note**: if the analyzer's exported surface doesn't let you simulate a band-driven `computeFindings` call from `_test.go` without running the full `Analyze` pipeline, fall back to the realistic alternative: drive `analyzer.Analyze` over a hostile input that produces each band, then assert the resulting `findings[].id` set matches the expected one. Keep the test deterministic.
-
-4. Run `go test ./internal/analyzer/ -run TestRenderInputs -v` and confirm both new tests pass on a clean tree.
+5. Run `go test ./internal/analyzer/ -run TestRenderInputs -v` (and the two new sibling tests above) and confirm all pass on a clean tree.
 
 **Files**:
 
-- `internal/analyzer/view_render_inputs_test.go` (new) — approx 80–140 lines including imports.
+- `internal/analyzer/view_render_inputs_test.go` (new) — approx 150–220 lines including imports, helpers, and the three new test functions.
 
 **Validation**:
 
-- [ ] `go test ./internal/analyzer/ -run TestRenderInputs -v` passes.
-- [ ] The hostile-canary test fails loudly if a developer introduces a regression that pipes private input into a fingerprint or utilization field.
-- [ ] The band-pairing test fails loudly if a future analyzer change removes one of the four `*_bloat_*` findings.
+- [ ] All three new tests pass (`go test ./internal/analyzer/ -run "TestRenderInputs_NoCanaryInRendererJSON|TestPruningAdviceRecommendations_BytewiseEqualToConstants|TestBandFindingPairings_DrivenByAnalyze" -v`).
+- [ ] Canary test fails loudly if any future regression pipes private input into ANY field reachable by the renderers (fingerprints, utilization, full findings slice).
+- [ ] Recommendation-byte test fails loudly if `analyzer.go` reworks one of the four advice strings without updating the test (forces NFR-007 re-review).
+- [ ] Band-pairing test fails loudly if a future analyzer change removes a `*_bloat_*` finding for `severe`/`high` OR introduces one for `watch`/`normal`/`unknown` OR emits the same advice ID twice (INV-6 breach).
 
 ---
 
@@ -425,7 +442,7 @@ You **must not** modify:
 
 - [ ] All six subtasks T001..T006 complete with their validation checkboxes ticked.
 - [ ] `gofmt -w $(find . -name '*.go' -not -path './.git/*')` — no changes left after formatting.
-- [ ] `go test ./...` — all tests pass, including the two new tests in T006.
+- [ ] `go test ./...` — all tests pass, including the three new tests in T006.
 - [ ] `go vet ./...` — clean.
 - [ ] `terraform -chdir=infra/aws fmt -check -recursive` — clean.
 - [ ] `./scripts/smoke-local.sh` — green.
@@ -433,7 +450,9 @@ You **must not** modify:
   - [ ] Workflow Fingerprints section visible for a fixture with fingerprints.
   - [ ] MCP & Skill Utilization rows render bucket labels, counts, ratio (when `exposure_known`), inference label (when not), and a band chip per surface.
   - [ ] Advice block appears under MCP/Skill rows ONLY when band ∈ {high, severe}.
-  - [ ] Privacy grep `grep -Eo 'mcp__[A-Za-z0-9_-]+|skill__[A-Za-z0-9_-]+|plugin__[A-Za-z0-9_-]+' /tmp/rendered.html` returns empty or allowlist-only IDs.
+  - [ ] **FR-009 non-regression**: the existing `Ecosystem` `<pre>` block still renders all of today's fields (client, OS, workflow_frameworks, MCPs). Compare against `main` rendering for the same fixture.
+  - [ ] **Privacy grep** (save rendered HTML to `/tmp/report.html` per quickstart §"Browser QA"): `grep -Eo 'mcp__[A-Za-z0-9_-]+|skill__[A-Za-z0-9_-]+|plugin__[A-Za-z0-9_-]+' /tmp/report.html` returns empty or allowlist-only IDs.
+  - [ ] **NFR-005 measurement**: wrap the `renderReport(report)` call in a `performance.now()` delta once during browser QA and paste the millisecond result into the PR description. Budget: < 5 ms for the two new renderers combined (compare a "before" and "after" measurement on the same fixture).
 - [ ] No new schema field anywhere (`git diff main -- internal/analyzer/types.go` shows zero diff).
 - [ ] No new framework/bundler/`package.json`/`node_modules` introduced (`git diff main -- web/` does not contain any such file).
 - [ ] No new outbound `fetch()` / `XMLHttpRequest` / HTTP call introduced in `web/app.js` for the new code.
