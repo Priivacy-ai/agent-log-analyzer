@@ -29,7 +29,8 @@ subtasks:
 - T023
 - T024
 - T025
-agent: claude
+agent: "claude:opus-4-7:implementer-ivan:implementer"
+shell_pid: "48277"
 history:
 - '2026-05-19': created from mission token-saving-recommendation-engine-phase-a-01KRZKCJ
 agent_profile: implementer-ivan
@@ -345,3 +346,7 @@ classes when both present.
   boundaries.
 - Doc updates (WP05/WP06).
 - Registry changes (WP01).
+
+## Activity Log
+
+- 2026-05-19T09:43:06Z – claude:opus-4-7:implementer-ivan:implementer – shell_pid=48277 – Started implementation via action command
