@@ -50,9 +50,9 @@
 | T039 | Update `docs/data-retention-and-analytics.md` with fingerprint privacy notes | WP09 | [D] |
 | T040 | Update `docs/logging-policy.md` with CLI probe rules | WP09 | [D] |
 | T041 | Document the GitHub issue comments to post on #38 / #42 / #43 / #44–#48 / #49 / #50 / #66 / #67 | WP09 | | [D] |
-| T042 | Update `internal/analyzer/golden_test.go` for `WorkflowFingerprints` shape | WP10 | |
-| T043 | `gofmt -w` + `go test ./...` + `./scripts/smoke-local.sh` clean | WP10 | |
-| T044 | Switch to `codex/sdd-fingerprint-registry` branch, commit consolidated changes, push | WP10 | |
+| T042 | Update `internal/analyzer/golden_test.go` for `WorkflowFingerprints` shape | WP10 | | [D] |
+| T043 | `gofmt -w` + `go test ./...` + `./scripts/smoke-local.sh` clean | WP10 | | [D] |
+| T044 | Switch to `codex/sdd-fingerprint-registry` branch, commit consolidated changes, push | WP10 | | [D] |
 
 ## Work packages
 
