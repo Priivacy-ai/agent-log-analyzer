@@ -75,11 +75,11 @@ small public lookup API and a test that locks the registry's invariants.
 
 **Included subtasks**
 
-- [ ] T001 Create `internal/analyzer/token_saving_tools.go` with the `TokenSavingTool` struct (fields per data-model.md). (WP01)
-- [ ] T002 Encode the registry as a package-level Go literal `var registry = []TokenSavingTool{ … }` containing every entry from research.md §"Per-tool research notes". (WP01)
-- [ ] T003 Implement `GetTool(id ToolID)`, `AllTools()` (defensive copy, sorted by class+rank), and `RegistryVersion()` returning the constant `"phase-a-2026-05-19"`. (WP01)
-- [ ] T004 [P] Create `internal/analyzer/token_saving_tools_test.go` with `TestRegistryInvariants` enforcing every invariant from data-model.md ¶"Invariants". (WP01)
-- [ ] T005 [P] Add `TestRegistryAllowlistCoverage` asserting every brief-listed ID (`ccusage`, `rtk`, `context_mode`, …) appears exactly once in `AllTools()`. (WP01)
+- [x] T001 Create `internal/analyzer/token_saving_tools.go` with the `TokenSavingTool` struct (fields per data-model.md). (WP01)
+- [x] T002 Encode the registry as a package-level Go literal `var registry = []TokenSavingTool{ … }` containing every entry from research.md §"Per-tool research notes". (WP01)
+- [x] T003 Implement `GetTool(id ToolID)`, `AllTools()` (defensive copy, sorted by class+rank), and `RegistryVersion()` returning the constant `"phase-a-2026-05-19"`. (WP01)
+- [x] T004 [P] Create `internal/analyzer/token_saving_tools_test.go` with `TestRegistryInvariants` enforcing every invariant from data-model.md ¶"Invariants". (WP01)
+- [x] T005 [P] Add `TestRegistryAllowlistCoverage` asserting every brief-listed ID (`ccusage`, `rtk`, `context_mode`, …) appears exactly once in `AllTools()`. (WP01)
 
 **Implementation sketch**: write the type, encode the literal, expose three pure functions, write the invariant tests. No engine logic touches this file.
 
