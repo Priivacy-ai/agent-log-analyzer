@@ -118,6 +118,6 @@ Extend `mergeEcosystems` to cover both fields using the FR-007 / FR-008 semantic
 | `version_bucket` on disagreement | empty | A new `mixed` enum value would be more informative | Adding enum values is a schema decision belonging to the paid analytics design mission, not this one |
 | CLI parser library | Keep stdlib `flag` | Cobra would centralize positional rules but adds a dep | `locality-of-change`: out of scope; four-line patch in existing parser site |
 
-## Open `[NEEDS CLARIFICATION]`
+## Open Clarifications
 
-None. All ambiguities resolved before Phase 1 begins (per plan governance guideline).
+None. All ambiguities resolved before Phase 1 begins (per plan governance guideline). No deferred-decision markers remain in spec.md.

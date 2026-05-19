@@ -2,7 +2,7 @@
   "created_at": "2026-05-19T11:27:38.552370+00:00",
   "friendly_name": "Launch Correctness Fixes",
   "mission_id": "01KRZZVKHQK6V1R4B0ZABWTFCJ",
-  "mission_number": null,
+  "mission_number": 2,
   "mission_slug": "launch-correctness-01KRZZVK",
   "mission_type": "software-dev",
   "purpose_context": "Three correctness defects in the launch handoff could each cause a skeptical developer to lose trust in the profiler before they finish inspecting its privacy story. This mission ships them as one focused PR so the remaining launch sequence (report UX, recommendation Phase B, privacy gates, paid distribution, cloud hardening) builds on a correct foundation.",

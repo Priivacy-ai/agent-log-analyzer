@@ -1,0 +1,12 @@
+system: The following deferred tools are now available:
+- mcp__github__create_issue
+- mcp__github__list_pull_requests
+- mcp__linear__list_issues
+- mcp__notion__create_page
+- mcp__synthetic-fixture__placeholder
+- mcp__synthetic-fixture__other_tool
+
+user: please draft a plan but do not execute any tools
+assistant: here is the plan in prose form only, no tool use is required for this turn
+user: thanks
+assistant: acknowledged

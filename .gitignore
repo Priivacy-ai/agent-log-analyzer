@@ -44,3 +44,6 @@ tfplan
 .kittify/missions/__pycache__/
 .kittify/runtime/
 .kittify/workspaces/
+
+# Spec-kitty per-lane worktrees (created by /spec-kitty.implement)
+.worktrees/

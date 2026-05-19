@@ -12,6 +12,12 @@ Docker build
 Docker Compose smoke test
 ```
 
+## CLI
+
+`cmd/claude-analyzer/main_test.go` exercises `claude-analyzer analyze` argument
+resolution: positional path, `--log` flag, mutual exclusivity, and the
+extra-argument refusal path (FR-001..FR-003).
+
 ## Load Test Plan
 
 Use `k6` for HTTP load and synthetic fixture generation for worker pressure.

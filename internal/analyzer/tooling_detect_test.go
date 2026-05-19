@@ -2,6 +2,7 @@ package analyzer
 
 import (
 	"encoding/json"
+	"os"
 	"reflect"
 	"strings"
 	"testing"
@@ -408,4 +409,151 @@ func TestEstimateFootprint(t *testing.T) {
 		tokens, known := estimateMCPFootprintTokens(4000, 1, 2)
 		assertNoLeak(t, "footprint", holder{Tokens: tokens, Known: known})
 	})
+}
+
+// TestInsideAny exercises the masking primitive used by
+// detectMCPCallsFromToolUse to skip raw-byte matches that fall inside any
+// exposure-header byte range. Boundary behavior matters: the range is
+// half-open [Start, End), so Start is inside and End is outside.
+func TestInsideAny(t *testing.T) {
+	t.Run("empty ranges: always false", func(t *testing.T) {
+		for _, off := range []int{-1, 0, 1, 100, 1 << 20} {
+			if insideAny(off, nil) {
+				t.Errorf("insideAny(%d, nil) = true, want false", off)
+			}
+			if insideAny(off, []byteRange{}) {
+				t.Errorf("insideAny(%d, empty) = true, want false", off)
+			}
+		}
+	})
+
+	t.Run("single range [10,20): half-open boundary", func(t *testing.T) {
+		ranges := []byteRange{{Start: 10, End: 20}}
+		cases := []struct {
+			off  int
+			want bool
+		}{
+			{9, false},  // just before Start: outside
+			{10, true},  // at Start: inside (half-open low)
+			{15, true},  // middle: inside
+			{19, true},  // just before End: inside
+			{20, false}, // at End: outside (half-open high)
+			{21, false}, // just after End: outside
+		}
+		for _, tc := range cases {
+			if got := insideAny(tc.off, ranges); got != tc.want {
+				t.Errorf("insideAny(%d, [10,20)) = %v, want %v", tc.off, got, tc.want)
+			}
+		}
+	})
+
+	t.Run("multiple ranges: any-match short-circuits to true", func(t *testing.T) {
+		ranges := []byteRange{
+			{Start: 0, End: 5},
+			{Start: 100, End: 110},
+			{Start: 200, End: 210},
+		}
+		// Inside the third range — must still return true even though earlier
+		// ranges don't contain the offset.
+		if !insideAny(205, ranges) {
+			t.Errorf("insideAny(205, multi) = false, want true (offset is in third range)")
+		}
+		// Inside the first.
+		if !insideAny(3, ranges) {
+			t.Errorf("insideAny(3, multi) = false, want true (offset is in first range)")
+		}
+		// Between ranges: not inside any.
+		if insideAny(50, ranges) {
+			t.Errorf("insideAny(50, multi) = true, want false (offset is in a gap)")
+		}
+		if insideAny(150, ranges) {
+			t.Errorf("insideAny(150, multi) = true, want false (offset is in a gap)")
+		}
+	})
+}
+
+// TestInsideAnyCombinedMCPAndSkillRanges is the defensive-symmetry coverage
+// for the skill side of the mask. It constructs a combined ranges slice
+// carrying BOTH MCP and skill exposure-header byte ranges, then asserts that
+// candidate offsets falling inside either kind of range are filtered out.
+// This guards against a future skill exposure-header schema change reintroducing
+// the issue #70 class of bug on the skill side without test detection.
+func TestInsideAnyCombinedMCPAndSkillRanges(t *testing.T) {
+	// Imagine the MCP header occupies bytes [10, 50) and the skill header
+	// occupies bytes [80, 120). The combined set is the union.
+	mcpRanges := []byteRange{{Start: 10, End: 50}}
+	skillRanges := []byteRange{{Start: 80, End: 120}}
+	combined := append([]byteRange{}, mcpRanges...)
+	combined = append(combined, skillRanges...)
+
+	type candidate struct {
+		off    int
+		masked bool // true => insideAny must return true (offset filtered out)
+		why    string
+	}
+	cases := []candidate{
+		{off: 5, masked: false, why: "before any header"},
+		{off: 25, masked: true, why: "inside MCP header"},
+		{off: 60, masked: false, why: "between MCP and skill headers"},
+		{off: 100, masked: true, why: "inside skill header"},
+		{off: 150, masked: false, why: "after all headers"},
+		{off: 50, masked: false, why: "at MCP End (half-open)"},
+		{off: 80, masked: true, why: "at skill Start (half-open)"},
+	}
+	for _, tc := range cases {
+		got := insideAny(tc.off, combined)
+		if got != tc.masked {
+			t.Errorf("insideAny(%d, combined) = %v, want %v (%s)", tc.off, got, tc.masked, tc.why)
+		}
+	}
+}
+
+// TestDetectMCPCallsFromToolUseHeaderMask is the load-bearing fixture-based
+// assertion for FR-005 / FR-006 / NFR-003: a log that contains an MCP
+// exposure header advertising several `mcp__server__tool` identifiers but
+// zero actual tool_use records must produce CallCount == 0,
+// KnownCallCount == 0, and an empty UniqueKnownCalledIDs after the mask is
+// applied.
+func TestDetectMCPCallsFromToolUseHeaderMask(t *testing.T) {
+	registry := ecosystemRegistry()
+	data, err := os.ReadFile("testdata/tooling/08-header-only-zero-calls.log")
+	if err != nil {
+		t.Fatalf("read fixture 08: %v", err)
+	}
+
+	// Sanity-check: the header detector itself sees the header and records
+	// a non-empty byte range. Without this, the mask test below would be
+	// vacuously green if the header parser stopped detecting the block.
+	exp := detectMCPExposureFromHeaders(data, registry)
+	if exp.InferenceSource != InferenceSourceHeader {
+		t.Fatalf("fixture 08 must produce a header inference, got %q", exp.InferenceSource)
+	}
+	if len(exp.HeaderRanges) == 0 {
+		t.Fatalf("fixture 08 must produce at least one HeaderRanges entry")
+	}
+	if exp.ExposedToolCount < 5 {
+		t.Fatalf("fixture 08 must advertise at least 5 mcp__server__tool tokens, got %d", exp.ExposedToolCount)
+	}
+
+	// Now the actual assertion: the call detector must mask all of those
+	// header tokens and report zero calls.
+	calls := detectMCPCallsFromToolUse(data, nil, registry)
+	if calls.TotalCalls != 0 {
+		t.Errorf("CallCount = %d, want 0 (header tokens must not count as calls)", calls.TotalCalls)
+	}
+	if calls.KnownCallCount != 0 {
+		t.Errorf("KnownCallCount = %d, want 0", calls.KnownCallCount)
+	}
+	if calls.UnknownCallCount != 0 {
+		t.Errorf("UnknownCallCount = %d, want 0", calls.UnknownCallCount)
+	}
+	if len(calls.UniqueKnownIDs) != 0 {
+		t.Errorf("UniqueKnownCalledIDs = %v, want empty", calls.UniqueKnownIDs)
+	}
+	if calls.UniqueServerCount != 0 {
+		t.Errorf("UniqueServerCount = %d, want 0", calls.UniqueServerCount)
+	}
+	if calls.UniqueToolCount != 0 {
+		t.Errorf("UniqueToolCount = %d, want 0", calls.UniqueToolCount)
+	}
 }

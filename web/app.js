@@ -67,6 +67,8 @@ function analyzeCommand() {
   return [
     "go install \\",
     "  github.com/robertdouglass/claude-log-analyzer/cmd/claude-analyzer@v0.1.0",
+    "# omit the path to use the latest log under ~/.claude/projects/,",
+    "# or pass a path positionally (--log <path> also works):",
     "claude-analyzer analyze --out ./claude-analyzer-report.json",
   ].join("\n");
 }
