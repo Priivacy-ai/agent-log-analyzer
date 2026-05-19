@@ -1,0 +1,71 @@
+{
+  "version": 1,
+  "mission_slug": "launch-correctness-01KRZZVK",
+  "mission_id": "01KRZZVKHQK6V1R4B0ZABWTFCJ",
+  "mission_branch": "kitty/mission-launch-correctness-01KRZZVK",
+  "target_branch": "main",
+  "lanes": [
+    {
+      "lane_id": "lane-a",
+      "wp_ids": [
+        "WP01"
+      ],
+      "write_scope": [
+        "README.md",
+        "cmd/claude-analyzer/**",
+        "docs/testing-plan.md",
+        "web/app.js"
+      ],
+      "predicted_surfaces": [
+        "api",
+        "artifact-rendering",
+        "legacy-cleanup",
+        "workspace"
+      ],
+      "depends_on_lanes": [],
+      "parallel_group": 0
+    },
+    {
+      "lane_id": "lane-b",
+      "wp_ids": [
+        "WP02"
+      ],
+      "write_scope": [
+        "internal/analyzer/testdata/tooling/**",
+        "internal/analyzer/tooling_detect.go",
+        "internal/analyzer/tooling_detect_test.go"
+      ],
+      "predicted_surfaces": [
+        "api",
+        "workspace"
+      ],
+      "depends_on_lanes": [],
+      "parallel_group": 0
+    },
+    {
+      "lane_id": "lane-c",
+      "wp_ids": [
+        "WP03"
+      ],
+      "write_scope": [
+        "internal/analyzer/aggregate.go",
+        "internal/analyzer/aggregate_test.go",
+        "internal/analyzer/golden_test.go",
+        "internal/analyzer/leak_test.go",
+        "internal/analyzer/testdata/golden/**",
+        "internal/remediation/artifact_test.go"
+      ],
+      "predicted_surfaces": [
+        "api",
+        "artifact-rendering",
+        "legacy-cleanup",
+        "workspace"
+      ],
+      "depends_on_lanes": [],
+      "parallel_group": 0
+    }
+  ],
+  "computed_at": "2026-05-19T12:02:17.035173+00:00",
+  "computed_from": "dependency_graph+ownership",
+  "planning_artifact_wps": []
+}
