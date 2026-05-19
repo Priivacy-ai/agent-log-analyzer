@@ -306,3 +306,4 @@ exercised end-to-end by WP04.
 - 2026-05-19T09:33:18Z – claude:opus-4-7:implementer-ivan:implementer – shell_pid=44738 – Engine types + enums + ToolStateMap.Resolve + output structs; WP01 alias placeholders removed; all tests green
 - 2026-05-19T09:33:43Z – claude:opus-4-7:reviewer-rina:reviewer – shell_pid=45806 – Started review via action command
 - 2026-05-19T09:35:25Z – claude:opus-4-7:reviewer-rina:reviewer – shell_pid=45806 – Review passed: types-only file matches data-model.md verbatim (56 constants across 8 enums), ToolStateMap.Resolve precedence is correct (rejected>active>configured>installed>mentioned>unknown), output struct JSON tags match the contract, and the 2 WP01->WP02 handoff edits (alias removal + 3 string conversions) are minimal; go vet/build clean and all 15 analyzer tests pass.
+- 2026-05-19T10:03:02Z – claude:opus-4-7:reviewer-rina:reviewer – shell_pid=45806 – Moved to done
