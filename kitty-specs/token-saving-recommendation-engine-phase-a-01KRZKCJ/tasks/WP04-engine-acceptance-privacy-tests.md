@@ -350,3 +350,4 @@ classes when both present.
 ## Activity Log
 
 - 2026-05-19T09:43:06Z – claude:opus-4-7:implementer-ivan:implementer – shell_pid=48277 – Started implementation via action command
+- 2026-05-19T09:57:56Z – claude:opus-4-7:implementer-ivan:implementer – shell_pid=48277 – AS-01..AS-13 + determinism + skip-active + no-MCP-stacking + ≤1+1 + privacy budget; all tests green; privacy probe smoke-tested catches injected decoys
