@@ -25,8 +25,8 @@ subtasks:
 - T004
 - T005
 - T006
-agent: claude
-shell_pid: '79012'
+agent: "claude:opus-4-7:frontend-freddy:implementer"
+shell_pid: "79012"
 history:
 - timestamp: '2026-05-19T13:47:54Z'
   event: drafted
@@ -488,3 +488,7 @@ go test ./internal/analyzer/ -run "TestRenderInputs|TestReportSerializationConta
 ```bash
 spec-kitty agent action implement WP01 --agent claude --mission report-intelligence-ux-01KS070G
 ```
+
+## Activity Log
+
+- 2026-05-19T14:08:25Z – claude:opus-4-7:frontend-freddy:implementer – shell_pid=79012 – Assigned agent via action command
