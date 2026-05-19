@@ -145,3 +145,4 @@ prompt.
 
 - 2026-05-19T06:35:00Z -- system -- Prompt created.
 - 2026-05-19T08:16:57Z – claude:opus-4.7:implementer-ivan:implementer – shell_pid=25965 – Started implementation via action command
+- 2026-05-19T08:21:12Z – claude:opus-4.7:implementer-ivan:implementer – shell_pid=25965 – Canary leak test (20 forbidden strings) over full Analyze + AggregateEvent; structural bounded-shape test (7 fields, no maps); unknown-MCP names-stay-as-counts regression
