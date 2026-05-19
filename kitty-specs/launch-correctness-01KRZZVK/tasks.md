@@ -7,15 +7,17 @@
 
 ## Summary
 
-Three independent bug-fix work packages, all touching different modules. They share no `owned_files` and can be implemented in parallel.
+Three bug-fix work packages. WP01 is independent. WP02 and WP03 land in sequence (WP03 depends on WP02) because they share concern over `internal/analyzer/golden_test.go` and `testdata/golden/sample-report.json`: WP02 may shift per-report MCP call counts, and WP03 picks up the golden refresh after rebasing.
 
 | WP   | Title                                       | Subtasks | Est. lines | Parallel | Dependencies | Issues       |
 |------|---------------------------------------------|----------|------------|----------|--------------|--------------|
 | WP01 | CLI positional log path handling            | 5        | ~280       | [P]      | —            | #74          |
-| WP02 | MCP exposure-header call mask               | 6        | ~360       | [P]      | —            | #70          |
-| WP03 | Paid aggregate merge for ecosystem fields   | 7        | ~460       | [P]      | —            | #72          |
+| WP02 | MCP exposure-header call mask               | 6        | ~360       |          | —            | #70          |
+| WP03 | Paid aggregate merge for ecosystem fields   | 7        | ~460       |          | Depends on WP02 | #72       |
 
-MVP scope: any one of the three; correctness story requires all three.
+Lanes after `finalize-tasks` collapse: two lanes (WP01 in one, WP02 → WP03 in another).
+
+MVP scope: any one of the three lanes; correctness story requires all three WPs.
 
 ## Subtask Index
 
@@ -170,7 +172,9 @@ T017 is in `internal/remediation/` and can run in parallel with the analyzer-sid
 
 ### Dependencies
 
-None outside WP03. WP03 internal sequence: T012 → T013 → (T014 || T015 || T016 || T017 || T018).
+**Depends on WP02.** WP03 rebases on the WP02 lane head before starting code work; if WP02's hand-off note flags a per-report MCP `CallCount` shift, the refreshed `testdata/golden/sample-report.json` is committed as part of this WP together with the aggregate-merge updates. See "WP02 rebase / hand-off" in the WP03 prompt.
+
+WP03 internal sequence: T012 → T013 → (T014 || T015 || T016 || T017 || T018).
 
 ### Risks
 

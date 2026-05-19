@@ -91,6 +91,17 @@ go vet ./internal/analyzer/...
 - C-002 (privacy stance): no new field exposes private names, raw bytes, or stable hashes.
 - C-006 (no-op stability): fixtures `00..06` MUST be byte-identical before and after this WP.
 
+**File ownership divergence from `start-here.md`:** the launch brief listed
+`internal/analyzer/golden_test.go` and `docs/testing-plan.md` among the files
+for #70. This mission assigns `golden_test.go` to WP03 (which makes a small
+unrelated edit at lines 55..59 during the aggregate work) and `docs/testing-plan.md`
+to WP01 (which owns the user-visible docs for this mission). WP02 therefore
+does NOT own `golden_test.go`. If your fix changes the byte-shape of the
+`TestGoldenToolingFixtures` band assertions (because a fixture's MCP
+`CallCount` shifts after the mask), record that as a hand-off note for WP03
+in the lane activity log — WP03 picks it up after rebasing on WP02. WP03
+declares a `dependencies: [WP02]` link to make this rebase order explicit.
+
 ## Subtasks & Detailed Guidance
 
 ### Subtask T006 — Add `byteRange` type and `HeaderRanges` field
@@ -124,7 +135,7 @@ go vet ./internal/analyzer/...
 
 ### Subtask T008 — Mask helper and call-detector integration
 
-- **Purpose**: Make `detectMCPCallsFromToolUse` skip raw-byte matches inside header ranges (FR-005).
+- **Purpose**: Make `detectMCPCallsFromToolUse` skip raw-byte rescan matches whose offsets fall inside any exposure-header byte range (FR-005). The canonical terms are **exposure header** (the byte range advertising tools) and **actual call** (a tool-use record outside any exposure-header range); keep both terms exact in any code comments you add.
 - **Files**: `internal/analyzer/tooling_detect.go`.
 - **Steps**:
   1. Add a small unexported helper:
@@ -168,29 +179,31 @@ go vet ./internal/analyzer/...
 
 ### Subtask T010 — Extend `tooling_detect_test.go`
 
-- **Purpose**: Cover FR-006 with the new fixture and exercise the masking primitive (NFR-003).
+- **Purpose**: Cover FR-005 / FR-006 with the new fixture and exercise the masking primitive across both MCP and skill ranges (NFR-003).
 - **Files**: `internal/analyzer/tooling_detect_test.go`.
 - **Steps**:
   1. Add a case to the existing table-driven test for `detectMCPExposureFromHeaders` and the call detector that loads fixture 08 and asserts `mcpUtilization.CallCount == 0`, `mcpUtilization.KnownCallCount == 0`, and `mcpUtilization.UniqueKnownCalledIDs` is empty.
-  2. Add a separate unit test for `insideAny(off int, ranges []byteRange) bool`:
+  2. Add a unit test for `insideAny(off int, ranges []byteRange) bool`:
      - Empty ranges → always false.
      - Single range `[10, 20)` → `9` false, `10` true, `15` true, `19` true, `20` false.
      - Multiple ranges → first-hit short-circuit returns true.
+  3. Add a unit test that exercises the mask predicate over a **combined** ranges slice carrying both MCP and skill exposure-header ranges. Construct a synthetic candidate-offset list and assert that offsets inside *either* an MCP range or a skill range are filtered out. This is the defensive-symmetry coverage for the skill side; without it, a future skill exposure-header schema change could reintroduce the same class of bug without test detection.
 - **Parallel?**: No — depends on T008.
 
-### Subtask T011 — Verify C-006 no-op stability + update fixture-07 golden if needed
+### Subtask T011 — Verify C-006 no-op stability across existing tooling fixtures
 
-- **Purpose**: Prove that the fix does not perturb header-free fixtures and update the only fixture whose snapshot is allowed to shift.
-- **Files**: `internal/analyzer/testdata/golden/**` (only if a snapshot shifts).
+- **Purpose**: Prove that the fix is a strict no-op on fixtures `00..06`, and surface any band-shift on later fixtures as a hand-off for WP03.
+- **Files**: read-only against `internal/analyzer/golden_test.go` and `testdata/golden/sample-report.json` (WP03 owns both; do not edit either from this WP).
 - **Steps**:
-  1. Run `go test ./internal/analyzer/ -run TestGolden -v`.
-  2. For fixtures 00..06, expect byte-identical results. If any of them shifts, **STOP** and investigate — that violates C-006 and means the mask is over-matching.
-  3. For fixture 07 (`07-mixed-known-unknown.log`), the snapshot may shift downward (fewer false-positive MCP calls). Update the golden file in place.
-  4. Capture the diff in the PR description so the reviewer can confirm the shift is in the expected direction (counts go down, never up).
+  1. Run the existing tooling assertions: `go test ./internal/analyzer/ -run TestGoldenToolingFixtures -v`.
+  2. For fixtures `00..06`, the test must remain green. If any of them now fails because a band assertion shifted, **STOP** and investigate — the mask is over-matching, which violates C-006.
+  3. For fixture `07-mixed-known-unknown`, the existing test does **not** currently assert MCP `WarningBand` directly; it asserts `KnownServerIDs` content and `ExecutedCount == 0`. The fix should not perturb those assertions. If it does, **STOP** and investigate.
+  4. Run `go test ./internal/analyzer/ -run TestGoldenSampleReport -v`. If `testdata/golden/sample-report.json` shifts (because the per-report MCP `CallCount` in the sample fixture was previously inflated by header double-counts), do **NOT** update the golden from this WP. Instead, record the diff verbatim in the lane activity log and in the hand-off note for WP03. WP03 owns `testdata/golden/sample-report.json` and applies the golden refresh after rebasing on WP02 — together with its aggregate-merge updates to the same file.
+  5. Capture the diff (if any) in the PR description so the reviewer can confirm the shift is in the expected direction: counts go down or stay equal, never up.
 - **Parallel?**: No — runs last in this WP.
 - **Notes**:
-  - If fixture 07's snapshot does NOT shift, it means fixture 07 had no header-token double-count to begin with. That's fine — note it in the PR and move on.
-  - The `golden_test.go` file itself is owned by WP03; do not modify it. This WP only touches golden snapshot JSON files (data) in `testdata/golden/`.
+  - If the sample report does not shift at all, the per-report detector was never inflated for that fixture; record "no per-report shift" in the hand-off note and proceed.
+  - Do not edit `golden_test.go` or `testdata/golden/sample-report.json` from this WP. Both are WP03-owned. The dependency `WP03 -> [WP02]` exists for exactly this hand-off.
 
 ## Test Strategy
 
@@ -230,11 +243,11 @@ terraform -chdir=infra/aws fmt -check -recursive
 
 Reviewer checkpoints for `/spec-kitty.review`:
 
-1. **C-006 no-op stability**: confirm fixtures 00..06 golden snapshots are byte-identical pre/post-merge.
+1. **C-006 no-op stability**: confirm `TestGoldenToolingFixtures` for fixtures `00..06` is green without any assertion change.
 2. **FR-005 mask correctness**: confirm fixture 08 produces `CallCount == 0` after the fix.
-3. **Fixture 07 direction**: if its snapshot shifted, it must have shifted downward (fewer calls), not upward.
-4. **No serialized HeaderRanges**: confirm structurally that no JSON output anywhere mentions header ranges.
-5. **Skill defensive symmetry**: confirm `skillExposure.HeaderRanges` was added and populated, even though no current skill bug exists.
+3. **Sample-report hand-off**: if the sample-report golden shifted, confirm the diff direction is downward and that WP03 picked up the refresh after rebase. If it did not shift, confirm the hand-off note records "no per-report shift".
+4. **No serialized HeaderRanges**: confirm structurally that no JSON output anywhere mentions header ranges (the field has no `json:` tag and the enclosing structs are package-private).
+5. **Skill defensive symmetry**: confirm `skillExposure.HeaderRanges` was added and populated, and that the new T010 combined-ranges mask test exercises skill ranges.
 6. **Issue #70 comments**: implementer commented at start and ready-for-review.
 
 ## Activity Log

@@ -1,7 +1,8 @@
 ---
 work_package_id: WP03
 title: Paid aggregate merge for ecosystem fields
-dependencies: []
+dependencies:
+- WP02
 requirement_refs:
 - FR-007
 - FR-008
@@ -28,6 +29,9 @@ history:
 - at: '2026-05-19T11:55:54Z'
   actor: system
   action: Prompt generated via /spec-kitty.tasks
+- at: '2026-05-19T12:10:00Z'
+  actor: system
+  action: 'Post-analyze fixes: declare WP02 dependency, correct testdata/golden/ path, add internal/remediation/artifact.go to owned_files.'
 agent_profile: implementer-ivan
 authoritative_surface: internal/analyzer/aggregate
 execution_mode: code_change
@@ -37,7 +41,8 @@ owned_files:
 - internal/analyzer/aggregate_test.go
 - internal/analyzer/leak_test.go
 - internal/analyzer/golden_test.go
-- internal/analyzer/testdata/golden/**
+- testdata/golden/**
+- internal/remediation/artifact.go
 - internal/remediation/artifact_test.go
 role: implementer
 tags: []
@@ -104,8 +109,30 @@ go test ./internal/remediation/ -run TestArtifact -v
 **Constraints carried from spec/charter:**
 - C-001 (bounded-cardinality schema): every merged value is an allowlisted ID, a closed enum, a bounded bucket, or a numeric count. No new shape.
 - C-002 (privacy stance): no private name appears in merged output. Canary asserts this.
-- C-006 (no-op stability): doesn't directly apply here (C-006 is WP02's concern), but golden_test.go aggregate snapshots will shift to include fingerprint/utilization data — that is the intended fix, not a regression.
+- C-006 (no-op stability): doesn't directly apply here (C-006 is WP02's concern), but `testdata/golden/sample-report.json` will shift to include merged fingerprint/utilization data — that is the intended fix, not a regression.
 - C-007 (`evidence_count = sum`): locked. Do not switch to `max` in this WP.
+
+**WP02 rebase / hand-off (dependency declared in frontmatter as `dependencies: [WP02]`)**:
+
+- This WP runs after WP02 lands its lane. Before starting code work, rebase
+  onto the latest WP02 lane head and re-read the WP02 activity log.
+- WP02's T011 may have recorded a hand-off note about a shift in
+  `testdata/golden/sample-report.json` (because the per-report MCP detector
+  now masks header tokens correctly). If such a note exists:
+  - Run `UPDATE_GOLDEN=1 go test ./internal/analyzer -run TestGoldenSampleReport`
+    once, inspect the diff carefully, confirm it is downward-only on MCP call
+    counts, and commit the refreshed snapshot alongside this WP's aggregate
+    work.
+  - The same `testdata/golden/sample-report.json` will also receive the
+    aggregate-merge updates from T013 / T016. Folding both refreshes into one
+    commit is intentional and keeps the file diff coherent.
+- If WP02's hand-off note says "no per-report shift", only the aggregate-merge
+  changes touch the golden file.
+- `internal/analyzer/golden_test.go` lines 55..59 currently nil
+  `WorkflowFingerprints` and `AggregateEvent.Ecosystem.WorkflowFingerprints`
+  before the golden comparison. T016 removes that nilling (the field becomes
+  reproducible now that aggregate merge populates it deterministically). This
+  is the load-bearing reason this WP owns `golden_test.go`.
 
 ## Subtasks & Detailed Guidance
 
@@ -197,17 +224,17 @@ go test ./internal/remediation/ -run TestArtifact -v
 ### Subtask T015 — Privacy canary across merged output (NFR-002)
 
 - **Purpose**: Prove the merge doesn't accidentally leak private names.
-- **Files**: `internal/analyzer/leak_test.go`.
+- **Files**: `internal/analyzer/leak_test.go`. Also reference `internal/analyzer/golden_test.go::TestPrivacyLeakCorpus` as the existing template — that test already iterates fixtures `06-private-only.log` and `07-mixed-known-unknown.log` and asserts forbidden substrings are absent from `Report` and `AggregateEvent` serializations of a single report. T015 extends the same idea across `AggregateReports` output.
 - **Steps**:
-  1. Locate the existing leak-string list (e.g. `acme_internal_secret`, `private_corp_mcp`).
-  2. Build two input reports `A` and `B` from raw inputs containing those leak strings — analyze them through the existing analyzer pipeline so that the private names appear in unknown counts (not in allowlisted ID lists).
-  3. Call `AggregateReports` to produce the merged report.
-  4. Marshal the merged `Ecosystem` to JSON (`encoding/json`). Assert none of the leak strings appear in the resulting bytes.
-  5. Repeat the assertion against the aggregate event payload (`AggregateEvent` shape) produced by the same path.
+  1. Locate the existing leak-string lists in `internal/analyzer/golden_test.go:286..330` (the `TestPrivacyLeakCorpus` substring lists for `06-private-only` and `07-mixed-known-unknown`).
+  2. In `leak_test.go`, build two input reports `A` and `B` by analyzing those two fixtures through the existing `Analyze()` pipeline so the private names appear in unknown counts (never in allowlisted ID lists).
+  3. Call `AggregateReports("agg-canary", []Report{A, B}, len(A.Sources)+len(B.Sources))` (or whatever the actual signature is — confirm by reading `aggregate.go:8`).
+  4. Marshal the merged `Ecosystem` to JSON (`encoding/json`). Assert none of the union of both fixtures' leak strings appears in the resulting bytes.
+  5. Repeat the assertion against the aggregate event payload from the merged report (`merged.AggregateEvent`).
   6. Repeat the assertion against the generated paid plugin artifact bytes produced by `internal/remediation/artifact.go:Generate()` from the merged report.
 - **Parallel?**: [P] after T013.
 - **Notes**:
-  - Reuse existing leak-string fixtures; do not invent new ones.
+  - Reuse the existing leak-string fixtures from `golden_test.go::TestPrivacyLeakCorpus`; do not invent new ones.
   - If `Generate()` requires additional setup (entitlement, session token, etc.), use the same setup as the existing `internal/remediation/artifact_test.go` cases.
 
 ### Subtask T016 — Update `golden_test.go`
@@ -224,13 +251,14 @@ go test ./internal/remediation/ -run TestArtifact -v
 ### Subtask T017 — Artifact test proves merged data flows to paid plugin
 
 - **Purpose**: Lock FR-009.
-- **Files**: `internal/remediation/artifact_test.go`.
+- **Files**: `internal/remediation/artifact_test.go`, and (if needed) `internal/remediation/artifact.go`.
 - **Steps**:
   1. Add a test `TestGenerate_MergedAggregate_FlowsToArtifact`.
   2. Construct two input `Report` values with distinct `Ecosystem.ToolingUtilization` and `Ecosystem.WorkflowFingerprints` values (e.g. report A has MCP `CallCount=5` and fingerprint `spec-kitty:high`, report B has MCP `CallCount=7` and fingerprint `github-spec-kit:medium`).
   3. Call `AggregateReports` to merge them.
   4. Call `Generate()` on the merged report.
   5. Assert the generated artifact bytes contain markers reflecting the merged values (e.g. `CallCount==12`, both fingerprint ids present). Use whatever string-marker patterns the existing artifact tests use.
+  6. If the assertion fails because `safeKnownEcosystem` (`artifact.go:502`) or any other helper inside `internal/remediation/artifact.go` strips `ToolingUtilization` and `WorkflowFingerprints` before serialization, **extend that helper** to pass the merged fields through. The current code reads only the simple string fields per research.md; the fix may be as small as adding two field assignments. This is the load-bearing reason this WP owns `internal/remediation/artifact.go` (added to `owned_files` post-analyze).
 - **Parallel?**: [P] after T013.
 
 ### Subtask T018 — Timing test for NFR-005

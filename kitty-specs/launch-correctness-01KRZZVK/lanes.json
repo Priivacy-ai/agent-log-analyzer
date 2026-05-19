@@ -28,23 +28,7 @@
     {
       "lane_id": "lane-b",
       "wp_ids": [
-        "WP02"
-      ],
-      "write_scope": [
-        "internal/analyzer/testdata/tooling/**",
-        "internal/analyzer/tooling_detect.go",
-        "internal/analyzer/tooling_detect_test.go"
-      ],
-      "predicted_surfaces": [
-        "api",
-        "workspace"
-      ],
-      "depends_on_lanes": [],
-      "parallel_group": 0
-    },
-    {
-      "lane_id": "lane-c",
-      "wp_ids": [
+        "WP02",
         "WP03"
       ],
       "write_scope": [
@@ -52,8 +36,12 @@
         "internal/analyzer/aggregate_test.go",
         "internal/analyzer/golden_test.go",
         "internal/analyzer/leak_test.go",
-        "internal/analyzer/testdata/golden/**",
-        "internal/remediation/artifact_test.go"
+        "internal/analyzer/testdata/tooling/**",
+        "internal/analyzer/tooling_detect.go",
+        "internal/analyzer/tooling_detect_test.go",
+        "internal/remediation/artifact.go",
+        "internal/remediation/artifact_test.go",
+        "testdata/golden/**"
       ],
       "predicted_surfaces": [
         "api",
@@ -65,7 +53,22 @@
       "parallel_group": 0
     }
   ],
-  "computed_at": "2026-05-19T12:02:17.035173+00:00",
+  "computed_at": "2026-05-19T12:16:06.646481+00:00",
   "computed_from": "dependency_graph+ownership",
-  "planning_artifact_wps": []
+  "planning_artifact_wps": [],
+  "collapse_report": {
+    "events": [
+      {
+        "wp_a": "WP03",
+        "wp_b": "WP02",
+        "rule": "dependency",
+        "evidence": "WP03 depends on WP02"
+      }
+    ],
+    "total_merges": 1,
+    "independent_wps_collapsed": 0,
+    "by_rule": {
+      "dependency": 1
+    }
+  }
 }
