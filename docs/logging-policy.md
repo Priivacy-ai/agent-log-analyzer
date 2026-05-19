@@ -33,3 +33,7 @@ Current enforcement:
 - Worker logs job ID and score bucket only.
 - Aggregate ecosystem telemetry stores known public IDs and unknown counts only.
 
+## MCP and Skill Utilization
+
+Analyzer aggregate events include privacy-safe utilization metrics for MCP servers and skills. See [ecosystem-signatures.md](./ecosystem-signatures.md) for what's measured and [data-retention-and-analytics.md](./data-retention-and-analytics.md) for the upload contract. Private MCP/skill names are counted only; nothing identifying is logged, stored, or uploaded.
+

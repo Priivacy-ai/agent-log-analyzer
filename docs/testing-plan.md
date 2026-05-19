@@ -84,3 +84,25 @@ API 5xx rate: <0.1%
 - worker timeout
 - worker memory pressure
 - paid-scan tar/gzip bundle with 100 JSONL files
+
+## MCP and Skill Bloat Fixtures (Epic #39)
+
+Synthetic transcript fixtures exercise the MCP/skill utilization pipeline and pin band/bucket outputs deterministically. Fixtures live under `internal/analyzer/testdata/tooling/`:
+
+- `00-empty.log` — no MCP/skill signal at all; exposure unknown, band `unknown`.
+- `01-healthy-small.log` — a small number of exposed MCPs/skills with healthy utilization; band `normal`.
+- `02-many-high-util.log` — many exposed MCPs with high utilization; band stays `normal` (count alone never warns).
+- `03-many-low-util.log` — many exposed MCPs with very low utilization; band `high`.
+- `04-many-low-util-degraded.log` — same shape as `03` plus degradation signals (re-reads, retry depth, context growth); band `severe`.
+- `05-skill-bloat.log` — many exposed skills with low execution; exercises the skill side of the band classifier.
+- `06-private-only.log` — only non-allowlist (synthetic, private-shaped) MCP and skill names; verifies they are counted but never emitted.
+- `07-mixed-known-unknown.log` — a mix of allowlist hits and synthetic private-shaped names; verifies the known/unknown split.
+
+Two test functions consume the fixtures:
+
+- `TestGoldenToolingFixtures` — runs each fixture through the analyzer and pins band, count buckets, token buckets, efficiency buckets, and inference source against expected values.
+- `TestPrivacyLeakCorpus` — asserts zero substring leakage: the report JSON for fixtures `06` and `07` must not contain any of the synthetic private MCP/skill names introduced in those fixtures.
+
+**Sync rule**: the forbidden-substring list in `TestPrivacyLeakCorpus` must stay in sync with whatever synthetic private names are introduced in fixtures `06` and `07`. When a fixture gains a new synthetic name, the test's substring list must be extended in the same commit.
+
+All fixture content is synthetic; no real user logs, real product names, or real company names appear in the fixtures or in the tests.
