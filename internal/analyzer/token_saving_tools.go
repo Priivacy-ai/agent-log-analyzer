@@ -7,38 +7,19 @@
 // truth for tool IDs, recommendation classes, install policies, and
 // per-tool detector evidence sources.
 //
-// Type-alias bridge to WP02
+// Named-type bridge to WP02
 // -------------------------
 // The struct below references the enum-typed fields RecommendationClass,
-// RiskLevel, InstallPolicy, and EvidenceSource. Their proper named-type
-// declarations and constants live in token_saving_types.go (WP02). To
-// keep WP01 independently buildable and testable within the shared
-// lane-a worktree, those four names are declared here as transparent
-// type aliases over string:
-//
-//	type RecommendationClass = string
-//	type RiskLevel           = string
-//	type InstallPolicy       = string
-//	type EvidenceSource      = string
-//
-// When WP02 lands it will replace these aliases with proper named types
-// (`type Foo string`) plus the documented constants. Aliases are exact
-// equivalents to string, so the struct field declarations, JSON tag
-// shape, and registry literal below are unaffected by that rename. WP02
-// reviewers should expect the alias block in this file to be deleted in
-// favor of the named-type declarations in token_saving_types.go.
+// RiskLevel, InstallPolicy, and EvidenceSource. Their named-type
+// declarations (`type Foo string`) and constants live in
+// token_saving_types.go (WP02). The registry literal below uses
+// untyped string literals (e.g. "recommend", "usage_visibility") which
+// Go implicitly converts to the named types per the composite-literal
+// element-type and struct-field-type, so this file remains valid
+// without re-declaring those names.
 package analyzer
 
 import "sort"
-
-// Placeholder type aliases — replaced by named types in
-// token_saving_types.go (WP02). See file header.
-type (
-	RecommendationClass = string
-	RiskLevel           = string
-	InstallPolicy       = string
-	EvidenceSource      = string
-)
 
 // ToolID is the canonical allowlist identifier for a token-saving tool.
 // Canonical form is lowercase + underscore-separated (e.g. "ccusage",

@@ -98,8 +98,11 @@ func TestRegistryInvariants(t *testing.T) {
 		}
 		seenIDs[tool.ID] = len(seenIDs)
 
-		// InstallPolicy in the closed set.
-		if !validInstallPolicies[tool.InstallPolicy] {
+		// InstallPolicy in the closed set. tool.InstallPolicy is the
+		// named type InstallPolicy (declared in token_saving_types.go,
+		// WP02); convert to string for map lookup against the
+		// WP01-local literal set.
+		if !validInstallPolicies[string(tool.InstallPolicy)] {
 			t.Errorf("tool %q: InstallPolicy %q is not in the documented set", tool.ID, tool.InstallPolicy)
 		}
 
@@ -115,14 +118,15 @@ func TestRegistryInvariants(t *testing.T) {
 			t.Errorf("tool %q: InstallPolicy=recommend_with_waiver requires non-empty RollbackGuidance", tool.ID)
 		}
 
-		// RecommendationClass in the closed set.
-		if !validRecommendationClasses[tool.RecommendationClass] {
+		// RecommendationClass in the closed set. Convert the named
+		// type to string for map lookup (see note above).
+		if !validRecommendationClasses[string(tool.RecommendationClass)] {
 			t.Errorf("tool %q: RecommendationClass %q is not in the documented set",
 				tool.ID, tool.RecommendationClass)
 		}
 
 		// (class, rank) pairs unique.
-		key := classRankKey{class: tool.RecommendationClass, rank: tool.ClassRank}
+		key := classRankKey{class: string(tool.RecommendationClass), rank: tool.ClassRank}
 		if prior, dup := seenClassRank[key]; dup {
 			t.Errorf("tool %q: duplicate (class=%q, rank=%d) — also claimed by %q",
 				tool.ID, key.class, key.rank, prior)
