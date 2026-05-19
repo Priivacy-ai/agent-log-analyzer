@@ -16,8 +16,8 @@ subtasks:
 - T040
 - T041
 phase: Phase 5 — Docs
-agent: "claude:opus-4.7:curator-carla:curator"
-shell_pid: "10970"
+agent: "claude:opus-4.7:reviewer-renata:reviewer"
+shell_pid: "14321"
 history:
 - at: '2026-05-19T06:35:00Z'
   actor: system
@@ -129,3 +129,4 @@ No code tests. The acceptance criterion is "a new maintainer can land a new dete
 - 2026-05-19T06:35:00Z -- system -- Prompt created.
 - 2026-05-19T07:37:44Z – claude:opus-4.7:curator-carla:curator – shell_pid=10970 – Started implementation via action command
 - 2026-05-19T07:42:30Z – claude:opus-4.7:curator-carla:curator – shell_pid=10970 – Maintainer-facing registry doc + 3 related-doc updates + GH issue comment template
+- 2026-05-19T07:42:51Z – claude:opus-4.7:reviewer-renata:reviewer – shell_pid=14321 – Started review via action command
