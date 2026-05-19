@@ -1,0 +1,14 @@
+system: Available MCP servers: github, linear
+- github
+- linear
+
+A: tool_use mcp__github__create_issue title="example"
+assistant: tool_use mcp__linear__list_issues
+assistant: tool_use mcp__github__create_issue title="another"
+
+system: The following skills are available:
+- review
+- qa
+
+user: /review please
+assistant: done

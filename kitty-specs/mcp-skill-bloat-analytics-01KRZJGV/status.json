@@ -1,0 +1,63 @@
+{
+  "event_count": 12,
+  "last_event_id": "01KRZSD0B1QVH37EV8AMEPJAE4",
+  "materialized_at": "2026-05-19T09:34:48.673405+00:00",
+  "mission_number": "",
+  "mission_slug": "mcp-skill-bloat-analytics-01KRZJGV",
+  "mission_type": "software-dev",
+  "summary": {
+    "approved": 0,
+    "blocked": 0,
+    "canceled": 0,
+    "claimed": 0,
+    "done": 6,
+    "for_review": 0,
+    "in_progress": 0,
+    "in_review": 0,
+    "planned": 0
+  },
+  "work_packages": {
+    "WP01": {
+      "actor": "user",
+      "force_count": 2,
+      "lane": "done",
+      "last_event_id": "01KRZSCQ70W23B23RXKAYM94RT",
+      "last_transition_at": "2026-05-19T09:34:39.329044+00:00"
+    },
+    "WP02": {
+      "actor": "user",
+      "force_count": 2,
+      "lane": "done",
+      "last_event_id": "01KRZSCS19W9E74XNQMS14E65N",
+      "last_transition_at": "2026-05-19T09:34:41.193265+00:00"
+    },
+    "WP03": {
+      "actor": "user",
+      "force_count": 2,
+      "lane": "done",
+      "last_event_id": "01KRZSCTTZYV2XR7YK6MTFDEBZ",
+      "last_transition_at": "2026-05-19T09:34:43.039854+00:00"
+    },
+    "WP04": {
+      "actor": "user",
+      "force_count": 2,
+      "lane": "done",
+      "last_event_id": "01KRZSCWMKCYKS7N6WXS3ER13W",
+      "last_transition_at": "2026-05-19T09:34:44.883507+00:00"
+    },
+    "WP05": {
+      "actor": "user",
+      "force_count": 2,
+      "lane": "done",
+      "last_event_id": "01KRZSCYEPJ9AH5ZCAMH08J2CN",
+      "last_transition_at": "2026-05-19T09:34:46.742048+00:00"
+    },
+    "WP06": {
+      "actor": "user",
+      "force_count": 2,
+      "lane": "done",
+      "last_event_id": "01KRZSD0B1QVH37EV8AMEPJAE4",
+      "last_transition_at": "2026-05-19T09:34:48.673405+00:00"
+    }
+  }
+}

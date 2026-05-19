@@ -1,0 +1,87 @@
+{
+  "version": 1,
+  "mission_slug": "mcp-skill-bloat-analytics-01KRZJGV",
+  "mission_id": "01KRZJGVG3MCCCY9MKB1YRDBQR",
+  "mission_branch": "kitty/mission-mcp-skill-bloat-analytics-01KRZJGV",
+  "target_branch": "main",
+  "lanes": [
+    {
+      "lane_id": "lane-a",
+      "wp_ids": [
+        "WP01",
+        "WP02",
+        "WP03",
+        "WP04",
+        "WP05",
+        "WP06"
+      ],
+      "write_scope": [
+        "docs/data-retention-and-analytics.md",
+        "docs/ecosystem-signatures.md",
+        "docs/logging-policy.md",
+        "docs/testing-plan.md",
+        "internal/analyzer/analyzer.go",
+        "internal/analyzer/analyzer_test.go",
+        "internal/analyzer/ecosystem.go",
+        "internal/analyzer/golden_test.go",
+        "internal/analyzer/testdata/tooling/**",
+        "internal/analyzer/tooling_buckets.go",
+        "internal/analyzer/tooling_buckets_test.go",
+        "internal/analyzer/tooling_classify.go",
+        "internal/analyzer/tooling_classify_test.go",
+        "internal/analyzer/tooling_detect.go",
+        "internal/analyzer/tooling_detect_test.go",
+        "internal/analyzer/types.go"
+      ],
+      "predicted_surfaces": [
+        "api",
+        "legacy-cleanup",
+        "tracker-integration"
+      ],
+      "depends_on_lanes": [],
+      "parallel_group": 0
+    }
+  ],
+  "computed_at": "2026-05-19T08:11:00.593072+00:00",
+  "computed_from": "dependency_graph+ownership",
+  "planning_artifact_wps": [],
+  "collapse_report": {
+    "events": [
+      {
+        "wp_a": "WP02",
+        "wp_b": "WP01",
+        "rule": "dependency",
+        "evidence": "WP02 depends on WP01"
+      },
+      {
+        "wp_a": "WP03",
+        "wp_b": "WP01",
+        "rule": "dependency",
+        "evidence": "WP03 depends on WP01"
+      },
+      {
+        "wp_a": "WP04",
+        "wp_b": "WP01",
+        "rule": "dependency",
+        "evidence": "WP04 depends on WP01"
+      },
+      {
+        "wp_a": "WP05",
+        "wp_b": "WP04",
+        "rule": "dependency",
+        "evidence": "WP05 depends on WP04"
+      },
+      {
+        "wp_a": "WP06",
+        "wp_b": "WP04",
+        "rule": "dependency",
+        "evidence": "WP06 depends on WP04"
+      }
+    ],
+    "total_merges": 5,
+    "independent_wps_collapsed": 0,
+    "by_rule": {
+      "dependency": 5
+    }
+  }
+}

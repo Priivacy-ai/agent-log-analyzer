@@ -3,6 +3,7 @@ bin/
 dist/
 .env
 *.log
+!internal/analyzer/testdata/tooling/*.log
 tmp/
 .data/
 coverage.out

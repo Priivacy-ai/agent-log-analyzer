@@ -75,6 +75,8 @@ REPORT_API=$(echo "$REPORT_PATH" | sed 's#^/r/#/api/public-reports/#')
 REPORT=$(curl -fsS "http://127.0.0.1:8080$REPORT_API")
 echo "$REPORT" | grep -q '"raw_transcript_sent_to_llm":false'
 echo "$REPORT" | grep -q '"spec_kitty"'
+echo "$REPORT" | grep -q '"tooling_utilization"'
+echo "$REPORT" | grep -q '"warning_band"'
 if echo "$REPORT" | grep -q 'sk-ant-'; then
   echo "secret leaked in report"
   exit 1
@@ -138,6 +140,8 @@ if [ -z "$PAID_SESSION_COUNT" ] || [ "$PAID_SESSION_COUNT" -lt 2 ]; then
   exit 1
 fi
 echo "$PAID_REPORT" | grep -q '"raw_transcript_sent_to_llm":false'
+echo "$PAID_REPORT" | grep -q '"tooling_utilization"'
+echo "$PAID_REPORT" | grep -q '"warning_band"'
 PAID_ARTIFACT_API=$(echo "$PAID_REPORT_PATH" | sed 's#^/r/#/api/public-artifacts/#')/plugin.zip
 curl -fsS "http://127.0.0.1:8080$PAID_ARTIFACT_API" -o "$PAID_ROOT/plugin.zip"
 if [ "$(dd if="$PAID_ROOT/plugin.zip" bs=2 count=1 2>/dev/null)" != "PK" ]; then
