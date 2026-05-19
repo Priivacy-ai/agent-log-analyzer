@@ -18,8 +18,8 @@ subtasks:
 - T003
 - T004
 - T005
-agent: claude
-shell_pid: '42671'
+agent: "claude:opus-4-7:implementer-ivan:implementer"
+shell_pid: "42671"
 history:
 - '2026-05-19': created from mission token-saving-recommendation-engine-phase-a-01KRZKCJ
 agent_profile: implementer-ivan
@@ -279,3 +279,7 @@ passes.
 - Any enum constant declarations not strictly needed by this file (lives
   in WP02).
 - Any doc updates (live in WP05/WP06).
+
+## Activity Log
+
+- 2026-05-19T09:20:58Z – claude:opus-4-7:implementer-ivan:implementer – shell_pid=42671 – Assigned agent via action command
