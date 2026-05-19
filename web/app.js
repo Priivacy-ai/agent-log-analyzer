@@ -198,6 +198,8 @@ function renderReport(report) {
   }
 
   renderTimeline(report.timeline || []);
+  renderWorkflowFingerprints(report);
+  renderToolingUtilization(report);
   document.querySelector("#ecosystem").textContent = summarizeEcosystem(report.ecosystem);
   document.querySelector("#receipt").textContent = summarizeReceipt(report.security_receipt);
   renderPaidCommandPreview(report);
@@ -217,6 +219,270 @@ function renderTimeline(points) {
     bar.title = `turn ${point.turn}: ${point.estimated_tokens} estimated tokens`;
     chart.appendChild(bar);
   }
+}
+
+function renderWorkflowFingerprints(report) {
+  const section = document.querySelector("#workflow-fingerprints");
+  const list = document.querySelector("#workflow-fingerprints-list");
+  if (!section || !list) return;
+  const fps = report && report.ecosystem && Array.isArray(report.ecosystem.workflow_fingerprints)
+    ? report.ecosystem.workflow_fingerprints
+    : [];
+  list.replaceChildren();
+  if (fps.length === 0) {
+    section.hidden = true;
+    return;
+  }
+  section.hidden = false;
+  for (const fp of fps) {
+    if (!fp || typeof fp !== "object") continue;
+    const row = document.createElement("li");
+    row.className = "fingerprint-row";
+
+    const title = document.createElement("span");
+    title.className = "fingerprint-id";
+    title.textContent = typeof fp.id === "string" ? fp.id : "";
+    row.appendChild(title);
+
+    const confidence = document.createElement("span");
+    const confValue = typeof fp.confidence === "string" ? fp.confidence : "";
+    confidence.className = "fingerprint-confidence";
+    if (confValue) confidence.classList.add(`confidence-${confValue}`);
+    confidence.textContent = confValue;
+    row.appendChild(confidence);
+
+    if (Array.isArray(fp.sources) && fp.sources.length > 0) {
+      const sources = document.createElement("ul");
+      sources.className = "fingerprint-sources";
+      for (const source of fp.sources) {
+        const item = document.createElement("li");
+        item.textContent = typeof source === "string" ? source : "";
+        sources.appendChild(item);
+      }
+      row.appendChild(sources);
+    }
+
+    const evidence = document.createElement("span");
+    evidence.className = "fingerprint-evidence";
+    const evCount = typeof fp.evidence_count === "number" ? fp.evidence_count : 0;
+    evidence.textContent = `evidence: ${evCount}`;
+    row.appendChild(evidence);
+
+    if (fp.active === true) {
+      const active = document.createElement("span");
+      active.className = "fingerprint-active";
+      active.textContent = "active";
+      row.appendChild(active);
+    }
+    if (fp.installed === true) {
+      const installed = document.createElement("span");
+      installed.className = "fingerprint-installed";
+      installed.textContent = "installed";
+      row.appendChild(installed);
+    }
+    if (typeof fp.version_bucket === "string" && fp.version_bucket.length > 0) {
+      const version = document.createElement("span");
+      version.className = "fingerprint-version";
+      version.textContent = `version: ${fp.version_bucket}`;
+      row.appendChild(version);
+    }
+
+    list.appendChild(row);
+  }
+}
+
+// The four allowlisted advice IDs are emitted by internal/analyzer/analyzer.go:368-394.
+// If those IDs change, this UI must be updated in lockstep.
+const ADVICE_LOOKUP = {
+  mcp: { severe: "mcp_bloat_severe", high: "mcp_bloat_high" },
+  skill: { severe: "skill_bloat_severe", high: "skill_bloat_high" },
+};
+// No keys for watch/normal/unknown — structurally enforces FR-006.
+
+function findingById(report, id) {
+  const list = report && Array.isArray(report.findings) ? report.findings : [];
+  return list.find((f) => f && f.id === id) || null;
+}
+
+// Empty/missing warning_band → render as "unknown" (matches analyzer guarantee
+// in tooling_classify.go:149-151 / 191-193 when exposure_known is false; also
+// tolerates a future struct-default zero-value).
+function normalizeBand(b) {
+  const v = typeof b === "string" ? b : "";
+  return (v === "severe" || v === "high" || v === "watch" || v === "normal") ? v : "unknown";
+}
+
+function renderToolingUtilization(report) {
+  const section = document.querySelector("#tooling-utilization");
+  const rowsRoot = document.querySelector("#tooling-utilization-rows");
+  if (!section || !rowsRoot) return;
+  const tu = report && report.ecosystem && report.ecosystem.tooling_utilization;
+  rowsRoot.replaceChildren();
+  if (!tu) {
+    section.hidden = true;
+    return;
+  }
+  section.hidden = false;
+
+  const mcp = tu.mcp;
+  if (mcp && typeof mcp === "object") {
+    rowsRoot.appendChild(buildMCPRow(report, mcp));
+  }
+  const skill = tu.skill;
+  if (skill && typeof skill === "object") {
+    rowsRoot.appendChild(buildSkillRow(report, skill));
+  }
+}
+
+function buildMCPRow(report, mcp) {
+  const row = document.createElement("div");
+  row.className = "utilization-row";
+
+  const header = document.createElement("div");
+  header.className = "surface-header";
+  header.textContent = "MCP";
+  row.appendChild(header);
+
+  const body = document.createElement("div");
+  body.className = "surface-body";
+
+  // Bucket cells.
+  appendBucket(body, "servers", mcp.server_count_bucket);
+  appendBucket(body, "exposed tools", mcp.exposed_tool_count_bucket);
+  appendBucket(body, "context tokens", mcp.context_token_bucket);
+  appendBucket(body, "context efficiency", mcp.context_efficiency_bucket);
+
+  // Counts (numeric only — never names).
+  appendCount(body, "calls", mcp.call_count);
+  appendCount(body, "known calls", mcp.known_call_count);
+  appendCount(body, "unknown calls", mcp.unknown_call_count);
+  appendCount(body, "unknown servers", mcp.unknown_server_count);
+  appendCount(body, "unique unknown called", mcp.unique_unknown_called_count);
+  appendCount(
+    body,
+    "unique known called",
+    Array.isArray(mcp.unique_known_called_ids) ? mcp.unique_known_called_ids.length : 0,
+  );
+  appendCount(
+    body,
+    "known servers",
+    Array.isArray(mcp.known_server_ids) ? mcp.known_server_ids.length : 0,
+  );
+
+  // Band chip.
+  const band = normalizeBand(mcp.warning_band);
+  const chip = document.createElement("span");
+  chip.className = `band-chip band-${band}`;
+  chip.textContent = band;
+  body.appendChild(chip);
+
+  // Ratio cell (FR-007).
+  const ratio = document.createElement("span");
+  ratio.className = "utilization-ratio";
+  if (mcp.exposure_known === true) {
+    const pct = typeof mcp.utilization_ratio_pct === "number" ? mcp.utilization_ratio_pct : 0;
+    ratio.textContent = `${pct}%`;
+  } else {
+    const src = typeof mcp.inference_source === "string" ? mcp.inference_source : "";
+    ratio.textContent = `inferred from: ${src}`;
+  }
+  body.appendChild(ratio);
+
+  row.appendChild(body);
+
+  // Advice block (FR-005 / FR-006).
+  const adviceId = ADVICE_LOOKUP.mcp[band];
+  const finding = adviceId ? findingById(report, adviceId) : null;
+  if (finding && typeof finding.recommendation === "string" && finding.recommendation.length > 0) {
+    const advice = document.createElement("p");
+    advice.className = "band-advice";
+    advice.textContent = finding.recommendation;
+    row.appendChild(advice);
+  }
+
+  return row;
+}
+
+function buildSkillRow(report, skill) {
+  const row = document.createElement("div");
+  row.className = "utilization-row";
+
+  const header = document.createElement("div");
+  header.className = "surface-header";
+  header.textContent = "Skill";
+  row.appendChild(header);
+
+  const body = document.createElement("div");
+  body.className = "surface-body";
+
+  // Bucket cells (Skill has no exposed_tool_count_bucket).
+  appendBucket(body, "exposed", skill.exposed_count_bucket);
+  appendBucket(body, "context tokens", skill.context_token_bucket);
+  appendBucket(body, "context efficiency", skill.context_efficiency_bucket);
+
+  // Counts.
+  appendCount(body, "executed", skill.executed_count);
+  appendCount(body, "unknown exposed", skill.unknown_exposed_count);
+  appendCount(body, "unknown executed", skill.unknown_executed_count);
+  appendCount(
+    body,
+    "known exposed",
+    Array.isArray(skill.known_exposed_ids) ? skill.known_exposed_ids.length : 0,
+  );
+  appendCount(
+    body,
+    "known executed",
+    Array.isArray(skill.known_executed_ids) ? skill.known_executed_ids.length : 0,
+  );
+
+  // Band chip.
+  const band = normalizeBand(skill.warning_band);
+  const chip = document.createElement("span");
+  chip.className = `band-chip band-${band}`;
+  chip.textContent = band;
+  body.appendChild(chip);
+
+  // Ratio cell (FR-007).
+  const ratio = document.createElement("span");
+  ratio.className = "utilization-ratio";
+  if (skill.exposure_known === true) {
+    const pct = typeof skill.utilization_ratio_pct === "number" ? skill.utilization_ratio_pct : 0;
+    ratio.textContent = `${pct}%`;
+  } else {
+    const src = typeof skill.inference_source === "string" ? skill.inference_source : "";
+    ratio.textContent = `inferred from: ${src}`;
+  }
+  body.appendChild(ratio);
+
+  row.appendChild(body);
+
+  // Advice block.
+  const adviceId = ADVICE_LOOKUP.skill[band];
+  const finding = adviceId ? findingById(report, adviceId) : null;
+  if (finding && typeof finding.recommendation === "string" && finding.recommendation.length > 0) {
+    const advice = document.createElement("p");
+    advice.className = "band-advice";
+    advice.textContent = finding.recommendation;
+    row.appendChild(advice);
+  }
+
+  return row;
+}
+
+function appendBucket(parent, label, value) {
+  const span = document.createElement("span");
+  span.className = "bucket-cell";
+  const v = typeof value === "string" && value.length > 0 ? value : "—";
+  span.textContent = `${label}: ${v}`;
+  parent.appendChild(span);
+}
+
+function appendCount(parent, label, value) {
+  const span = document.createElement("span");
+  span.className = "count-cell";
+  const n = typeof value === "number" ? value : 0;
+  span.textContent = `${label}: ${n}`;
+  parent.appendChild(span);
 }
 
 function summarizeEcosystem(ecosystem) {
