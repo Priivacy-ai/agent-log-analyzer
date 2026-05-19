@@ -148,3 +148,16 @@ The current generator tests cover:
 The first implementation lives in `internal/remediation`.
 
 The package produces an in-memory `Artifact` and can write it as a zip archive. Paid bundle upload, local waiver-gated paid-session generation, and tokenized plugin zip download are implemented for Docker end-to-end testing. Plugin artifacts are generated on demand from the sanitized paid report and expire with the report token. Stripe success handling and any future persisted artifact storage are tracked separately in GitHub issues #27-#31.
+
+## Token-saving recommendation embedding (Phase A, additive)
+
+Phase A of the token-saving recommendation engine introduces a `TokenSavingRecommendation` contract object (see `docs/remediation/token-saving-recommendation-engine.md` for the canonical schema and rule precedence). This object captures at most one primary and at most one secondary tool suggestion per analyzed session, plus the signals and dedupe state that justified each suggestion.
+
+The recommendation object is **optional** in paid plugin artifacts. Generators may attach it to the existing artifact payload without altering the established artifact shape, and the current generator tests (plugin structure, deterministic output for identical sanitized inputs, leak checks, zip archive creation, unsafe-archive-path rejection) continue to hold because none of them require the field to be present or absent. New tests covering the embedded recommendation are introduced alongside the engine and are gated on the field actually being populated.
+
+Refer to `docs/remediation/token-saving-recommendation-engine.md` for the full Phase A contract: input signals, dedupe-aware emission rules, `active_high` skip behavior, and the precise field layout that downstream artifacts may serialize.
+
+## See also
+
+- `token-saving-recommendation-engine.md` — Phase A recommendation engine doc (state model, rule precedence, contract shape).
+- `token-saving-tooling-matrix.md` — human-facing tier matrix and product framing for the allowlisted tools the engine may recommend.
