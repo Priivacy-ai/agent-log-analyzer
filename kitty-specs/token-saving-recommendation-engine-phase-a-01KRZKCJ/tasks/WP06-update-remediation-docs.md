@@ -179,3 +179,4 @@ the end with at least the two new bullets.
 ## Activity Log
 
 - 2026-05-19T09:37:11Z – claude:opus-4-7:curator-carla:curator – shell_pid=47016 – Started implementation via action command
+- 2026-05-19T09:38:51Z – claude:opus-4-7:curator-carla:curator – shell_pid=47016 – Additive cross-references in matrix + plugin-artifacts docs; new Registry cross-reference and Recommendation embedding sections; See also links updated; no existing content modified
