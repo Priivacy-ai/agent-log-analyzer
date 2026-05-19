@@ -1,0 +1,13 @@
+Sanitized claude-code transcript excerpt — GSD (Get Shit Done) workspace.
+
+user: Bootstrap this repo with GSD. Run `npx get-shit-done-cc@latest`.
+assistant: Running npx get-shit-done-cc@latest. The installer creates /repo/.planning/ to hold session memory, decisions, blockers, and phase artifacts.
+assistant: Reading /repo/.planning/config.json for the GSD configuration.
+user: Start a new project.
+assistant: Calling /gsd-new-project to gather questions, run research, and propose a roadmap.
+assistant: Locking in phase preferences via /gsd-discuss-phase 1, then planning with /gsd-plan-phase 1.
+user: Begin execution.
+assistant: Running /gsd-execute-phase 1 for parallel execution with atomic commits. Phase artifacts land under /repo/.planning/phases/01-foundation/.
+user: Verify and ship.
+assistant: Walking through /gsd-verify-work 1 for manual UAT, then /gsd-ship 1 to open the PR.
+assistant: Reference: https://github.com/gsd-build/get-shit-done and https://www.npmjs.com/package/get-shit-done-cc.

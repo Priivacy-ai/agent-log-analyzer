@@ -1,0 +1,12 @@
+Sanitized claude-code transcript excerpt — PAUL (Plan-Apply-Unify Loop) framework.
+
+user: Bootstrap this project with PAUL. Run `npx paul-framework`.
+assistant: Running npx paul-framework. Reference: https://github.com/ChristopherKahler/paul and https://www.npmjs.com/package/paul-framework.
+assistant: The installer creates /repo/.paul/ for the project workspace, including /repo/.paul/PROJECT.md, /repo/.paul/ROADMAP.md, and /repo/.paul/STATE.md.
+user: Initialize requirements.
+assistant: Calling /paul:init to draft type-adapted requirements. Optional flows live in /repo/.paul/SPECIAL-FLOWS.md and integrations land in /repo/.paul/config.md.
+user: Plan the first phase.
+assistant: Running /paul:plan 01-foundation to draft an executable plan under /repo/.paul/phases/01-foundation/.
+user: Execute and reconcile.
+assistant: Calling /paul:apply 01-foundation to execute the approved plan, then /paul:unify 01-foundation to reconcile what was planned vs what happened and update STATE.md.
+assistant: Use /paul:progress for a smart status summary; /paul:help lists the command reference.

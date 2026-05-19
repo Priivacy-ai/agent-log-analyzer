@@ -1,0 +1,11 @@
+Sanitized claude-code transcript excerpt — SDD Pilot workspace.
+
+user: Set up SDD Pilot on this repo. Reference: https://github.com/attilaszasz/sdd-pilot and https://sdd-pilot.szaszattila.com/.
+assistant: Initializing governance via /sddp-init. SDD Pilot writes a shared project context file at /repo/.github/sddp-config.md.
+user: Start product discovery.
+assistant: Running /sddp-prd to draft the product requirements document, then /sddp-specify and /sddp-clarify to nail the spec.
+user: Move into planning.
+assistant: Running /sddp-systemdesign for architecture, /sddp-plan for the implementation plan, and /sddp-checklist to validate requirements quality.
+assistant: Breaking work down with /sddp-tasks, then sanity-checking with /sddp-analyze before /sddp-implement.
+user: Run the full pipeline next time.
+assistant: Use /sddp-autopilot for unattended end-to-end execution. /sddp-qc gates the final quality control phase.

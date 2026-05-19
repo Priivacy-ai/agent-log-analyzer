@@ -140,11 +140,11 @@ shared artifacts do not match alone (FR-012).
 
 ## #47 — Kiro/BMAD/GSD detectors
 
-`kiro` and `bmad_method` detectors are implemented and `verified`. `gsd`
-shipped as `research_needed` and is gated on the A-04 scope decision
-captured in #66 — the three-letter acronym has high collision risk and the
-canonical upstream repo could not be identified from public sources within
-mission scope.
+`kiro`, `bmad`, and `gsd` detectors are implemented and `verified`. GSD was
+promoted from `research_needed` to `verified` in the post-mission re-research
+pass after the canonical upstream was identified at github.com/gsd-build/get-shit-done
+(`.planning/` workspace, `get-shit-done-cc` npm package, `/gsd-*` slash command
+vocabulary).
 
 - PR: <PR-URL>
 - Commit: <COMMIT-SHA>
@@ -153,15 +153,14 @@ mission scope.
 
 ## #48 — Long-tail SDD detectors
 
-Long-tail detectors implemented for the remaining 14 top-20 entries.
-
-`verified` in this batch: Spec Workflow MCP, ChatDev, Cognition/Devin,
-Microsoft Agent Framework. `research_needed` (awaiting A-04 scope
-decision): SDD Pilot, Spec-Driven Develop, spec2ship, PAUL, fspec,
-whenwords, Intent, Tessl, Agentic Code, CodeSpeak. Per FR-013 the evaluator
-does not emit production fingerprints for `research_needed` detectors; the
-schema entries are present so the scope conversation can promote them
-without a code change.
+Long-tail detectors are now all `verified` after the post-mission re-research
+pass. The tier ships 9 verified detectors: Spec Workflow MCP, SDD Pilot,
+spec2ship, ChatDev, PAUL, fspec, Cognition/Devin, Microsoft Agent Framework,
+Tessl. Five tools from the original brief were removed entirely
+(Spec-Driven Develop, whenwords, Intent, Agentic Code, CodeSpeak) because
+no canonical upstream or public fingerprintable artifact surface could be
+identified — what cannot be verified from public sources is scratched from
+the list rather than left in a permanent `research_needed` state.
 
 - PR: <PR-URL>
 - Commit: <COMMIT-SHA>
@@ -205,32 +204,33 @@ is the structural backstop against future schema drift.
 
 ---
 
-## #66 — Research summary
+## #66 — Research summary (post re-research)
 
-Per-tool research complete for all 20 top-20 SDD tools. Per-tool files with
-public-source citations live at
+Per-tool research complete for the final 15-tool SDD registry. Per-tool
+files with public-source citations live at
 [`docs/research/sdd-fingerprints/`](../../docs/research/sdd-fingerprints/README.md).
 
-**C-001 / A-04 status: scope decision pending at mission-review.**
+**Final status: 15 / 15 verified. Zero `research_needed` entries.**
 
-- 9 / 20 tools reached `verified` from public sources within mission
-  scope: Spec Kitty, GitHub Spec Kit, OpenSpec, Kiro, BMAD-METHOD, Spec
-  Workflow MCP, ChatDev, Cognition/Devin, Microsoft Agent Framework.
-- 11 / 20 tools came back `research_needed`: GSD, SDD Pilot,
-  Spec-Driven Develop, spec2ship, PAUL, fspec, whenwords, Intent, Tessl,
-  Agentic Code, CodeSpeak.
-- Reasons split into two buckets:
-  - Generic / colliding names with no identifiable canonical upstream
-    (GSD, SDD Pilot, Spec-Driven Develop, spec2ship, PAUL, fspec,
-    whenwords, Intent, Agentic Code, CodeSpeak).
-  - Hosted vendor product with no local CLI/config artifact (Tessl).
-- [C-001](../../kitty-specs/top-20-sdd-fingerprint-registry-01KRZEQ3/spec.md#constraints)
-  requires 20 / 20 verified before DoD; A-04 reserves a scope conversation
-  with the user for any tool that cannot be verified from public sources.
-- Per FR-013 the production evaluator does not emit fingerprints for any
-  `research_needed` detector, so no privacy or correctness regression is
-  introduced by leaving these 11 in `research_needed` while the scope
-  decision is pending.
+Verified (15): Spec Kitty, GitHub Spec Kit, OpenSpec, Kiro, BMAD-METHOD,
+GSD, Spec Workflow MCP, SDD Pilot, spec2ship, ChatDev, PAUL, fspec,
+Cognition/Devin, Microsoft Agent Framework, Tessl.
+
+Removed during re-research (no canonical upstream / no public artifact
+surface):
+
+- Spec-Driven Develop — the name is the category descriptor itself.
+- whenwords — no canonical upstream identified.
+- Intent (Augment Code) — hosted product with no documented local
+  workspace-local artifact surface; generic name carries extreme false-
+  positive risk.
+- Agentic Code — category descriptor, no canonical upstream product.
+- CodeSpeak — no canonical upstream identified.
+
+Per the project rule, what cannot be verified from public sources is
+scratched from the list rather than left in a permanent `research_needed`
+state. Per FR-013 the production evaluator only emits fingerprints for
+`status: verified` detectors.
 
 - PR: <PR-URL>
 - Commit: <COMMIT-SHA>

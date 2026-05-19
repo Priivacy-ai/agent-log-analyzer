@@ -1,58 +1,63 @@
 # Tessl (tessl)
 
-- Status: research_needed
-- Category: spec-driven-development platform (Tessl is a hosted vendor; CLI / artifact surface not fully confirmed from public source as of cutoff)
+- Status: verified
+- Category: spec-driven-development platform; CLI + MCP server with tiles (composable spec/skill packages) and a hosted registry
 - Competitor priority: 18
-- Official repository: (Tessl is a hosted commercial product; public open-source repo not confirmed)
-- Official docs: https://www.tessl.io/ (vendor home; documentation linked from there but exact CLI / config layout is not exhaustively published)
-- Release / package source: (not confirmed)
+- Official repository: https://github.com/tesslio (organization; see e.g. https://github.com/tesslio/spec-driven-development-tile)
+- Official docs: https://docs.tessl.io/
+- Release / package source: Tessl CLI is distributed from https://tessl.io/ (and via `tessl cli update`). Tile registry at https://tessl.io/registry/.
 - Aliases: ["Tessl", "tessl", "Tessl.io"]
 
 ## Markers (public-source only)
 
 ### config_dir
-- (not confirmed — candidate `.tessl/` not verified from public source)
+- `.tessl/` — main configuration and cache directory. Documented at https://docs.tessl.io/reference/configuration.
+- `.tessl/tiles/` — downloaded tile cache organized as `workspace/tile-name/`.
 
 ### config_file
-- (not confirmed)
+- `tessl.json` — repository tile-dependency manifest. Documented at https://docs.tessl.io/reference/configuration.
+- `tile.json` — per-tile metadata file (in tile authoring repos).
+- `.tessl/RULES.md` — auto-generated agent rules file.
+- `.tileignore` — file-exclusion patterns for tiles.
 
 ### package_manifest
-- (not confirmed — Tessl may publish npm/PyPI packages but exact names are not confirmed from this research pass)
+- (Tessl distributes via its own CLI and registry, not npm/PyPI; `tessl.json` is the equivalent manifest)
 
 ### command_name
-- (not confirmed)
+- `tessl init`, `tessl install`, `tessl mcp start`, `tessl project create`, `tessl skill new`, `tessl tile new`, `tessl workspace create`, `tessl eval run`, etc. — documented at https://docs.tessl.io/reference/cli-commands.
 
 ### slash_command
-- (not confirmed)
+- (Tessl integrates with agents via MCP and per-agent rule files, not Claude Code slash commands.)
 
 ### mcp_server_name
-- (not confirmed)
+- `tessl` — the MCP server is started via `tessl mcp start`. Documented at https://docs.tessl.io/reference/cli-commands. The Claude Code MCP registration appears under the `mcp__tessl__*` namespace (per standard Claude Code MCP-name → tool-name convention).
 
 ### skill_name
-- (not confirmed)
+- (Tessl supports `tessl skill new` / `tessl skill publish` for authoring skills, but the skill names themselves are user-defined.)
 
 ### plugin_manifest
-- (not confirmed)
+- (none documented as a Claude Code plugin manifest)
 
 ### cli_binary
-- (not confirmed; do NOT allowlist)
+- `tessl` — primary CLI binary. Documented at https://docs.tessl.io/reference/cli-commands.
 
 ### cli_version_probe
-- (not applicable)
+- args: `["--version"]`
+- expected output pattern: `tessl[^\d]*(\d+\.\d+)` → bucket `MAJOR.MINOR`.
 
 ## Negative-test markers (must NOT trigger this detector alone)
-- The vendor name "Tessl" is reasonably distinctive (low collision risk), but bare mentions still warrant Low confidence only.
-- Avoid matching `tessellation` / `tessellate` substrings.
+- The English word "tessellate" / "tessellation" — different stem but partial overlap; the pattern must anchor on `\btessl\b` (not `tessl` as a substring).
+- Random `tile.json` files in unrelated repos — only count when paired with `.tessl/` or `tessl.json`.
+- `.kittify/`, `kitty-specs/`, `.specify/`, `openspec/`, `.kiro/`, `.bmad-core/` — other SDD tools; veto.
 
 ## Confidence wiring
-- **High**: cannot define until tool-specific markers are recorded.
-- **Medium**: free-text mention of `(?i)\btessl\.io\b` URL.
-- **Low**: bare `(?i)\bTessl\b` mention.
+- **High**: `.tessl/` directory present **and** any of (`tessl.json`, `tessl` CLI binary present, `tessl mcp start` text).
+- **Medium**: `tessl` CLI binary installed, OR `tessl.json` file, OR `mcp__tessl__*` MCP namespace match.
+- **Low**: bare `tessl` text mention or `docs.tessl.io` URL.
 
 ## Source references (citations)
-- https://www.tessl.io/ — vendor home page (confirmed exists; deeper artifact docs not yet pulled into this research pass).
-
-## Open questions / what's missing
-1. Tessl appears to be a hosted product; need to confirm whether there is any local repo artifact (CLI, config file, npm package) that the static analyzer can detect.
-2. If Tessl is fully hosted with no local artifact, treat like Cognition/Devin: text-mention markers only, and surface to the user as A-04 candidate.
-3. **A-04 trigger**: scope conversation needed before WP05 implements a detector.
+- https://docs.tessl.io/ — official documentation home.
+- https://docs.tessl.io/reference/configuration — documents `.tessl/`, `tessl.json`, `tile.json`, `.tileignore`.
+- https://docs.tessl.io/reference/cli-commands — documents the `tessl` CLI surface including `tessl mcp start`.
+- https://docs.tessl.io/use/spec-driven-development-with-tessl — documents the SDD workflow with Tessl.
+- https://github.com/tesslio/spec-driven-development-tile — official tile published by Tessl.

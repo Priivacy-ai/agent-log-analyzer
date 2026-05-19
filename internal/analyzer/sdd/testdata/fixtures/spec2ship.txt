@@ -1,0 +1,12 @@
+Sanitized claude-code transcript excerpt — spec2ship Claude Code plugin.
+
+user: Install the spec2ship Claude Code plugin. Run `/plugin marketplace add spec2ship/spec2ship` then `/plugin install s2s`.
+assistant: Plugin installed. Reference: https://github.com/spec2ship/spec2ship.
+user: Initialize the workspace.
+assistant: Running /s2s:init. The plugin creates /repo/.s2s/ for session-spanning context and backlog.
+assistant: Writing /repo/.s2s/CONTEXT.md with the session-spanning context and /repo/.s2s/BACKLOG.md as the backlog projection.
+user: Brainstorm a feature.
+assistant: Running /s2s:brainstorm to kick off the roundtable. Specs land via /s2s:specs and the design phase runs through /s2s:design.
+user: Plan and validate.
+assistant: Calling /s2s:plan to lay out the work and /s2s:roundtable for multi-agent review. Session artifacts land at /repo/.s2s/sessions/.
+assistant: Closing the session via /s2s:session:close after /s2s:session:validate passes.

@@ -20,7 +20,7 @@ Summary:
 ## Status semantics
 
 - **`verified`** — Every marker has a public citation that a reviewer can follow to confirm the tool ships that artifact / command / server name. The detector is safe to emit in production.
-- **`research_needed`** — One or more markers lack a citation, or the tool has no clear public fingerprintable surface. Per FR-013, production detectors MUST NOT be emitted for tools in this state. Per C-001, this mission ships zero `research_needed` detectors; any tool stuck here triggers a scope conversation with the user (see A-04).
+- **`research_needed`** — One or more markers lack a citation, or the tool has no clear public fingerprintable surface. Per FR-013, production detectors MUST NOT be emitted for tools in this state.
 - **`blocked`** — The tool has been investigated and found to have no public artifact useful for fingerprinting. Escalate to the user.
 
 ## Citation policy
@@ -29,59 +29,51 @@ Summary:
 - Where uncertainty exists about a repo move or rename, pin a commit hash in the citation.
 - Disposable install runs in the research-clones directory count as public-source equivalent (we are observing what a published tool generates), but each such observation MUST cite the upstream repo or docs that document the install command.
 
-## Top-20 status index
+## Final top-N status index (post re-research)
 
-| # | Tool | Slug | Status |
-| --- | --- | --- | --- |
-| 1 | Spec Kitty | [`spec-kitty.md`](./spec-kitty.md) | verified |
-| 2 | GitHub Spec Kit | [`github-spec-kit.md`](./github-spec-kit.md) | verified |
-| 3 | OpenSpec | [`openspec.md`](./openspec.md) | verified |
-| 4 | Kiro | [`kiro.md`](./kiro.md) | verified |
-| 5 | BMAD-METHOD | [`bmad.md`](./bmad.md) | verified |
-| 6 | GSD | [`gsd.md`](./gsd.md) | research_needed |
-| 7 | Spec Workflow MCP | [`spec-workflow-mcp.md`](./spec-workflow-mcp.md) | verified |
-| 8 | SDD Pilot | [`sdd-pilot.md`](./sdd-pilot.md) | research_needed |
-| 9 | Spec-Driven Develop | [`spec-driven-develop.md`](./spec-driven-develop.md) | research_needed |
-| 10 | spec2ship | [`spec2ship.md`](./spec2ship.md) | research_needed |
-| 11 | ChatDev | [`chatdev.md`](./chatdev.md) | verified |
-| 12 | PAUL | [`paul.md`](./paul.md) | research_needed |
-| 13 | fspec | [`fspec.md`](./fspec.md) | research_needed |
-| 14 | whenwords | [`whenwords.md`](./whenwords.md) | research_needed |
-| 15 | Intent | [`intent.md`](./intent.md) | research_needed |
-| 16 | Cognition / Devin | [`cognition-devin.md`](./cognition-devin.md) | verified |
-| 17 | Microsoft Agent Framework | [`microsoft-agent-framework.md`](./microsoft-agent-framework.md) | verified |
-| 18 | Tessl | [`tessl.md`](./tessl.md) | research_needed |
-| 19 | Agentic Code | [`agentic-code.md`](./agentic-code.md) | research_needed |
-| 20 | CodeSpeak | [`codespeak.md`](./codespeak.md) | research_needed |
+After the post-mission re-research pass, the registry contains **15 verified SDD tools** in 3 tiers. All previously `research_needed` entries have been either promoted to `verified` (with citations and production detectors) or removed from the registry entirely. There are no `research_needed` entries remaining.
 
-**Verified: 9 / 20. Research-needed: 11 / 20.** Per C-001 the mission DoD requires 20/20 `verified`; tools listed `research_needed` here either (a) have ambiguous public-source surfaces (generic name collisions like "Intent", "PAUL", "Agentic Code", "Spec-Driven Develop") or (b) are private hosted products without a CLI/config artifact that a static analyzer can detect from text fixtures alone. Both A-04 cases should trigger a scope conversation with the user before WP05 hard-codes detectors for them. See each per-tool file's "Open questions" section for the specific gaps.
+| # | Tool | Slug | Tier | Status |
+| --- | --- | --- | --- | --- |
+| 1 | Spec Kitty | [`spec-kitty.md`](./spec-kitty.md) | first-class | verified |
+| 2 | GitHub Spec Kit | [`github-spec-kit.md`](./github-spec-kit.md) | first-class | verified |
+| 3 | OpenSpec | [`openspec.md`](./openspec.md) | first-class | verified |
+| 4 | Kiro | [`kiro.md`](./kiro.md) | second-ring | verified |
+| 5 | BMAD-METHOD | [`bmad.md`](./bmad.md) | second-ring | verified |
+| 6 | GSD | [`gsd.md`](./gsd.md) | second-ring | verified |
+| 7 | Spec Workflow MCP | [`spec-workflow-mcp.md`](./spec-workflow-mcp.md) | long-tail | verified |
+| 8 | SDD Pilot | [`sdd-pilot.md`](./sdd-pilot.md) | long-tail | verified |
+| 9 | spec2ship | [`spec2ship.md`](./spec2ship.md) | long-tail | verified |
+| 10 | ChatDev | [`chatdev.md`](./chatdev.md) | long-tail | verified |
+| 11 | PAUL | [`paul.md`](./paul.md) | long-tail | verified |
+| 12 | fspec | [`fspec.md`](./fspec.md) | long-tail | verified |
+| 13 | Cognition / Devin | [`cognition-devin.md`](./cognition-devin.md) | long-tail | verified |
+| 14 | Microsoft Agent Framework | [`microsoft-agent-framework.md`](./microsoft-agent-framework.md) | long-tail | verified |
+| 15 | Tessl | [`tessl.md`](./tessl.md) | long-tail | verified |
 
-### research_needed tools awaiting scope conversation (A-04)
+**Verified: 15 / 15. Research-needed: 0 / 15.**
 
-| Slug | Reason |
+## Removed tools (no public-source fingerprint surface)
+
+The following tools appeared on the initial top-20 brief but were removed from the registry during the post-mission re-research pass. Each was searched freshly; none of them had a canonical upstream repository or documented public artifact set that could anchor a tool-specific detector. Per the project rule, what cannot be verified from public sources is scratched from the list rather than left in a permanent `research_needed` state.
+
+| Tool | Reason for removal |
 | --- | --- |
-| `gsd.md` | Canonical repo not identified; three-letter acronym is high-collision. |
-| `sdd-pilot.md` | Canonical repo not identified. |
-| `spec-driven-develop.md` | Name collides with the category descriptor itself; reviewer must confirm specific upstream. |
-| `spec2ship.md` | Canonical repo not identified. |
-| `paul.md` | Canonical repo not identified; common given name. |
-| `fspec.md` | Multiple unrelated repos use the name. |
-| `whenwords.md` | Canonical repo not identified. |
-| `intent.md` | Extreme false-positive risk (Android `Intent`, NLP "intent classification", common noun). |
-| `tessl.md` | Hosted vendor; local artifact surface unconfirmed. |
-| `agentic-code.md` | Name collides with the category descriptor. |
-| `codespeak.md` | Canonical repo not identified. |
+| Spec-Driven Develop | The name is the category descriptor itself ("spec-driven development"). The only candidate repos either map back to GitHub Spec Kit (already covered) or are MCP servers (e.g., `formulahendry/mcp-server-spec-driven-development`) whose generic naming would conflict with the descriptor; no canonical, tool-specific marker set exists. |
+| whenwords | No canonical upstream repository, npm/PyPI package, or product page found. |
+| Intent | Augment Code ships a hosted product called "Intent" with an `auggie` CLI, but the product is a hosted workspace and documents no local config directory or workspace-local artifact surface that a static text analyzer can detect. Combined with the extreme false-positive risk of the generic word "intent" (Android Intent, NLP intent classification, etc.), the tool is unfingerprintable from public sources. |
+| Agentic Code | The phrase is a category descriptor. No canonical upstream product with that exact name. |
+| CodeSpeak | No canonical upstream repository or product page that ships a fingerprintable artifact set. |
 
 ## Reviewer quickcheck
 
 ```sh
 grep -l "^- Status: verified" docs/research/sdd-fingerprints/*.md | wc -l
-# Mission DoD (C-001): 20
-# Current: see status index above
+# Should match the verified count in the table above (15 as of the latest pass).
 ```
 
 ## Cross-link
 
 - Mission spec: [`kitty-specs/top-20-sdd-fingerprint-registry-01KRZEQ3/spec.md`](../../../kitty-specs/top-20-sdd-fingerprint-registry-01KRZEQ3/spec.md)
 - Research notes: [`kitty-specs/top-20-sdd-fingerprint-registry-01KRZEQ3/research.md`](../../../kitty-specs/top-20-sdd-fingerprint-registry-01KRZEQ3/research.md)
-- WP09 consumer-facing registry: `docs/sdd-fingerprint-registry.md` (created by WP09 — do not edit from WP04)
+- WP09 consumer-facing registry: `docs/sdd-fingerprint-registry.md` (created by WP09)

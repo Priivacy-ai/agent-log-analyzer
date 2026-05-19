@@ -1,59 +1,59 @@
 # GSD (gsd)
 
-- Status: research_needed
-- Category: spec-driven-development (Get Spec Done / Get Stuff Done — exact expansion unconfirmed)
+- Status: verified
+- Category: spec-driven-development meta-prompting and context-engineering system for Claude Code (Get Shit Done / GSD by TÂCHES)
 - Competitor priority: 6
-- Official repository: (not confirmed from public source as of cutoff)
-- Official docs: (not confirmed)
-- Release / package source: (not confirmed)
-- Aliases: ["GSD", "Get Spec Done", "gsd"]
+- Official repository: https://github.com/gsd-build/get-shit-done
+- Official docs: https://github.com/gsd-build/get-shit-done/blob/main/docs/USER-GUIDE.md and https://gsd.build/
+- Release / package source: https://www.npmjs.com/package/get-shit-done-cc (installed via `npx get-shit-done-cc@latest`)
+- Aliases: ["GSD", "Get Shit Done", "get-shit-done", "get-shit-done-cc", "gsd-build"]
 
 ## Markers (public-source only)
 
 ### config_dir
-- (not confirmed — candidate `.gsd/` based on naming convention but **not verified**)
+- `.planning/` — root directory created by GSD to hold session memory, decisions, blockers, phase artifacts, research, spikes, and sketches. Documented at https://github.com/gsd-build/get-shit-done/blob/main/docs/USER-GUIDE.md.
+- `.planning/phases/` — per-phase artifact subtrees (e.g., `phases/01-foundation/`).
 
 ### config_file
-- (not confirmed)
+- `PROJECT.md`, `REQUIREMENTS.md`, `ROADMAP.md`, `STATE.md`, `CONTEXT.md`, `REVIEW.md` — top-level markdown projections. **Never match these names alone** (FR-012): generic file names. Only count when paired with `.planning/`.
 
 ### package_manifest
-- (not confirmed)
+- npm `get-shit-done-cc` (https://www.npmjs.com/package/get-shit-done-cc).
 
 ### command_name
-- (not confirmed)
+- `npx get-shit-done-cc` invocation in scrubbed transcripts. Documented in README quick-start.
 
 ### slash_command
-- (not confirmed)
+- `/gsd-new-project`, `/gsd-discuss-phase`, `/gsd-plan-phase`, `/gsd-execute-phase`, `/gsd-verify-work`, `/gsd-ship`, `/gsd-progress`, `/gsd-quick`, `/gsd-ui-phase`, `/gsd-spike`, `/gsd-complete-milestone`, `/gsd-new-milestone`, `/gsd-map-codebase`, `/gsd-settings`, `/gsd-code-review` — Claude Code slash commands. Documented in the USER-GUIDE.
 
 ### mcp_server_name
-- (not confirmed)
+- (none documented)
 
 ### skill_name
-- (not confirmed)
+- (Skills install to `~/.claude/skills/gsd-*/` per the USER-GUIDE, but the path itself is private; skill names alone are not enumerated as a stable public surface.)
 
 ### plugin_manifest
-- (not confirmed)
+- (none documented as a stand-alone Claude Code plugin manifest)
 
 ### cli_binary
-- (not confirmed; do NOT allowlist until repo is identified)
+- (no globally installed binary documented; invocation is via `npx get-shit-done-cc`)
 
 ### cli_version_probe
-- (not applicable until binary confirmed)
+- (not applicable; no global binary)
 
 ## Negative-test markers (must NOT trigger this detector alone)
-- Bare `GSD` — extremely common acronym ("Get Shit Done", productivity framework, unrelated tools named GSD on npm/PyPI). Must NOT match on the three-letter token alone.
+- Bare three-letter token `GSD` — extremely common acronym ("Get Shit Done" productivity framework, unrelated tools). Must NOT match on the token alone.
+- Generic `STATE.md` / `PROJECT.md` / `ROADMAP.md` / `REQUIREMENTS.md` filenames alone — extremely generic; require pairing with `.planning/` or `get-shit-done-cc` or a `/gsd-*` slash command.
 - The unrelated `gsd` npm package (file-system watcher) — different product.
-- Any productivity-app mention of "GSD" — different domain.
+- `.kittify/`, `kitty-specs/`, `.specify/`, `openspec/`, `.kiro/`, `.bmad-core/` — other SDD tools; veto.
 
 ## Confidence wiring
-- **High**: cannot define until tool-specific markers are recorded.
-- **Medium**: n/a.
-- **Low**: n/a (refuse low-confidence detection on a three-letter acronym).
+- **High**: `.planning/` directory present **and** any of (`/gsd-*` slash command, `get-shit-done-cc` npm reference).
+- **Medium**: any single `/gsd-*` slash command OR `get-shit-done-cc` package reference, with no other corroboration.
+- **Low**: bare `npx get-shit-done-cc` text mention only.
 
 ## Source references (citations)
-- _None — this entry is `research_needed` pending identification of the canonical repository._
-
-## Open questions / what's missing
-1. The brief at `start-here.md` lists "GSD" without a repo URL. Several SDD-adjacent repos use the acronym; the team needs to confirm which one the brief intends.
-2. Without an official repo, this detector cannot be `verified` per FR-013/FR-014.
-3. **A-04 trigger**: Recommend the reviewer / user clarify the upstream source before WP05 implements the detector. Until then this entry is `research_needed`.
+- https://github.com/gsd-build/get-shit-done — official repository (README + USER-GUIDE document `.planning/`, slash commands, npm package).
+- https://github.com/gsd-build/get-shit-done/blob/main/docs/USER-GUIDE.md — user guide with the canonical command list.
+- https://www.npmjs.com/package/get-shit-done-cc — npm package.
+- https://gsd.build/ — official product home.

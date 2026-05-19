@@ -208,32 +208,36 @@ The Bulk-Edit Detection check from `/spec-kitty.specify` confirmed this during s
 
 **Rationale.** Avoids producing an `occurrence_map.yaml` that has no real occurrences to track.
 
-## R-09 Top-20 tool list — initial fingerprint sketch
+## R-09 Final SDD tool list — post re-research
 
-This table is the **starting point** for the per-tool research that happens in WP02 (research gate). It is not the final registry — each entry must be backed by public-source citations before it earns `verified` status. Where the brief or existing analyzer code already contributes signal, that is noted in the `Initial signal` column.
+This table reflects the **final 15-tool registry** after the post-mission
+re-research pass. Each entry is backed by public-source citations in the
+per-tool research file under `docs/research/sdd-fingerprints/`. The original
+brief listed 20 candidates; 5 were removed because no canonical upstream or
+public fingerprintable artifact surface could be identified (see
+`docs/research/sdd-fingerprints/README.md` "Removed tools" for rationale).
 
-| # | id | Display name | Initial signal source |
+| # | id | Display name | Public anchor |
 | --- | --- | --- | --- |
-| 1 | `spec_kitty` | Spec Kitty | Existing `frameworks.json` entry; `.kittify/` and `kitty-specs/` directories present in this very repo |
-| 2 | `github_spec_kit` | GitHub Spec Kit | Existing `frameworks.json` `spec_kit` entry; public GitHub `github/spec-kit` repo |
-| 3 | `openspec` | OpenSpec | Existing `frameworks.json` entry; public docs |
-| 4 | `kiro` | Kiro | Public docs from Amazon |
-| 5 | `bmad` | BMAD-METHOD | Existing `frameworks.json` `bmad` entry; public repo `bmad-code-org/bmad-method` |
-| 6 | `gsd` | GSD | Public repo / docs |
-| 7 | `spec_workflow_mcp` | Spec Workflow MCP | Public MCP server registry |
-| 8 | `sdd_pilot` | SDD Pilot | Public repo |
-| 9 | `spec_driven_develop` | Spec-Driven Develop | Public repo |
-| 10 | `spec2ship` | spec2ship | Public repo |
-| 11 | `chatdev` | ChatDev | Public repo |
-| 12 | `paul` | PAUL | Public repo |
-| 13 | `fspec` | fspec | Public repo |
-| 14 | `whenwords` | whenwords | Public repo |
-| 15 | `intent` | Intent | Public repo |
-| 16 | `cognition_devin` | Cognition / Devin | Public product docs |
-| 17 | `microsoft_agent_framework` | Microsoft Agent Framework | Public docs |
-| 18 | `tessl` | Tessl | Public docs |
-| 19 | `agentic_code` | Agentic Code | Public docs |
-| 20 | `codespeak` | CodeSpeak | Public docs |
+| 1 | `spec_kitty` | Spec Kitty | `.kittify/` and `kitty-specs/` (this repo's own workflow) |
+| 2 | `github_spec_kit` | GitHub Spec Kit | github.com/github/spec-kit |
+| 3 | `openspec` | OpenSpec | github.com/Fission-AI/OpenSpec |
+| 4 | `kiro` | Kiro | kiro.dev (AWS) |
+| 5 | `bmad` | BMAD-METHOD | github.com/bmad-code-org/bmad-method |
+| 6 | `gsd` | GSD | github.com/gsd-build/get-shit-done |
+| 7 | `spec_workflow_mcp` | Spec Workflow MCP | github.com/Pimzino/spec-workflow-mcp |
+| 8 | `sdd_pilot` | SDD Pilot | github.com/attilaszasz/sdd-pilot |
+| 9 | `spec2ship` | spec2ship | github.com/spec2ship/spec2ship |
+| 10 | `chatdev` | ChatDev | github.com/OpenBMB/ChatDev |
+| 11 | `paul` | PAUL | github.com/ChristopherKahler/paul |
+| 12 | `fspec` | fspec | github.com/sengac/fspec |
+| 13 | `cognition_devin` | Cognition / Devin | docs.devin.ai |
+| 14 | `microsoft_agent_framework` | Microsoft Agent Framework | github.com/microsoft/agent-framework |
+| 15 | `tessl` | Tessl | docs.tessl.io |
+
+**Removed during re-research:** `spec_driven_develop`, `whenwords`, `intent`,
+`agentic_code`, `codespeak` — no canonical upstream / no public artifact
+surface. See `docs/research/sdd-fingerprints/README.md` for per-tool reasons.
 
 **Note on naming collision.** `bmad` already exists as a `framework` ID in `frameworks.json`. The new `sdd_detectors.json` uses the same canonical ID, and the legacy `frameworks.json` entry is left in place per C-004 (back-compat). Same applies to `spec_kit`, `spec_kitty`, and `openspec`.
 

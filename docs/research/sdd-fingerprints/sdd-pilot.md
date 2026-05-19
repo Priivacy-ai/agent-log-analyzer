@@ -1,59 +1,57 @@
 # SDD Pilot (sdd_pilot)
 
-- Status: research_needed
-- Category: spec-driven-development pilot/assistant
+- Status: verified
+- Category: spec-driven-development pilot/workflow framework for AI coding agents (Specify → Plan → Tasks → Implement → QC)
 - Competitor priority: 8
-- Official repository: (not confirmed from public source as of cutoff — the brief lists "SDD Pilot" but no canonical repo URL has been verified)
-- Official docs: (not confirmed)
-- Release / package source: (not confirmed)
-- Aliases: ["SDD Pilot", "sdd-pilot", "sdd_pilot"]
+- Official repository: https://github.com/attilaszasz/sdd-pilot
+- Official docs: https://sdd-pilot.szaszattila.com/
+- Release / package source: Distributed as versioned platform archives (e.g., `sdd-pilot-copilot-vX.Y.Z.zip`) per the GitHub releases page. No npm/PyPI package.
+- Aliases: ["SDD Pilot", "sdd-pilot", "sddp"]
 
 ## Markers (public-source only)
 
 ### config_dir
-- (not confirmed — candidate `.sdd-pilot/` based on naming convention; **not verified**)
+- (none unique to SDD Pilot; it uses generic `specs/` and `.agents/`. **Do not** trigger on `specs/` alone — FR-012.)
 
 ### config_file
-- (not confirmed)
+- `.github/sddp-config.md` — shared project context file. Documented in the SDD Pilot repository.
 
 ### package_manifest
-- (not confirmed)
+- (no npm/PyPI; distribution is via release archives)
 
 ### command_name
-- (not confirmed — candidate `sdd-pilot` not allowlisted yet)
+- `sddp-` filename prefix in `.claude/commands/`, `.codex/commands/`, etc. — recognizable command-pack identifier.
 
 ### slash_command
-- (not confirmed)
+- `/sddp-prd`, `/sddp-specify`, `/sddp-clarify`, `/sddp-plan`, `/sddp-checklist`, `/sddp-tasks`, `/sddp-analyze`, `/sddp-implement`, `/sddp-qc`, `/sddp-autopilot`, `/sddp-systemdesign`, `/sddp-devops`, `/sddp-projectplan`, `/sddp-amend`, `/sddp-init`, `/sddp-devsetup` — documented in the SDD Pilot repository.
 
 ### mcp_server_name
-- (not confirmed)
+- (none documented)
 
 ### skill_name
-- (not confirmed)
+- (none documented as a registered Claude Code skill)
 
 ### plugin_manifest
-- (not confirmed)
+- `gemini-extension.json` is a Gemini-specific extension manifest; not Claude Code plugin shape.
 
 ### cli_binary
-- (not confirmed; do NOT allowlist until repo is identified)
+- (no installable CLI binary documented)
 
 ### cli_version_probe
 - (not applicable)
 
 ## Negative-test markers (must NOT trigger this detector alone)
-- Bare phrase "SDD pilot" — could be a generic descriptor ("a spec-driven-development pilot project") rather than this tool.
-- Acronym `SDD` alone — far too generic (software design document, sudden death disease, etc.).
+- Bare `specs/` directory — generic SDD shared artifact.
+- Bare `.agents/` directory — generic.
+- `prd.md`, `sad.md`, `dod.md`, `project-plan.md` filenames alone — generic.
+- The English word "pilot" — generic.
+- `.kittify/`, `kitty-specs/`, `.specify/`, `openspec/`, `.kiro/`, `.bmad-core/` — other SDD tools; veto.
 
 ## Confidence wiring
-- **High**: cannot define until tool-specific markers are recorded.
-- **Medium**: n/a.
-- **Low**: n/a.
+- **High**: any `/sddp-*` slash command **and** `.github/sddp-config.md` config file (two distinct source classes).
+- **Medium**: any single `/sddp-*` slash command match.
+- **Low**: bare textual mention of `sddp-` command name.
 
 ## Source references (citations)
-- _None — this entry is `research_needed` pending identification of the canonical repository._
-
-## Open questions / what's missing
-1. The brief at `start-here.md` names "SDD Pilot" without a repo URL.
-2. Several GitHub repos share variants of this name; the team needs to confirm which one is intended.
-3. Without an official repo, this detector cannot be `verified` per FR-013/FR-014.
-4. **A-04 trigger**: scope conversation needed with the user before WP05 implements a detector.
+- https://github.com/attilaszasz/sdd-pilot — official repository (README documents the workflow and `/sddp-*` command set).
+- https://sdd-pilot.szaszattila.com/ — official documentation site.

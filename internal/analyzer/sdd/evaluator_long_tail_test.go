@@ -18,13 +18,11 @@ import (
 // registry untouched, just as evaluator_first_class_test.go and
 // evaluator_second_ring_test.go do.
 //
-// NOTE: WP07 ships only 4 verified long-tail detectors (spec_workflow_mcp,
-// chatdev, cognition_devin, microsoft_agent_framework). The 10 other
-// long-tail tools enumerated in WP04 (sdd_pilot, spec_driven_develop,
-// spec2ship, paul, fspec, whenwords, intent, tessl, agentic_code, codespeak)
-// remain research_needed and intentionally do NOT ship production detectors
-// or fixtures per FR-013. C-001 scope decision is awaiting mission-review
-// per assumption A-04.
+// NOTE: post-mission re-research promoted 5 additional long-tail tools to
+// verified (sdd_pilot, spec2ship, paul, fspec, tessl). The long-tail tier
+// now ships 9 verified detectors. The 5 remaining tools from the original
+// list (spec_driven_develop, whenwords, intent, agentic_code, codespeak)
+// were removed entirely — no public-source anchor was found for them.
 var longTailRegistryPaths = []string{
 	"../signatures/sdd_detectors_first_class.json",
 	"../signatures/sdd_detectors_second_ring.json",
@@ -69,9 +67,9 @@ func loadLongTailRegistry(t *testing.T) []SDDDetector {
 			verified = append(verified, d)
 		}
 	}
-	// 3 first-class + 2 second-ring + 4 long-tail = 9 verified detectors.
-	if len(verified) != 9 {
-		t.Fatalf("expected exactly 9 verified detectors (3 first-class + 2 second-ring + 4 long-tail); got %d", len(verified))
+	// 3 first-class + 3 second-ring + 9 long-tail = 15 verified detectors.
+	if len(verified) != 15 {
+		t.Fatalf("expected exactly 15 verified detectors (3 first-class + 3 second-ring + 9 long-tail); got %d", len(verified))
 	}
 	return verified
 }
@@ -110,7 +108,7 @@ func assertNotHasIDLT(t *testing.T, fps []Fingerprint, id string) {
 
 // TestLongTailPositive verifies that each verified long-tail fixture triggers
 // its own detector. This is the positive arm of FR-014 for the long-tail
-// tier (WP07 ships 4 verified detectors).
+// tier (post-re-research: 9 verified long-tail detectors).
 func TestLongTailPositive(t *testing.T) {
 	cases := []struct {
 		fixture string
@@ -120,8 +118,16 @@ func TestLongTailPositive(t *testing.T) {
 		{"chatdev.txt", "chatdev"},
 		{"cognition_devin.txt", "cognition_devin"},
 		{"microsoft_agent_framework.txt", "microsoft_agent_framework"},
+		{"sdd_pilot.txt", "sdd_pilot"},
+		{"spec2ship.txt", "spec2ship"},
+		{"paul.txt", "paul"},
+		{"fspec.txt", "fspec"},
+		{"tessl.txt", "tessl"},
 	}
-	longTail := []string{"spec_workflow_mcp", "chatdev", "cognition_devin", "microsoft_agent_framework"}
+	longTail := []string{
+		"spec_workflow_mcp", "chatdev", "cognition_devin", "microsoft_agent_framework",
+		"sdd_pilot", "spec2ship", "paul", "fspec", "tessl",
+	}
 	for _, c := range cases {
 		c := c
 		t.Run(c.fixture, func(t *testing.T) {
@@ -142,24 +148,25 @@ func TestLongTailPositive(t *testing.T) {
 }
 
 // TestLongTailCrossNegative enforces FR-014 for the long-tail tier against
-// the 5 prior detectors: for each of the 4 long-tail fixtures, none of
-// spec_kitty, github_spec_kit, openspec, kiro, bmad may fire. The full
-// matrix produces 4 fixtures × 5 cross-negative targets = 20 explicit
-// cross-negative assertions.
+// the 6 prior detectors: for each long-tail fixture, none of spec_kitty,
+// github_spec_kit, openspec, kiro, bmad, gsd may fire.
 //
-// Note: gsd is intentionally absent — it does not ship in WP06 (research_needed
-// per WP04 research and deferred per C-001 / A-04). Likewise, the 10
-// research_needed long-tail tools (sdd_pilot, spec_driven_develop, spec2ship,
-// paul, fspec, whenwords, intent, tessl, agentic_code, codespeak) are absent
-// from the registry per FR-013 and therefore have no IDs to assert against.
+// Note: the 5 removed tools (spec_driven_develop, whenwords, intent,
+// agentic_code, codespeak) are absent from the registry entirely and
+// therefore have no IDs to assert against.
 func TestLongTailCrossNegative(t *testing.T) {
 	fixtures := []string{
 		"spec_workflow_mcp.txt",
 		"chatdev.txt",
 		"cognition_devin.txt",
 		"microsoft_agent_framework.txt",
+		"sdd_pilot.txt",
+		"spec2ship.txt",
+		"paul.txt",
+		"fspec.txt",
+		"tessl.txt",
 	}
-	priorIDs := []string{"spec_kitty", "github_spec_kit", "openspec", "kiro", "bmad"}
+	priorIDs := []string{"spec_kitty", "github_spec_kit", "openspec", "kiro", "bmad", "gsd"}
 	for _, f := range fixtures {
 		f := f
 		t.Run(f, func(t *testing.T) {

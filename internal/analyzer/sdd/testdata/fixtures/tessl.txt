@@ -1,0 +1,11 @@
+Sanitized claude-code transcript excerpt — Tessl spec-driven-development platform.
+
+user: Set up Tessl on this repo. Reference: https://docs.tessl.io/ and https://docs.tessl.io/reference/cli-commands.
+assistant: Running tessl init to scaffold the workspace. Tessl writes its config and tile cache to /repo/.tessl/.
+assistant: The repository tile-dependency manifest is /repo/tessl.json. Auto-generated agent rules live at /repo/.tessl/RULES.md, with exclusions in /repo/.tileignore.
+user: Start the MCP server so the agent can call Tessl.
+assistant: Running tessl mcp start. The Claude Code MCP tool calls land under the mcp__tessl__create-spec and mcp__tessl__verify-spec namespace.
+user: Install a tile from the registry.
+assistant: Running tessl install. Tiles land under /repo/.tessl/tiles/workspace-name/tile-name/. Reference: https://docs.tessl.io/use/spec-driven-development-with-tessl.
+user: Author a new tile.
+assistant: Running tessl tile new to scaffold; the tile metadata file is tile.json. The Tessl docs are at docs.tessl.io.

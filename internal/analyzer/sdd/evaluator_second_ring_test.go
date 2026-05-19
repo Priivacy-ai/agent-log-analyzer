@@ -16,10 +16,12 @@ import (
 // Loading directly (not via LoadRegistry) keeps the sync.Once-memoized global
 // registry untouched, just as evaluator_first_class_test.go does.
 //
-// NOTE: WP06 ships only kiro + bmad. GSD remains research_needed per the WP04
-// research file (docs/research/sdd-fingerprints/gsd.md) and is deferred per
-// scope decision C-001 / assumption A-04 — awaiting mission-review. This test
-// therefore does NOT include a gsd positive case.
+// NOTE: post-mission re-research promoted GSD to verified. The second-ring
+// tier now ships kiro + bmad + gsd. The 10 long-tail tools that previously sat
+// in research_needed were re-researched in the same pass: 5 were verified and
+// promoted to production detectors (sdd_pilot, spec2ship, paul, fspec, tessl);
+// 5 had no public-source anchor and were removed entirely (spec_driven_develop,
+// whenwords, intent, agentic_code, codespeak).
 var secondRingRegistryPaths = []string{
 	"../signatures/sdd_detectors_first_class.json",
 	"../signatures/sdd_detectors_second_ring.json",
@@ -62,8 +64,8 @@ func loadSecondRingRegistry(t *testing.T) []SDDDetector {
 			verified = append(verified, d)
 		}
 	}
-	if len(verified) < 5 {
-		t.Fatalf("expected at least 5 verified detectors (3 first-class + 2 second-ring); got %d", len(verified))
+	if len(verified) < 6 {
+		t.Fatalf("expected at least 6 verified detectors (3 first-class + 3 second-ring); got %d", len(verified))
 	}
 	return verified
 }
@@ -105,8 +107,8 @@ func assertNotHasIDSR(t *testing.T, fps []Fingerprint, id string) {
 // github_spec_kit, openspec). This is the FR-014 cross-negative assertion for
 // the second ring.
 //
-// Per WP06 scope: only kiro and bmad ship. GSD is deferred (research_needed
-// per WP04 research) and intentionally absent from this case table.
+// Per WP06 scope plus the post-mission re-research follow-up: second-ring now
+// covers kiro, bmad, and gsd.
 func TestSecondRingPositive(t *testing.T) {
 	cases := []struct {
 		fixture string
@@ -114,9 +116,10 @@ func TestSecondRingPositive(t *testing.T) {
 	}{
 		{"kiro.txt", "kiro"},
 		{"bmad.txt", "bmad"},
+		{"gsd.txt", "gsd"},
 	}
 	firstClass := []string{"spec_kitty", "github_spec_kit", "openspec"}
-	secondRing := []string{"kiro", "bmad"}
+	secondRing := []string{"kiro", "bmad", "gsd"}
 	for _, c := range cases {
 		c := c
 		t.Run(c.fixture, func(t *testing.T) {

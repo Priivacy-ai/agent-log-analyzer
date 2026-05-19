@@ -1,0 +1,12 @@
+Sanitized claude-code transcript excerpt — fspec (Spec-Driven Multi-Agent Coding Factory).
+
+user: Install fspec globally. Run `npm install -g @sengac/fspec`.
+assistant: Installed. Reference: https://github.com/sengac/fspec and https://www.npmjs.com/package/@sengac/fspec.
+user: Bootstrap the workspace.
+assistant: Running fspec init to scaffold the spec-driven workflow. The /fspec slash command bootstraps Claude Code integration.
+assistant: For Codex, the bootstrap is /prompts:fspec.
+user: Show the kanban board.
+assistant: Running fspec to open the interactive kanban over the Gherkin scenarios and TDD checkpoints.
+user: Something broke; restore the last checkpoint.
+assistant: Running fspec restore-checkpoint to roll back to the most recent auto checkpoint. If needed, fspec report-bug-to-github opens an upstream issue.
+assistant: Package reference: "@sengac/fspec" in devDependencies, https://npmjs.com/package/@sengac/fspec.

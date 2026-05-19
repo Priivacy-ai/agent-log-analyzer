@@ -27,53 +27,42 @@ structural shape of the record is what makes the privacy guarantees
 enforceable; the leak test (NFR-001) is the build-time backstop. See
 [mission spec §Purpose](../kitty-specs/top-20-sdd-fingerprint-registry-01KRZEQ3/spec.md#purpose).
 
-## Top-20 table
+## Final top-N table (post re-research)
 
 The per-tool research files in [`docs/research/sdd-fingerprints/`](research/sdd-fingerprints/README.md)
 are the authoritative source for every marker and citation. Each detector
 entry in `internal/analyzer/signatures/sdd_detectors.json` MUST point back to
 one of these files via its `source_references`.
 
-| # | Tool                       | ID                          | Status            | Research file |
-| - | -------------------------- | --------------------------- | ----------------- | ------------- |
-| 1 | Spec Kitty                 | `spec_kitty`                | verified          | [`spec-kitty.md`](research/sdd-fingerprints/spec-kitty.md) |
-| 2 | GitHub Spec Kit            | `github_spec_kit`           | verified          | [`github-spec-kit.md`](research/sdd-fingerprints/github-spec-kit.md) |
-| 3 | OpenSpec                   | `openspec`                  | verified          | [`openspec.md`](research/sdd-fingerprints/openspec.md) |
-| 4 | Kiro                       | `kiro`                      | verified          | [`kiro.md`](research/sdd-fingerprints/kiro.md) |
-| 5 | BMAD-METHOD                | `bmad`                      | verified          | [`bmad.md`](research/sdd-fingerprints/bmad.md) |
-| 6 | GSD                        | `gsd`                       | research_needed   | [`gsd.md`](research/sdd-fingerprints/gsd.md) |
-| 7 | Spec Workflow MCP          | `spec_workflow_mcp`         | verified          | [`spec-workflow-mcp.md`](research/sdd-fingerprints/spec-workflow-mcp.md) |
-| 8 | SDD Pilot                  | `sdd_pilot`                 | research_needed   | [`sdd-pilot.md`](research/sdd-fingerprints/sdd-pilot.md) |
-| 9 | Spec-Driven Develop        | `spec_driven_develop`       | research_needed   | [`spec-driven-develop.md`](research/sdd-fingerprints/spec-driven-develop.md) |
-| 10| spec2ship                  | `spec2ship`                 | research_needed   | [`spec2ship.md`](research/sdd-fingerprints/spec2ship.md) |
-| 11| ChatDev                    | `chatdev`                   | verified          | [`chatdev.md`](research/sdd-fingerprints/chatdev.md) |
-| 12| PAUL                       | `paul`                      | research_needed   | [`paul.md`](research/sdd-fingerprints/paul.md) |
-| 13| fspec                      | `fspec`                     | research_needed   | [`fspec.md`](research/sdd-fingerprints/fspec.md) |
-| 14| whenwords                  | `whenwords`                 | research_needed   | [`whenwords.md`](research/sdd-fingerprints/whenwords.md) |
-| 15| Intent                     | `intent`                    | research_needed   | [`intent.md`](research/sdd-fingerprints/intent.md) |
-| 16| Cognition / Devin          | `cognition_devin`           | verified          | [`cognition-devin.md`](research/sdd-fingerprints/cognition-devin.md) |
-| 17| Microsoft Agent Framework  | `microsoft_agent_framework` | verified          | [`microsoft-agent-framework.md`](research/sdd-fingerprints/microsoft-agent-framework.md) |
-| 18| Tessl                      | `tessl`                     | research_needed   | [`tessl.md`](research/sdd-fingerprints/tessl.md) |
-| 19| Agentic Code               | `agentic_code`              | research_needed   | [`agentic-code.md`](research/sdd-fingerprints/agentic-code.md) |
-| 20| CodeSpeak                  | `codespeak`                 | research_needed   | [`codespeak.md`](research/sdd-fingerprints/codespeak.md) |
+| # | Tool                       | ID                          | Status   | Research file |
+| - | -------------------------- | --------------------------- | -------- | ------------- |
+| 1 | Spec Kitty                 | `spec_kitty`                | verified | [`spec-kitty.md`](research/sdd-fingerprints/spec-kitty.md) |
+| 2 | GitHub Spec Kit            | `github_spec_kit`           | verified | [`github-spec-kit.md`](research/sdd-fingerprints/github-spec-kit.md) |
+| 3 | OpenSpec                   | `openspec`                  | verified | [`openspec.md`](research/sdd-fingerprints/openspec.md) |
+| 4 | Kiro                       | `kiro`                      | verified | [`kiro.md`](research/sdd-fingerprints/kiro.md) |
+| 5 | BMAD-METHOD                | `bmad`                      | verified | [`bmad.md`](research/sdd-fingerprints/bmad.md) |
+| 6 | GSD                        | `gsd`                       | verified | [`gsd.md`](research/sdd-fingerprints/gsd.md) |
+| 7 | Spec Workflow MCP          | `spec_workflow_mcp`         | verified | [`spec-workflow-mcp.md`](research/sdd-fingerprints/spec-workflow-mcp.md) |
+| 8 | SDD Pilot                  | `sdd_pilot`                 | verified | [`sdd-pilot.md`](research/sdd-fingerprints/sdd-pilot.md) |
+| 9 | spec2ship                  | `spec2ship`                 | verified | [`spec2ship.md`](research/sdd-fingerprints/spec2ship.md) |
+| 10| ChatDev                    | `chatdev`                   | verified | [`chatdev.md`](research/sdd-fingerprints/chatdev.md) |
+| 11| PAUL                       | `paul`                      | verified | [`paul.md`](research/sdd-fingerprints/paul.md) |
+| 12| fspec                      | `fspec`                     | verified | [`fspec.md`](research/sdd-fingerprints/fspec.md) |
+| 13| Cognition / Devin          | `cognition_devin`           | verified | [`cognition-devin.md`](research/sdd-fingerprints/cognition-devin.md) |
+| 14| Microsoft Agent Framework  | `microsoft_agent_framework` | verified | [`microsoft-agent-framework.md`](research/sdd-fingerprints/microsoft-agent-framework.md) |
+| 15| Tessl                      | `tessl`                     | verified | [`tessl.md`](research/sdd-fingerprints/tessl.md) |
 
-**Current verified count: 9 / 20.**
+**Current verified count: 15 / 15.**
 
-**C-001 status is not yet met.** Mission constraint
-[C-001](../kitty-specs/top-20-sdd-fingerprint-registry-01KRZEQ3/spec.md#constraints)
-says all 20 tools must reach `verified` from public sources before this
-mission is done. The 11 tools currently `research_needed` either have
-ambiguous public-source surfaces (generic name collisions — "Intent", "PAUL",
-"Agentic Code", "Spec-Driven Develop") or are private hosted products with no
-local CLI/config artifact a static analyzer can detect from text fixtures
-alone. Both cases trip [A-04](../kitty-specs/top-20-sdd-fingerprint-registry-01KRZEQ3/spec.md#assumptions),
-which requires a scope conversation with the user before downgrading C-001 or
-shipping `research_needed` detectors. **That scope decision is pending at
-mission-review** and is owned by the human reviewer, not by any agent in this
-mission. See each per-tool file's "Open questions" section and the
-"`research_needed` tools awaiting scope conversation (A-04)" subsection of
+A post-mission re-research pass investigated each of the 11 tools that had
+previously shipped as `research_needed`. Six tools were verified against
+public-source citations and promoted to production detectors (GSD, SDD Pilot,
+spec2ship, PAUL, fspec, Tessl). The remaining five had no canonical upstream
+or no fingerprintable public artifact surface and were removed from the
+registry entirely (Spec-Driven Develop, whenwords, Intent, Agentic Code,
+CodeSpeak). See
 [`docs/research/sdd-fingerprints/README.md`](research/sdd-fingerprints/README.md)
-for the specific gaps.
+for the per-tool reasoning and the "Removed tools" section.
 
 ## Source-class taxonomy
 

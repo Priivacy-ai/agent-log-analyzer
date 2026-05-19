@@ -60,5 +60,39 @@
       {"confidence": "medium", "requires_any_of": ["cli_binary", "package_manifest"]},
       {"confidence": "low", "requires_any_of": ["command_name"]}
     ]
+  },
+  {
+    "id": "gsd",
+    "display_name": "GSD",
+    "aliases": ["GSD", "Get Shit Done", "get-shit-done", "get-shit-done-cc", "gsd-build"],
+    "category": "sdd",
+    "competitor_priority": 6,
+    "status": "verified",
+    "source_references": [
+      {"kind": "official_repo", "url": "https://github.com/gsd-build/get-shit-done", "note": "Official GSD repository; README + USER-GUIDE document .planning/, slash commands, npm package"},
+      {"kind": "docs", "url": "https://github.com/gsd-build/get-shit-done/blob/main/docs/USER-GUIDE.md", "note": "User guide enumerating the /gsd-* slash command set and .planning/ structure"},
+      {"kind": "package_registry", "url": "https://www.npmjs.com/package/get-shit-done-cc", "note": "npm package distributed via npx get-shit-done-cc@latest"},
+      {"kind": "official_docs", "url": "https://gsd.build/", "note": "Official product home"}
+    ],
+    "markers": [
+      {"source_class": "config_dir", "pattern": "(?i)(^|[\\s/'\"`(\\[])\\.planning/", "note": ".planning workspace dir created by GSD"},
+      {"source_class": "config_dir", "pattern": "(?i)\\.planning/phases/", "note": ".planning per-phase subdirectory"},
+      {"source_class": "config_file", "pattern": "(?i)\\.planning/config\\.json", "note": "GSD configuration file inside .planning/"},
+      {"source_class": "package_manifest", "pattern": "(?i)\"get-shit-done-cc\"\\s*:|npmjs\\.com/package/get-shit-done-cc|npx\\s+get-shit-done-cc", "note": "get-shit-done-cc npm package reference or invocation"},
+      {"source_class": "slash_command", "pattern": "(?i)/gsd[-:](new-project|discuss-phase|plan-phase|execute-phase|verify-work|ship|progress|quick|ui-phase|spike|complete-milestone|new-milestone|map-codebase|settings|code-review)\\b", "note": "GSD slash command vocabulary (hyphen form for Claude Code, colon form for Gemini CLI)"},
+      {"source_class": "command_name", "pattern": "(?i)github\\.com/gsd-build/get-shit-done", "note": "Canonical GitHub repo path mention"},
+      {"source_class": "config_dir", "pattern": "(?i)(^|[\\s/'\"`(\\[])\\.kittify/", "negative": true, "note": "Spec Kitty workspace; vetoes GSD"},
+      {"source_class": "config_dir", "pattern": "(?i)(^|[\\s/'\"`(\\[])kitty-specs/", "negative": true, "note": "Spec Kitty mission dir; vetoes GSD"},
+      {"source_class": "config_dir", "pattern": "(?i)(^|[\\s/'\"`(\\[])\\.specify/", "negative": true, "note": "GitHub Spec Kit workspace; vetoes GSD"},
+      {"source_class": "config_dir", "pattern": "(?i)(^|[\\s/'\"`(\\[])openspec/", "negative": true, "note": "OpenSpec workspace; vetoes GSD"},
+      {"source_class": "config_dir", "pattern": "(?i)(^|[\\s/'\"`(\\[])\\.kiro/", "negative": true, "note": "Kiro workspace; vetoes GSD"},
+      {"source_class": "config_dir", "pattern": "(?i)(^|[\\s/'\"`(\\[])\\.bmad-core/", "negative": true, "note": "BMAD workspace; vetoes GSD"},
+      {"source_class": "package_manifest", "pattern": "(?i)\"bmad-method\"\\s*:|npx\\s+bmad-method", "negative": true, "note": "BMAD package reference; vetoes GSD"}
+    ],
+    "confidence_rules": [
+      {"confidence": "high", "requires_distinct_classes": 2},
+      {"confidence": "medium", "requires_any_of": ["cli_binary", "slash_command", "mcp_server_name", "package_manifest"]},
+      {"confidence": "low", "requires_any_of": ["command_name"]}
+    ]
   }
 ]

@@ -128,5 +128,173 @@
       {"confidence": "medium", "requires_any_of": ["cli_binary", "slash_command", "mcp_server_name", "package_manifest"]},
       {"confidence": "low", "requires_any_of": ["command_name"]}
     ]
+  },
+  {
+    "id": "sdd_pilot",
+    "display_name": "SDD Pilot",
+    "aliases": ["SDD Pilot", "sdd-pilot", "sddp"],
+    "category": "sdd",
+    "competitor_priority": 8,
+    "status": "verified",
+    "source_references": [
+      {"kind": "official_repo", "url": "https://github.com/attilaszasz/sdd-pilot", "note": "Official SDD Pilot repository documenting /sddp-* command set and workflow"},
+      {"kind": "official_docs", "url": "https://sdd-pilot.szaszattila.com/", "note": "Official SDD Pilot documentation site"}
+    ],
+    "markers": [
+      {"source_class": "slash_command", "pattern": "(?i)/sddp-(prd|specify|clarify|plan|checklist|tasks|analyze|implement|qc|autopilot|systemdesign|devops|projectplan|amend|init|devsetup)\\b", "note": "SDD Pilot slash command vocabulary"},
+      {"source_class": "config_file", "pattern": "(?i)\\.github/sddp-config\\.md", "note": "SDD Pilot shared project context file"},
+      {"source_class": "command_name", "pattern": "(?i)github\\.com/attilaszasz/sdd-pilot", "note": "Canonical GitHub repo path mention"},
+      {"source_class": "command_name", "pattern": "(?i)sdd-pilot\\.szaszattila\\.com", "note": "Official docs URL mention"},
+      {"source_class": "config_dir", "pattern": "(?i)(^|[\\s/'\"`(\\[])\\.kittify/", "negative": true, "note": "Spec Kitty workspace; vetoes SDD Pilot"},
+      {"source_class": "config_dir", "pattern": "(?i)(^|[\\s/'\"`(\\[])kitty-specs/", "negative": true, "note": "Spec Kitty mission dir; vetoes SDD Pilot"},
+      {"source_class": "config_dir", "pattern": "(?i)(^|[\\s/'\"`(\\[])\\.specify/", "negative": true, "note": "GitHub Spec Kit workspace; vetoes SDD Pilot"},
+      {"source_class": "config_dir", "pattern": "(?i)(^|[\\s/'\"`(\\[])openspec/", "negative": true, "note": "OpenSpec workspace; vetoes SDD Pilot"},
+      {"source_class": "config_dir", "pattern": "(?i)(^|[\\s/'\"`(\\[])\\.kiro/", "negative": true, "note": "Kiro workspace; vetoes SDD Pilot"},
+      {"source_class": "config_dir", "pattern": "(?i)(^|[\\s/'\"`(\\[])\\.bmad-core/", "negative": true, "note": "BMAD workspace; vetoes SDD Pilot"},
+      {"source_class": "package_manifest", "pattern": "(?i)\"bmad-method\"\\s*:|npx\\s+bmad-method", "negative": true, "note": "BMAD package reference; vetoes SDD Pilot"}
+    ],
+    "confidence_rules": [
+      {"confidence": "high", "requires_distinct_classes": 2},
+      {"confidence": "medium", "requires_any_of": ["cli_binary", "slash_command", "mcp_server_name", "package_manifest"]},
+      {"confidence": "low", "requires_any_of": ["command_name"]}
+    ]
+  },
+  {
+    "id": "spec2ship",
+    "display_name": "spec2ship",
+    "aliases": ["spec2ship", "Spec2Ship", "s2s"],
+    "category": "sdd",
+    "competitor_priority": 10,
+    "status": "verified",
+    "source_references": [
+      {"kind": "official_repo", "url": "https://github.com/spec2ship/spec2ship", "note": "Official spec2ship Claude Code plugin repository"}
+    ],
+    "markers": [
+      {"source_class": "config_dir", "pattern": "(?i)(^|[\\s/'\"`(\\[])\\.s2s/", "note": ".s2s workspace dir created by the spec2ship plugin"},
+      {"source_class": "config_dir", "pattern": "(?i)\\.s2s/sessions/", "note": ".s2s/sessions/ per-session yaml subdirectory"},
+      {"source_class": "config_file", "pattern": "(?i)\\.s2s/CONTEXT\\.md", "note": "spec2ship session-spanning context file"},
+      {"source_class": "config_file", "pattern": "(?i)\\.s2s/BACKLOG\\.md", "note": "spec2ship backlog projection"},
+      {"source_class": "slash_command", "pattern": "(?i)/s2s:(init|brainstorm|specs|design|plan|roundtable|session(:list|:validate|:close)?)\\b", "note": "spec2ship Claude Code slash command vocabulary"},
+      {"source_class": "command_name", "pattern": "(?i)github\\.com/spec2ship/spec2ship", "note": "Canonical GitHub repo path mention"},
+      {"source_class": "command_name", "pattern": "(?i)/plugin\\s+install\\s+s2s\\b", "note": "Claude Code plugin install command"},
+      {"source_class": "config_dir", "pattern": "(?i)(^|[\\s/'\"`(\\[])\\.kittify/", "negative": true, "note": "Spec Kitty workspace; vetoes spec2ship"},
+      {"source_class": "config_dir", "pattern": "(?i)(^|[\\s/'\"`(\\[])kitty-specs/", "negative": true, "note": "Spec Kitty mission dir; vetoes spec2ship"},
+      {"source_class": "config_dir", "pattern": "(?i)(^|[\\s/'\"`(\\[])\\.specify/", "negative": true, "note": "GitHub Spec Kit workspace; vetoes spec2ship"},
+      {"source_class": "config_dir", "pattern": "(?i)(^|[\\s/'\"`(\\[])openspec/", "negative": true, "note": "OpenSpec workspace; vetoes spec2ship"},
+      {"source_class": "config_dir", "pattern": "(?i)(^|[\\s/'\"`(\\[])\\.kiro/", "negative": true, "note": "Kiro workspace; vetoes spec2ship"},
+      {"source_class": "config_dir", "pattern": "(?i)(^|[\\s/'\"`(\\[])\\.bmad-core/", "negative": true, "note": "BMAD workspace; vetoes spec2ship"},
+      {"source_class": "package_manifest", "pattern": "(?i)\"bmad-method\"\\s*:|npx\\s+bmad-method", "negative": true, "note": "BMAD package reference; vetoes spec2ship"}
+    ],
+    "confidence_rules": [
+      {"confidence": "high", "requires_distinct_classes": 2},
+      {"confidence": "medium", "requires_any_of": ["cli_binary", "slash_command", "mcp_server_name", "package_manifest"]},
+      {"confidence": "low", "requires_any_of": ["command_name"]}
+    ]
+  },
+  {
+    "id": "paul",
+    "display_name": "PAUL",
+    "aliases": ["PAUL", "paul", "paul-framework", "Plan-Apply-Unify Loop"],
+    "category": "sdd",
+    "competitor_priority": 12,
+    "status": "verified",
+    "source_references": [
+      {"kind": "official_repo", "url": "https://github.com/ChristopherKahler/paul", "note": "Official PAUL repository; README documents .paul/, slash commands, and npm install"},
+      {"kind": "package_registry", "url": "https://www.npmjs.com/package/paul-framework", "note": "npm package paul-framework, invoked via npx paul-framework"}
+    ],
+    "markers": [
+      {"source_class": "config_dir", "pattern": "(?i)(^|[\\s/'\"`(\\[])\\.paul/", "note": ".paul workspace dir created by PAUL"},
+      {"source_class": "config_dir", "pattern": "(?i)\\.paul/phases/", "note": ".paul per-phase subdirectory"},
+      {"source_class": "config_file", "pattern": "(?i)\\.paul/(PROJECT|ROADMAP|STATE|SPECIAL-FLOWS)\\.md", "note": "PAUL canonical workspace markdown files inside .paul/"},
+      {"source_class": "config_file", "pattern": "(?i)\\.paul/config\\.md", "note": "PAUL optional integrations config"},
+      {"source_class": "package_manifest", "pattern": "(?i)\"paul-framework\"\\s*:|npmjs\\.com/package/paul-framework|npx\\s+paul-framework", "note": "paul-framework npm package reference or invocation"},
+      {"source_class": "slash_command", "pattern": "(?i)/paul:(init|plan|apply|unify|progress|help)\\b", "note": "PAUL Claude Code slash command vocabulary (core subset)"},
+      {"source_class": "command_name", "pattern": "(?i)github\\.com/ChristopherKahler/paul", "note": "Canonical GitHub repo path mention"},
+      {"source_class": "config_dir", "pattern": "(?i)(^|[\\s/'\"`(\\[])\\.kittify/", "negative": true, "note": "Spec Kitty workspace; vetoes PAUL"},
+      {"source_class": "config_dir", "pattern": "(?i)(^|[\\s/'\"`(\\[])kitty-specs/", "negative": true, "note": "Spec Kitty mission dir; vetoes PAUL"},
+      {"source_class": "config_dir", "pattern": "(?i)(^|[\\s/'\"`(\\[])\\.specify/", "negative": true, "note": "GitHub Spec Kit workspace; vetoes PAUL"},
+      {"source_class": "config_dir", "pattern": "(?i)(^|[\\s/'\"`(\\[])openspec/", "negative": true, "note": "OpenSpec workspace; vetoes PAUL"},
+      {"source_class": "config_dir", "pattern": "(?i)(^|[\\s/'\"`(\\[])\\.kiro/", "negative": true, "note": "Kiro workspace; vetoes PAUL"},
+      {"source_class": "config_dir", "pattern": "(?i)(^|[\\s/'\"`(\\[])\\.bmad-core/", "negative": true, "note": "BMAD workspace; vetoes PAUL"},
+      {"source_class": "package_manifest", "pattern": "(?i)\"bmad-method\"\\s*:|npx\\s+bmad-method", "negative": true, "note": "BMAD package reference; vetoes PAUL"}
+    ],
+    "confidence_rules": [
+      {"confidence": "high", "requires_distinct_classes": 2},
+      {"confidence": "medium", "requires_any_of": ["cli_binary", "slash_command", "mcp_server_name", "package_manifest"]},
+      {"confidence": "low", "requires_any_of": ["command_name"]}
+    ]
+  },
+  {
+    "id": "fspec",
+    "display_name": "fspec",
+    "aliases": ["fspec", "FSPEC", "@sengac/fspec"],
+    "category": "sdd",
+    "competitor_priority": 13,
+    "status": "verified",
+    "source_references": [
+      {"kind": "official_repo", "url": "https://github.com/sengac/fspec", "note": "Official fspec repository; README documents npm install, CLI binary, /fspec slash command"},
+      {"kind": "package_registry", "url": "https://www.npmjs.com/package/@sengac/fspec", "note": "npm package @sengac/fspec, installed globally for the fspec CLI binary"},
+      {"kind": "official_docs", "url": "https://fspec.dev/", "note": "Official product home"}
+    ],
+    "markers": [
+      {"source_class": "package_manifest", "pattern": "(?i)\"@sengac/fspec\"|npmjs\\.com/package/@sengac/fspec", "note": "@sengac/fspec npm package reference"},
+      {"source_class": "command_name", "pattern": "(?i)\\bfspec\\s+(init|restore-checkpoint|report-bug-to-github)\\b", "note": "fspec CLI subcommand invocation"},
+      {"source_class": "command_name", "pattern": "(?i)github\\.com/sengac/fspec", "note": "Canonical GitHub repo path mention"},
+      {"source_class": "slash_command", "pattern": "(?i)/fspec\\b", "note": "fspec Claude Code bootstrap slash command"},
+      {"source_class": "slash_command", "pattern": "(?i)/prompts:fspec\\b", "note": "fspec Codex bootstrap"},
+      {"source_class": "cli_binary", "binary": "fspec", "note": "fspec CLI binary installed by npm install -g @sengac/fspec"},
+      {"source_class": "cli_version_probe", "binary": "fspec", "version_args": ["--version"], "note": "version probe"},
+      {"source_class": "config_dir", "pattern": "(?i)(^|[\\s/'\"`(\\[])\\.kittify/", "negative": true, "note": "Spec Kitty workspace; vetoes fspec"},
+      {"source_class": "config_dir", "pattern": "(?i)(^|[\\s/'\"`(\\[])kitty-specs/", "negative": true, "note": "Spec Kitty mission dir; vetoes fspec"},
+      {"source_class": "config_dir", "pattern": "(?i)(^|[\\s/'\"`(\\[])\\.specify/", "negative": true, "note": "GitHub Spec Kit workspace; vetoes fspec"},
+      {"source_class": "config_dir", "pattern": "(?i)(^|[\\s/'\"`(\\[])openspec/", "negative": true, "note": "OpenSpec workspace; vetoes fspec"},
+      {"source_class": "config_dir", "pattern": "(?i)(^|[\\s/'\"`(\\[])\\.kiro/", "negative": true, "note": "Kiro workspace; vetoes fspec"},
+      {"source_class": "config_dir", "pattern": "(?i)(^|[\\s/'\"`(\\[])\\.bmad-core/", "negative": true, "note": "BMAD workspace; vetoes fspec"},
+      {"source_class": "package_manifest", "pattern": "(?i)\"bmad-method\"\\s*:|npx\\s+bmad-method", "negative": true, "note": "BMAD package reference; vetoes fspec"}
+    ],
+    "confidence_rules": [
+      {"confidence": "high", "requires_distinct_classes": 2},
+      {"confidence": "medium", "requires_any_of": ["cli_binary", "slash_command", "mcp_server_name", "package_manifest"]},
+      {"confidence": "low", "requires_any_of": ["command_name"]}
+    ]
+  },
+  {
+    "id": "tessl",
+    "display_name": "Tessl",
+    "aliases": ["Tessl", "tessl", "Tessl.io"],
+    "category": "sdd",
+    "competitor_priority": 18,
+    "status": "verified",
+    "source_references": [
+      {"kind": "official_docs", "url": "https://docs.tessl.io/", "note": "Tessl official documentation home"},
+      {"kind": "docs", "url": "https://docs.tessl.io/reference/configuration", "note": "Documents .tessl/, tessl.json, tile.json, .tileignore"},
+      {"kind": "docs", "url": "https://docs.tessl.io/reference/cli-commands", "note": "Documents the tessl CLI surface including tessl mcp start"},
+      {"kind": "docs", "url": "https://docs.tessl.io/use/spec-driven-development-with-tessl", "note": "Documents the SDD workflow with Tessl"},
+      {"kind": "official_repo", "url": "https://github.com/tesslio/spec-driven-development-tile", "note": "Official Tessl tile published by Tessl"}
+    ],
+    "markers": [
+      {"source_class": "config_dir", "pattern": "(?i)(^|[\\s/'\"`(\\[])\\.tessl/", "note": ".tessl main configuration and cache directory"},
+      {"source_class": "config_dir", "pattern": "(?i)\\.tessl/tiles/", "note": ".tessl/tiles/ downloaded tile cache subdirectory"},
+      {"source_class": "config_file", "pattern": "(?i)(^|[\\s/'\"`(\\[])tessl\\.json\\b", "note": "Tessl repository tile-dependency manifest"},
+      {"source_class": "config_file", "pattern": "(?i)\\.tessl/RULES\\.md", "note": "Auto-generated Tessl agent rules file"},
+      {"source_class": "config_file", "pattern": "(?i)(^|[\\s/'\"`(\\[])\\.tileignore\\b", "note": "Tessl tile-exclusion file"},
+      {"source_class": "mcp_server_name", "pattern": "(?i)mcp__tessl__[a-z0-9_\\-]+", "note": "MCP tool call namespace mcp__tessl__<tool>"},
+      {"source_class": "command_name", "pattern": "(?i)\\btessl\\s+(init|install|mcp\\s+start|project|skill|tile|workspace|eval|cli\\s+update|doctor)\\b", "note": "tessl CLI subcommand invocation"},
+      {"source_class": "command_name", "pattern": "(?i)docs\\.tessl\\.io|tessl\\.io/registry", "note": "Tessl docs / registry URL"},
+      {"source_class": "cli_binary", "binary": "tessl", "note": "tessl CLI binary"},
+      {"source_class": "cli_version_probe", "binary": "tessl", "version_args": ["--version"], "note": "version probe"},
+      {"source_class": "config_dir", "pattern": "(?i)(^|[\\s/'\"`(\\[])\\.kittify/", "negative": true, "note": "Spec Kitty workspace; vetoes Tessl"},
+      {"source_class": "config_dir", "pattern": "(?i)(^|[\\s/'\"`(\\[])kitty-specs/", "negative": true, "note": "Spec Kitty mission dir; vetoes Tessl"},
+      {"source_class": "config_dir", "pattern": "(?i)(^|[\\s/'\"`(\\[])\\.specify/", "negative": true, "note": "GitHub Spec Kit workspace; vetoes Tessl"},
+      {"source_class": "config_dir", "pattern": "(?i)(^|[\\s/'\"`(\\[])openspec/", "negative": true, "note": "OpenSpec workspace; vetoes Tessl"},
+      {"source_class": "config_dir", "pattern": "(?i)(^|[\\s/'\"`(\\[])\\.kiro/", "negative": true, "note": "Kiro workspace; vetoes Tessl"},
+      {"source_class": "config_dir", "pattern": "(?i)(^|[\\s/'\"`(\\[])\\.bmad-core/", "negative": true, "note": "BMAD workspace; vetoes Tessl"},
+      {"source_class": "package_manifest", "pattern": "(?i)\"bmad-method\"\\s*:|npx\\s+bmad-method", "negative": true, "note": "BMAD package reference; vetoes Tessl"}
+    ],
+    "confidence_rules": [
+      {"confidence": "high", "requires_distinct_classes": 2},
+      {"confidence": "medium", "requires_any_of": ["cli_binary", "slash_command", "mcp_server_name", "package_manifest"]},
+      {"confidence": "low", "requires_any_of": ["command_name"]}
+    ]
   }
 ]
