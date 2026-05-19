@@ -17,6 +17,7 @@ requirement_refs:
 - C-001
 - C-002
 - C-005
+- C-006
 planning_base_branch: main
 merge_target_branch: main
 branch_strategy: Planning artifacts for this mission were generated on main. During /spec-kitty.implement this WP may branch from a dependency-specific base, but completed changes must merge back into main unless the human explicitly redirects the landing branch.
@@ -192,11 +193,18 @@ defined in `contracts/signal-derivation-map.md`.
    rule.
 4. Determine whether any active usage-tracker fingerprint is present:
    - Walk `report.Ecosystem.WorkflowFingerprints`.
-   - For each entry where `Active == true`, check whether the ID belongs to
-     the engine's `usage_visibility` class. Resolve membership via the
-     registry: `tool := GetTool(ToolID(entry.ID))` then check
-     `tool.Class == ClassUsageVisibility`. Unknown IDs (where `GetTool`
-     returns `nil`) are skipped.
+   - For each entry where `Active == true`, resolve registry membership via:
+     ```go
+     if tool, ok := GetTool(ToolID(entry.ID)); ok && tool.RecommendationClass == ClassUsageVisibility {
+         hasActiveUsageTracker = true
+         break
+     }
+     ```
+     - `GetTool` returns `(TokenSavingTool, bool)`; the second return is
+       false for IDs outside the registry. Unknown IDs are silently
+       skipped (count toward `UnknownIDCount` via the engine, not here).
+     - The field on `TokenSavingTool` is `RecommendationClass` (not
+       `Class`). Using the wrong name will fail to compile.
    - If **no** active usage-visibility fingerprint is found, append
      `SignalNoUsageVisibility`.
 5. Dedupe and sort via the existing `sortedSignalIDs` helper in

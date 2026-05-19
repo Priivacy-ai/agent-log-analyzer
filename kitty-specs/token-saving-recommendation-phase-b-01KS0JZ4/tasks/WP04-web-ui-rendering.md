@@ -94,17 +94,18 @@ Fingerprints section.
    (search for `workflow-fingerprints` or "Workflow Fingerprints").
 2. **Immediately above** that section, insert:
    ```html
-   <section id="recommendation-section" class="report-section full-width hidden">
+   <section id="recommendation-section" class="intel-section" hidden>
      <h2>Next-best recommendation</h2>
      <div id="recommendation-primary"></div>
      <div id="recommendation-secondary"></div>
-     <p id="recommendation-empty" class="hidden">No action needed — your tooling is already in shape.</p>
+     <p id="recommendation-empty" hidden>No action needed — your tooling is already in shape.</p>
    </section>
    ```
-3. The `hidden` class is the existing pattern for sections that render
-   conditionally — confirm by reading the existing sections in
-   `index.html`. If the existing convention is different, match it
-   rather than introducing a new one.
+3. The existing intelligence-section convention (`web/index.html` line ~77
+   for Workflow Fingerprints) uses `class="intel-section"` and the HTML5
+   boolean `hidden` attribute (NOT a `hidden` CSS class). Match this
+   exactly: `<section ... hidden>` to hide, set `section.hidden = false`
+   in JS to show.
 
 **Validation**: open the page; the section is hidden until the
 renderer populates it.
@@ -122,7 +123,8 @@ only. No `innerHTML`. No template engine.
 2. Implement `renderRecommendation(report)`:
    - Early return if `report.recommendation == null` (legacy report
      compatibility — FR-012). Section stays hidden.
-   - Show `#recommendation-section` by removing the `hidden` class.
+   - Show `#recommendation-section` by setting `section.hidden = false`
+     (HTML5 boolean attribute, **not** a CSS class toggle).
    - Render Primary into `#recommendation-primary` by composing a card
      of bounded text from enum values:
      - Tool ID: human-readable label via an allowlist map
@@ -148,8 +150,13 @@ only. No `innerHTML`. No template engine.
    ```
    No string concatenation into `innerHTML`. No `dangerouslySetInnerHTML`-
    analog patterns.
-4. Wire the call into the existing render pipeline (wherever the other
-   intelligence sections are rendered).
+4. Wire the call into the existing render pipeline:
+   - The entry point is `function renderReport(report)` in `web/app.js`
+     (around line 173).
+   - Insert `renderRecommendation(report);` **before** the existing
+     `renderWorkflowFingerprints(report)` call (around line 199), so the
+     recommendation section's `hidden = false` toggle precedes the
+     Workflow Fingerprints render in DOM order.
 
 **Validation**: Open the page on the existing severe-MCP fixture; the
 Primary card appears above Workflow Fingerprints.
@@ -174,7 +181,8 @@ are absent, render the "no action needed" note containing only counts.
    - Compose a sentence via `textContent` only. Do not include any tool
      ID. Example: "Engine evaluated N candidates; none warranted a
      recommendation. (M unknown identifiers were counted only.)"
-3. Toggle `#recommendation-empty` visibility based on this branch.
+3. Toggle `#recommendation-empty` visibility by setting its `hidden`
+   attribute (`document.querySelector('#recommendation-empty').hidden = !shouldShow`).
 
 **Validation**: a fixture with `primary == null && secondary == null`
 renders the note. A fixture with Primary or Secondary populated does
