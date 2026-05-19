@@ -1,0 +1,121 @@
+{
+  "entries": [
+    {
+      "created_at": "2026-05-19T17:06:11.465885Z",
+      "decision_id": "01KS0K7GC9GH94QCMZ4SHJEBJP",
+      "final_answer": "Superseded by 01KS0NFDAQQ27YZ7R3JTY13R57: see savings-estimate decision; resolved as 'Always emit when no tracker is detected'.",
+      "input_key": "no_usage_visibility_policy",
+      "mission_id": "01KS0JZ495XV0PCKSVBNDVAY16",
+      "mission_slug": "token-saving-recommendation-phase-b-01KS0JZ4",
+      "options": [
+        "Always emit",
+        "Emit only when other waste signals are also present",
+        "Never emit (Phase C)"
+      ],
+      "origin_flow": "plan",
+      "other_answer": false,
+      "question": "When the user has no usage-tracking tool installed (no ccusage / no usage-visibility tool detected), should Phase B emit Signal=no_usage_visibility to trigger a usage-visibility recommendation?",
+      "rationale": null,
+      "resolved_at": "2026-05-19T17:46:13.949389Z",
+      "resolved_by": null,
+      "slot_key": "plan.signals.no-usage-visibility",
+      "status": "resolved",
+      "step_id": null,
+      "summary_json": null
+    },
+    {
+      "created_at": "2026-05-19T17:06:13.894149Z",
+      "decision_id": "01KS0K7JR5J25BJ4HERMJ0P913",
+      "final_answer": "Above Workflow Fingerprints (most prominent)",
+      "input_key": "ui_section_placement",
+      "mission_id": "01KS0JZ495XV0PCKSVBNDVAY16",
+      "mission_slug": "token-saving-recommendation-phase-b-01KS0JZ4",
+      "options": [
+        "Above Workflow Fingerprints (most prominent)",
+        "Between Workflow Fingerprints and MCP and Skill Utilization",
+        "Below MCP and Skill Utilization (after all existing intelligence sections)"
+      ],
+      "origin_flow": "plan",
+      "other_answer": false,
+      "question": "Where in the web report should the new recommendation panel render?",
+      "rationale": null,
+      "resolved_at": "2026-05-19T17:45:10.292938Z",
+      "resolved_by": null,
+      "slot_key": "plan.ui.section-placement",
+      "status": "resolved",
+      "step_id": null,
+      "summary_json": null
+    },
+    {
+      "created_at": "2026-05-19T17:06:16.660922Z",
+      "decision_id": "01KS0K7NEM1FNE38KKSRWGVBK5",
+      "final_answer": "Single helper analyzer.AttachRecommendation called from Analyze AND AggregateReports",
+      "input_key": "engine_call_site",
+      "mission_id": "01KS0JZ495XV0PCKSVBNDVAY16",
+      "mission_slug": "token-saving-recommendation-phase-b-01KS0JZ4",
+      "options": [
+        "Single new helper analyzer.AttachRecommendation called from both Analyze and AggregateReports",
+        "Inline in Analyze AND inline in AggregateReports (no shared helper)",
+        "Only in Analyze; AggregateReports re-runs after merging"
+      ],
+      "origin_flow": "plan",
+      "other_answer": false,
+      "question": "Where does Phase B invoke the Recommend engine?",
+      "rationale": null,
+      "resolved_at": "2026-05-19T17:45:12.806561Z",
+      "resolved_by": null,
+      "slot_key": "plan.architecture.engine-call-site",
+      "status": "resolved",
+      "step_id": null,
+      "summary_json": null
+    },
+    {
+      "created_at": "2026-05-19T17:45:27.639877Z",
+      "decision_id": "01KS0NFDAQQ27YZ7R3JTY13R57",
+      "final_answer": "Always emit when no tracker is detected",
+      "input_key": "no_usage_visibility_trigger",
+      "mission_id": "01KS0JZ495XV0PCKSVBNDVAY16",
+      "mission_slug": "token-saving-recommendation-phase-b-01KS0JZ4",
+      "options": [
+        "Always emit when no tracker is detected",
+        "Only when other waste signals also fire",
+        "Never in Phase B"
+      ],
+      "origin_flow": "plan",
+      "other_answer": false,
+      "question": "Confirm: emit Signal=no_usage_visibility whenever no usage-tracking tool is detected (independent of other waste signals)?",
+      "rationale": null,
+      "resolved_at": "2026-05-19T17:46:14.699277Z",
+      "resolved_by": null,
+      "slot_key": "plan.signals.no-usage-visibility-trigger",
+      "status": "resolved",
+      "step_id": null,
+      "summary_json": null
+    },
+    {
+      "created_at": "2026-05-19T17:45:30.061037Z",
+      "decision_id": "01KS0NFFPCDHF5YYVPRXF2QDW2",
+      "final_answer": "Render bounded bucket from existing Report numerics in the UI layer (no engine change)",
+      "input_key": "savings_estimate_source",
+      "mission_id": "01KS0JZ495XV0PCKSVBNDVAY16",
+      "mission_slug": "token-saving-recommendation-phase-b-01KS0JZ4",
+      "options": [
+        "Render bounded savings bucket from existing Report numerics in the UI layer (no engine change)",
+        "Extend Phase A engine output with estimated_savings_bucket enum (engine change)",
+        "Defer savings estimate to Phase C; ship Phase B without it"
+      ],
+      "origin_flow": "plan",
+      "other_answer": false,
+      "question": "How should the UI present an estimated savings for the recommendation?",
+      "rationale": null,
+      "resolved_at": "2026-05-19T17:46:15.463959Z",
+      "resolved_by": null,
+      "slot_key": "plan.ui.savings-estimate",
+      "status": "resolved",
+      "step_id": null,
+      "summary_json": null
+    }
+  ],
+  "mission_id": "01KS0JZ495XV0PCKSVBNDVAY16",
+  "version": 1
+}
