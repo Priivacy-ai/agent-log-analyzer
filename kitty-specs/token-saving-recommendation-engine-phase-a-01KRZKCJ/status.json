@@ -1,7 +1,7 @@
 {
-  "event_count": 28,
-  "last_event_id": "01KRZSPFYQ7TXHDPD64ZYNJBG5",
-  "materialized_at": "2026-05-19T09:39:59.575503+00:00",
+  "event_count": 29,
+  "last_event_id": "01KRZSQFMEJYRNW634D8GEKB02",
+  "materialized_at": "2026-05-19T09:40:32.014724+00:00",
   "mission_number": "",
   "mission_slug": "token-saving-recommendation-engine-phase-a-01KRZKCJ",
   "mission_type": "software-dev",
@@ -11,8 +11,8 @@
     "canceled": 0,
     "claimed": 0,
     "done": 0,
-    "for_review": 0,
-    "in_progress": 1,
+    "for_review": 1,
+    "in_progress": 0,
     "in_review": 0,
     "planned": 1
   },
@@ -32,11 +32,11 @@
       "last_transition_at": "2026-05-19T09:35:25.664566+00:00"
     },
     "WP03": {
-      "actor": "claude:opus-4-7:implementer-ivan:implementer",
+      "actor": "user",
       "force_count": 1,
-      "lane": "in_progress",
-      "last_event_id": "01KRZSESB4ESJ4PDCF1NMXXGYJ",
-      "last_transition_at": "2026-05-19T09:35:47.044410+00:00"
+      "lane": "for_review",
+      "last_event_id": "01KRZSQFMEJYRNW634D8GEKB02",
+      "last_transition_at": "2026-05-19T09:40:32.014724+00:00"
     },
     "WP04": {
       "actor": "finalize-tasks",

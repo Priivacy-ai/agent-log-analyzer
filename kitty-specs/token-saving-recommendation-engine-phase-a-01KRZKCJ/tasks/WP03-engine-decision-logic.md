@@ -343,3 +343,4 @@ succeeds. The acceptance suite is in WP04.
 ## Activity Log
 
 - 2026-05-19T09:35:47Z – claude:opus-4-7:implementer-ivan:implementer – shell_pid=46766 – Started implementation via action command
+- 2026-05-19T09:40:32Z – claude:opus-4-7:implementer-ivan:implementer – shell_pid=46766 – Engine logic: 8-step rule precedence, candidate selection, per-rule state machine (absent/installed/configured/active/rejected/server_quota), secondary selection with different-class rule, ≤1+≤1 invariant, advisory recommendations for prune-first/audit-config classes; all WP01+WP02 tests still green
