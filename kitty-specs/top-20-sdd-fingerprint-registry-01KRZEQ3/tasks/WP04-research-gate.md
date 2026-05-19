@@ -17,7 +17,8 @@ subtasks:
 - T019
 - T020
 phase: Phase 2 — Research
-agent: claude
+agent: "claude:opus-4.7:researcher-robbie:researcher"
+shell_pid: "1185"
 history:
 - at: '2026-05-19T06:35:00Z'
   actor: system
@@ -142,3 +143,4 @@ No code tests in this WP. The quality bar is:
 ## Activity Log
 
 - 2026-05-19T06:35:00Z -- system -- Prompt created.
+- 2026-05-19T07:26:15Z – claude:opus-4.7:researcher-robbie:researcher – shell_pid=1185 – Started implementation via action command
