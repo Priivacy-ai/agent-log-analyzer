@@ -13,8 +13,8 @@ subtasks:
 - T031
 - T032
 - T033
-agent: "claude:opus-4-7:curator-carla:curator"
-shell_pid: "47016"
+agent: "claude:opus-4-7:reviewer-rina:reviewer"
+shell_pid: "47410"
 history:
 - '2026-05-19': created from mission token-saving-recommendation-engine-phase-a-01KRZKCJ
 agent_profile: curator-carla
@@ -180,3 +180,4 @@ the end with at least the two new bullets.
 
 - 2026-05-19T09:37:11Z – claude:opus-4-7:curator-carla:curator – shell_pid=47016 – Started implementation via action command
 - 2026-05-19T09:38:51Z – claude:opus-4-7:curator-carla:curator – shell_pid=47016 – Additive cross-references in matrix + plugin-artifacts docs; new Registry cross-reference and Recommendation embedding sections; See also links updated; no existing content modified
+- 2026-05-19T09:39:06Z – claude:opus-4-7:reviewer-rina:reviewer – shell_pid=47410 – Started review via action command
