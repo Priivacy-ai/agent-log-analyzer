@@ -45,11 +45,11 @@
 | T034 | Add `internal/analyzer/sdd/leak_test.go` with 16-category canary fixture | WP08 | |
 | T035 | Extend `internal/analyzer/analyzer_test.go` for end-to-end unknown-count + fingerprint privacy | WP08 | |
 | T036 | Structural test: `Ecosystem.WorkflowFingerprints` sorted, deduplicated, bounded keys (NFR-003) | WP08 | |
-| T037 | Write `docs/sdd-fingerprint-registry.md` (top-20 table, taxonomy, confidence, status, privacy rules) | WP09 | |
-| T038 | Update `docs/ecosystem-signatures.md` with pointer to new doc | WP09 | [P] |
-| T039 | Update `docs/data-retention-and-analytics.md` with fingerprint privacy notes | WP09 | [P] |
-| T040 | Update `docs/logging-policy.md` with CLI probe rules | WP09 | [P] |
-| T041 | Document the GitHub issue comments to post on #38 / #42 / #43 / #44–#48 / #49 / #50 / #66 / #67 | WP09 | |
+| T037 | Write `docs/sdd-fingerprint-registry.md` (top-20 table, taxonomy, confidence, status, privacy rules) | WP09 | | [D] |
+| T038 | Update `docs/ecosystem-signatures.md` with pointer to new doc | WP09 | [D] |
+| T039 | Update `docs/data-retention-and-analytics.md` with fingerprint privacy notes | WP09 | [D] |
+| T040 | Update `docs/logging-policy.md` with CLI probe rules | WP09 | [D] |
+| T041 | Document the GitHub issue comments to post on #38 / #42 / #43 / #44–#48 / #49 / #50 / #66 / #67 | WP09 | | [D] |
 | T042 | Update `internal/analyzer/golden_test.go` for `WorkflowFingerprints` shape | WP10 | |
 | T043 | `gofmt -w` + `go test ./...` + `./scripts/smoke-local.sh` clean | WP10 | |
 | T044 | Switch to `codex/sdd-fingerprint-registry` branch, commit consolidated changes, push | WP10 | |
