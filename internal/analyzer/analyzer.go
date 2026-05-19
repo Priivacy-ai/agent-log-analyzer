@@ -38,7 +38,8 @@ func Analyze(jobID string, input []byte) (Report, error) {
 
 	metrics, timeline := computeMetrics(lines)
 	ecosystem := DetectEcosystem(scrubbed, lines)
-	findings := buildFindings(metrics, lines)
+	ecosystem.ToolingUtilization = computeToolingUtilization(scrubbed, lines, metrics)
+	findings := buildFindings(metrics, lines, ecosystem)
 	score := score(metrics, findings)
 	waste := wasteRange(score, metrics)
 
@@ -300,7 +301,7 @@ func computeMetrics(lines []parsedLine) (Metrics, []TimelinePoint) {
 	return m, timeline
 }
 
-func buildFindings(m Metrics, lines []parsedLine) []Finding {
+func buildFindings(m Metrics, lines []parsedLine, eco Ecosystem) []Finding {
 	var findings []Finding
 	if m.Rereads >= 3 {
 		findings = append(findings, Finding{
@@ -359,6 +360,39 @@ func buildFindings(m Metrics, lines []parsedLine) []Finding {
 			Deterministic:  true,
 		})
 	}
+
+	// MCP/skill bloat findings driven by the WP03 classifier band. We emit a
+	// finding only for the "high" and "severe" bands — "watch" stays in the
+	// dashboard metric, and "normal"/"unknown" emit nothing.
+	tu := eco.ToolingUtilization
+	appendBand := func(id, title, sev, rec string) {
+		findings = append(findings, Finding{
+			ID:             id,
+			Title:          title,
+			Severity:       sev,
+			CostImpact:     "medium-high",
+			Evidence:       FindingEvidence{Description: "Bloat band: " + sev},
+			Recommendation: rec,
+			Deterministic:  true,
+		})
+	}
+	switch tu.MCP.WarningBand {
+	case WarningBandSevere:
+		appendBand("mcp_bloat_severe", "MCP tool surface severely underutilized", "high",
+			"Disable unused MCP servers by default and lazy-load heavy MCP servers only when needed.")
+	case WarningBandHigh:
+		appendBand("mcp_bloat_high", "MCP tool surface underutilized", "medium",
+			"Scope project-specific MCPs to project config instead of global config; prefer narrower MCP servers over all-tools-enabled setups.")
+	}
+	switch tu.Skill.WarningBand {
+	case WarningBandSevere:
+		appendBand("skill_bloat_severe", "Skill surface severely underutilized", "high",
+			"Move rarely used instructions out of always-loaded skill context; keep only high-signal skills in the default agent context.")
+	case WarningBandHigh:
+		appendBand("skill_bloat_high", "Skill surface underutilized", "medium",
+			"Split general skills from project-specific skills.")
+	}
+
 	return findings
 }
 
@@ -486,6 +520,18 @@ func normalizeEcosystemCollections(ecosystem *Ecosystem) {
 	}
 	if ecosystem.PackageManagers == nil {
 		ecosystem.PackageManagers = []string{}
+	}
+	if ecosystem.ToolingUtilization.MCP.KnownServerIDs == nil {
+		ecosystem.ToolingUtilization.MCP.KnownServerIDs = []string{}
+	}
+	if ecosystem.ToolingUtilization.MCP.UniqueKnownCalledIDs == nil {
+		ecosystem.ToolingUtilization.MCP.UniqueKnownCalledIDs = []string{}
+	}
+	if ecosystem.ToolingUtilization.Skill.KnownExposedIDs == nil {
+		ecosystem.ToolingUtilization.Skill.KnownExposedIDs = []string{}
+	}
+	if ecosystem.ToolingUtilization.Skill.KnownExecutedIDs == nil {
+		ecosystem.ToolingUtilization.Skill.KnownExecutedIDs = []string{}
 	}
 }
 

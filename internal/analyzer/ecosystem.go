@@ -143,6 +143,153 @@ func countUnknownSlashCommands(lines []parsedLine, known []string) int {
 	return len(unknown)
 }
 
+// computeToolingUtilization orchestrates the WP02 detection layer and WP03
+// classifier into the ToolingUtilization payload that hangs off Ecosystem.
+// Pure function: no I/O, no globals beyond the package-level registry cache.
+// Unknown names are surfaced as counts only — never as strings — preserving
+// the privacy invariant inherited from DetectEcosystem.
+func computeToolingUtilization(input []byte, lines []parsedLine, metrics Metrics) ToolingUtilization {
+	registry := ecosystemRegistry()
+
+	// --- MCP ---
+	mcpExp := detectMCPExposureFromHeaders(input, registry)
+	mcpCalls := detectMCPCallsFromToolUse(input, lines, registry)
+	mcpExposureKnown := mcpExp.InferenceSource == InferenceSourceHeader
+	mcpInferenceSource := InferenceSourceNone
+	serverCount := -1
+	toolCount := -1
+	if mcpExposureKnown {
+		mcpInferenceSource = InferenceSourceHeader
+		serverCount = len(mcpExp.KnownIDs) + mcpExp.UnknownCount
+		if mcpExp.ExposedToolKnown {
+			toolCount = mcpExp.ExposedToolCount
+		}
+	} else if mcpCalls.UniqueServerCount > 0 {
+		mcpExposureKnown = true
+		mcpInferenceSource = InferenceSourceCalls
+		serverCount = mcpCalls.UniqueServerCount
+		toolCount = mcpCalls.UniqueToolCount
+	}
+	mcpTokens, mcpTokensKnown := estimateMCPFootprintTokens(mcpExp.SchemaTextBytes, serverCount, toolCount)
+
+	// Utilization ratio: callers as proxy for utilized exposure. Guard
+	// against division-by-zero and clamp to [0,100].
+	mcpRatio := 0
+	if mcpExposureKnown {
+		denom := toolCount
+		if denom <= 0 {
+			denom = serverCount
+		}
+		if denom > 0 {
+			numer := mcpCalls.UniqueServerCount
+			if numer > denom {
+				numer = denom
+			}
+			mcpRatio = numer * 100 / denom
+		}
+	}
+
+	mcpTokensField := tokenBucket(mcpTokens, mcpExposureKnown && mcpTokensKnown)
+	mcp := MCPUtilization{
+		KnownServerIDs:           dedupeSorted(mcpExp.KnownIDs),
+		UnknownServerCount:       mcpExp.UnknownCount,
+		ServerCountBucket:        countBucket(maxIntTU(serverCount, 0), mcpExposureKnown),
+		ExposedToolCountBucket:   countBucket(maxIntTU(toolCount, 0), mcpExposureKnown && toolCount >= 0),
+		ContextTokenBucket:       mcpTokensField,
+		ExposureKnown:            mcpExposureKnown,
+		InferenceSource:          mcpInferenceSource,
+		CallCount:                mcpCalls.TotalCalls,
+		KnownCallCount:           mcpCalls.KnownCallCount,
+		UnknownCallCount:         mcpCalls.UnknownCallCount,
+		UniqueKnownCalledIDs:     mcpCalls.UniqueKnownIDs,
+		UniqueUnknownCalledCount: mcpCalls.UniqueUnknownCount,
+		UtilizationRatioPct:      mcpRatio,
+		ContextEfficiencyBucket:  efficiencyBucket(mcpRatio, mcpTokensField, mcpExposureKnown),
+		WarningBand: classifyMCPBand(mcpBandInput{
+			ServerCountBucket:      countBucket(maxIntTU(serverCount, 0), mcpExposureKnown),
+			ExposedToolCountBucket: countBucket(maxIntTU(toolCount, 0), mcpExposureKnown && toolCount >= 0),
+			ContextTokenBucket:     mcpTokensField,
+			UtilizationRatioPct:    mcpRatio,
+			ExposureKnown:          mcpExposureKnown,
+			Rereads:                metrics.Rereads,
+			RetryDepthMax:          metrics.RetryDepthMax,
+			ContextGrowthEvents:    metrics.ContextGrowthEvents,
+		}),
+	}
+
+	// --- Skill ---
+	skillExp := detectSkillExposureFromHeaders(input, registry)
+	skillExec := detectSkillExecutionsFromLines(lines, registry)
+	skillExposureKnown := skillExp.InferenceSource == InferenceSourceHeader
+	skillInferenceSource := InferenceSourceNone
+	skillCount := -1
+	if skillExposureKnown {
+		skillInferenceSource = InferenceSourceHeader
+		skillCount = len(skillExp.KnownIDs) + skillExp.UnknownCount
+	}
+	skillTokens, skillTokensKnown := estimateSkillFootprintTokens(skillExp.SchemaTextBytes, skillCount)
+	skillRatio := 0
+	if skillExposureKnown && skillCount > 0 {
+		used := len(skillExec.KnownExecutedIDs) + skillExec.UnknownExecuted
+		if used > skillCount {
+			used = skillCount
+		}
+		skillRatio = used * 100 / skillCount
+	}
+	skillTokensField := tokenBucket(skillTokens, skillExposureKnown && skillTokensKnown)
+	skill := SkillUtilization{
+		KnownExposedIDs:         dedupeSorted(skillExp.KnownIDs),
+		UnknownExposedCount:     skillExp.UnknownCount,
+		ExposedCountBucket:      countBucket(maxIntTU(skillCount, 0), skillExposureKnown),
+		ContextTokenBucket:      skillTokensField,
+		ExposureKnown:           skillExposureKnown,
+		InferenceSource:         skillInferenceSource,
+		ExecutedCount:           skillExec.ExecutedCount,
+		KnownExecutedIDs:        skillExec.KnownExecutedIDs,
+		UnknownExecutedCount:    skillExec.UnknownExecuted,
+		UtilizationRatioPct:     skillRatio,
+		ContextEfficiencyBucket: efficiencyBucket(skillRatio, skillTokensField, skillExposureKnown),
+		WarningBand: classifySkillBand(skillBandInput{
+			ExposedCountBucket:  countBucket(maxIntTU(skillCount, 0), skillExposureKnown),
+			ContextTokenBucket:  skillTokensField,
+			UtilizationRatioPct: skillRatio,
+			ExposureKnown:       skillExposureKnown,
+			Rereads:             metrics.Rereads,
+			RetryDepthMax:       metrics.RetryDepthMax,
+			ContextGrowthEvents: metrics.ContextGrowthEvents,
+		}),
+	}
+
+	return ToolingUtilization{MCP: mcp, Skill: skill}
+}
+
+// maxIntTU returns the larger of two ints. Named to avoid colliding with the
+// existing max() helper in analyzer.go (kept stylistically local to WP04).
+func maxIntTU(a, b int) int {
+	if a > b {
+		return a
+	}
+	return b
+}
+
+// dedupeSorted returns a sorted, de-duplicated copy of xs. Returns a non-nil
+// empty slice when xs is empty so the JSON contract never emits null.
+func dedupeSorted(xs []string) []string {
+	if len(xs) == 0 {
+		return []string{}
+	}
+	seen := map[string]bool{}
+	out := make([]string, 0, len(xs))
+	for _, x := range xs {
+		if !seen[x] {
+			seen[x] = true
+			out = append(out, x)
+		}
+	}
+	sort.Strings(out)
+	return out
+}
+
 func sortedKeys(m map[string]bool) []string {
 	out := make([]string, 0, len(m))
 	for key := range m {
