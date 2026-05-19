@@ -310,3 +310,119 @@ pre {
     display: grid;
   }
 }
+
+/* Report Intelligence UX sections — kitty-specs/report-intelligence-ux-01KS070G */
+
+.intel-section {
+  margin: 1.5rem 0;
+}
+.intel-section[hidden] {
+  display: none;
+}
+
+/* Workflow Fingerprints */
+#workflow-fingerprints-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.fingerprint-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--rule, rgba(255, 255, 255, 0.08));
+  font-family: inherit;
+}
+.fingerprint-confidence {
+  font-size: 0.85em;
+  padding: 0.05em 0.4em;
+  border-radius: 3px;
+}
+.confidence-high {
+  background: rgba(80, 200, 120, 0.18);
+}
+.confidence-medium {
+  background: rgba(240, 200, 80, 0.18);
+}
+.confidence-low {
+  background: rgba(200, 200, 200, 0.18);
+}
+.fingerprint-sources {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: inline-flex;
+  gap: 0.3rem;
+  flex-wrap: wrap;
+}
+.fingerprint-sources li {
+  font-size: 0.8em;
+  padding: 0.05em 0.4em;
+  border-radius: 3px;
+  background: rgba(120, 160, 255, 0.16);
+}
+.fingerprint-evidence,
+.fingerprint-version {
+  font-size: 0.85em;
+  opacity: 0.85;
+}
+.fingerprint-active,
+.fingerprint-installed {
+  font-size: 0.8em;
+  padding: 0.05em 0.4em;
+  border-radius: 3px;
+  background: rgba(80, 200, 120, 0.18);
+}
+
+/* Tooling Utilization */
+#tooling-utilization-rows {
+  display: grid;
+  gap: 0.75rem;
+}
+.utilization-row {
+  display: grid;
+  grid-template-columns: minmax(6rem, max-content) 1fr;
+  gap: 0.5rem 1rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--rule, rgba(255, 255, 255, 0.08));
+}
+.utilization-row .surface-header {
+  font-weight: 600;
+}
+.utilization-row .surface-body {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 0.8rem;
+  align-items: center;
+  font-size: 0.9em;
+}
+.band-chip {
+  font-size: 0.8em;
+  padding: 0.05em 0.4em;
+  border-radius: 3px;
+  text-transform: lowercase;
+}
+.band-severe {
+  background: rgba(220, 80, 80, 0.22);
+}
+.band-high {
+  background: rgba(220, 140, 60, 0.22);
+}
+.band-watch {
+  background: rgba(240, 200, 80, 0.22);
+}
+.band-normal {
+  background: rgba(80, 200, 120, 0.18);
+}
+.band-unknown {
+  background: rgba(180, 180, 180, 0.18);
+}
+.band-advice {
+  grid-column: 1 / -1;
+  margin-top: 0.4rem;
+  padding: 0.5rem 0.75rem;
+  background: rgba(220, 140, 60, 0.1);
+  border-left: 2px solid rgba(220, 140, 60, 0.55);
+  font-size: 0.9em;
+}
