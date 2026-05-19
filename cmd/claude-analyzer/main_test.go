@@ -67,6 +67,21 @@ func TestAnalyze_PositionalOnly_UsesPositional(t *testing.T) {
 	}
 }
 
+func TestAnalyze_PositionalBeforeOutFlag_UsesPositionalAndOut(t *testing.T) {
+	dir := t.TempDir()
+	logPath := writeSampleLog(t, dir)
+	outPath := filepath.Join(dir, "report.json")
+	withLatestShim(t, filepath.Join(dir, "does-not-exist.jsonl"))
+
+	err := runAnalyze([]string{logPath, "--out", outPath})
+	if err != nil {
+		t.Fatalf("runAnalyze: %v", err)
+	}
+	if _, err := os.Stat(outPath); err != nil {
+		t.Fatalf("expected report at %s: %v", outPath, err)
+	}
+}
+
 func TestAnalyze_LogFlagOnly_UsesLogFlag(t *testing.T) {
 	dir := t.TempDir()
 	logPath := writeSampleLog(t, dir)

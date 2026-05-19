@@ -171,9 +171,11 @@ func TestMergeMCPUtilization_AllFields(t *testing.T) {
 	if got.UniqueUnknownCalledCount != 5 {
 		t.Errorf("UniqueUnknownCalledCount: got %d want 5", got.UniqueUnknownCalledCount)
 	}
-	// UtilizationRatioPct: recomputed from summed counts: 12/30 = 40
-	if got.UtilizationRatioPct != 40 {
-		t.Errorf("UtilizationRatioPct: got %d want 40 (recomputed from sums)", got.UtilizationRatioPct)
+	// UtilizationRatioPct: distinct servers called / distinct servers exposed.
+	// known called union=2, unknown called count=5, exposed known union=3,
+	// unknown exposed count=3, numerator is clamped to denominator: 6/6 = 100.
+	if got.UtilizationRatioPct != 100 {
+		t.Errorf("UtilizationRatioPct: got %d want 100 (recomputed from distinct exposed/called servers)", got.UtilizationRatioPct)
 	}
 	if got.WarningBand != WarningBandHigh {
 		t.Errorf("WarningBand max-rank: got %q want %q", got.WarningBand, WarningBandHigh)
@@ -242,9 +244,11 @@ func TestMergeSkillUtilization_AllFields(t *testing.T) {
 	if got.UnknownExecutedCount != 3 {
 		t.Errorf("UnknownExecutedCount: got %d want 3", got.UnknownExecutedCount)
 	}
-	// ratio recomputed from summed ExecutedCount / union(KnownExposedIDs) = 3 / 3 = 100
-	if got.UtilizationRatioPct != 100 {
-		t.Errorf("UtilizationRatioPct: got %d want 100 (recomputed)", got.UtilizationRatioPct)
+	// ratio recomputed from distinct executed / distinct exposed:
+	// known executed union=2, unknown executed count=3, exposed known union=3,
+	// unknown exposed count=3 => 5/6 = 83.
+	if got.UtilizationRatioPct != 83 {
+		t.Errorf("UtilizationRatioPct: got %d want 83 (recomputed from distinct exposed/executed skills)", got.UtilizationRatioPct)
 	}
 	if got.WarningBand != WarningBandSevere {
 		t.Errorf("WarningBand max-rank: got %q want %q", got.WarningBand, WarningBandSevere)
@@ -332,16 +336,17 @@ func ecosystemA() Ecosystem {
 		VersionControl:        "git",
 		ToolingUtilization: ToolingUtilization{
 			MCP: MCPUtilization{
-				KnownServerIDs:       []string{"github"},
-				UnknownServerCount:   1,
-				CallCount:            10,
-				KnownCallCount:       7,
-				UniqueKnownCalledIDs: []string{"github"},
-				WarningBand:          WarningBandNormal,
-				ExposureKnown:        true,
-				InferenceSource:      "header",
-				ServerCountBucket:    "1-3",
-				UtilizationRatioPct:  70, // matches 7/10*100 — must match the merge formula for identity
+				KnownServerIDs:           []string{"github"},
+				UnknownServerCount:       1,
+				CallCount:                10,
+				KnownCallCount:           7,
+				UniqueKnownCalledIDs:     []string{"github"},
+				UniqueUnknownCalledCount: 1,
+				WarningBand:              WarningBandNormal,
+				ExposureKnown:            true,
+				InferenceSource:          "header",
+				ServerCountBucket:        "1-3",
+				UtilizationRatioPct:      100, // matches distinct called/exposed servers for identity
 			},
 			Skill: SkillUtilization{
 				KnownExposedIDs:     []string{"qa"},
@@ -373,22 +378,27 @@ func ecosystemB() Ecosystem {
 		VersionControl:        "git",
 		ToolingUtilization: ToolingUtilization{
 			MCP: MCPUtilization{
-				KnownServerIDs:       []string{"linear", "notion"},
-				UnknownServerCount:   2,
-				CallCount:            20,
-				KnownCallCount:       8,
-				UniqueKnownCalledIDs: []string{"linear"},
-				WarningBand:          WarningBandHigh,
-				ExposureKnown:        true,
-				InferenceSource:      "calls",
-				ServerCountBucket:    "4-10",
+				KnownServerIDs:           []string{"linear", "notion"},
+				UnknownServerCount:       2,
+				CallCount:                20,
+				KnownCallCount:           8,
+				UniqueKnownCalledIDs:     []string{"linear"},
+				UniqueUnknownCalledCount: 1,
+				WarningBand:              WarningBandHigh,
+				ExposureKnown:            true,
+				InferenceSource:          "calls",
+				ServerCountBucket:        "4-10",
+				UtilizationRatioPct:      50,
 			},
 			Skill: SkillUtilization{
-				KnownExposedIDs:    []string{"review", "investigate"},
-				ExecutedCount:      2,
-				KnownExecutedIDs:   []string{"review"},
-				WarningBand:        WarningBandWatch,
-				ExposedCountBucket: "4-10",
+				KnownExposedIDs:      []string{"review", "investigate"},
+				UnknownExposedCount:  1,
+				ExecutedCount:        2,
+				KnownExecutedIDs:     []string{"review"},
+				UnknownExecutedCount: 1,
+				WarningBand:          WarningBandWatch,
+				ExposedCountBucket:   "4-10",
+				UtilizationRatioPct:  66,
 			},
 		},
 		WorkflowFingerprints: []EcosystemFingerprint{
@@ -412,12 +422,14 @@ func ecosystemC() Ecosystem {
 				UniqueKnownCalledIDs: []string{"supabase"},
 				WarningBand:          WarningBandSevere,
 				ServerCountBucket:    "1-3",
+				UtilizationRatioPct:  50,
 			},
 			Skill: SkillUtilization{
-				KnownExposedIDs:  []string{"qa", "ship"},
-				ExecutedCount:    3,
-				KnownExecutedIDs: []string{"qa"},
-				WarningBand:      WarningBandHigh,
+				KnownExposedIDs:     []string{"qa", "ship"},
+				ExecutedCount:       3,
+				KnownExecutedIDs:    []string{"qa"},
+				WarningBand:         WarningBandHigh,
+				UtilizationRatioPct: 50,
 			},
 		},
 		WorkflowFingerprints: []EcosystemFingerprint{
@@ -436,8 +448,9 @@ func TestMergeEcosystems_Identity(t *testing.T) {
 	}
 	if !reflect.DeepEqual(leftMerge, a) {
 		// Note: KnownServerIDs etc. should round-trip; UtilizationRatioPct
-		// is recomputed from the same CallCount/KnownCallCount so it must
-		// match the per-report value when one side is empty.
+		// is recomputed from the same distinct exposed/called or
+		// exposed/executed counts, so it must match the per-report value when
+		// one side is empty.
 		t.Fatalf("identity violated: m(A,empty) != A\nleft=%#v\nA=%#v", leftMerge, a)
 	}
 }

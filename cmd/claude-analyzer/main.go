@@ -51,7 +51,8 @@ func runAnalyze(args []string) error {
 	fs := flag.NewFlagSet("analyze", flag.ContinueOnError)
 	out := fs.String("out", "claude-analyzer-report.json", "path to write sanitized report JSON")
 	logPath := fs.String("log", "", "explicit Claude Code JSONL log path")
-	if err := fs.Parse(args); err != nil {
+	orderedArgs := reorderAnalyzeArgs(args)
+	if err := fs.Parse(orderedArgs); err != nil {
 		return err
 	}
 
@@ -101,6 +102,30 @@ func runAnalyze(args []string) error {
 	fmt.Printf("Review before upload: jq . %s\n", shellQuote(*out))
 	fmt.Printf("Upload sanitized report: claude-analyzer upload %s\n", shellQuote(*out))
 	return nil
+}
+
+func reorderAnalyzeArgs(args []string) []string {
+	flags := make([]string, 0, len(args))
+	positionals := make([]string, 0, len(args))
+	for i := 0; i < len(args); i++ {
+		arg := args[i]
+		switch {
+		case arg == "--out" || arg == "-out" || arg == "--log" || arg == "-log":
+			flags = append(flags, arg)
+			if i+1 < len(args) {
+				i++
+				flags = append(flags, args[i])
+			}
+		case strings.HasPrefix(arg, "--out=") || strings.HasPrefix(arg, "-out=") ||
+			strings.HasPrefix(arg, "--log=") || strings.HasPrefix(arg, "-log="):
+			flags = append(flags, arg)
+		case strings.HasPrefix(arg, "-"):
+			flags = append(flags, arg)
+		default:
+			positionals = append(positionals, arg)
+		}
+	}
+	return append(flags, positionals...)
 }
 
 func runUpload(args []string) error {

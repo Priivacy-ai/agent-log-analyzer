@@ -361,6 +361,36 @@ func clampPct(n int) int {
 	return n
 }
 
+func mergedMCPUtilizationRatio(out MCPUtilization) int {
+	denom := len(out.KnownServerIDs) + out.UnknownServerCount
+	numer := len(out.UniqueKnownCalledIDs) + out.UniqueUnknownCalledCount
+	if denom <= 0 {
+		denom = numer
+	}
+	if denom <= 0 {
+		return 0
+	}
+	if numer > denom {
+		numer = denom
+	}
+	return clampPct(numer * 100 / denom)
+}
+
+func mergedSkillUtilizationRatio(out SkillUtilization) int {
+	denom := len(out.KnownExposedIDs) + out.UnknownExposedCount
+	numer := len(out.KnownExecutedIDs) + out.UnknownExecutedCount
+	if denom <= 0 {
+		denom = numer
+	}
+	if denom <= 0 {
+		return 0
+	}
+	if numer > denom {
+		numer = denom
+	}
+	return clampPct(numer * 100 / denom)
+}
+
 // mergeMCPUtilization merges two MCPUtilization values per FR-008.
 // See contracts/aggregate-merge.md for the row-by-row contract.
 func mergeMCPUtilization(a, b MCPUtilization) MCPUtilization {
@@ -380,14 +410,11 @@ func mergeMCPUtilization(a, b MCPUtilization) MCPUtilization {
 		ContextEfficiencyBucket:  maxBucketRank(a.ContextEfficiencyBucket, b.ContextEfficiencyBucket),
 		WarningBand:              maxWarningBand(a.WarningBand, b.WarningBand),
 	}
-	// UtilizationRatioPct: recompute from summed counts when the denominator
-	// is positive; else 0. CallCount is the denominator per the per-report
-	// formula in internal/analyzer/ecosystem.go.
-	if out.CallCount > 0 {
-		out.UtilizationRatioPct = clampPct(int(float64(out.KnownCallCount) / float64(out.CallCount) * 100))
-	} else {
-		out.UtilizationRatioPct = 0
-	}
+	// UtilizationRatioPct follows the single-report semantic from
+	// computeToolingUtilization: distinct servers called / distinct servers
+	// exposed. Known IDs are unioned; unknown IDs are count-only and therefore
+	// summed conservatively to avoid storing private names.
+	out.UtilizationRatioPct = mergedMCPUtilizationRatio(out)
 	return out
 }
 
@@ -406,17 +433,10 @@ func mergeSkillUtilization(a, b SkillUtilization) SkillUtilization {
 		ContextEfficiencyBucket: maxBucketRank(a.ContextEfficiencyBucket, b.ContextEfficiencyBucket),
 		WarningBand:             maxWarningBand(a.WarningBand, b.WarningBand),
 	}
-	// UtilizationRatioPct: recompute from summed counts. The per-report
-	// formula is `ExecutedCount / max(1, KnownExposedCount) * 100`, but
-	// KnownExposedCount is not surfaced as a numeric field. Use the union
-	// cardinality of KnownExposedIDs as the denominator — equivalent for
-	// per-report inputs since detectSkillExposure populates both in lockstep.
-	denom := len(out.KnownExposedIDs)
-	if denom > 0 {
-		out.UtilizationRatioPct = clampPct(int(float64(out.ExecutedCount) / float64(denom) * 100))
-	} else {
-		out.UtilizationRatioPct = 0
-	}
+	// UtilizationRatioPct follows the single-report semantic from
+	// computeToolingUtilization: distinct skills executed / distinct skills
+	// exposed. Unknown names remain count-only and are summed conservatively.
+	out.UtilizationRatioPct = mergedSkillUtilizationRatio(out)
 	return out
 }
 
