@@ -8,7 +8,7 @@ requirement_refs:
 - FR-014
 planning_base_branch: main
 merge_target_branch: main
-branch_strategy: Planning on main; implementation lands on codex/sdd-fingerprint-registry; final merge target main.
+branch_strategy: Planning artifacts for this mission were generated on main. During /spec-kitty.implement this WP may branch from a dependency-specific base, but completed changes must merge back into main unless the human explicitly redirects the landing branch.
 subtasks:
 - T015
 - T016
@@ -27,7 +27,6 @@ authoritative_surface: docs/research/sdd-fingerprints/
 execution_mode: planning_artifact
 owned_files:
 - docs/research/sdd-fingerprints/**
-- docs/sdd-fingerprint-registry.md
 role: researcher
 tags: []
 ---
@@ -111,20 +110,15 @@ Per C-001: every tool must end `verified`. If a tool genuinely has no public fin
 - Note: `intent.md` is a particularly generic name. Find specific markers (config file name, package name) and treat plain "Intent" mentions as low confidence at most.
 - `cognition-devin` may be hosted product rather than a CLI tool; record markers from public docs (e.g., known UI strings, public API names).
 
-### Subtask T020 — `docs/sdd-fingerprint-registry.md`
+### Subtask T020 — `docs/research/sdd-fingerprints/README.md` cross-link
 
-- **Purpose**: Cross-link the per-tool research files and explain the registry shape to future maintainers.
+- **Purpose**: Provide a brief in-research-tree index so future maintainers can navigate the 20 per-tool files. The customer-facing `docs/sdd-fingerprint-registry.md` is written by WP09 (T037) and is NOT owned by this WP.
 - **Steps**:
-  1. Create `docs/sdd-fingerprint-registry.md` with sections:
-     - Overview (what the registry is and why it exists).
-     - Source-class taxonomy (10 classes; same definitions as `data-model.md`).
-     - Confidence levels (3 tiers; same rules as `research.md` §R-05).
-     - Status semantics (`verified` / `research_needed` / `blocked`).
-     - CLI probe privacy rules (link to `contracts/cli-probe.md`).
-     - The 16 forbidden raw-string categories (link to `contracts/forbidden-strings.md`).
-     - Top-20 table linking to each per-tool research file.
-  2. The detailed implementation of this doc continues in WP09 task T037. WP04's job is the cross-link skeleton.
-- **Files**: `docs/sdd-fingerprint-registry.md` (new, skeleton ~80 lines; WP09 expands).
+  1. Polish the `README.md` in `docs/research/sdd-fingerprints/` to:
+     - List all 20 tools with their current `status` value (after T016–T019).
+     - Cross-link to the WP09-owned `docs/sdd-fingerprint-registry.md` for the consumer-facing registry overview.
+  2. Do NOT touch `docs/sdd-fingerprint-registry.md` from this WP.
+- **Files**: `docs/research/sdd-fingerprints/README.md` (edit; already created in T015).
 
 ## Test Strategy
 

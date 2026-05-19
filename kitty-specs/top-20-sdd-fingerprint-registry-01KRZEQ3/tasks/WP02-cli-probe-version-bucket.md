@@ -9,12 +9,11 @@ requirement_refs:
 - FR-016
 planning_base_branch: main
 merge_target_branch: main
-branch_strategy: Planning on main; implementation lands on codex/sdd-fingerprint-registry; final merge target main.
+branch_strategy: Planning artifacts for this mission were generated on main. During /spec-kitty.implement this WP may branch from a dependency-specific base, but completed changes must merge back into main unless the human explicitly redirects the landing branch.
 subtasks:
 - T006
 - T007
 - T008
-- T009
 phase: Phase 1 — Foundation
 agent: claude
 history:
@@ -175,33 +174,9 @@ match for this work package's `task_type` and `authoritative_surface`.
 
 **Note**: every other unit test in the `sdd` package MUST use `FakeProbe`. Real exec is exercised only here.
 
-### Subtask T009 — Tighten `version_args` deny-list in the loader
+### (T009 removed)
 
-- **Purpose**: Enforce the safe-arg policy promised in `contracts/cli-probe.md`.
-- **Steps**:
-  1. In `internal/analyzer/sdd/registry.go`, add:
-     ```go
-     var denyVersionArgs = map[string]struct{}{
-         "--config": {}, "--registry": {}, "--token": {}, "--server": {}, "--login": {},
-     }
-
-     func validateVersionArgs(args []string) error {
-         for _, a := range args {
-             if _, bad := denyVersionArgs[a]; bad {
-                 return fmt.Errorf("denied version arg: %s", a)
-             }
-             if strings.ContainsRune(a, '/') {
-                 return fmt.Errorf("denied version arg containing /: %s", a)
-             }
-         }
-         return nil
-     }
-     ```
-  2. Call `validateVersionArgs` from the marker validator. If empty, default to `["--version"]`.
-  3. Replace any `TODO(WP02)` left in WP01 with the real call.
-  4. Add a test case to `detector_test.go` (added in WP01) for `version_args` containing each denied flag and a value with `/`. (Edit the WP01-owned test file; consider this a cross-WP touch — coordinate.)
-
-- **Note**: T009 edits a file owned by WP01 (`sdd/registry.go` was created in WP01). This is intentional — WP01 leaves a marker, WP02 fills it in. Both WPs share the same authoritative surface (`internal/analyzer/sdd/`). The `owned_files` list above includes `registry.go` ambiguity: declare T009's edits to `registry.go` explicitly in the implementation comment and confirm with the reviewer.
+The `version_args` deny-list is now implemented in WP01 (inside `registry.go`) so this WP does not cross file-ownership boundaries.
 
 ## Test Strategy
 

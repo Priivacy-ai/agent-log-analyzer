@@ -9,7 +9,7 @@ requirement_refs:
 - FR-016
 planning_base_branch: main
 merge_target_branch: main
-branch_strategy: Planning on main; implementation lands on codex/sdd-fingerprint-registry per the brief; final merge target main.
+branch_strategy: Planning artifacts for this mission were generated on main. During /spec-kitty.implement this WP may branch from a dependency-specific base, but completed changes must merge back into main unless the human explicitly redirects the landing branch.
 subtasks:
 - T001
 - T002
@@ -29,7 +29,7 @@ owned_files:
 - internal/analyzer/sdd/detector.go
 - internal/analyzer/sdd/registry.go
 - internal/analyzer/sdd/detector_test.go
-- internal/analyzer/signatures/sdd_detectors.json
+- internal/analyzer/signatures/sdd_detectors_base.json
 - internal/analyzer/types.go
 role: implementer
 tags: []
@@ -61,7 +61,7 @@ match for this work package's `task_type` and `authoritative_surface`.
 Land the typed registry foundation:
 
 - `SDDDetector`, `SourceClass`, `Confidence`, `Status`, `Marker`, `ConfidenceRule`, `SourceRef` types in a new `internal/analyzer/sdd/` package.
-- An embedded loader for `internal/analyzer/signatures/sdd_detectors.json` (file initially holds `[]`) with startup validation: enum check, regex compilation, allowlisted-binary check, `status == "verified"` ⇒ `len(SourceReferences) >= 1`.
+- An embedded loader that globs `internal/analyzer/signatures/sdd_detectors*.json` and concatenates entries from every matching tier file (`sdd_detectors_base.json` ships in WP01 as the empty placeholder; later WPs add `_first_class.json`, `_second_ring.json`, `_long_tail.json`). Startup validation: enum check, regex compilation, allowlisted-binary check, `status == "verified"` ⇒ `len(SourceReferences) >= 1`, deny-listed `version_args` rejected.
 - A new `EcosystemFingerprint` type in `internal/analyzer/types.go` (placed there, not in `sdd`, to avoid import cycle with `analyzer.Ecosystem`).
 - A new `WorkflowFingerprints []EcosystemFingerprint` field on `analyzer.Ecosystem` (omitempty).
 - All existing tests continue to pass; new sdd loader test passes.
@@ -161,12 +161,12 @@ Land the typed registry foundation:
 - **Purpose**: Embed `signatures/sdd_detectors.json`, parse it, validate every detector at startup. Bad data ⇒ `panic` with a precise message.
 - **Steps**:
   1. Create `internal/analyzer/sdd/registry.go`.
-  2. Use `//go:embed sdd_detectors.json` (vendored locally to the sdd package, OR re-use the existing `signatures/` embed by exposing a getter on `analyzer.registry` — see Notes).
+  2. Use the existing `signatureFS` (`//go:embed signatures/*.json` in `internal/analyzer/registry.go`) and add an exported helper in that file that reads every entry matching `signatures/sdd_detectors*.json` and returns the concatenated `[]byte` chunks. The sdd loader walks those bytes and parses each chunk as `[]SDDDetector`. The WP creates `signatures/sdd_detectors_base.json` containing `[]` so the glob always has at least one match (otherwise the build embed pattern fails).
   3. Validate:
      - Each `id` matches `^[a-z][a-z0-9_]{2,}$`.
      - `Status` is one of the three enum values.
      - For every `Marker`: `SourceClass` is one of the ten enum values; `pattern` is set unless `SourceClass ∈ {cli_binary, cli_version_probe}`, in which case `binary` is set.
-     - For every `Marker` whose `SourceClass` is `cli_version_probe`, `VersionArgs` defaults to `["--version"]` if empty, and is checked against the deny-list `[--config, --registry, --token, --server, --login]` and against any value containing `/` (delegate this check to a helper — WP02 will add it; for WP01 leave a `TODO(WP02)` and at least reject `/`-containing args).
+     - For every `Marker` whose `SourceClass` is `cli_version_probe`, `VersionArgs` defaults to `["--version"]` if empty. WP01 implements the full deny-list helper in `registry.go`: reject any arg in `{--config, --registry, --token, --server, --login}` and any arg containing `/`. (Earlier drafts deferred this to WP02; the deny-list is now WP01's responsibility.)
      - Every `Marker.Pattern` compiles via `regexp.Compile`.
      - If `Status == "verified"`, `len(SourceReferences) >= 1`.
   4. Memoize the parsed registry with `sync.Once` (mirror the existing pattern in `internal/analyzer/registry.go`).

@@ -7,7 +7,7 @@ requirement_refs:
 - FR-011
 planning_base_branch: main
 merge_target_branch: main
-branch_strategy: Planning on main; implementation lands on codex/sdd-fingerprint-registry; final merge target main.
+branch_strategy: Planning artifacts for this mission were generated on main. During /spec-kitty.implement this WP may branch from a dependency-specific base, but completed changes must merge back into main unless the human explicitly redirects the landing branch.
 subtasks:
 - T034
 - T035
@@ -22,7 +22,7 @@ agent_profile: implementer-ivan
 authoritative_surface: internal/analyzer/sdd/
 execution_mode: code_change
 owned_files:
-- internal/analyzer/sdd/leak_test.go
+- internal/analyzer/leak_test.go
 - internal/analyzer/sdd/structural_test.go
 - internal/analyzer/analyzer_test.go
 role: implementer

@@ -10,7 +10,7 @@ requirement_refs:
 - FR-014
 planning_base_branch: main
 merge_target_branch: main
-branch_strategy: Planning on main; implementation lands on codex/sdd-fingerprint-registry; final merge target main.
+branch_strategy: Planning artifacts for this mission were generated on main. During /spec-kitty.implement this WP may branch from a dependency-specific base, but completed changes must merge back into main unless the human explicitly redirects the landing branch.
 subtasks:
 - T026
 - T027
@@ -26,11 +26,11 @@ agent_profile: implementer-ivan
 authoritative_surface: internal/analyzer/sdd/testdata/
 execution_mode: code_change
 owned_files:
-- internal/analyzer/signatures/sdd_detectors.json
+- internal/analyzer/signatures/sdd_detectors_second_ring.json
 - internal/analyzer/sdd/testdata/fixtures/kiro.txt
 - internal/analyzer/sdd/testdata/fixtures/bmad.txt
 - internal/analyzer/sdd/testdata/fixtures/gsd.txt
-- internal/analyzer/sdd/evaluator_test.go
+- internal/analyzer/sdd/evaluator_second_ring_test.go
 role: implementer
 tags: []
 ---
@@ -51,7 +51,7 @@ prompt.
 
 ## Objectives & Success Criteria
 
-- `sdd_detectors.json` gains three `verified` entries: `kiro`, `bmad`, `gsd`.
+- `sdd_detectors_second_ring.json` gains three `verified` entries: `kiro`, `bmad`, `gsd`.
 - Three new fixtures under `testdata/fixtures/`.
 - Positive-detection tests for each of the three; cross-negative against the first-class trio (Spec Kitty / GitHub Spec Kit / OpenSpec).
 - Generic markers (FR-012 list) still trigger nothing.
@@ -59,16 +59,16 @@ prompt.
 ## Context & Constraints
 
 - Read research files: `docs/research/sdd-fingerprints/{kiro,bmad,gsd}.md`.
-- Read: `sdd_detectors.json` entries from WP05 for shape.
+- Read: `sdd_detectors_second_ring.json` entries from WP05 for shape.
 - Issue: #47 (Detector group: Kiro, BMAD, and GSD).
-- BMAD ID `bmad` already exists in legacy `frameworks.json`. Reuse the same ID in `sdd_detectors.json`. The legacy entry stays per C-004.
+- BMAD ID `bmad` already exists in legacy `frameworks.json`. Reuse the same ID in `sdd_detectors_second_ring.json`. The legacy entry stays per C-004.
 
 ## Subtasks & Detailed Guidance
 
 ### Subtask T026 — Seed `kiro`
 
 - **Steps**:
-  1. Append a `kiro` detector entry to `sdd_detectors.json` using markers from research.
+  1. Append a `kiro` detector entry to `sdd_detectors_second_ring.json` using markers from research.
   2. Kiro's source-class signal includes config dir, slash commands, possibly an MCP server name. Note that `hooks` alone is in the FR-012 negative-name list — never use `hooks` as a Kiro-specific marker without an additional tool-specific qualifier.
   3. Add `internal/analyzer/sdd/testdata/fixtures/kiro.txt` (~10 lines, sanitized).
 
@@ -90,7 +90,7 @@ prompt.
 ### Subtask T029 — Extend evaluator tests
 
 - **Steps**:
-  1. In `evaluator_test.go`, extend the existing fixture-driven harness from WP05 to add positive cases:
+  1. In `evaluator_second_ring_test.go`, extend the existing fixture-driven harness from WP05 to add positive cases:
      ```go
      {"kiro.txt", "kiro"},
      {"bmad.txt", "bmad"},

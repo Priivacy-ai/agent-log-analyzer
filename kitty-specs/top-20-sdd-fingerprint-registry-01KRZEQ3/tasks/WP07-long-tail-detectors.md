@@ -10,7 +10,7 @@ requirement_refs:
 - FR-014
 planning_base_branch: main
 merge_target_branch: main
-branch_strategy: Planning on main; implementation lands on codex/sdd-fingerprint-registry; final merge target main.
+branch_strategy: Planning artifacts for this mission were generated on main. During /spec-kitty.implement this WP may branch from a dependency-specific base, but completed changes must merge back into main unless the human explicitly redirects the landing branch.
 subtasks:
 - T030
 - T031
@@ -26,7 +26,7 @@ agent_profile: implementer-ivan
 authoritative_surface: internal/analyzer/sdd/testdata/
 execution_mode: code_change
 owned_files:
-- internal/analyzer/signatures/sdd_detectors.json
+- internal/analyzer/signatures/sdd_detectors_long_tail.json
 - internal/analyzer/sdd/testdata/fixtures/spec_workflow_mcp.txt
 - internal/analyzer/sdd/testdata/fixtures/sdd_pilot.txt
 - internal/analyzer/sdd/testdata/fixtures/spec_driven_develop.txt
@@ -41,7 +41,7 @@ owned_files:
 - internal/analyzer/sdd/testdata/fixtures/tessl.txt
 - internal/analyzer/sdd/testdata/fixtures/agentic_code.txt
 - internal/analyzer/sdd/testdata/fixtures/codespeak.txt
-- internal/analyzer/sdd/evaluator_test.go
+- internal/analyzer/sdd/evaluator_long_tail_test.go
 role: implementer
 tags: []
 ---
@@ -62,7 +62,7 @@ prompt.
 
 ## Objectives & Success Criteria
 
-- `sdd_detectors.json` gains 14 `verified` entries: `spec_workflow_mcp`, `sdd_pilot`, `spec_driven_develop`, `spec2ship`, `chatdev`, `paul`, `fspec`, `whenwords`, `intent`, `cognition_devin`, `microsoft_agent_framework`, `tessl`, `agentic_code`, `codespeak`.
+- `sdd_detectors_long_tail.json` gains 14 `verified` entries: `spec_workflow_mcp`, `sdd_pilot`, `spec_driven_develop`, `spec2ship`, `chatdev`, `paul`, `fspec`, `whenwords`, `intent`, `cognition_devin`, `microsoft_agent_framework`, `tessl`, `agentic_code`, `codespeak`.
 - 14 new fixtures under `testdata/fixtures/`.
 - Positive-detection tests for each of the 14.
 - Cross-negative assertions: no long-tail tool triggers any first-class or second-ring detector.
@@ -105,7 +105,7 @@ prompt.
 ### Subtask T032 — Positive-detection tests
 
 - **Steps**:
-  1. Extend the fixture-driven matrix in `evaluator_test.go` with one entry per long-tail tool:
+  1. Extend the fixture-driven matrix in `evaluator_long_tail_test.go` with one entry per long-tail tool:
      ```go
      {"spec_workflow_mcp.txt", "spec_workflow_mcp"},
      {"sdd_pilot.txt", "sdd_pilot"},

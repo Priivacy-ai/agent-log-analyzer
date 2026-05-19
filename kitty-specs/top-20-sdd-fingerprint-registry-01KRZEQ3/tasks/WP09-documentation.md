@@ -2,13 +2,13 @@
 work_package_id: WP09
 title: Documentation + GitHub issue hygiene
 dependencies:
-- WP08
+- WP04
 requirement_refs:
 - FR-013
 - FR-015
 planning_base_branch: main
 merge_target_branch: main
-branch_strategy: Planning on main; implementation lands on codex/sdd-fingerprint-registry; final merge target main.
+branch_strategy: Planning artifacts for this mission were generated on main. During /spec-kitty.implement this WP may branch from a dependency-specific base, but completed changes must merge back into main unless the human explicitly redirects the landing branch.
 subtasks:
 - T037
 - T038

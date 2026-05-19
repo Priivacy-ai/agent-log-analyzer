@@ -14,7 +14,7 @@ requirement_refs:
 - FR-014
 planning_base_branch: main
 merge_target_branch: main
-branch_strategy: Planning on main; implementation lands on codex/sdd-fingerprint-registry; final merge target main.
+branch_strategy: Planning artifacts for this mission were generated on main. During /spec-kitty.implement this WP may branch from a dependency-specific base, but completed changes must merge back into main unless the human explicitly redirects the landing branch.
 subtasks:
 - T021
 - T022
@@ -31,12 +31,12 @@ agent_profile: implementer-ivan
 authoritative_surface: internal/analyzer/sdd/testdata/
 execution_mode: code_change
 owned_files:
-- internal/analyzer/signatures/sdd_detectors.json
+- internal/analyzer/signatures/sdd_detectors_first_class.json
 - internal/analyzer/sdd/testdata/fixtures/spec_kitty.txt
 - internal/analyzer/sdd/testdata/fixtures/github_spec_kit.txt
 - internal/analyzer/sdd/testdata/fixtures/openspec.txt
 - internal/analyzer/sdd/testdata/fixtures/generic_only.txt
-- internal/analyzer/sdd/evaluator_test.go
+- internal/analyzer/sdd/evaluator_first_class_test.go
 role: implementer
 tags: []
 ---
@@ -78,7 +78,7 @@ prompt.
 ### Subtask T021 — Seed `spec_kitty`
 
 - **Steps**:
-  1. Open `internal/analyzer/signatures/sdd_detectors.json` (currently `[]`).
+  1. Create `internal/analyzer/signatures/sdd_detectors_first_class.json` (new file, starting as `[]`). The WP01 loader globs `signatures/sdd_detectors*.json`, so this tier file is picked up automatically.
   2. Append the `spec_kitty` entry. Required fields:
      - `id`: `"spec_kitty"`.
      - `display_name`: `"Spec Kitty"`.
@@ -135,7 +135,7 @@ prompt.
 ### Subtask T025 — Cross-negative matrix in tests
 
 - **Steps**:
-  1. Open `internal/analyzer/sdd/evaluator_test.go`.
+  1. Create `internal/analyzer/sdd/evaluator_first_class_test.go` (new file owned by this WP). Other tiers add their own `evaluator_<tier>_test.go` files later.
   2. Add:
      ```go
      func TestCrossNegativeFirstClass(t *testing.T) {
@@ -175,7 +175,7 @@ prompt.
   3. `evaluateWithRealRegistry` constructs a `FakeProbe` with `Installed = nil` (so CLI presence doesn't artificially fire) and calls `sdd.Evaluate(text, slashHits, fake, sdd.LoadRegistry())`.
   4. Confirm the test file produces ≥9 assertions across the matrix and ≥1 from the generic-only test (NFR-004 floor met).
 
-- **Files**: `internal/analyzer/sdd/evaluator_test.go` (edit, add ~120 lines).
+- **Files**: `internal/analyzer/sdd/evaluator_first_class_test.go` (edit, add ~120 lines).
 
 ## Test Strategy
 

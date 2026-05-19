@@ -1,0 +1,157 @@
+{
+  "version": 1,
+  "mission_slug": "top-20-sdd-fingerprint-registry-01KRZEQ3",
+  "mission_id": "01KRZEQ372C78Z0KGN69MXRXZV",
+  "mission_branch": "kitty/mission-top-20-sdd-fingerprint-registry-01KRZEQ3",
+  "target_branch": "main",
+  "lanes": [
+    {
+      "lane_id": "lane-a",
+      "wp_ids": [
+        "WP01",
+        "WP02",
+        "WP03",
+        "WP05",
+        "WP06",
+        "WP07",
+        "WP08",
+        "WP10"
+      ],
+      "write_scope": [
+        "internal/analyzer/analyzer_test.go",
+        "internal/analyzer/ecosystem.go",
+        "internal/analyzer/golden_test.go",
+        "internal/analyzer/leak_test.go",
+        "internal/analyzer/sdd/detector.go",
+        "internal/analyzer/sdd/detector_test.go",
+        "internal/analyzer/sdd/evaluator.go",
+        "internal/analyzer/sdd/evaluator_first_class_test.go",
+        "internal/analyzer/sdd/evaluator_long_tail_test.go",
+        "internal/analyzer/sdd/evaluator_second_ring_test.go",
+        "internal/analyzer/sdd/evaluator_test.go",
+        "internal/analyzer/sdd/probe.go",
+        "internal/analyzer/sdd/probe_test.go",
+        "internal/analyzer/sdd/registry.go",
+        "internal/analyzer/sdd/structural_test.go",
+        "internal/analyzer/sdd/testdata/fixtures/agentic_code.txt",
+        "internal/analyzer/sdd/testdata/fixtures/bmad.txt",
+        "internal/analyzer/sdd/testdata/fixtures/chatdev.txt",
+        "internal/analyzer/sdd/testdata/fixtures/codespeak.txt",
+        "internal/analyzer/sdd/testdata/fixtures/cognition_devin.txt",
+        "internal/analyzer/sdd/testdata/fixtures/fspec.txt",
+        "internal/analyzer/sdd/testdata/fixtures/generic_only.txt",
+        "internal/analyzer/sdd/testdata/fixtures/github_spec_kit.txt",
+        "internal/analyzer/sdd/testdata/fixtures/gsd.txt",
+        "internal/analyzer/sdd/testdata/fixtures/intent.txt",
+        "internal/analyzer/sdd/testdata/fixtures/kiro.txt",
+        "internal/analyzer/sdd/testdata/fixtures/microsoft_agent_framework.txt",
+        "internal/analyzer/sdd/testdata/fixtures/openspec.txt",
+        "internal/analyzer/sdd/testdata/fixtures/paul.txt",
+        "internal/analyzer/sdd/testdata/fixtures/sdd_pilot.txt",
+        "internal/analyzer/sdd/testdata/fixtures/spec2ship.txt",
+        "internal/analyzer/sdd/testdata/fixtures/spec_driven_develop.txt",
+        "internal/analyzer/sdd/testdata/fixtures/spec_kitty.txt",
+        "internal/analyzer/sdd/testdata/fixtures/spec_workflow_mcp.txt",
+        "internal/analyzer/sdd/testdata/fixtures/tessl.txt",
+        "internal/analyzer/sdd/testdata/fixtures/whenwords.txt",
+        "internal/analyzer/sdd/version_bucket.go",
+        "internal/analyzer/sdd/version_bucket_test.go",
+        "internal/analyzer/signatures/sdd_detectors_base.json",
+        "internal/analyzer/signatures/sdd_detectors_first_class.json",
+        "internal/analyzer/signatures/sdd_detectors_long_tail.json",
+        "internal/analyzer/signatures/sdd_detectors_second_ring.json",
+        "internal/analyzer/types.go"
+      ],
+      "predicted_surfaces": [
+        "api",
+        "app-shell",
+        "artifact-rendering",
+        "legacy-cleanup",
+        "tests",
+        "tracker-integration",
+        "workspace"
+      ],
+      "depends_on_lanes": [
+        "lane-planning"
+      ],
+      "parallel_group": 1
+    },
+    {
+      "lane_id": "lane-planning",
+      "wp_ids": [
+        "WP04",
+        "WP09"
+      ],
+      "write_scope": [
+        "docs/data-retention-and-analytics.md",
+        "docs/ecosystem-signatures.md",
+        "docs/logging-policy.md",
+        "docs/research/sdd-fingerprints/**",
+        "docs/sdd-fingerprint-registry.md",
+        "kitty-specs/top-20-sdd-fingerprint-registry-01KRZEQ3/github-issue-comments.md"
+      ],
+      "predicted_surfaces": [
+        "planning"
+      ],
+      "depends_on_lanes": [],
+      "parallel_group": 0
+    }
+  ],
+  "computed_at": "2026-05-19T07:03:57.443676+00:00",
+  "computed_from": "dependency_graph+ownership",
+  "planning_artifact_wps": [
+    "WP04",
+    "WP09"
+  ],
+  "collapse_report": {
+    "events": [
+      {
+        "wp_a": "WP02",
+        "wp_b": "WP01",
+        "rule": "dependency",
+        "evidence": "WP02 depends on WP01"
+      },
+      {
+        "wp_a": "WP03",
+        "wp_b": "WP01",
+        "rule": "dependency",
+        "evidence": "WP03 depends on WP01"
+      },
+      {
+        "wp_a": "WP05",
+        "wp_b": "WP03",
+        "rule": "dependency",
+        "evidence": "WP05 depends on WP03"
+      },
+      {
+        "wp_a": "WP06",
+        "wp_b": "WP05",
+        "rule": "dependency",
+        "evidence": "WP06 depends on WP05"
+      },
+      {
+        "wp_a": "WP07",
+        "wp_b": "WP06",
+        "rule": "dependency",
+        "evidence": "WP07 depends on WP06"
+      },
+      {
+        "wp_a": "WP08",
+        "wp_b": "WP05",
+        "rule": "dependency",
+        "evidence": "WP08 depends on WP05"
+      },
+      {
+        "wp_a": "WP10",
+        "wp_b": "WP07",
+        "rule": "dependency",
+        "evidence": "WP10 depends on WP07"
+      }
+    ],
+    "total_merges": 7,
+    "independent_wps_collapsed": 0,
+    "by_rule": {
+      "dependency": 7
+    }
+  }
+}
