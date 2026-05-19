@@ -9,6 +9,9 @@ requirement_refs:
 planning_base_branch: main
 merge_target_branch: main
 branch_strategy: Planning artifacts for this mission were generated on main. During /spec-kitty.implement this WP may branch from a dependency-specific base, but completed changes must merge back into main unless the human explicitly redirects the landing branch.
+base_branch: kitty/mission-token-saving-recommendation-engine-phase-a-01KRZKCJ
+base_commit: dad606ae0955e3813c8c20171dc9de9e988b43f4
+created_at: '2026-05-19T09:20:57.057739+00:00'
 subtasks:
 - T001
 - T002
@@ -16,6 +19,7 @@ subtasks:
 - T004
 - T005
 agent: claude
+shell_pid: '42671'
 history:
 - '2026-05-19': created from mission token-saving-recommendation-engine-phase-a-01KRZKCJ
 agent_profile: implementer-ivan
