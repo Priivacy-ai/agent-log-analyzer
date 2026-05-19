@@ -1,0 +1,84 @@
+{
+  "version": 1,
+  "mission_slug": "token-saving-recommendation-engine-phase-a-01KRZKCJ",
+  "mission_id": "01KRZKCJN2VCSE6M6T29VHZS96",
+  "mission_branch": "kitty/mission-token-saving-recommendation-engine-phase-a-01KRZKCJ",
+  "target_branch": "main",
+  "lanes": [
+    {
+      "lane_id": "lane-a",
+      "wp_ids": [
+        "WP01",
+        "WP02",
+        "WP03",
+        "WP04"
+      ],
+      "write_scope": [
+        "internal/analyzer/token_saving_recommendations.go",
+        "internal/analyzer/token_saving_recommendations_test.go",
+        "internal/analyzer/token_saving_tools.go",
+        "internal/analyzer/token_saving_tools_test.go",
+        "internal/analyzer/token_saving_types.go"
+      ],
+      "predicted_surfaces": [
+        "api",
+        "app-shell",
+        "legacy-cleanup"
+      ],
+      "depends_on_lanes": [],
+      "parallel_group": 0
+    },
+    {
+      "lane_id": "lane-planning",
+      "wp_ids": [
+        "WP05",
+        "WP06"
+      ],
+      "write_scope": [
+        "docs/remediation/plugin-artifacts.md",
+        "docs/remediation/token-saving-recommendation-engine.md",
+        "docs/remediation/token-saving-tooling-matrix.md"
+      ],
+      "predicted_surfaces": [
+        "planning"
+      ],
+      "depends_on_lanes": [
+        "lane-a"
+      ],
+      "parallel_group": 1
+    }
+  ],
+  "computed_at": "2026-05-19T08:59:32.401212+00:00",
+  "computed_from": "dependency_graph+ownership",
+  "planning_artifact_wps": [
+    "WP05",
+    "WP06"
+  ],
+  "collapse_report": {
+    "events": [
+      {
+        "wp_a": "WP02",
+        "wp_b": "WP01",
+        "rule": "dependency",
+        "evidence": "WP02 depends on WP01"
+      },
+      {
+        "wp_a": "WP03",
+        "wp_b": "WP01",
+        "rule": "dependency",
+        "evidence": "WP03 depends on WP01"
+      },
+      {
+        "wp_a": "WP04",
+        "wp_b": "WP01",
+        "rule": "dependency",
+        "evidence": "WP04 depends on WP01"
+      }
+    ],
+    "total_merges": 3,
+    "independent_wps_collapsed": 0,
+    "by_rule": {
+      "dependency": 3
+    }
+  }
+}

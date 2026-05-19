@@ -1,0 +1,63 @@
+{
+  "event_count": 42,
+  "last_event_id": "01KRZV0YECR5BAFKZQM6HR2BSA",
+  "materialized_at": "2026-05-19T10:03:10.668930+00:00",
+  "mission_number": "",
+  "mission_slug": "token-saving-recommendation-engine-phase-a-01KRZKCJ",
+  "mission_type": "software-dev",
+  "summary": {
+    "approved": 0,
+    "blocked": 0,
+    "canceled": 0,
+    "claimed": 0,
+    "done": 6,
+    "for_review": 0,
+    "in_progress": 0,
+    "in_review": 0,
+    "planned": 0
+  },
+  "work_packages": {
+    "WP01": {
+      "actor": "user",
+      "force_count": 2,
+      "lane": "done",
+      "last_event_id": "01KRZV0MAGK5T8ZSC332CJ2YBS",
+      "last_transition_at": "2026-05-19T10:03:00.304641+00:00"
+    },
+    "WP02": {
+      "actor": "user",
+      "force_count": 2,
+      "lane": "done",
+      "last_event_id": "01KRZV0PHSCXHX46YFZTK6DZYM",
+      "last_transition_at": "2026-05-19T10:03:02.585717+00:00"
+    },
+    "WP03": {
+      "actor": "user",
+      "force_count": 2,
+      "lane": "done",
+      "last_event_id": "01KRZV0RGXBCDET56C6JXAVQDY",
+      "last_transition_at": "2026-05-19T10:03:04.605635+00:00"
+    },
+    "WP04": {
+      "actor": "user",
+      "force_count": 2,
+      "lane": "done",
+      "last_event_id": "01KRZV0TFAA1642JGW4EQMEGC3",
+      "last_transition_at": "2026-05-19T10:03:06.602330+00:00"
+    },
+    "WP05": {
+      "actor": "user",
+      "force_count": 2,
+      "lane": "done",
+      "last_event_id": "01KRZV0WDG6DBH4EAPB013767D",
+      "last_transition_at": "2026-05-19T10:03:08.592226+00:00"
+    },
+    "WP06": {
+      "actor": "user",
+      "force_count": 2,
+      "lane": "done",
+      "last_event_id": "01KRZV0YECR5BAFKZQM6HR2BSA",
+      "last_transition_at": "2026-05-19T10:03:10.668930+00:00"
+    }
+  }
+}

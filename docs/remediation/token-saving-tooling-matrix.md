@@ -48,3 +48,18 @@ This matrix is the starting allowlist for paid remediation recommendations. The 
 - Local semantic search tools must disclose indexing cost, storage location, and embedding provider.
 - Tools that rewrite shell commands are advanced-only and must be separately approved.
 - Generated artifacts must not include unknown private tool names from logs.
+
+## Registry cross-reference (Phase A)
+
+The canonical machine-readable registry of token-saving tools lives in `internal/analyzer/token_saving_tools.go`. That Go file is the source of truth that the recommendation engine actually consults at runtime; the tier tables above remain the human-facing reference and product rationale.
+
+This matrix doc and the registry are intentionally complementary: when a tool's tier, signal mapping, or product framing changes, update this document so reviewers and operators retain narrative context; when the engine's runtime behavior changes (new tool entry, signal alias, activation heuristic), update the Go registry so the binary behavior follows. Drift between the two is a planning bug, not a runtime bug — the engine will keep operating off the registry regardless of doc state.
+
+Phase A enforces a dedupe-aware recommendation contract: for any given analyzed session, the engine emits at most one primary and at most one secondary token-saving recommendation. Tools that telemetry classifies as `active_high` for a given signal are treated as already in effect and skipped rather than re-recommended, so the user is never asked to install something they are already running successfully.
+
+See `docs/remediation/token-saving-recommendation-engine.md` for the full Phase A state model, rule precedence, signal-to-tool mapping, and the additive contract surface that downstream artifacts may embed.
+
+## See also
+
+- `token-saving-recommendation-engine.md` — Phase A recommendation engine doc (state model, rule precedence, contract shape).
+- `plugin-artifacts.md` — paid plugin artifact contract and how the recommendation object may optionally embed into generated artifacts.
