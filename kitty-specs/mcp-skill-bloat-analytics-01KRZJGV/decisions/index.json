@@ -1,0 +1,29 @@
+{
+  "entries": [
+    {
+      "created_at": "2026-05-19T07:38:29.537478Z",
+      "decision_id": "01KRZJR0S1VJBYX6TQR2J6WVMZ",
+      "final_answer": "nested-in-ecosystem",
+      "input_key": "tooling_utilization_placement",
+      "mission_id": "01KRZJGVG3MCCCY9MKB1YRDBQR",
+      "mission_slug": "mcp-skill-bloat-analytics-01KRZJGV",
+      "options": [
+        "nested-in-ecosystem",
+        "sibling-on-report",
+        "both"
+      ],
+      "origin_flow": "plan",
+      "other_answer": false,
+      "question": "Where should ToolingUtilization live in the report JSON?",
+      "rationale": null,
+      "resolved_at": "2026-05-19T07:48:29.105358Z",
+      "resolved_by": null,
+      "slot_key": "plan.architecture.tooling-utilization-placement",
+      "status": "resolved",
+      "step_id": null,
+      "summary_json": null
+    }
+  ],
+  "mission_id": "01KRZJGVG3MCCCY9MKB1YRDBQR",
+  "version": 1
+}
