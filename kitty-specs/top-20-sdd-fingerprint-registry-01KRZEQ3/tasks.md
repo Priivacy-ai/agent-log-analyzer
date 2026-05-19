@@ -42,9 +42,9 @@
 | T031 | Seed 7 entries + fixtures: whenwords, Intent, Cognition/Devin, Microsoft Agent Framework, Tessl, Agentic Code, CodeSpeak | WP07 | | [D] |
 | T032 | Add positive-detection tests for all 14 long-tail tools | WP07 | | [D] |
 | T033 | Cross-negative assertions: no long-tail tool triggers a first-class or second-ring detector | WP07 | | [D] |
-| T034 | Add `internal/analyzer/sdd/leak_test.go` with 16-category canary fixture | WP08 | |
-| T035 | Extend `internal/analyzer/analyzer_test.go` for end-to-end unknown-count + fingerprint privacy | WP08 | |
-| T036 | Structural test: `Ecosystem.WorkflowFingerprints` sorted, deduplicated, bounded keys (NFR-003) | WP08 | |
+| T034 | Add `internal/analyzer/sdd/leak_test.go` with 16-category canary fixture | WP08 | | [D] |
+| T035 | Extend `internal/analyzer/analyzer_test.go` for end-to-end unknown-count + fingerprint privacy | WP08 | | [D] |
+| T036 | Structural test: `Ecosystem.WorkflowFingerprints` sorted, deduplicated, bounded keys (NFR-003) | WP08 | | [D] |
 | T037 | Write `docs/sdd-fingerprint-registry.md` (top-20 table, taxonomy, confidence, status, privacy rules) | WP09 | | [D] |
 | T038 | Update `docs/ecosystem-signatures.md` with pointer to new doc | WP09 | [D] |
 | T039 | Update `docs/data-retention-and-analytics.md` with fingerprint privacy notes | WP09 | [D] |
