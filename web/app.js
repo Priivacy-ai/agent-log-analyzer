@@ -179,9 +179,7 @@ function renderReport(report) {
   const findings = document.querySelector("#findings");
   findings.innerHTML = "";
   for (const finding of report.findings) {
-    const item = document.createElement("li");
-    item.innerHTML = `<strong>${finding.title}</strong><span>${finding.severity} - ${finding.cost_impact}</span><p>${findingEvidence(finding.evidence)}</p><p>${finding.recommendation}</p>`;
-    findings.appendChild(item);
+    findings.appendChild(buildFindingItem(finding));
   }
   if (report.findings.length === 0) {
     const item = document.createElement("li");
@@ -203,6 +201,30 @@ function renderReport(report) {
   document.querySelector("#ecosystem").textContent = summarizeEcosystem(report.ecosystem);
   document.querySelector("#receipt").textContent = summarizeReceipt(report.security_receipt);
   renderPaidCommandPreview(report);
+}
+
+function buildFindingItem(finding) {
+  const item = document.createElement("li");
+
+  const title = document.createElement("strong");
+  title.textContent = typeof finding?.title === "string" ? finding.title : "";
+  item.appendChild(title);
+
+  const meta = document.createElement("span");
+  const severity = typeof finding?.severity === "string" ? finding.severity : "unknown";
+  const impact = typeof finding?.cost_impact === "string" ? finding.cost_impact : "unknown";
+  meta.textContent = `${severity} - ${impact}`;
+  item.appendChild(meta);
+
+  const evidence = document.createElement("p");
+  evidence.textContent = findingEvidence(finding?.evidence);
+  item.appendChild(evidence);
+
+  const recommendation = document.createElement("p");
+  recommendation.textContent = typeof finding?.recommendation === "string" ? finding.recommendation : "";
+  item.appendChild(recommendation);
+
+  return item;
 }
 
 function renderTimeline(points) {

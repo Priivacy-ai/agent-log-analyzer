@@ -288,9 +288,11 @@ func assertBandPairing(t *testing.T, rep analyzer.Report, surface, band string) 
 	prefix := surface + "_bloat_"
 	// Count findings whose ID starts with the surface prefix.
 	hits := map[string]int{}
+	byID := map[string]analyzer.Finding{}
 	for _, f := range rep.Findings {
 		if strings.HasPrefix(f.ID, prefix) {
 			hits[f.ID]++
+			byID[f.ID] = f
 		}
 	}
 	totalHits := 0
@@ -306,6 +308,7 @@ func assertBandPairing(t *testing.T, rep analyzer.Report, surface, band string) 
 		if totalHits != 1 {
 			t.Errorf("%s band=severe: want exactly one %s_bloat_* finding total, got %d (hits=%v)", surface, surface, totalHits, hits)
 		}
+		assertBloatEvidenceBand(t, byID[wantID], analyzer.WarningBandSevere)
 	case analyzer.WarningBandHigh:
 		wantID := prefix + "high"
 		if hits[wantID] != 1 {
@@ -314,12 +317,21 @@ func assertBandPairing(t *testing.T, rep analyzer.Report, surface, band string) 
 		if totalHits != 1 {
 			t.Errorf("%s band=high: want exactly one %s_bloat_* finding total, got %d (hits=%v)", surface, surface, totalHits, hits)
 		}
+		assertBloatEvidenceBand(t, byID[wantID], analyzer.WarningBandHigh)
 	case analyzer.WarningBandWatch, analyzer.WarningBandNormal, analyzer.WarningBandUnknown:
 		if totalHits != 0 {
 			t.Errorf("%s band=%s: want zero %s_bloat_* findings, got %d (hits=%v)", surface, band, surface, totalHits, hits)
 		}
 	default:
 		t.Errorf("%s: unexpected warning band %q (not one of severe/high/watch/normal/unknown)", surface, band)
+	}
+}
+
+func assertBloatEvidenceBand(t *testing.T, finding analyzer.Finding, band string) {
+	t.Helper()
+	want := "Bloat band: " + band
+	if finding.Evidence.Description != want {
+		t.Errorf("%s evidence description = %q, want %q", finding.ID, finding.Evidence.Description, want)
 	}
 }
 

@@ -314,6 +314,7 @@ pre {
 /* Report Intelligence UX sections — kitty-specs/report-intelligence-ux-01KS070G */
 
 .intel-section {
+  grid-column: 1 / -1;
   margin: 1.5rem 0;
 }
 .intel-section[hidden] {

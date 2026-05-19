@@ -365,31 +365,31 @@ func buildFindings(m Metrics, lines []parsedLine, eco Ecosystem) []Finding {
 	// finding only for the "high" and "severe" bands — "watch" stays in the
 	// dashboard metric, and "normal"/"unknown" emit nothing.
 	tu := eco.ToolingUtilization
-	appendBand := func(id, title, sev, rec string) {
+	appendBand := func(id, title, band, sev, rec string) {
 		findings = append(findings, Finding{
 			ID:             id,
 			Title:          title,
 			Severity:       sev,
 			CostImpact:     "medium-high",
-			Evidence:       FindingEvidence{Description: "Bloat band: " + sev},
+			Evidence:       FindingEvidence{Description: "Bloat band: " + band},
 			Recommendation: rec,
 			Deterministic:  true,
 		})
 	}
 	switch tu.MCP.WarningBand {
 	case WarningBandSevere:
-		appendBand("mcp_bloat_severe", "MCP tool surface severely underutilized", "high",
+		appendBand("mcp_bloat_severe", "MCP tool surface severely underutilized", WarningBandSevere, "high",
 			"Disable unused MCP servers by default and lazy-load heavy MCP servers only when needed.")
 	case WarningBandHigh:
-		appendBand("mcp_bloat_high", "MCP tool surface underutilized", "medium",
+		appendBand("mcp_bloat_high", "MCP tool surface underutilized", WarningBandHigh, "medium",
 			"Scope project-specific MCPs to project config instead of global config; prefer narrower MCP servers over all-tools-enabled setups.")
 	}
 	switch tu.Skill.WarningBand {
 	case WarningBandSevere:
-		appendBand("skill_bloat_severe", "Skill surface severely underutilized", "high",
+		appendBand("skill_bloat_severe", "Skill surface severely underutilized", WarningBandSevere, "high",
 			"Move rarely used instructions out of always-loaded skill context; keep only high-signal skills in the default agent context.")
 	case WarningBandHigh:
-		appendBand("skill_bloat_high", "Skill surface underutilized", "medium",
+		appendBand("skill_bloat_high", "Skill surface underutilized", WarningBandHigh, "medium",
 			"Split general skills from project-specific skills.")
 	}
 
