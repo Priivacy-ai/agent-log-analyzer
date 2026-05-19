@@ -13,7 +13,8 @@ subtasks:
 - T031
 - T032
 - T033
-agent: claude
+agent: "claude:opus-4-7:curator-carla:curator"
+shell_pid: "47016"
 history:
 - '2026-05-19': created from mission token-saving-recommendation-engine-phase-a-01KRZKCJ
 agent_profile: curator-carla
@@ -174,3 +175,7 @@ the end with at least the two new bullets.
 - Writing the new engine doc (WP05).
 - Editing any source file.
 - Restructuring or trimming existing tier tables.
+
+## Activity Log
+
+- 2026-05-19T09:37:11Z – claude:opus-4-7:curator-carla:curator – shell_pid=47016 – Started implementation via action command
