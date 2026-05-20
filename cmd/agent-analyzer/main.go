@@ -100,17 +100,25 @@ func runAnalyze(args []string) error {
 }
 
 func analyzeSingle(path, out string, printNextSteps bool) error {
+	progress := newProgressBar(3)
+	progress.Update(0, "reading "+shortDisplay(path))
 	data, err := os.ReadFile(path)
 	if err != nil {
+		progress.Fail()
 		return err
 	}
+	progress.Update(1, "analyzing "+shortDisplay(path))
 	report, err := analyzeBytes("local", data)
 	if err != nil {
+		progress.Fail()
 		return err
 	}
+	progress.Update(2, "writing sanitized report")
 	if err := writeReport(out, report); err != nil {
+		progress.Fail()
 		return err
 	}
+	progress.Finish("complete")
 
 	fmt.Printf("Analyzed locally: %s\n", path)
 	fmt.Printf("Raw bytes read locally: %d\n", len(data))
@@ -164,6 +172,59 @@ func printNextStepsFor(out string) {
 	fmt.Printf("Upload sanitized report: agent-analyzer upload %s\n", shellQuote(out))
 }
 
+type progressBar struct {
+	total   int
+	width   int
+	lastLen int
+}
+
+func newProgressBar(total int) *progressBar {
+	if total < 1 {
+		total = 1
+	}
+	return &progressBar{total: total, width: 24}
+}
+
+func (bar *progressBar) Update(done int, message string) {
+	if done < 0 {
+		done = 0
+	}
+	if done > bar.total {
+		done = bar.total
+	}
+	filled := done * bar.width / bar.total
+	empty := bar.width - filled
+	head := ""
+	if done < bar.total && empty > 0 {
+		head = ">"
+		empty--
+	}
+	line := fmt.Sprintf("\r[%s%s%s] %d/%d %s",
+		strings.Repeat("=", filled),
+		head,
+		strings.Repeat(" ", empty),
+		done,
+		bar.total,
+		message,
+	)
+	if bar.lastLen > len(line) {
+		line += strings.Repeat(" ", bar.lastLen-len(line))
+	}
+	fmt.Print(line)
+	bar.lastLen = len(line)
+}
+
+func (bar *progressBar) Finish(message string) {
+	bar.Update(bar.total, message)
+	fmt.Println()
+}
+
+func (bar *progressBar) Fail() {
+	if bar.lastLen > 0 {
+		fmt.Println()
+	}
+}
+
 func analyzeDiscovered(candidates []logCandidate, out string, paid bool, printNextSteps bool) error {
 	if len(candidates) == 0 {
 		return errors.New("no supported agent logs found; checked Claude Code, Codex, and OpenCode")
@@ -171,19 +232,27 @@ func analyzeDiscovered(candidates []logCandidate, out string, paid bool, printNe
 	reports := make([]analyzer.Report, 0, len(candidates))
 	totalBytes := 0
 	totalRedacted := 0
+	progress := newProgressBar(len(candidates)*2 + 1)
+	step := 0
 	for index, candidate := range candidates {
-		fmt.Printf("Analyzing %s log %d/%d: %s\n", candidate.SourceLabel, index+1, len(candidates), candidate.Display)
+		progress.Update(step, fmt.Sprintf("reading %s %s", candidate.SourceLabel, candidate.shortDisplay()))
 		data, err := candidate.readBytes()
 		if err != nil {
+			progress.Fail()
 			return fmt.Errorf("read %s log %q: %w", candidate.SourceLabel, candidate.Display, err)
 		}
+		step++
+		progress.Update(step, fmt.Sprintf("analyzing %s %s", candidate.SourceLabel, candidate.shortDisplay()))
 		report, err := analyzer.Analyze(fmt.Sprintf("local-%s-%03d", candidate.SourceID, index+1), data)
 		if err != nil {
+			progress.Fail()
 			return fmt.Errorf("analyze %s log %d: %w", candidate.SourceLabel, index+1, err)
 		}
 		reports = append(reports, report)
 		totalBytes += len(data)
 		totalRedacted += report.SecurityReceipt.SecretsRedacted
+		step++
+		progress.Update(step, fmt.Sprintf("complete %s", candidate.SourceLabel))
 	}
 
 	var report analyzer.Report
@@ -200,13 +269,17 @@ func analyzeDiscovered(candidates []logCandidate, out string, paid bool, printNe
 		}
 		report, err = analyzer.AggregateReportsWithParserType(jobID, reports, totalBytes, parserType)
 		if err != nil {
+			progress.Fail()
 			return err
 		}
 		report.SecurityReceipt.RawLogTTL = "not uploaded"
 	}
+	progress.Update(step, "writing sanitized report")
 	if err := writeReport(out, report); err != nil {
+		progress.Fail()
 		return err
 	}
+	progress.Finish("complete")
 
 	if paid {
 		fmt.Printf("Analyzed locally: %d supported agent logs across %d sources (%s)\n", len(candidates), sourceCount(candidates), sourceSummary(candidates))
@@ -231,7 +304,7 @@ func analyzeDiscovered(candidates []logCandidate, out string, paid bool, printNe
 func runOneShot(args []string) error {
 	fs := flag.NewFlagSet("run", flag.ContinueOnError)
 	out := fs.String("out", "agent-analyzer-report.json", "path to write sanitized report JSON")
-	logPath := fs.String("log", "", "explicit Claude Code JSONL log path")
+	logPath := fs.String("log", "", "explicit supported JSON/JSONL log path")
 	baseURL := fs.String("base-url", defaultBaseURL, "Agent Analyzer base URL")
 	yes := fs.Bool("yes", false, "upload the sanitized report without an interactive confirmation")
 	noOpen := fs.Bool("no-open", false, "do not open the generated report URL in a browser")
@@ -398,6 +471,25 @@ func (candidate logCandidate) readBytes() ([]byte, error) {
 		return candidate.Read()
 	}
 	return os.ReadFile(candidate.Display)
+}
+
+func (candidate logCandidate) shortDisplay() string {
+	return shortDisplay(candidate.Display)
+}
+
+func shortDisplay(value string) string {
+	if value == "" {
+		return "log"
+	}
+	if strings.Contains(value, string(os.PathSeparator)) {
+		if base := filepath.Base(value); base != "." && base != string(os.PathSeparator) {
+			return base
+		}
+	}
+	if len(value) > 48 {
+		return value[:45] + "..."
+	}
+	return value
 }
 
 func latestSupportedLogs() ([]logCandidate, error) {
