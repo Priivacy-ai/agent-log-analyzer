@@ -87,6 +87,7 @@ var reportHTMLTemplate = template.Must(template.New("report").Funcs(template.Fun
 	"boolText":              boolText,
 	"bucketValue":           bucketValue,
 	"findingEvidence":       findingEvidence,
+	"findingsBubbleChart":   findingsBubbleChartHTML,
 	"join":                  joinStrings,
 	"mapLines":              mapLines,
 	"recommendationLabel":   recommendationLabel,
@@ -120,20 +121,9 @@ var reportHTMLTemplate = template.Must(template.New("report").Funcs(template.Fun
           <p id="waste">{{.Report.EstimatedWaste.Low}}-{{.Report.EstimatedWaste.High}}% avoidable token spend</p>
           <p class="command-note">Observed tokens: {{.Report.Metrics.EstimatedTokens}} total, {{.Report.Metrics.ToolOutputTokens}} from tool output.</p>
         </div>
-        <div>
+        <div class="problem-section">
           <h2>Top Problems</h2>
-          <ol id="findings">
-            {{range .Report.Findings}}
-            <li>
-              <strong>{{.Title}}</strong>
-              <p>{{.Severity}} - {{.CostImpact}}</p>
-              <p>{{findingEvidence .Evidence}}</p>
-              <p>{{.Recommendation}}</p>
-            </li>
-            {{else}}
-            <li>No major deterministic problems detected.</li>
-            {{end}}
-          </ol>
+          {{findingsBubbleChart .Report}}
         </div>
         {{if not .Report.SourceReports}}
         <div>
@@ -371,6 +361,155 @@ func sourceLogLabel(count int) string {
 		return "1 log"
 	}
 	return fmt.Sprintf("%d logs", count)
+}
+
+func findingsBubbleChartHTML(report analyzer.Report) template.HTML {
+	if len(report.Findings) == 0 {
+		return template.HTML(`<div id="findings" class="problem-bubbles problem-bubbles-empty"><p>No major deterministic problems detected.</p></div>`)
+	}
+	estimates := make([]int, len(report.Findings))
+	maxEstimate := 1
+	for index, finding := range report.Findings {
+		estimate := representativeProblemTokens(finding, report)
+		if estimate > maxEstimate {
+			maxEstimate = estimate
+		}
+		estimates[index] = estimate
+	}
+	var b strings.Builder
+	b.WriteString(`<div id="findings" class="problem-bubbles" role="list" aria-label="Top problems sized by representative token impact">`)
+	for index, finding := range report.Findings {
+		diameter := bubbleDiameter(estimates[index], maxEstimate)
+		tone := bubbleTone(finding, index)
+		detail := fmt.Sprintf("%s. %s", findingEvidence(finding.Evidence), finding.Recommendation)
+		fmt.Fprintf(
+			&b,
+			`<article class="problem-bubble problem-bubble-%s" role="listitem" style="--bubble-size:%dpx; --bubble-offset:%dpx" aria-label="%s">`,
+			htmlstd.EscapeString(tone),
+			diameter,
+			bubbleOffset(index),
+			htmlstd.EscapeString(fmt.Sprintf("%s. %s. %s representative tokens. %s", finding.Title, finding.Severity, compactNumber(estimates[index]), detail)),
+		)
+		fmt.Fprintf(&b, `<span class="problem-rank">%d</span>`, index+1)
+		fmt.Fprintf(&b, `<strong>%s</strong>`, htmlstd.EscapeString(finding.Title))
+		fmt.Fprintf(&b, `<span class="problem-meta">%s - %s</span>`, htmlstd.EscapeString(finding.Severity), htmlstd.EscapeString(finding.CostImpact))
+		fmt.Fprintf(&b, `<span class="problem-impact">%s representative tokens</span>`, htmlstd.EscapeString(compactNumber(estimates[index])))
+		fmt.Fprintf(&b, `<p>%s</p>`, htmlstd.EscapeString(findingEvidence(finding.Evidence)))
+		fmt.Fprintf(&b, `<p>%s</p>`, htmlstd.EscapeString(finding.Recommendation))
+		b.WriteString(`</article>`)
+	}
+	b.WriteString(`</div>`)
+	return template.HTML(b.String())
+}
+
+func representativeProblemTokens(finding analyzer.Finding, report analyzer.Report) int {
+	total := report.Metrics.EstimatedTokens
+	if total <= 0 {
+		total = report.AnalysisSignals.InputTokens + report.AnalysisSignals.OutputTokens
+	}
+	if total <= 0 {
+		total = 1000
+	}
+	if finding.Evidence.TokenShare > 0 {
+		return clampRepresentativeTokens(total*finding.Evidence.TokenShare/100, total)
+	}
+	switch finding.ID {
+	case "tool_output_bloat":
+		if report.Metrics.ToolOutputTokens > 0 {
+			return clampRepresentativeTokens(report.Metrics.ToolOutputTokens, total)
+		}
+	case "cache_invalidation_spike":
+		if report.AnalysisSignals.CacheCreationTokens > 0 {
+			return clampRepresentativeTokens(report.AnalysisSignals.CacheCreationTokens, total)
+		}
+	case "args_hashed_retry_loop":
+		return percentageTokens(total, finding.Evidence.Count, 5, 34)
+	case "retry_loop":
+		count := finding.Evidence.Count
+		if count == 0 {
+			count = report.Metrics.RetryDepthMax
+		}
+		return percentageTokens(total, count, 5, 32)
+	case "repeated_file_reads":
+		count := finding.Evidence.Count
+		if count == 0 {
+			count = report.Metrics.Rereads
+		}
+		return percentageTokens(total, count, 3, 38)
+	case "context_growth_spikes":
+		count := finding.Evidence.Count
+		if count == 0 {
+			count = report.Metrics.ContextGrowthEvents
+		}
+		return percentageTokens(total, count, 4, 42)
+	}
+	wasteLow, wasteHigh := normalizedWaste(report.EstimatedWaste)
+	wasteMid := (wasteLow + wasteHigh) / 2
+	if wasteMid <= 0 {
+		wasteMid = 12
+	}
+	return clampRepresentativeTokens(total*wasteMid/100, total)
+}
+
+func percentageTokens(total, count, perCountPct, maxPct int) int {
+	if count <= 0 {
+		count = 1
+	}
+	pct := count * perCountPct
+	if pct > maxPct {
+		pct = maxPct
+	}
+	if pct < 4 {
+		pct = 4
+	}
+	return clampRepresentativeTokens(total*pct/100, total)
+}
+
+func clampRepresentativeTokens(tokens, total int) int {
+	if tokens < 1 {
+		return 1
+	}
+	limit := total
+	if limit < 1 {
+		limit = tokens
+	}
+	if tokens > limit {
+		return limit
+	}
+	return tokens
+}
+
+func bubbleDiameter(tokens, maxTokens int) int {
+	if maxTokens <= 0 {
+		maxTokens = 1
+	}
+	ratio := float64(tokens) / float64(maxTokens)
+	if ratio < 0 {
+		ratio = 0
+	}
+	if ratio > 1 {
+		ratio = 1
+	}
+	return 170 + int(ratio*98)
+}
+
+func bubbleTone(finding analyzer.Finding, index int) string {
+	switch finding.ID {
+	case "tool_output_bloat", "cache_invalidation_spike":
+		return "orange"
+	case "repeated_file_reads", "context_growth_spikes":
+		return "blue"
+	case "retry_loop", "args_hashed_retry_loop":
+		return "green"
+	default:
+		tones := []string{"orange", "blue", "green"}
+		return tones[index%len(tones)]
+	}
+}
+
+func bubbleOffset(index int) int {
+	offsets := []int{0, 28, -8, 18, -18, 10}
+	return offsets[index%len(offsets)]
 }
 
 func timelineChartHTML(points []analyzer.TimelinePoint, waste analyzer.WasteRange) template.HTML {

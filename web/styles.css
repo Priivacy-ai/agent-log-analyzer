@@ -257,26 +257,117 @@ pre {
   color: var(--muted);
 }
 
-#findings {
-  display: grid;
-  gap: 12px;
-  padding-left: 20px;
+.problem-section {
+  grid-column: 1 / -1;
 }
 
-#findings li strong {
-  display: block;
+.problem-bubbles {
+  min-height: 260px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 18px clamp(18px, 3vw, 34px);
+  padding: 12px 0 20px;
 }
 
-#findings li span {
-  display: inline-block;
-  margin: 6px 0;
-  color: var(--orange);
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
-}
-
-#findings li p {
-  margin: 4px 0;
+.problem-bubbles-empty {
+  min-height: 120px;
+  align-items: center;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #080b10;
   color: var(--muted);
+}
+
+.problem-bubble {
+  --bubble-size: 180px;
+  --bubble-offset: 0px;
+  position: relative;
+  width: clamp(158px, var(--bubble-size), 272px);
+  height: clamp(158px, var(--bubble-size), 272px);
+  transform: translateY(var(--bubble-offset));
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 6px;
+  padding: 26px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 999px;
+  color: var(--text);
+  text-align: center;
+  overflow: visible;
+  isolation: isolate;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.04),
+    0 18px 48px rgba(0, 0, 0, 0.36);
+}
+
+.problem-bubble::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  opacity: 0.86;
+  border-radius: inherit;
+}
+
+.problem-bubble::after {
+  content: "";
+  position: absolute;
+  inset: 14%;
+  z-index: -1;
+  border-radius: inherit;
+  background: radial-gradient(circle at 42% 34%, rgba(255, 255, 255, 0.22), transparent 52%);
+}
+
+.problem-bubble-blue::before {
+  background:
+    radial-gradient(circle at 35% 28%, rgba(117, 188, 255, 0.92), rgba(117, 188, 255, 0.14) 52%, rgba(10, 15, 20, 0.82) 100%);
+}
+
+.problem-bubble-orange::before {
+  background:
+    radial-gradient(circle at 35% 28%, rgba(255, 169, 90, 0.94), rgba(255, 169, 90, 0.16) 52%, rgba(10, 15, 20, 0.82) 100%);
+}
+
+.problem-bubble-green::before {
+  background:
+    radial-gradient(circle at 35% 28%, rgba(126, 231, 135, 0.9), rgba(126, 231, 135, 0.14) 52%, rgba(10, 15, 20, 0.82) 100%);
+}
+
+.problem-rank {
+  position: absolute;
+  top: 16px;
+  left: 18px;
+  color: rgba(232, 238, 245, 0.74);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-size: 13px;
+}
+
+.problem-bubble strong {
+  max-width: 100%;
+  color: var(--text);
+  font-size: clamp(14px, 1.4vw, 21px);
+  line-height: 1.08;
+  overflow-wrap: anywhere;
+}
+
+.problem-meta,
+.problem-impact {
+  max-width: 100%;
+  color: var(--text);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-size: 12px;
+  line-height: 1.2;
+}
+
+.problem-impact {
+  color: rgba(232, 238, 245, 0.8);
+}
+
+.problem-bubble p {
+  display: none;
 }
 
 .timeline-caption {
@@ -593,6 +684,14 @@ pre {
   .source-score {
     justify-self: start;
     justify-items: start;
+  }
+
+  .problem-bubbles {
+    justify-content: center;
+  }
+
+  .problem-bubble {
+    transform: none;
   }
 
   .timeline-frame {

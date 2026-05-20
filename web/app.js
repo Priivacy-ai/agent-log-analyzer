@@ -152,11 +152,15 @@ function renderReport(report) {
 
   const findings = document.querySelector("#findings");
   findings.innerHTML = "";
-  for (const finding of report.findings) {
-    findings.appendChild(buildFindingItem(finding));
+  findings.className = "problem-bubbles";
+  const estimates = (report.findings || []).map((finding) => representativeProblemTokens(finding, report));
+  const maxEstimate = Math.max(...estimates, 1);
+  for (const [index, finding] of (report.findings || []).entries()) {
+    findings.appendChild(buildFindingItem(finding, report, index, estimates[index], maxEstimate));
   }
-  if (report.findings.length === 0) {
-    const item = document.createElement("li");
+  if ((report.findings || []).length === 0) {
+    findings.classList.add("problem-bubbles-empty");
+    const item = document.createElement("p");
     item.textContent = "No major deterministic waste pattern detected.";
     findings.appendChild(item);
   }
@@ -184,18 +188,43 @@ function renderReport(report) {
   renderPaidCommandPreview(report);
 }
 
-function buildFindingItem(finding) {
-  const item = document.createElement("li");
+function buildFindingItem(finding, report, index, estimatedTokens, maxEstimate) {
+  const item = document.createElement("article");
+  item.className = `problem-bubble problem-bubble-${bubbleTone(finding, index)}`;
+  item.style.setProperty("--bubble-size", `${bubbleDiameter(estimatedTokens, maxEstimate)}px`);
+  item.style.setProperty("--bubble-offset", `${bubbleOffset(index)}px`);
+  item.setAttribute("role", "listitem");
+  item.setAttribute(
+    "aria-label",
+    [
+      typeof finding?.title === "string" ? finding.title : "Problem",
+      typeof finding?.severity === "string" ? finding.severity : "unknown severity",
+      `${formatCompactNumber(estimatedTokens)} representative tokens`,
+      findingEvidence(finding?.evidence),
+      typeof finding?.recommendation === "string" ? finding.recommendation : "",
+    ].filter(Boolean).join(". "),
+  );
+
+  const rank = document.createElement("span");
+  rank.className = "problem-rank";
+  rank.textContent = String(index + 1);
+  item.appendChild(rank);
 
   const title = document.createElement("strong");
   title.textContent = typeof finding?.title === "string" ? finding.title : "";
   item.appendChild(title);
 
   const meta = document.createElement("span");
+  meta.className = "problem-meta";
   const severity = typeof finding?.severity === "string" ? finding.severity : "unknown";
   const impact = typeof finding?.cost_impact === "string" ? finding.cost_impact : "unknown";
   meta.textContent = `${severity} - ${impact}`;
   item.appendChild(meta);
+
+  const estimate = document.createElement("span");
+  estimate.className = "problem-impact";
+  estimate.textContent = `${formatCompactNumber(estimatedTokens)} representative tokens`;
+  item.appendChild(estimate);
 
   const evidence = document.createElement("p");
   evidence.textContent = findingEvidence(finding?.evidence);
@@ -206,6 +235,72 @@ function buildFindingItem(finding) {
   item.appendChild(recommendation);
 
   return item;
+}
+
+function representativeProblemTokens(finding, report) {
+  const metrics = report?.metrics || {};
+  const signals = report?.analysis_signals || {};
+  let total = numberValue(metrics.estimated_tokens);
+  if (total <= 0) total = numberValue(signals.input_tokens) + numberValue(signals.output_tokens);
+  if (total <= 0) total = 1000;
+  const evidence = finding?.evidence || {};
+  const tokenShare = numberValue(evidence.token_share_pct);
+  if (tokenShare > 0) return clampProblemTokens(Math.round(total * tokenShare / 100), total);
+  const count = numberValue(evidence.count);
+  switch (finding?.id) {
+    case "tool_output_bloat":
+      return clampProblemTokens(numberValue(metrics.tool_output_tokens) || Math.round(total * 0.25), total);
+    case "cache_invalidation_spike":
+      return clampProblemTokens(numberValue(signals.cache_creation_tokens) || Math.round(total * 0.22), total);
+    case "args_hashed_retry_loop":
+      return percentageProblemTokens(total, count, 5, 34);
+    case "retry_loop":
+      return percentageProblemTokens(total, count || numberValue(metrics.retry_depth_max), 5, 32);
+    case "repeated_file_reads":
+      return percentageProblemTokens(total, count || numberValue(metrics.rereads), 3, 38);
+    case "context_growth_spikes":
+      return percentageProblemTokens(total, count || numberValue(metrics.context_growth_events), 4, 42);
+    default: {
+      const wasteRange = normalizeWasteRange(report?.estimated_waste_pct);
+      const wasteMid = Math.max(12, Math.round((wasteRange.low + wasteRange.high) / 2));
+      return clampProblemTokens(Math.round(total * wasteMid / 100), total);
+    }
+  }
+}
+
+function percentageProblemTokens(total, count, perCountPct, maxPct) {
+  const boundedCount = Math.max(1, numberValue(count));
+  const pct = Math.min(maxPct, Math.max(4, boundedCount * perCountPct));
+  return clampProblemTokens(Math.round(total * pct / 100), total);
+}
+
+function clampProblemTokens(tokens, total) {
+  return Math.min(Math.max(1, numberValue(tokens)), Math.max(1, numberValue(total)));
+}
+
+function bubbleDiameter(tokens, maxTokens) {
+  const ratio = Math.min(1, Math.max(0, numberValue(tokens) / Math.max(1, numberValue(maxTokens))));
+  return 170 + Math.round(ratio * 98);
+}
+
+function bubbleTone(finding, index) {
+  switch (finding?.id) {
+    case "tool_output_bloat":
+    case "cache_invalidation_spike":
+      return "orange";
+    case "repeated_file_reads":
+    case "context_growth_spikes":
+      return "blue";
+    case "retry_loop":
+    case "args_hashed_retry_loop":
+      return "green";
+    default:
+      return ["orange", "blue", "green"][index % 3];
+  }
+}
+
+function bubbleOffset(index) {
+  return [0, 28, -8, 18, -18, 10][index % 6];
 }
 
 function renderTimeline(points, estimatedWaste) {
