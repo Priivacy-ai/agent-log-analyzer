@@ -443,6 +443,29 @@ resource "aws_lb_listener" "https" {
   }
 }
 
+resource "aws_lb_listener_rule" "legacy_claude_code_redirect" {
+  count        = var.certificate_arn == "" ? 0 : 1
+  listener_arn = aws_lb_listener.https[0].arn
+  priority     = 10
+
+  action {
+    type = "redirect"
+
+    redirect {
+      host        = "analyzer.spec-kitty.ai"
+      port        = "443"
+      protocol    = "HTTPS"
+      status_code = "HTTP_301"
+    }
+  }
+
+  condition {
+    host_header {
+      values = ["claude-code.spec-kitty.ai"]
+    }
+  }
+}
+
 locals {
   env = [
     { name = "AWS_REGION", value = var.aws_region },
