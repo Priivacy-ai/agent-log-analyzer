@@ -15,35 +15,18 @@ const GeneratorVersion = "0.1.0"
 
 var safeValueRE = regexp.MustCompile(`^[a-z0-9_.:-]+$`)
 
-var publicEcosystemIDs = map[string]map[string]bool{
-	"agent": {
-		"aider": true, "claude_code": true, "cline": true, "codex": true, "continue": true,
-		"copilot": true, "cursor": true, "gemini_cli": true, "opencode": true, "roo": true, "windsurf": true,
-	},
-	"framework": {
-		"agent_sessions": true, "aider": true, "bmad": true, "ccusage": true, "claude_code_hooks": true,
-		"codex_transcript_viewer": true, "context_engineering": true, "openspec": true, "spec_kit": true,
-		"spec_kitty": true, "superpowers": true,
-	},
-	"mcp": {
-		"browser": true, "brave_search": true, "context7": true, "docker": true, "fetch": true,
-		"figma": true, "filesystem": true, "git": true, "github": true, "gitlab": true, "gmail": true,
-		"google_drive": true, "jira": true, "kubernetes": true, "linear": true, "memory": true,
-		"notion": true, "playwright": true, "postgres": true, "puppeteer": true, "sentry": true,
-		"sequential_thinking": true, "slack": true, "supabase": true,
-	},
-	"skill": {
-		"benchmark": true, "design_review": true, "investigate": true, "plan_ceo_review": true,
-		"plan_eng_review": true, "qa": true, "review": true, "security": true, "ship": true,
-	},
-	"plugin": {
-		"browser": true, "canva": true, "figma": true, "github": true, "gmail": true,
-		"google_calendar": true, "google_drive": true, "linear": true, "notion": true, "slack": true,
-	},
-	"package_manager": {
-		"bun": true, "cargo": true, "composer": true, "go": true, "npm": true,
-		"pip": true, "pnpm": true, "poetry": true, "uv": true, "yarn": true,
-	},
+// artifactPrefixToCategory maps the public-artifact prefix space used in
+// SourceSummary.KnownEcosystem to the analyzer's signature-registry
+// category keys (see analyzer.KnownEcosystemIDs). Keeping a single source
+// of truth — the embedded signature registries — prevents drift between
+// the analyzer's allowlist and the paid-artifact allowlist.
+var artifactPrefixToCategory = map[string]string{
+	"agent":           "coding_agent",
+	"framework":       "framework",
+	"mcp":             "mcp",
+	"skill":           "skill",
+	"plugin":          "plugin",
+	"package_manager": "package_manager",
 }
 
 type Options struct {
@@ -559,11 +542,12 @@ func safeKnownEcosystem(ecosystem analyzer.Ecosystem) []string {
 	add("skill", ecosystem.ToolingUtilization.Skill.KnownExposedIDs)
 	add("skill", ecosystem.ToolingUtilization.Skill.KnownExecutedIDs)
 	for _, fp := range ecosystem.WorkflowFingerprints {
-		// Fingerprint IDs come from the SDD detector's allowlist
-		// (internal/analyzer/sdd/), but we still require safePublicID under
-		// the "framework" prefix — that is the closed-enum space where SDD
-		// IDs live.
-		if safePublicID("framework", fp.ID) {
+		// Fingerprint IDs come from the SDD detector registry
+		// (internal/analyzer/sdd/), a separate closed allowlist from the
+		// frameworks-signature registry. Gate against the SDD registry —
+		// not the framework one — and emit under the existing "framework:"
+		// prefix to preserve the public artifact schema.
+		if safeIdentifier(fp.ID) && analyzer.ValidEcosystemID("workflow_fingerprint", fp.ID) {
 			addID("framework:" + fp.ID)
 		}
 	}
@@ -580,7 +564,14 @@ func containsString(values []string, want string) bool {
 }
 
 func safePublicID(prefix, value string) bool {
-	return safeIdentifier(value) && publicEcosystemIDs[prefix][value]
+	if !safeIdentifier(value) {
+		return false
+	}
+	category, ok := artifactPrefixToCategory[prefix]
+	if !ok {
+		return false
+	}
+	return analyzer.ValidEcosystemID(category, value)
 }
 
 func safeIdentifier(value string) bool {

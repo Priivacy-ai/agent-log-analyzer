@@ -308,6 +308,48 @@ func TestGenerate_MergedAggregate_FlowsToArtifact(t *testing.T) {
 	}
 }
 
+// TestGenerate_KnownEcosystem_PreservesAllSDDFingerprints regression-locks
+// the bug where a stale, hand-maintained framework allowlist in the
+// remediation package silently dropped WorkflowFingerprint IDs that existed
+// only in the SDD detector registry (github_spec_kit, kiro, gsd, and later
+// additions) and not in the frameworks-signature registry.
+//
+// The test deliberately derives its fixture from the analyzer registry. That
+// makes future SDD detector additions fail here automatically if paid artifact
+// export drifts away from the single source of truth.
+func TestGenerate_KnownEcosystem_PreservesAllSDDFingerprints(t *testing.T) {
+	sddIDs := analyzer.KnownEcosystemIDs("workflow_fingerprint")
+	if len(sddIDs) == 0 {
+		t.Fatalf("workflow_fingerprint registry is empty")
+	}
+	fps := make([]analyzer.EcosystemFingerprint, 0, len(sddIDs))
+	for id := range sddIDs {
+		fps = append(fps, analyzer.EcosystemFingerprint{
+			ID:         id,
+			Confidence: "high",
+			Sources:    []string{"cli_binary"},
+			Installed:  true,
+		})
+	}
+	report := analyzer.Report{
+		Version:   "0.1.0",
+		Ecosystem: analyzer.Ecosystem{WorkflowFingerprints: fps},
+	}
+	artifact := Generate(report, Options{
+		GeneratedAt: time.Date(2026, 5, 19, 0, 0, 0, 0, time.UTC),
+	})
+	known := map[string]bool{}
+	for _, tok := range artifact.Source.KnownEcosystem {
+		known[tok] = true
+	}
+	for id := range sddIDs {
+		tok := "framework:" + id
+		if !known[tok] {
+			t.Errorf("KnownEcosystem dropped SDD fingerprint %q (got %v)", tok, artifact.Source.KnownEcosystem)
+		}
+	}
+}
+
 // TestGenerateAttachesRecommendation locks the WP02 carry-through: the paid
 // artifact must surface report.Recommendation verbatim under the
 // `recommendation` JSON key, and the field must be omitted when the report

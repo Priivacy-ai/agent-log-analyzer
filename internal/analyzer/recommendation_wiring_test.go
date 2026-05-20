@@ -139,7 +139,12 @@ func TestDeriveToolStateMap(t *testing.T) {
 		{
 			name: "T-F-01 active fingerprint → active_high",
 			report: Report{Ecosystem: Ecosystem{WorkflowFingerprints: []EcosystemFingerprint{
-				{ID: "ccusage", Active: true, Sources: []string{"cli_probe"}, VersionBucket: "recent"},
+				// "cli_binary" is the canonical source enum emitted by the
+				// SDD evaluator (internal/analyzer/sdd). Using the real
+				// value catches the prior regression where the wiring
+				// checked for "cli_probe" — a string the evaluator never
+				// emits — and EvidenceCLIPresence was silently always 0.
+				{ID: "ccusage", Active: true, Sources: []string{"cli_binary"}, VersionBucket: "recent"},
 			}}},
 			want: map[ToolID]wantEntry{
 				"ccusage": {
@@ -153,9 +158,24 @@ func TestDeriveToolStateMap(t *testing.T) {
 			},
 		},
 		{
+			name: "T-F-01 cli_version_probe also counts as CLI presence",
+			report: Report{Ecosystem: Ecosystem{WorkflowFingerprints: []EcosystemFingerprint{
+				{ID: "ccusage", Active: true, Sources: []string{"cli_version_probe"}},
+			}}},
+			want: map[ToolID]wantEntry{
+				"ccusage": {
+					state: ToolStateActiveHigh,
+					sources: map[EvidenceSource]int{
+						EvidenceReportMention: 1,
+						EvidenceCLIPresence:   1,
+					},
+				},
+			},
+		},
+		{
 			name: "T-F-02 installed-inactive fingerprint → installed_medium",
 			report: Report{Ecosystem: Ecosystem{WorkflowFingerprints: []EcosystemFingerprint{
-				{ID: "ccusage", Active: false, Installed: true, Sources: []string{"cli_probe"}},
+				{ID: "ccusage", Active: false, Installed: true, Sources: []string{"cli_binary"}},
 			}}},
 			want: map[ToolID]wantEntry{
 				"ccusage": {
@@ -180,6 +200,57 @@ func TestDeriveToolStateMap(t *testing.T) {
 					},
 				},
 			},
+		},
+		{
+			// T-W-01: ccusage detected via frameworks.json signature only
+			// (no SDD fingerprint, no MCP, no skill record). Must surface
+			// as mentioned_low so the engine can attribute report-mention
+			// evidence rather than treating ccusage as totally absent.
+			name: "T-W-01 WorkflowFrameworks mention → mentioned_low",
+			report: Report{Ecosystem: Ecosystem{
+				WorkflowFrameworks: []string{"ccusage"},
+			}},
+			want: map[ToolID]wantEntry{
+				"ccusage": {
+					state: ToolStateMentionedLow,
+					sources: map[EvidenceSource]int{
+						EvidenceReportMention: 1,
+					},
+				},
+			},
+		},
+		{
+			// T-W-01 must not promote state when a stronger downstream
+			// signal exists. Mention + active MCP → active_high.
+			name: "T-W-01 framework mention loses to active MCP",
+			report: Report{Ecosystem: Ecosystem{
+				WorkflowFrameworks: []string{"ccusage"},
+				ToolingUtilization: ToolingUtilization{
+					MCP: MCPUtilization{
+						KnownServerIDs:       []string{"ccusage"},
+						UniqueKnownCalledIDs: []string{"ccusage"},
+					},
+				},
+			}},
+			want: map[ToolID]wantEntry{
+				"ccusage": {
+					state: ToolStateActiveHigh,
+					sources: map[EvidenceSource]int{
+						EvidenceReportMention: 1,
+						EvidenceMCPActive:     1,
+					},
+				},
+			},
+		},
+		{
+			// T-W-01 must ignore framework IDs not in the token-saving
+			// registry (e.g. spec_kitty exists in frameworks.json but is
+			// not a token-saving tool). No state entry should appear.
+			name: "T-W-01 non-token-saving framework ignored",
+			report: Report{Ecosystem: Ecosystem{
+				WorkflowFrameworks: []string{"spec_kitty"},
+			}},
+			mustEmpty: true,
 		},
 		{
 			name: "T-M-01 MCP active server",
