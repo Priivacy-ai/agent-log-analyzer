@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"errors"
 	"flag"
@@ -14,7 +13,6 @@ import (
 	"path/filepath"
 	"runtime"
 	"sort"
-	"strconv"
 	"strings"
 	"time"
 
@@ -23,6 +21,8 @@ import (
 
 const defaultBaseURL = "https://analyzer.spec-kitty.ai"
 const freeAutoMaxLogBytes = 2 * 1024 * 1024
+const freeAutoMinLogBytes = 4 * 1024
+const freeAutoCandidatePool = 25
 
 func main() {
 	if err := run(os.Args[1:]); err != nil {
@@ -403,7 +403,7 @@ func analyzeDiscovered(candidates []logCandidate, out string, paid bool, printNe
 	if paid {
 		fmt.Printf("Analyzed locally: %d supported agent logs across %d sources (%s)\n", len(candidates), sourceCount(candidates), sourceSummary(candidates))
 	} else {
-		fmt.Printf("Analyzed locally: %d latest bounded-size supported agent log(s) across %d sources (%s)\n", len(candidates), sourceCount(candidates), sourceSummary(candidates))
+		fmt.Printf("Analyzed locally: %d representative recent supported agent log(s) across %d sources (%s)\n", len(candidates), sourceCount(candidates), sourceSummary(candidates))
 	}
 	fmt.Printf("Raw bytes read locally: %d\n", totalBytes)
 	fmt.Printf("Secrets redacted before report write: %d\n", totalRedacted)
@@ -612,14 +612,42 @@ func shortDisplay(value string) string {
 }
 
 func latestSupportedLogs() ([]logCandidate, error) {
-	return recentSupportedLogsWithMaxBytes(1, freeAutoMaxLogBytes)
+	return representativeSupportedLogs()
 }
 
 func recentSupportedLogs(limit int) ([]logCandidate, error) {
-	return recentSupportedLogsWithMaxBytes(limit, 0)
+	return recentSupportedLogsWithBounds(limit, 0, freeAutoMinLogBytes)
 }
 
-func recentSupportedLogsWithMaxBytes(limit int, maxBytes int64) ([]logCandidate, error) {
+func representativeSupportedLogs() ([]logCandidate, error) {
+	candidates, err := recentSupportedLogsWithBounds(freeAutoCandidatePool, freeAutoMaxLogBytes, freeAutoMinLogBytes)
+	if err != nil {
+		return nil, err
+	}
+	selected := make([]logCandidate, 0, 3)
+	for _, sourceID := range []string{"claude_code", "codex", "opencode"} {
+		bestIndex := -1
+		for index := range candidates {
+			if candidates[index].SourceID != sourceID {
+				continue
+			}
+			if bestIndex == -1 ||
+				candidates[index].Size > candidates[bestIndex].Size ||
+				candidates[index].Size == candidates[bestIndex].Size && candidates[index].ModTime.After(candidates[bestIndex].ModTime) {
+				bestIndex = index
+			}
+		}
+		if bestIndex >= 0 {
+			selected = append(selected, candidates[bestIndex])
+		}
+	}
+	if len(selected) == 0 {
+		return nil, errors.New("no supported agent logs found; checked Claude Code, Codex, and OpenCode")
+	}
+	return selected, nil
+}
+
+func recentSupportedLogsWithBounds(limit int, maxBytes int64, minBytes int64) ([]logCandidate, error) {
 	if limit <= 0 {
 		return nil, errors.New("log discovery limit must be greater than zero")
 	}
@@ -644,13 +672,13 @@ func recentSupportedLogsWithMaxBytes(limit int, maxBytes int64) ([]logCandidate,
 		},
 	}
 	for _, source := range fileSources {
-		found, err := recentFileLogs(source.id, source.label, source.root, source.exts, limit, maxBytes)
+		found, err := recentFileLogs(source.id, source.label, source.root, source.exts, limit, maxBytes, minBytes)
 		if err != nil {
 			return nil, err
 		}
 		candidates = append(candidates, found...)
 	}
-	openCode, err := recentOpenCodeSessions(limit)
+	openCode, err := recentOpenCodeSessions(limit, maxBytes, minBytes)
 	if err != nil {
 		return nil, err
 	}
@@ -661,7 +689,7 @@ func recentSupportedLogsWithMaxBytes(limit int, maxBytes int64) ([]logCandidate,
 	return candidates, nil
 }
 
-func recentFileLogs(sourceID, sourceLabel string, rootParts []string, extensions map[string]bool, limit int, maxBytes int64) ([]logCandidate, error) {
+func recentFileLogs(sourceID, sourceLabel string, rootParts []string, extensions map[string]bool, limit int, maxBytes int64, minBytes int64) ([]logCandidate, error) {
 	home, err := os.UserHomeDir()
 	if err != nil {
 		return nil, err
@@ -681,6 +709,9 @@ func recentFileLogs(sourceID, sourceLabel string, rootParts []string, extensions
 			return nil
 		}
 		if maxBytes > 0 && info.Size() > maxBytes {
+			return nil
+		}
+		if minBytes > 0 && info.Size() < minBytes {
 			return nil
 		}
 		matches = append(matches, logMatch{path: path, modTime: info.ModTime(), size: info.Size()})
@@ -720,83 +751,129 @@ type logMatch struct {
 	size    int64
 }
 
-func recentOpenCodeSessions(limit int) ([]logCandidate, error) {
-	if _, err := exec.LookPath("opencode"); err != nil {
-		return nil, nil
-	}
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-	args := []string{"session", "list", "--format", "json", "--max-count", strconv.Itoa(limit)}
-	output, err := exec.CommandContext(ctx, "opencode", args...).Output()
+func recentOpenCodeSessions(limit int, maxBytes int64, minBytes int64) ([]logCandidate, error) {
+	home, err := os.UserHomeDir()
 	if err != nil {
+		return nil, err
+	}
+	root := filepath.Join(home, ".local", "share", "opencode", "storage", "message")
+	entries, err := os.ReadDir(root)
+	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	matches := make([]logMatch, 0, len(entries))
+	for _, entry := range entries {
+		if !entry.IsDir() || !strings.HasPrefix(entry.Name(), "ses_") {
+			continue
+		}
+		path := filepath.Join(root, entry.Name())
+		size, modTime, err := openCodeSessionStats(path)
+		if err != nil || size == 0 {
+			continue
+		}
+		if maxBytes > 0 && size > maxBytes {
+			continue
+		}
+		if minBytes > 0 && size < minBytes {
+			continue
+		}
+		matches = append(matches, logMatch{path: path, modTime: modTime, size: size})
+	}
+	if len(matches) == 0 {
 		return nil, nil
 	}
-	ids := openCodeSessionIDs(output, limit)
-	candidates := make([]logCandidate, 0, len(ids))
-	for _, id := range ids {
-		sessionID := id
+	sort.Slice(matches, func(i, j int) bool {
+		if matches[i].modTime.Equal(matches[j].modTime) {
+			return matches[i].path > matches[j].path
+		}
+		return matches[i].modTime.After(matches[j].modTime)
+	})
+	if limit > 0 && len(matches) > limit {
+		matches = matches[:limit]
+	}
+	candidates := make([]logCandidate, 0, len(matches))
+	for _, match := range matches {
+		sessionPath := match.path
+		sessionID := filepath.Base(sessionPath)
 		candidates = append(candidates, logCandidate{
 			SourceID:    "opencode",
 			SourceLabel: "OpenCode",
 			Display:     "opencode session " + sessionID,
+			ModTime:     match.modTime,
+			Size:        match.size,
 			Read: func() ([]byte, error) {
-				ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
-				defer cancel()
-				return exec.CommandContext(ctx, "opencode", "export", sessionID).Output()
+				return readOpenCodeSessionMessages(sessionPath)
 			},
 		})
 	}
 	return candidates, nil
 }
 
-func openCodeSessionIDs(data []byte, limit int) []string {
-	var decoded any
-	if err := json.Unmarshal(data, &decoded); err != nil {
+func openCodeSessionStats(path string) (int64, time.Time, error) {
+	var total int64
+	var latest time.Time
+	err := filepath.WalkDir(path, func(filePath string, entry os.DirEntry, err error) error {
+		if err != nil {
+			return nil
+		}
+		if entry.IsDir() || strings.ToLower(filepath.Ext(filePath)) != ".json" {
+			return nil
+		}
+		info, err := entry.Info()
+		if err != nil {
+			return nil
+		}
+		total += info.Size()
+		if info.ModTime().After(latest) {
+			latest = info.ModTime()
+		}
 		return nil
-	}
-	var ids []string
-	seen := map[string]bool{}
-	var collect func(any)
-	collect = func(value any) {
-		if limit > 0 && len(ids) >= limit {
-			return
-		}
-		switch typed := value.(type) {
-		case []any:
-			for _, item := range typed {
-				collect(item)
-				if limit > 0 && len(ids) >= limit {
-					return
-				}
-			}
-		case map[string]any:
-			if id := sessionIDFromMap(typed); id != "" && !seen[id] {
-				seen[id] = true
-				ids = append(ids, id)
-			}
-			for _, key := range []string{"sessions", "data", "items", "results"} {
-				if nested, ok := typed[key]; ok {
-					collect(nested)
-				}
-			}
-		}
-	}
-	collect(decoded)
-	return ids
+	})
+	return total, latest, err
 }
 
-func sessionIDFromMap(value map[string]any) string {
-	for _, key := range []string{"id", "sessionID", "sessionId", "session_id"} {
-		raw, ok := value[key]
-		if !ok {
+func readOpenCodeSessionMessages(path string) ([]byte, error) {
+	var files []logMatch
+	err := filepath.WalkDir(path, func(filePath string, entry os.DirEntry, err error) error {
+		if err != nil {
+			return nil
+		}
+		if entry.IsDir() || strings.ToLower(filepath.Ext(filePath)) != ".json" {
+			return nil
+		}
+		info, err := entry.Info()
+		if err != nil {
+			return nil
+		}
+		files = append(files, logMatch{path: filePath, modTime: info.ModTime(), size: info.Size()})
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	sort.Slice(files, func(i, j int) bool {
+		if files[i].modTime.Equal(files[j].modTime) {
+			return files[i].path < files[j].path
+		}
+		return files[i].modTime.Before(files[j].modTime)
+	})
+	var output bytes.Buffer
+	for _, file := range files {
+		data, err := os.ReadFile(file.path)
+		if err != nil {
+			return nil, err
+		}
+		trimmed := bytes.TrimSpace(data)
+		if len(trimmed) == 0 {
 			continue
 		}
-		id, ok := raw.(string)
-		if ok && strings.TrimSpace(id) != "" {
-			return strings.TrimSpace(id)
-		}
+		output.Write(trimmed)
+		output.WriteByte('\n')
 	}
-	return ""
+	return output.Bytes(), nil
 }
 
 func sourceCount(candidates []logCandidate) int {

@@ -26,10 +26,24 @@ const sampleJSONL = `{"type":"user","message":"hello"}
 func writeSampleLog(t *testing.T, dir string) string {
 	t.Helper()
 	path := filepath.Join(dir, "sample.jsonl")
-	if err := os.WriteFile(path, []byte(sampleJSONL), 0o600); err != nil {
+	writeLogContent(t, path, sampleJSONL)
+	return path
+}
+
+func writeMeaningfulLog(t *testing.T, path string) {
+	t.Helper()
+	var builder strings.Builder
+	for builder.Len() < freeAutoMinLogBytes+1024 {
+		builder.WriteString(sampleJSONL)
+	}
+	writeLogContent(t, path, builder.String())
+}
+
+func writeLogContent(t *testing.T, path string, content string) {
+	t.Helper()
+	if err := os.WriteFile(path, []byte(content), 0o600); err != nil {
 		t.Fatalf("write sample log: %v", err)
 	}
-	return path
 }
 
 func withLatestShim(t *testing.T, path string) {
@@ -142,9 +156,7 @@ func TestRecentSupportedLogs_LimitsPerSource(t *testing.T) {
 		filepath.Join(codexRoot, "new.jsonl"),
 	}
 	for index, path := range paths {
-		if err := os.WriteFile(path, []byte(sampleJSONL), 0o600); err != nil {
-			t.Fatalf("write log: %v", err)
-		}
+		writeMeaningfulLog(t, path)
 		mtime := time.Unix(int64(100+index), 0)
 		if err := os.Chtimes(path, mtime, mtime); err != nil {
 			t.Fatalf("chtimes: %v", err)
@@ -176,12 +188,8 @@ func TestLatestSupportedLogs_SkipsOversizedFreeAutoLogs(t *testing.T) {
 	}
 	small := filepath.Join(codexRoot, "small.jsonl")
 	huge := filepath.Join(codexRoot, "huge.jsonl")
-	if err := os.WriteFile(small, []byte(sampleJSONL), 0o600); err != nil {
-		t.Fatalf("write small log: %v", err)
-	}
-	if err := os.WriteFile(huge, []byte(sampleJSONL), 0o600); err != nil {
-		t.Fatalf("write huge log: %v", err)
-	}
+	writeMeaningfulLog(t, small)
+	writeMeaningfulLog(t, huge)
 	if err := os.Truncate(huge, freeAutoMaxLogBytes+1); err != nil {
 		t.Fatalf("truncate huge log: %v", err)
 	}
@@ -200,6 +208,75 @@ func TestLatestSupportedLogs_SkipsOversizedFreeAutoLogs(t *testing.T) {
 	}
 	if len(candidates) != 1 || filepath.Base(candidates[0].Display) != "small.jsonl" {
 		t.Fatalf("expected oversized newest log to be skipped for free auto scan, got %#v", candidates)
+	}
+}
+
+func TestLatestSupportedLogs_PrefersLargestRecentMeaningfulLog(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	t.Setenv("PATH", "")
+	root := filepath.Join(home, ".claude", "projects", "repo")
+	if err := os.MkdirAll(root, 0o700); err != nil {
+		t.Fatalf("mkdir claude: %v", err)
+	}
+	tinyNewest := filepath.Join(root, "tiny-newest.jsonl")
+	smaller := filepath.Join(root, "smaller.jsonl")
+	larger := filepath.Join(root, "larger.jsonl")
+	writeLogContent(t, tinyNewest, "{}\n")
+	writeMeaningfulLog(t, smaller)
+	writeMeaningfulLog(t, larger)
+	if err := os.Truncate(smaller, freeAutoMinLogBytes+512); err != nil {
+		t.Fatalf("truncate smaller: %v", err)
+	}
+	if err := os.Truncate(larger, freeAutoMinLogBytes+4096); err != nil {
+		t.Fatalf("truncate larger: %v", err)
+	}
+	for path, modTime := range map[string]time.Time{
+		smaller:    time.Unix(100, 0),
+		larger:     time.Unix(200, 0),
+		tinyNewest: time.Unix(300, 0),
+	} {
+		if err := os.Chtimes(path, modTime, modTime); err != nil {
+			t.Fatalf("chtimes %s: %v", path, err)
+		}
+	}
+
+	candidates, err := latestSupportedLogs()
+	if err != nil {
+		t.Fatalf("latestSupportedLogs: %v", err)
+	}
+	if len(candidates) != 1 || filepath.Base(candidates[0].Display) != "larger.jsonl" {
+		t.Fatalf("expected largest meaningful recent Claude log, got %#v", candidates)
+	}
+}
+
+func TestRecentOpenCodeSessions_ReadsMessageDirectoriesAndSkipsTinySessions(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	root := filepath.Join(home, ".local", "share", "opencode", "storage", "message")
+	tiny := filepath.Join(root, "ses_tiny")
+	big := filepath.Join(root, "ses_big")
+	for _, dir := range []string{tiny, big} {
+		if err := os.MkdirAll(dir, 0o700); err != nil {
+			t.Fatalf("mkdir opencode session: %v", err)
+		}
+	}
+	writeLogContent(t, filepath.Join(tiny, "msg_1.json"), "{}")
+	writeMeaningfulLog(t, filepath.Join(big, "msg_1.json"))
+
+	candidates, err := recentOpenCodeSessions(10, 0, freeAutoMinLogBytes)
+	if err != nil {
+		t.Fatalf("recentOpenCodeSessions: %v", err)
+	}
+	if len(candidates) != 1 || candidates[0].Display != "opencode session ses_big" {
+		t.Fatalf("expected only meaningful OpenCode message session, got %#v", candidates)
+	}
+	data, err := candidates[0].readBytes()
+	if err != nil {
+		t.Fatalf("read opencode session: %v", err)
+	}
+	if !strings.HasSuffix(string(data), "\n") || !strings.Contains(string(data), `"type":"user"`) {
+		t.Fatalf("expected JSONL message output, got %q", string(data[:min(len(data), 80)]))
 	}
 }
 
