@@ -78,9 +78,12 @@ first npm launch. Start public npm distribution with `v0.1.2` or newer.
    `checksums.txt`.
 4. The release workflow also builds npm package binaries and publishes
    `agent-analyzer` to npm with provenance. For the first publish of an
-   unclaimed package, add a short-lived npm automation token as the GitHub
-   `NPM_TOKEN` secret. After the package exists, configure npm Trusted
-   Publishing for `release.yml` and remove the token secret.
+   unclaimed package, add a short-lived granular npm token with read/write
+   package access and "Bypass 2FA" enabled as the GitHub `NPM_TOKEN` secret.
+   A token without 2FA bypass will fail non-interactive publishing even when
+   the package build and provenance generation succeed. After the package
+   exists, configure npm Trusted Publishing for `release.yml` and remove the
+   token secret.
 5. Review the draft, checksum asset, changelog, npm package page, and install
    commands before broad launch.
 
