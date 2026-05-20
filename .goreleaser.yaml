@@ -1,0 +1,109 @@
+version: 2
+
+project_name: claude-analyzer
+
+before:
+  hooks:
+    - go mod download
+
+builds:
+  - id: claude-analyzer
+    main: ./cmd/claude-analyzer
+    binary: claude-analyzer
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - darwin
+      - linux
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    ignore:
+      - goos: windows
+        goarch: arm64
+    ldflags:
+      - -s -w
+      - -X main.version={{ .Version }}
+      - -X main.commit={{ .Commit }}
+      - -X main.date={{ .Date }}
+
+archives:
+  - id: cli
+    ids:
+      - claude-analyzer
+    name_template: >-
+      {{ .ProjectName }}_
+      {{- .Version }}_
+      {{- .Os }}_
+      {{- .Arch }}
+    formats:
+      - tar.gz
+    format_overrides:
+      - goos: windows
+        formats:
+          - zip
+    files:
+      - README.md
+      - LICENSE
+      - docs/distribution.md
+
+checksum:
+  name_template: checksums.txt
+  algorithm: sha256
+
+snapshot:
+  version_template: "{{ incpatch .Version }}-snapshot-{{ .ShortCommit }}"
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+
+release:
+  github:
+    owner: robertDouglass
+    name: claude-log-analyzer
+  draft: true
+  prerelease: auto
+  name_template: "{{ .ProjectName }} {{ .Tag }}"
+  footer: |
+    Release provenance:
+    - Source: https://github.com/robertDouglass/claude-log-analyzer
+    - Commit: {{ .Commit }}
+    - Checksums: checksums.txt
+
+brews:
+  - name: claude-analyzer
+    repository:
+      owner: robertDouglass
+      name: homebrew-claude-log-analyzer
+      branch: main
+      token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
+    commit_author:
+      name: goreleaserbot
+      email: bot@goreleaser.com
+    homepage: https://github.com/robertDouglass/claude-log-analyzer
+    description: Local-first Claude Code log profiler that uploads sanitized reports only.
+    license: Proprietary
+    directory: Formula
+    install: |
+      bin.install "claude-analyzer"
+    test: |
+      system "#{bin}/claude-analyzer", "version"
+
+scoops:
+  - name: claude-analyzer
+    repository:
+      owner: robertDouglass
+      name: scoop-claude-log-analyzer
+      branch: main
+      token: "{{ .Env.SCOOP_BUCKET_GITHUB_TOKEN }}"
+    commit_author:
+      name: goreleaserbot
+      email: bot@goreleaser.com
+    homepage: https://github.com/robertDouglass/claude-log-analyzer
+    description: Local-first Claude Code log profiler that uploads sanitized reports only.
+    license: Proprietary

@@ -12,6 +12,7 @@
       <p class="eyebrow">security</p>
       <h1>Raw Claude Code logs stay on your machine.</h1>
       <p class="subhead">The launch flow is local-first: parse, redact, and summarize locally; upload only the sanitized report JSON you can inspect first.</p>
+      <p class="subhead">Claude Log Analyzer is an independent third-party tool and is not affiliated with Anthropic.</p>
 
       <section class="panel">
         <h2>Data Flow</h2>
@@ -30,6 +31,7 @@
           <li>No browser file picker and no hidden access to `~/.claude`.</li>
           <li>No one-time bearer token pasted into a web-provided shell snippet for the public flow.</li>
           <li>No raw transcript is sent to an LLM.</li>
+          <li>No raw Claude Code JSONL logs are received by the public web flow.</li>
           <li>No model tools, browsing, shell, filesystem, memory, or MCP access are used for interpretation.</li>
           <li>Server intake is bounded to sanitized report JSON and rejects reports that claim raw transcript LLM exposure.</li>
           <li>Operational logs are allowlisted to metadata, timings, status, buckets, and error categories.</li>

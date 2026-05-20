@@ -86,7 +86,7 @@ PAID_SESSION=$(curl -fsS \
   -X POST \
   -H "Content-Type: application/json" \
   --data '{"waiver_accepted":true,"acknowledgment":"I accept at my own risk"}' \
-  http://127.0.0.1:8080/api/paid-sessions)
+  'http://127.0.0.1:8080/api/paid-sessions?legacy_raw_bundle=1')
 PAID_JOB_ID=$(echo "$PAID_SESSION" | sed -n 's/.*"job_id":"\([^"]*\)".*/\1/p')
 PAID_TOKEN=$(echo "$PAID_SESSION" | sed -n 's/.*"token":"\([^"]*\)".*/\1/p')
 PAID_REPORT_PATH=$(echo "$PAID_SESSION" | sed -n 's/.*"report_path":"\([^"]*\)".*/\1/p')

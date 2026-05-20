@@ -41,14 +41,18 @@ copyPaidCommandButton?.addEventListener("click", () => copyText(paidCommand.text
 
 unlockPaidButton?.addEventListener("click", async () => {
   unlockPaidButton.disabled = true;
-  paidStatus.textContent = "creating waiver-gated paid scan token";
+  paidStatus.textContent = "creating waiver-gated paid scan commands";
   try {
     const session = await createPaidSession();
     paidCommand.textContent = session.prompt;
     copyPaidCommandButton.hidden = false;
-    paidStatus.textContent =
-      `paid token expires ${new Date(session.expires_at).toLocaleTimeString()} - review this legacy command before running it`;
-    pollPaidJob(session.job_id, session.report_path);
+    if (session.job_id && session.report_path) {
+      paidStatus.textContent =
+        `paid token expires ${new Date(session.expires_at).toLocaleTimeString()} - review these commands before running them`;
+      pollPaidJob(session.job_id, session.report_path);
+    } else {
+      paidStatus.textContent = "review these local-first commands; they upload only the sanitized aggregate JSON";
+    }
   } catch (error) {
     paidStatus.textContent = `could not unlock paid scan: ${error.message}`;
     unlockPaidButton.disabled = false;
@@ -65,8 +69,10 @@ async function createSession() {
 
 function analyzeCommand() {
   return [
-    "go install \\",
-    "  github.com/robertdouglass/claude-log-analyzer/cmd/claude-analyzer@v0.1.0",
+    "# Install claude-analyzer from a GitHub Release archive first:",
+    "# https://github.com/robertDouglass/claude-log-analyzer/releases",
+    "# Verify checksums.txt, then confirm provenance:",
+    "claude-analyzer version",
     "# omit the path to use the latest log under ~/.claude/projects/,",
     "# or pass a path positionally (--log <path> also works):",
     "claude-analyzer analyze --out ./claude-analyzer-report.json",
@@ -76,7 +82,7 @@ function analyzeCommand() {
 function uploadCommand() {
   const baseURL = window.location.origin && window.location.origin !== "null"
     ? window.location.origin
-    : "https://claude-code.spec-kitty.ai";
+    : "https://analyzer.spec-kitty.ai";
   return [
     "jq . ./claude-analyzer-report.json",
     "claude-analyzer upload \\",
@@ -128,7 +134,7 @@ async function pollPaidJob(jobID, reportPath) {
     if (job.status === "uploading") {
       paidStatus.textContent = "waiting for paid scan upload";
     } else if (job.status === "pending" || job.status === "processing") {
-      paidStatus.textContent = "analyzing paid scan bundle";
+      paidStatus.textContent = "analyzing sanitized paid scan report";
     } else if (job.status === "completed") {
       paidStatus.innerHTML = `paid report ready: <a href="${reportPath}">${reportPath}</a>`;
       return;
@@ -807,7 +813,7 @@ function renderPaidCommandPreview(report) {
     const upsellCopy = document.querySelectorAll(".upsell p");
     if (upsellCopy[0]) {
       upsellCopy[0].textContent =
-        "Your paid bundle scan is complete. The optimization plugin below is generated from sanitized aggregate findings and vetted tooling recommendations.";
+        "Your paid scan is complete. The optimization plugin below is generated from sanitized aggregate findings and vetted tooling recommendations.";
     }
     if (upsellCopy[1]) {
       upsellCopy[1].textContent =
