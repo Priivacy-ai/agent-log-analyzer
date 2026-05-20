@@ -60,7 +60,15 @@
         </div>
         <div>
           <h2>Session Timeline</h2>
-          <div id="timeline" class="timeline"></div>
+          <p id="timeline-caption" class="timeline-caption">Estimated context size by turn. Hover or focus a bar for exact metrics.</p>
+          <div class="timeline-frame">
+            <div class="timeline-y-axis" aria-hidden="true">
+              <span id="timeline-y-max">max</span>
+              <span>0</span>
+            </div>
+            <div id="timeline" class="timeline" aria-describedby="timeline-caption"></div>
+          </div>
+          <div id="timeline-x-axis" class="timeline-x-axis" aria-hidden="true"></div>
         </div>
         <div>
           <h2>Suggested Immediate Fixes</h2>

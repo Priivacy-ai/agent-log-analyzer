@@ -263,7 +263,34 @@ pre {
   color: var(--muted);
 }
 
+.timeline-caption {
+  margin: -4px 0 8px;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.timeline-frame {
+  display: grid;
+  grid-template-columns: 64px 1fr;
+  gap: 10px;
+  align-items: stretch;
+}
+
+.timeline-y-axis {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: end;
+  padding: 12px 0;
+  color: var(--muted);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-size: 12px;
+  text-align: right;
+}
+
 .timeline {
+  position: relative;
   height: 160px;
   display: flex;
   align-items: end;
@@ -274,10 +301,72 @@ pre {
   background: #080b10;
 }
 
-.timeline span {
+.timeline-bar {
+  position: relative;
   flex: 1;
   min-width: 3px;
   background: linear-gradient(to top, var(--orange), var(--blue));
+  border: 0;
+  outline: 0;
+}
+
+.timeline-bar:hover,
+.timeline-bar:focus {
+  background: linear-gradient(to top, #ffbf7a, #9ad0ff);
+}
+
+.timeline-bar:focus {
+  box-shadow: 0 0 0 2px #080b10, 0 0 0 4px var(--green);
+}
+
+.timeline-bar:hover::after,
+.timeline-bar:focus::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  z-index: 2;
+  left: 50%;
+  top: 8px;
+  width: max-content;
+  max-width: min(360px, calc(100vw - 48px));
+  transform: translateX(-50%);
+  padding: 6px 8px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: #d8dee4;
+  color: #24292f;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-size: 12px;
+  line-height: 1.35;
+  white-space: normal;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
+}
+
+.timeline-bar:first-child::after {
+  left: 0;
+  transform: none;
+}
+
+.timeline-bar:last-child::after {
+  right: 0;
+  left: auto;
+  transform: none;
+}
+
+.timeline-x-axis {
+  display: flex;
+  justify-content: space-between;
+  margin: 6px 0 0 74px;
+  color: var(--muted);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-size: 12px;
+}
+
+.timeline-tick-middle {
+  text-align: center;
+}
+
+.timeline-tick-last {
+  text-align: right;
 }
 
 .upsell {

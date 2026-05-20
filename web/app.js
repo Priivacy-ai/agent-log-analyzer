@@ -214,18 +214,78 @@ function buildFindingItem(finding) {
 
 function renderTimeline(points) {
   const chart = document.querySelector("#timeline");
+  const yMax = document.querySelector("#timeline-y-max");
+  const xAxis = document.querySelector("#timeline-x-axis");
   chart.innerHTML = "";
+  if (xAxis) xAxis.replaceChildren();
   if (points.length === 0) {
     chart.textContent = "No timeline points detected.";
+    chart.removeAttribute("aria-label");
+    if (yMax) yMax.textContent = "max";
     return;
   }
-  const maxTokens = Math.max(...points.map((point) => point.estimated_tokens), 1);
-  for (const point of points.slice(-60)) {
+  const visiblePoints = points.slice(-60);
+  const maxTokens = Math.max(...visiblePoints.map((point) => numberValue(point.estimated_tokens)), 1);
+  const firstTurn = numberValue(visiblePoints[0]?.turn);
+  const lastTurn = numberValue(visiblePoints[visiblePoints.length - 1]?.turn);
+  chart.setAttribute(
+    "aria-label",
+    `Session timeline showing estimated context growth from turn ${firstTurn} to turn ${lastTurn}; maximum ${formatNumber(maxTokens)} estimated tokens.`,
+  );
+  if (yMax) yMax.textContent = `${formatCompactNumber(maxTokens)} tokens`;
+  for (const point of visiblePoints) {
     const bar = document.createElement("span");
-    bar.style.height = `${Math.max(4, (point.estimated_tokens / maxTokens) * 100)}%`;
-    bar.title = `turn ${point.turn}: ${point.estimated_tokens} estimated tokens`;
+    const estimatedTokens = numberValue(point.estimated_tokens);
+    const tooltip = [
+      `turn ${numberValue(point.turn)}`,
+      `${formatNumber(estimatedTokens)} estimated tokens`,
+      `${formatNumber(numberValue(point.tool_tokens))} tool-output tokens`,
+      `${formatNumber(numberValue(point.rereads))} rereads`,
+      `${formatNumber(numberValue(point.retries))} retries`,
+    ].join(" | ");
+    bar.className = "timeline-bar";
+    bar.style.height = `${Math.max(4, (estimatedTokens / maxTokens) * 100)}%`;
+    bar.title = tooltip;
+    bar.dataset.tooltip = tooltip;
+    bar.tabIndex = 0;
+    bar.setAttribute("role", "img");
+    bar.setAttribute("aria-label", tooltip);
     chart.appendChild(bar);
   }
+  renderTimelineAxis(xAxis, visiblePoints);
+}
+
+function renderTimelineAxis(axis, visiblePoints) {
+  if (!axis || visiblePoints.length === 0) return;
+  const first = visiblePoints[0];
+  const middle = visiblePoints[Math.floor((visiblePoints.length - 1) / 2)];
+  const last = visiblePoints[visiblePoints.length - 1];
+  const ticks = [
+    { key: "first", label: `turn ${numberValue(first.turn)}` },
+    { key: "middle", label: `turn ${numberValue(middle.turn)}` },
+    { key: "last", label: `turn ${numberValue(last.turn)}` },
+  ].filter((tick, index, all) => all.findIndex((item) => item.label === tick.label) === index);
+  for (const tick of ticks) {
+    const item = document.createElement("span");
+    item.className = `timeline-tick timeline-tick-${tick.key}`;
+    item.textContent = tick.label;
+    axis.appendChild(item);
+  }
+}
+
+function numberValue(value) {
+  return Number.isFinite(Number(value)) ? Number(value) : 0;
+}
+
+function formatNumber(value) {
+  return new Intl.NumberFormat("en-US").format(numberValue(value));
+}
+
+function formatCompactNumber(value) {
+  return new Intl.NumberFormat("en-US", {
+    notation: "compact",
+    maximumFractionDigits: 1,
+  }).format(numberValue(value));
 }
 
 function renderWorkflowFingerprints(report) {
