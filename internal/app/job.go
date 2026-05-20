@@ -22,6 +22,9 @@ type Job struct {
 	ID                   string    `json:"id"`
 	Status               JobStatus `json:"status"`
 	ScanType             ScanType  `json:"scan_type,omitempty"`
+	PaymentProvider      string    `json:"payment_provider,omitempty"`
+	PaymentSessionID     string    `json:"payment_session_id,omitempty"`
+	PaymentStatus        string    `json:"payment_status,omitempty"`
 	UploadPath           string    `json:"upload_path"`
 	MaxUploadBytes       int64     `json:"max_upload_bytes,omitempty"`
 	UploadTokenHash      string    `json:"upload_token_hash,omitempty"`
