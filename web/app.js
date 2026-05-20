@@ -317,9 +317,9 @@ function renderWorkflowFingerprints(report) {
 // Token-saving recommendation rendering — kitty-specs/token-saving-recommendation-phase-b-01KS0JZ4.
 //
 // Every text node is composed via textContent from allowlisted enum values
-// produced by internal/analyzer/token_saving_*.go. The engine guarantees
-// enum-only IDs, so the fallback to the raw value below is defense in depth
-// (FR-009) and should never fire in practice.
+// produced by internal/analyzer/token_saving_*.go. Unknown values are never
+// echoed into the DOM; that keeps this renderer privacy-safe even if it is
+// handed malformed report JSON.
 
 const TOOL_LABEL = {
   ccusage: "ccusage",
@@ -412,6 +412,10 @@ function savingsBucket(report) {
   return "high";
 }
 
+function labelFrom(table, value, fallback) {
+  return typeof value === "string" && Object.hasOwn(table, value) ? table[value] : fallback;
+}
+
 function renderRecommendation(report) {
   const section = document.querySelector("#recommendation-section");
   const primaryRoot = document.querySelector("#recommendation-primary");
@@ -478,18 +482,21 @@ function buildRecommendationCard(rec, savingsBucketValue) {
   const card = document.createElement("div");
   card.className = "recommendation-card";
 
-  // Tool label (allowlisted; fallback to raw enum string per defense in depth).
+  // Tool label. Advisory recommendations intentionally carry an empty
+  // PrimaryToolID; render those as actions instead of blank tool cards.
   const toolID = typeof rec.primary_tool_id === "string" ? rec.primary_tool_id : "";
   const toolEl = document.createElement("div");
   toolEl.className = "recommendation-tool";
-  toolEl.textContent = TOOL_LABEL[toolID] ?? toolID;
+  toolEl.textContent = toolID.length > 0
+    ? labelFrom(TOOL_LABEL, toolID, "Unknown tool")
+    : advisoryRecommendationLabel(rec);
   card.appendChild(toolEl);
 
   // Optional savings-bucket badge (Primary only).
   if (typeof savingsBucketValue === "string" && savingsBucketValue.length > 0) {
     const savings = document.createElement("span");
     savings.className = "recommendation-savings-bucket";
-    savings.textContent = SAVINGS_BUCKET_LABEL[savingsBucketValue] ?? savingsBucketValue;
+    savings.textContent = labelFrom(SAVINGS_BUCKET_LABEL, savingsBucketValue, "Estimated savings");
     card.appendChild(savings);
   }
 
@@ -499,25 +506,25 @@ function buildRecommendationCard(rec, savingsBucketValue) {
   const reason = typeof rec.reason === "string" ? rec.reason : "";
   const reasonEl = document.createElement("span");
   reasonEl.className = "recommendation-reason";
-  reasonEl.textContent = REASON_LABEL[reason] ?? reason;
+  reasonEl.textContent = labelFrom(REASON_LABEL, reason, "Unknown reason");
   meta.appendChild(reasonEl);
 
   const confidence = typeof rec.confidence === "string" ? rec.confidence : "";
   const confidenceEl = document.createElement("span");
   confidenceEl.className = "recommendation-confidence";
-  confidenceEl.textContent = CONFIDENCE_LABEL[confidence] ?? confidence;
+  confidenceEl.textContent = labelFrom(CONFIDENCE_LABEL, confidence, "Unknown confidence");
   meta.appendChild(confidenceEl);
 
   const risk = typeof rec.risk_level === "string" ? rec.risk_level : "";
   const riskEl = document.createElement("span");
   riskEl.className = "recommendation-risk";
-  riskEl.textContent = RISK_LABEL[risk] ?? risk;
+  riskEl.textContent = labelFrom(RISK_LABEL, risk, "Unknown risk");
   meta.appendChild(riskEl);
 
   const policy = typeof rec.install_policy === "string" ? rec.install_policy : "";
   const policyEl = document.createElement("span");
   policyEl.className = "recommendation-policy";
-  policyEl.textContent = POLICY_LABEL[policy] ?? policy;
+  policyEl.textContent = labelFrom(POLICY_LABEL, policy, "Unknown policy");
   meta.appendChild(policyEl);
 
   card.appendChild(meta);
@@ -532,13 +539,25 @@ function buildRecommendationCard(rec, savingsBucketValue) {
       if (id.length === 0) continue;
       const chip = document.createElement("li");
       chip.className = "recommendation-signal";
-      chip.textContent = SIGNAL_LABEL[id] ?? id;
+      chip.textContent = labelFrom(SIGNAL_LABEL, id, "Unknown signal");
       signalList.appendChild(chip);
     }
     card.appendChild(signalList);
   }
 
   return card;
+}
+
+function advisoryRecommendationLabel(rec) {
+  const reason = typeof rec.reason === "string" ? rec.reason : "";
+  const signals = Array.isArray(rec.signal_ids) ? rec.signal_ids : [];
+  if (reason === "prune_first" || signals.includes("mcp_skill_bloat")) {
+    return "Prune / lazy-load MCPs and skills";
+  }
+  if (reason === "audit_config" || signals.includes("retry_loop") || signals.includes("context_growth_spikes")) {
+    return "Session hygiene audit";
+  }
+  return "Tooling recommendation";
 }
 
 // The four allowlisted advice IDs are emitted by internal/analyzer/analyzer.go:368-394.
