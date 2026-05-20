@@ -345,6 +345,89 @@ func TestClientReportUploadRejectsUnsafeReceipt(t *testing.T) {
 	}
 }
 
+func TestPaidClientReportUploadStoresSanitizedAggregateAndArtifactWorks(t *testing.T) {
+	t.Setenv("CLAUDE_ANALYZER_ENABLE_LOCAL_PAID_SESSIONS", "true")
+	store, err := localstore.New(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	report := paidAggregateReport()
+	body, err := json.Marshal(report)
+	if err != nil {
+		t.Fatal(err)
+	}
+	req := httptest.NewRequest(http.MethodPost, "/api/paid-client-reports", bytes.NewReader(body))
+	req.Host = "example.test"
+	req.Header.Set("X-Waiver-Accepted", "true")
+	req.Header.Set("X-Waiver-Acknowledgment", "I accept at my own risk")
+	rec := httptest.NewRecorder()
+
+	createPaidClientReportHandler(store, 15*time.Minute).ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusCreated {
+		t.Fatalf("expected paid report status 201, got %d: %s", rec.Code, rec.Body.String())
+	}
+	var session analysisSessionResponse
+	if err := json.Unmarshal(rec.Body.Bytes(), &session); err != nil {
+		t.Fatalf("response is not valid session JSON: %v", err)
+	}
+	if session.Token != "" || session.UploadPath != "" || !strings.Contains(session.ReportURL, "/r/") {
+		t.Fatalf("expected report-only paid response, got %#v", session)
+	}
+	job, err := store.GetJob(session.JobID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if job.ScanType != app.ScanTypePaidBundle || job.Status != app.StatusCompleted || job.UploadPath != "" || job.WaiverAcceptedAt.IsZero() {
+		t.Fatalf("expected completed waiver-gated paid report job without upload path, got %#v", job)
+	}
+	stored, err := store.GetReport(session.JobID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if stored.AggregateEvent.ParserType != "paid_bundle" || stored.SecurityReceipt.RawLogTTL != "not uploaded" {
+		t.Fatalf("stored paid report is not sanitized aggregate: %#v", stored)
+	}
+
+	artifactReq := httptest.NewRequest(http.MethodGet, "/api/public-artifacts/"+session.JobID+"/token/plugin.zip", nil)
+	artifactReq.Host = "example.test"
+	artifactReq.SetPathValue("id", session.JobID)
+	artifactReq.SetPathValue("token", strings.TrimPrefix(session.ReportPath, "/r/"+session.JobID+"/"))
+	artifactRec := httptest.NewRecorder()
+	getPublicArtifactHandler(store).ServeHTTP(artifactRec, artifactReq)
+
+	if artifactRec.Code != http.StatusOK {
+		t.Fatalf("expected plugin zip from sanitized paid report, got %d: %s", artifactRec.Code, artifactRec.Body.String())
+	}
+	if !bytes.HasPrefix(artifactRec.Body.Bytes(), []byte("PK")) {
+		t.Fatalf("expected zip response")
+	}
+}
+
+func TestPaidClientReportUploadRejectsNonAggregateReport(t *testing.T) {
+	t.Setenv("CLAUDE_ANALYZER_ENABLE_LOCAL_PAID_SESSIONS", "true")
+	store, err := localstore.New(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	report := paidAggregateReport()
+	report.AggregateEvent.ParserType = "jsonl"
+	body, err := json.Marshal(report)
+	if err != nil {
+		t.Fatal(err)
+	}
+	req := httptest.NewRequest(http.MethodPost, "/api/paid-client-reports", bytes.NewReader(body))
+	req.Header.Set("X-Waiver-Accepted", "true")
+	req.Header.Set("X-Waiver-Acknowledgment", "I accept at my own risk")
+	rec := httptest.NewRecorder()
+
+	createPaidClientReportHandler(store, 15*time.Minute).ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected non-aggregate paid report rejection 400, got %d: %s", rec.Code, rec.Body.String())
+	}
+}
+
 func TestPaidBundleUploadRequiresPaidTokenAndLimit(t *testing.T) {
 	store, err := localstore.New(t.TempDir())
 	if err != nil {
@@ -415,7 +498,7 @@ func TestCreatePaidSessionRequiresLocalEnablementAndWaiver(t *testing.T) {
 	}
 }
 
-func TestCreatePaidSessionReturnsPaidBundleCommand(t *testing.T) {
+func TestCreatePaidSessionReturnsLocalFirstPaidCommandByDefault(t *testing.T) {
 	t.Setenv("CLAUDE_ANALYZER_ENABLE_LOCAL_PAID_SESSIONS", "true")
 	store, err := localstore.New(t.TempDir())
 	if err != nil {
@@ -434,8 +517,42 @@ func TestCreatePaidSessionReturnsPaidBundleCommand(t *testing.T) {
 	if err := json.Unmarshal(rec.Body.Bytes(), &session); err != nil {
 		t.Fatalf("response is not valid session JSON: %v", err)
 	}
+	for _, forbidden := range []string{"/api/paid-uploads/", "tar -C", "application/gzip", "raw bundle", "bundles my 100"} {
+		if strings.Contains(session.Command, forbidden) || strings.Contains(session.Prompt, forbidden) || strings.Contains(session.UploadPath, forbidden) {
+			t.Fatalf("public paid session exposed raw upload instruction %q: %#v", forbidden, session)
+		}
+	}
+	for _, want := range []string{"claude-analyzer analyze --paid --limit 100", "/api/paid-client-reports", "sanitized aggregate", "does not upload raw logs"} {
+		if !strings.Contains(session.Command, want) && !strings.Contains(session.Prompt, want) {
+			t.Fatalf("paid local-first session missing %q: %#v", want, session)
+		}
+	}
+	if session.Token != "" || session.JobID != "" || session.FinalizePath != "" {
+		t.Fatalf("public local-first paid session should not mint a raw upload job/token: %#v", session)
+	}
+}
+
+func TestCreatePaidSessionReturnsLegacyPaidBundleOnlyWhenExplicit(t *testing.T) {
+	t.Setenv("CLAUDE_ANALYZER_ENABLE_LOCAL_PAID_SESSIONS", "true")
+	store, err := localstore.New(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	req := httptest.NewRequest(http.MethodPost, "/api/paid-sessions?legacy_raw_bundle=1", strings.NewReader(`{"waiver_accepted":true,"acknowledgment":"I accept at my own risk"}`))
+	req.Host = "example.test"
+	rec := httptest.NewRecorder()
+
+	createPaidSessionHandler(store, 15*time.Minute).ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusCreated {
+		t.Fatalf("expected paid session status 201, got %d: %s", rec.Code, rec.Body.String())
+	}
+	var session analysisSessionResponse
+	if err := json.Unmarshal(rec.Body.Bytes(), &session); err != nil {
+		t.Fatalf("response is not valid session JSON: %v", err)
+	}
 	if !strings.Contains(session.UploadPath, "/api/paid-uploads/") || !strings.Contains(session.Command, "limit=100") || !strings.Contains(session.Command, "X-Scan-Limit: 100") {
-		t.Fatalf("expected paid bundle command, got %#v", session)
+		t.Fatalf("expected explicit legacy paid bundle command, got %#v", session)
 	}
 	job, err := store.GetJob(session.JobID)
 	if err != nil {
@@ -558,4 +675,27 @@ func testPaidBundle(t *testing.T) []byte {
 		t.Fatal(err)
 	}
 	return buf.Bytes()
+}
+
+func paidAggregateReport() analyzer.Report {
+	return analyzer.Report{
+		JobID:   "local-paid",
+		Version: analyzer.Version,
+		Score:   68,
+		Metrics: analyzer.Metrics{Turns: 12, SessionCount: 2, EstimatedTokens: 2400},
+		SecurityReceipt: analyzer.SecurityReceipt{
+			RawTranscriptSentToLLM: false,
+			OutboundDuringAnalysis: false,
+			SecretsRedacted:        1,
+			RawLogTTL:              "not uploaded",
+		},
+		AggregateEvent: analyzer.AggregateSafeEvent{
+			Event:      "analysis_completed",
+			ParserType: "paid_bundle",
+			Findings:   map[string]string{"repeated_file_reads": "high"},
+		},
+		Findings: []analyzer.Finding{
+			{ID: "repeated_file_reads", Severity: "high", CostImpact: "medium-high", Evidence: analyzer.FindingEvidence{Count: 6}},
+		},
+	}
 }

@@ -13,9 +13,25 @@ This repo starts with a Docker-local, end-to-end implementation:
 
 The production target is CDN + local deterministic CLI + report-only upload + short-lived report storage. Local development intentionally avoids cloud dependencies so the complete flow can be tested before any infrastructure is provisioned.
 
+## Install
+
+The public launch install path is the versioned CLI archive on
+[GitHub Releases](https://github.com/robertDouglass/claude-log-analyzer/releases).
+Download the archive for your platform, verify it against `checksums.txt` from
+the same release, and run:
+
+```bash
+claude-analyzer version
+```
+
+The version output shows the binary version, commit, build timestamp, and source
+repository. Homebrew and Scoop publishing are wired in release automation but
+require the tap/bucket repositories and write tokens before those install paths
+are advertised as live. See [docs/distribution.md](docs/distribution.md).
+
 There is intentionally no browser upload form. Claude Code logs live under `~/.claude`, which is awkward for Finder/browser upload flows. The public launch path is local-first:
 
-1. The user installs the source-available CLI with `go install github.com/robertdouglass/claude-log-analyzer/cmd/claude-analyzer@v0.1.0`.
+1. The user installs the source-available CLI from a versioned GitHub Release archive and verifies `checksums.txt`.
 2. `claude-analyzer analyze --out ./claude-analyzer-report.json` finds the latest Claude Code JSONL log, parses and redacts it locally, and writes a sanitized report.
 3. The user reviews the JSON with `jq . ./claude-analyzer-report.json`.
 4. `claude-analyzer upload ./claude-analyzer-report.json` sends only the sanitized report to `POST /api/client-reports`.

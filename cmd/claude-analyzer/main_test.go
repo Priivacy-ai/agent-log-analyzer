@@ -1,10 +1,14 @@
 package main
 
 import (
+	"bytes"
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/robertdouglass/claude-log-analyzer/internal/analyzer"
 )
 
 // sampleJSONL is a minimal Claude Code JSONL log fixture used by the CLI
@@ -32,6 +36,18 @@ func withLatestShim(t *testing.T, path string) {
 	original := latestClaudeLogFn
 	latestClaudeLogFn = func() (string, error) { return path, nil }
 	t.Cleanup(func() { latestClaudeLogFn = original })
+}
+
+func withRecentShim(t *testing.T, paths []string) {
+	t.Helper()
+	original := recentClaudeLogsFn
+	recentClaudeLogsFn = func(limit int) ([]string, error) {
+		if limit > 0 && len(paths) > limit {
+			return paths[:limit], nil
+		}
+		return paths, nil
+	}
+	t.Cleanup(func() { recentClaudeLogsFn = original })
 }
 
 func TestAnalyze_NoArgs_UsesLatest(t *testing.T) {
@@ -143,5 +159,87 @@ func TestAnalyze_PositionalNonExistent_Refuses(t *testing.T) {
 	err := runAnalyze([]string{"--out", outPath, missing})
 	if err == nil {
 		t.Fatalf("expected error, got nil")
+	}
+}
+
+func TestAnalyzePaid_WritesSanitizedAggregate(t *testing.T) {
+	dir := t.TempDir()
+	first := writeSampleLog(t, dir)
+	second := filepath.Join(dir, "second.jsonl")
+	if err := os.WriteFile(second, []byte(sampleJSONL), 0o600); err != nil {
+		t.Fatalf("write second log: %v", err)
+	}
+	outPath := filepath.Join(dir, "paid-report.json")
+	withRecentShim(t, []string{first, second})
+
+	err := runAnalyze([]string{"--paid", "--limit", "100", "--out", outPath})
+	if err != nil {
+		t.Fatalf("runAnalyze paid: %v", err)
+	}
+	data, err := os.ReadFile(outPath)
+	if err != nil {
+		t.Fatalf("read paid report: %v", err)
+	}
+	var report analyzer.Report
+	if err := json.Unmarshal(data, &report); err != nil {
+		t.Fatalf("paid report is not JSON: %v", err)
+	}
+	if report.AggregateEvent.ParserType != "paid_bundle" {
+		t.Fatalf("expected paid_bundle parser type, got %#v", report.AggregateEvent)
+	}
+	if report.Metrics.SessionCount != 2 {
+		t.Fatalf("expected two paid sessions, got %#v", report.Metrics)
+	}
+	if report.SecurityReceipt.RawLogTTL != "not uploaded" || report.SecurityReceipt.RawTranscriptSentToLLM {
+		t.Fatalf("expected local-only security receipt, got %#v", report.SecurityReceipt)
+	}
+}
+
+func TestAnalyzePaid_RejectsUnsafeArguments(t *testing.T) {
+	dir := t.TempDir()
+	logPath := writeSampleLog(t, dir)
+	outPath := filepath.Join(dir, "paid-report.json")
+
+	err := runAnalyze([]string{"--paid", "--out", outPath, logPath})
+	if err == nil || !strings.Contains(err.Error(), "--paid cannot be combined") {
+		t.Fatalf("expected paid positional rejection, got %v", err)
+	}
+	err = runAnalyze([]string{"--paid", "--limit", "101", "--out", outPath})
+	if err == nil || !strings.Contains(err.Error(), "--limit cannot exceed 100") {
+		t.Fatalf("expected paid limit rejection, got %v", err)
+	}
+}
+
+func TestVersion_PrintsProvenance(t *testing.T) {
+	var buf bytes.Buffer
+	original := os.Stdout
+	read, write, err := os.Pipe()
+	if err != nil {
+		t.Fatalf("pipe: %v", err)
+	}
+	os.Stdout = write
+	t.Cleanup(func() { os.Stdout = original })
+
+	err = run([]string{"version"})
+	if err != nil {
+		t.Fatalf("run version: %v", err)
+	}
+	if err := write.Close(); err != nil {
+		t.Fatalf("close writer: %v", err)
+	}
+	if _, err := buf.ReadFrom(read); err != nil {
+		t.Fatalf("read stdout: %v", err)
+	}
+
+	output := buf.String()
+	for _, want := range []string{
+		"claude-analyzer ",
+		"commit:",
+		"built:",
+		"source: https://github.com/robertDouglass/claude-log-analyzer",
+	} {
+		if !strings.Contains(output, want) {
+			t.Fatalf("version output missing %q:\n%s", want, output)
+		}
 	}
 }

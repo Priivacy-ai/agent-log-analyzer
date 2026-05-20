@@ -17,7 +17,7 @@ import (
 	"github.com/robertdouglass/claude-log-analyzer/internal/analyzer"
 )
 
-const defaultBaseURL = "https://claude-code.spec-kitty.ai"
+const defaultBaseURL = "https://analyzer.spec-kitty.ai"
 
 func main() {
 	if err := run(os.Args[1:]); err != nil {
@@ -36,6 +36,9 @@ func run(args []string) error {
 		return runAnalyze(args[1:])
 	case "upload":
 		return runUpload(args[1:])
+	case "version", "--version", "-v":
+		printVersion()
+		return nil
 	default:
 		usage()
 		return fmt.Errorf("unknown command %q", args[0])
@@ -46,17 +49,26 @@ func run(args []string) error {
 // "find the latest log under ~/.claude/projects" behavior without touching
 // the user's real home directory.
 var latestClaudeLogFn = latestClaudeLog
+var recentClaudeLogsFn = recentClaudeLogs
 
 func runAnalyze(args []string) error {
 	fs := flag.NewFlagSet("analyze", flag.ContinueOnError)
 	out := fs.String("out", "claude-analyzer-report.json", "path to write sanitized report JSON")
 	logPath := fs.String("log", "", "explicit Claude Code JSONL log path")
+	paid := fs.Bool("paid", false, "analyze recent Claude Code logs locally and write a sanitized paid aggregate report")
+	limit := fs.Int("limit", 100, "maximum recent Claude Code JSONL logs to analyze with --paid")
 	orderedArgs := reorderAnalyzeArgs(args)
 	if err := fs.Parse(orderedArgs); err != nil {
 		return err
 	}
 
 	positional := fs.Args()
+	if *paid {
+		if *logPath != "" || len(positional) > 0 {
+			return errors.New("claude-analyzer analyze: --paid cannot be combined with --log or positional log paths")
+		}
+		return runAnalyzePaid(*out, *limit)
+	}
 	// FR-002 takes precedence over FR-003 when both a positional and --log
 	// are supplied alongside extra positional arguments.
 	if len(positional) >= 1 && *logPath != "" {
@@ -110,14 +122,15 @@ func reorderAnalyzeArgs(args []string) []string {
 	for i := 0; i < len(args); i++ {
 		arg := args[i]
 		switch {
-		case arg == "--out" || arg == "-out" || arg == "--log" || arg == "-log":
+		case arg == "--out" || arg == "-out" || arg == "--log" || arg == "-log" || arg == "--limit" || arg == "-limit":
 			flags = append(flags, arg)
 			if i+1 < len(args) {
 				i++
 				flags = append(flags, args[i])
 			}
 		case strings.HasPrefix(arg, "--out=") || strings.HasPrefix(arg, "-out=") ||
-			strings.HasPrefix(arg, "--log=") || strings.HasPrefix(arg, "-log="):
+			strings.HasPrefix(arg, "--log=") || strings.HasPrefix(arg, "-log=") ||
+			strings.HasPrefix(arg, "--limit=") || strings.HasPrefix(arg, "-limit="):
 			flags = append(flags, arg)
 		case strings.HasPrefix(arg, "-"):
 			flags = append(flags, arg)
@@ -126,6 +139,59 @@ func reorderAnalyzeArgs(args []string) []string {
 		}
 	}
 	return append(flags, positionals...)
+}
+
+func runAnalyzePaid(out string, limit int) error {
+	if limit <= 0 {
+		return errors.New("claude-analyzer analyze: --limit must be greater than zero")
+	}
+	if limit > 100 {
+		return errors.New("claude-analyzer analyze: --limit cannot exceed 100")
+	}
+	paths, err := recentClaudeLogsFn(limit)
+	if err != nil {
+		return err
+	}
+	if len(paths) == 0 {
+		return errors.New("no Claude Code JSONL logs found under ~/.claude/projects")
+	}
+	reports := make([]analyzer.Report, 0, len(paths))
+	totalBytes := 0
+	totalRedacted := 0
+	for index, path := range paths {
+		data, err := os.ReadFile(path)
+		if err != nil {
+			return err
+		}
+		report, err := analyzer.Analyze(fmt.Sprintf("local-paid-%03d", index+1), data)
+		if err != nil {
+			return fmt.Errorf("analyze paid log %d: %w", index+1, err)
+		}
+		reports = append(reports, report)
+		totalBytes += len(data)
+		totalRedacted += report.SecurityReceipt.SecretsRedacted
+	}
+	report, err := analyzer.AggregateReports("local-paid", reports, totalBytes)
+	if err != nil {
+		return err
+	}
+	report.SecurityReceipt.RawLogTTL = "not uploaded"
+	encoded, err := json.MarshalIndent(report, "", "  ")
+	if err != nil {
+		return err
+	}
+	if err := os.WriteFile(out, append(encoded, '\n'), 0o600); err != nil {
+		return err
+	}
+
+	fmt.Printf("Analyzed locally: %d recent Claude Code logs\n", len(paths))
+	fmt.Printf("Raw bytes read locally: %d\n", totalBytes)
+	fmt.Printf("Secrets redacted before report write: %d\n", totalRedacted)
+	fmt.Printf("Sanitized paid aggregate report: %s (%d bytes)\n", out, len(encoded)+1)
+	fmt.Println()
+	fmt.Printf("Review before upload: jq . %s\n", shellQuote(out))
+	fmt.Printf("Upload sanitized paid aggregate with the command from your paid unlock page.\n")
+	return nil
 }
 
 func runUpload(args []string) error {
@@ -184,12 +250,23 @@ func runUpload(args []string) error {
 }
 
 func latestClaudeLog() (string, error) {
-	home, err := os.UserHomeDir()
+	matches, err := recentClaudeLogs(1)
 	if err != nil {
 		return "", err
 	}
+	if len(matches) == 0 {
+		return "", errors.New("no Claude Code JSONL logs found under ~/.claude/projects")
+	}
+	return matches[0], nil
+}
+
+func recentClaudeLogs(limit int) ([]string, error) {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return nil, err
+	}
 	root := filepath.Join(home, ".claude", "projects")
-	var matches []string
+	var matches []logMatch
 	err = filepath.WalkDir(root, func(path string, entry os.DirEntry, err error) error {
 		if err != nil {
 			return nil
@@ -197,24 +274,38 @@ func latestClaudeLog() (string, error) {
 		if entry.IsDir() || filepath.Ext(path) != ".jsonl" {
 			return nil
 		}
-		matches = append(matches, path)
+		info, err := entry.Info()
+		if err != nil {
+			return nil
+		}
+		matches = append(matches, logMatch{path: path, modTime: info.ModTime()})
 		return nil
 	})
 	if err != nil && !errors.Is(err, os.ErrNotExist) {
-		return "", err
+		return nil, err
 	}
 	if len(matches) == 0 {
-		return "", errors.New("no Claude Code JSONL logs found under ~/.claude/projects")
+		return nil, errors.New("no Claude Code JSONL logs found under ~/.claude/projects")
 	}
 	sort.Slice(matches, func(i, j int) bool {
-		left, leftErr := os.Stat(matches[i])
-		right, rightErr := os.Stat(matches[j])
-		if leftErr != nil || rightErr != nil {
-			return matches[i] > matches[j]
+		if matches[i].modTime.Equal(matches[j].modTime) {
+			return matches[i].path > matches[j].path
 		}
-		return left.ModTime().After(right.ModTime())
+		return matches[i].modTime.After(matches[j].modTime)
 	})
-	return matches[0], nil
+	if limit > 0 && len(matches) > limit {
+		matches = matches[:limit]
+	}
+	paths := make([]string, 0, len(matches))
+	for _, match := range matches {
+		paths = append(paths, match.path)
+	}
+	return paths, nil
+}
+
+type logMatch struct {
+	path    string
+	modTime time.Time
 }
 
 func shellQuote(value string) string {
@@ -229,6 +320,9 @@ func usage() {
 	fmt.Fprintln(os.Stderr, "                 is used.")
 	fmt.Fprintln(os.Stderr, "  --log <path>   explicit log path; mutually exclusive with a positional <log-path>.")
 	fmt.Fprintln(os.Stderr, "  --out <path>   output path for the sanitized report JSON (default: ./claude-analyzer-report.json).")
+	fmt.Fprintln(os.Stderr, "  --paid         analyze recent logs locally and write a sanitized aggregate report.")
+	fmt.Fprintln(os.Stderr, "  --limit <n>    maximum recent logs for --paid, capped at 100 (default: 100).")
 	fmt.Fprintln(os.Stderr, "")
-	fmt.Fprintln(os.Stderr, "  claude-analyzer upload <sanitized-report.json> [--base-url https://claude-code.spec-kitty.ai]")
+	fmt.Fprintln(os.Stderr, "  claude-analyzer upload <sanitized-report.json> [--base-url https://analyzer.spec-kitty.ai]")
+	fmt.Fprintln(os.Stderr, "  claude-analyzer version")
 }

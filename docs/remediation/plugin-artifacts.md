@@ -16,10 +16,14 @@ Paid scan:
 
 - analyzes at most the 100 most recent Claude Code JSONL logs locally
 - writes a reviewable sanitized aggregate report JSON
-- uploads only the sanitized aggregate report
+- uploads only the sanitized aggregate report to `POST /api/paid-client-reports`
 - aggregates deterministic metrics across sessions
-- generates a customized Claude Code plugin archive
+- generates a customized Claude Code plugin archive from the sanitized aggregate report
 - shows copyable install commands and a Claude-native install prompt
+
+The public paid flow must not ask users to tar, gzip, or upload raw Claude
+Code JSONL logs. Any raw-log paid bundle endpoint is legacy/internal smoke
+coverage only and must require an explicit internal request path.
 
 ## Plugin Shape
 
@@ -143,11 +147,29 @@ The current generator tests cover:
 - zip archive creation
 - rejection of unsafe archive paths
 
+API route tests also cover the paid local-first trust boundary:
+
+- the default paid session command points at local CLI aggregate analysis and
+  `POST /api/paid-client-reports`
+- the default paid session response does not mint a raw upload token or expose
+  `/api/paid-uploads/`, tar/gzip commands, or raw bundle copy
+- `POST /api/paid-client-reports` accepts only waiver-gated sanitized aggregate
+  reports and creates a paid report job without storing an upload path
+- tokenized plugin zip generation works from that sanitized aggregate report
+- the legacy raw paid bundle command is available only through
+  `/api/paid-sessions?legacy_raw_bundle=1` for internal smoke compatibility
+
 ## Implementation
 
 The first implementation lives in `internal/remediation`.
 
-The package produces an in-memory `Artifact` and can write it as a zip archive. Paid bundle upload, local waiver-gated paid-session generation, and tokenized plugin zip download are implemented for Docker end-to-end testing. Plugin artifacts are generated on demand from the sanitized paid report and expire with the report token. Stripe success handling and any future persisted artifact storage are tracked separately in GitHub issues #27-#31.
+The package produces an in-memory `Artifact` and can write it as a zip archive. Paid local-first report upload, local waiver-gated paid-session generation, and tokenized plugin zip download are implemented for Docker end-to-end testing. Plugin artifacts are generated on demand from the sanitized paid report and expire with the report token.
+
+The legacy raw paid bundle upload route remains only for internal Docker smoke
+coverage while the CLI paid aggregate command is integrated. It is not the
+default `/api/paid-sessions` response and must not be linked from public launch
+UX. Stripe success handling and any future persisted artifact storage are
+tracked separately in GitHub issues #27-#31.
 
 ## Token-saving recommendation embedding (Phase A, additive)
 

@@ -14,7 +14,7 @@ This is the remaining work to move from green Docker/LocalStack gates to real cl
 
 - [x] Decide production region, default `us-east-1`.
 - [x] Confirm external DNS provider: Namecheap manages `spec-kitty.ai`.
-- [x] Confirm launch hostname: `claude-code.spec-kitty.ai`.
+- [x] Confirm launch hostname: `analyzer.spec-kitty.ai`.
 - [x] Confirm ACM certificate path:
   - [x] Request a new public ACM cert in the production region.
   - [x] Add ACM DNS validation CNAME in Namecheap.
@@ -161,8 +161,9 @@ Acceptance:
   `arn:aws:acm:us-east-1:129875099715:certificate/0620795a-f10b-49c1-b030-3f39756be44f`
 - [x] Preserve the currently deployed image when applying TLS unless intentionally deploying a new image:
   `129875099715.dkr.ecr.us-east-1.amazonaws.com/claude-analyzer-prod:f195181-amd64`
-- [x] Configure DNS record for the launch domain:
-  `claude-code.spec-kitty.ai CNAME claude-analyzer-prod-720064025.us-east-1.elb.amazonaws.com`
+- [ ] Configure DNS record for the launch domain:
+  `analyzer.spec-kitty.ai CNAME claude-analyzer-prod-720064025.us-east-1.elb.amazonaws.com`
+- [ ] Keep `claude-code.spec-kitty.ai` only as a compatibility redirect to `analyzer.spec-kitty.ai`; do not use it in public launch copy.
 - [x] Keep DNS hosted at Namecheap; do not create a Route 53 hosted zone for launch.
 - [x] Redirect ALB HTTP listener to HTTPS when `certificate_arn` is set.
 - [x] Apply TLS after ACM is `ISSUED`:
@@ -195,10 +196,11 @@ The public upload UX is local CLI analysis plus sanitized-report upload. Raw Cla
 - [x] Write reviewable sanitized report JSON before upload.
 - [x] Add API endpoint to accept sanitized client reports only.
 - [x] Serve reports only through tokenized `/r/{job_id}/{report_token}` URLs.
+- [x] Add release automation for versioned CLI archives and checksums.
 - [ ] Publish signed CLI releases and package-manager install paths.
-- [ ] Move paid 100-log scan to the same local-first sanitized-report upload path.
+- [x] Move paid 100-log scan to the same local-first sanitized-report upload path.
 - [x] Add `/security` and `/privacy` pages with data-flow diagrams and named controls.
-- [ ] Rename public host away from `claude-code.*` before broad launch unless Anthropic brand review says it is acceptable.
+- [x] Rename public host away from `claude-code.*` before broad launch.
 
 Legacy/internal token path:
 
