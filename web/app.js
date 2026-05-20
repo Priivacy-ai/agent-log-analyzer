@@ -253,7 +253,6 @@ function renderTimeline(points, estimatedWaste) {
     ].join(" | ");
     bar.className = "timeline-bar";
     bar.style.height = `${Math.max(4, (estimatedTokens / maxTokens) * 100)}%`;
-    bar.title = tooltip;
     bar.dataset.tooltip = tooltip;
     bar.tabIndex = 0;
     bar.setAttribute("role", "img");
