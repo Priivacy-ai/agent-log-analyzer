@@ -458,10 +458,15 @@ function renderRecommendation(report) {
     const skippedCount = Array.isArray(rec.skipped) ? rec.skipped.length : 0;
     const unknownCount = typeof rec.unknown_id_count === "number" ? rec.unknown_id_count : 0;
     const sentence = document.createElement("span");
-    sentence.textContent =
+    let text =
       `Engine evaluated ${skippedCount} candidate${skippedCount === 1 ? "" : "s"}; ` +
-      `none warranted a recommendation. ` +
-      `(${unknownCount} unknown identifier${unknownCount === 1 ? "" : "s"} were counted only.)`;
+      `none warranted a recommendation.`;
+    if (unknownCount > 0) {
+      text +=
+        ` (${unknownCount} unknown identifier${unknownCount === 1 ? "" : "s"} ` +
+        `${unknownCount === 1 ? "was" : "were"} counted only.)`;
+    }
+    sentence.textContent = text;
     emptyNote.appendChild(sentence);
     emptyNote.hidden = false;
   } else {
