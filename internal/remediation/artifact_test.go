@@ -308,29 +308,22 @@ func TestGenerate_MergedAggregate_FlowsToArtifact(t *testing.T) {
 	}
 }
 
-// TestGenerate_KnownEcosystem_PreservesSDDOnlyFingerprints regression-locks
+// TestGenerate_KnownEcosystem_PreservesAllSDDFingerprints regression-locks
 // the bug where a stale, hand-maintained framework allowlist in the
-// remediation package silently dropped any WorkflowFingerprint ID that
-// existed only in the SDD detector registry (github_spec_kit, kiro, gsd,
-// spec_workflow_mcp, etc.) and not in the frameworks-signature registry.
+// remediation package silently dropped WorkflowFingerprint IDs that existed
+// only in the SDD detector registry (github_spec_kit, kiro, gsd, and later
+// additions) and not in the frameworks-signature registry.
 //
-// The fix delegates to analyzer.ValidEcosystemID("workflow_fingerprint", id),
-// so every SDD-registry ID survives the gate.
-func TestGenerate_KnownEcosystem_PreservesSDDOnlyFingerprints(t *testing.T) {
-	sddOnlyIDs := []string{
-		"github_spec_kit",
-		"kiro",
-		"gsd",
-		"spec_workflow_mcp",
-		"sdd_pilot",
-		"spec2ship",
-		"chatdev",
-		"paul",
-		"fspec",
-		"tessl",
+// The test deliberately derives its fixture from the analyzer registry. That
+// makes future SDD detector additions fail here automatically if paid artifact
+// export drifts away from the single source of truth.
+func TestGenerate_KnownEcosystem_PreservesAllSDDFingerprints(t *testing.T) {
+	sddIDs := analyzer.KnownEcosystemIDs("workflow_fingerprint")
+	if len(sddIDs) == 0 {
+		t.Fatalf("workflow_fingerprint registry is empty")
 	}
-	fps := make([]analyzer.EcosystemFingerprint, 0, len(sddOnlyIDs))
-	for _, id := range sddOnlyIDs {
+	fps := make([]analyzer.EcosystemFingerprint, 0, len(sddIDs))
+	for id := range sddIDs {
 		fps = append(fps, analyzer.EcosystemFingerprint{
 			ID:         id,
 			Confidence: "high",
@@ -349,10 +342,10 @@ func TestGenerate_KnownEcosystem_PreservesSDDOnlyFingerprints(t *testing.T) {
 	for _, tok := range artifact.Source.KnownEcosystem {
 		known[tok] = true
 	}
-	for _, id := range sddOnlyIDs {
+	for id := range sddIDs {
 		tok := "framework:" + id
 		if !known[tok] {
-			t.Errorf("KnownEcosystem dropped SDD-only fingerprint %q (got %v)", tok, artifact.Source.KnownEcosystem)
+			t.Errorf("KnownEcosystem dropped SDD fingerprint %q (got %v)", tok, artifact.Source.KnownEcosystem)
 		}
 	}
 }
