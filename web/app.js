@@ -179,7 +179,7 @@ function renderReport(report) {
     fixes.appendChild(item);
   }
 
-  renderTimeline(report.timeline || []);
+  renderTimeline(report.timeline || [], report.estimated_waste_pct);
   renderRecommendation(report);
   renderWorkflowFingerprints(report);
   renderToolingUtilization(report);
@@ -212,12 +212,14 @@ function buildFindingItem(finding) {
   return item;
 }
 
-function renderTimeline(points) {
+function renderTimeline(points, estimatedWaste) {
   const chart = document.querySelector("#timeline");
   const yMax = document.querySelector("#timeline-y-max");
   const xAxis = document.querySelector("#timeline-x-axis");
+  const legend = document.querySelector("#timeline-legend");
   chart.innerHTML = "";
   if (xAxis) xAxis.replaceChildren();
+  if (legend) legend.replaceChildren();
   if (points.length === 0) {
     chart.textContent = "No timeline points detected.";
     chart.removeAttribute("aria-label");
@@ -226,19 +228,25 @@ function renderTimeline(points) {
   }
   const visiblePoints = points.slice(-60);
   const maxTokens = Math.max(...visiblePoints.map((point) => numberValue(point.estimated_tokens)), 1);
+  const wasteRange = normalizeWasteRange(estimatedWaste);
+  const savingsPct = Math.min(95, Math.max(0, (wasteRange.low + wasteRange.high) / 2));
   const firstTurn = numberValue(visiblePoints[0]?.turn);
   const lastTurn = numberValue(visiblePoints[visiblePoints.length - 1]?.turn);
   chart.setAttribute(
     "aria-label",
-    `Session timeline showing estimated context growth from turn ${firstTurn} to turn ${lastTurn}; maximum ${formatNumber(maxTokens)} estimated tokens.`,
+    `Session timeline showing estimated context growth from turn ${firstTurn} to turn ${lastTurn}; maximum ${formatNumber(maxTokens)} estimated tokens; estimated avoidable spend ${wasteRange.low}-${wasteRange.high} percent.`,
   );
   if (yMax) yMax.textContent = `${formatCompactNumber(maxTokens)} tokens`;
+  renderTimelineLegend(legend, wasteRange);
   for (const point of visiblePoints) {
     const bar = document.createElement("span");
     const estimatedTokens = numberValue(point.estimated_tokens);
+    const savedTokensLow = Math.round(estimatedTokens * wasteRange.low / 100);
+    const savedTokensHigh = Math.round(estimatedTokens * wasteRange.high / 100);
     const tooltip = [
       `turn ${numberValue(point.turn)}`,
       `${formatNumber(estimatedTokens)} estimated tokens`,
+      `${formatNumber(savedTokensLow)}-${formatNumber(savedTokensHigh)} potentially avoidable tokens`,
       `${formatNumber(numberValue(point.tool_tokens))} tool-output tokens`,
       `${formatNumber(numberValue(point.rereads))} rereads`,
       `${formatNumber(numberValue(point.retries))} retries`,
@@ -250,9 +258,48 @@ function renderTimeline(points) {
     bar.tabIndex = 0;
     bar.setAttribute("role", "img");
     bar.setAttribute("aria-label", tooltip);
+    if (savingsPct > 0) {
+      const savings = document.createElement("span");
+      savings.className = "timeline-savings";
+      savings.style.height = `${savingsPct}%`;
+      savings.setAttribute("aria-hidden", "true");
+      bar.appendChild(savings);
+    }
     chart.appendChild(bar);
   }
   renderTimelineAxis(xAxis, visiblePoints);
+}
+
+function normalizeWasteRange(estimatedWaste) {
+  const low = Math.round(clampPercent(estimatedWaste?.low));
+  const high = Math.round(clampPercent(estimatedWaste?.high));
+  return {
+    low: Math.min(low, high),
+    high: Math.max(low, high),
+  };
+}
+
+function clampPercent(value) {
+  return Math.min(100, Math.max(0, numberValue(value)));
+}
+
+function renderTimelineLegend(legend, wasteRange) {
+  if (!legend) return;
+  const observed = document.createElement("span");
+  observed.className = "timeline-legend-item";
+  const observedSwatch = document.createElement("span");
+  observedSwatch.className = "timeline-legend-swatch timeline-legend-observed";
+  observed.appendChild(observedSwatch);
+  observed.append("observed context");
+  legend.appendChild(observed);
+
+  const avoidable = document.createElement("span");
+  avoidable.className = "timeline-legend-item";
+  const avoidableSwatch = document.createElement("span");
+  avoidableSwatch.className = "timeline-legend-swatch timeline-legend-savings";
+  avoidable.appendChild(avoidableSwatch);
+  avoidable.append(`${wasteRange.low}-${wasteRange.high}% optimized potential`);
+  legend.appendChild(avoidable);
 }
 
 function renderTimelineAxis(axis, visiblePoints) {

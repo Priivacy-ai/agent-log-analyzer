@@ -270,6 +270,38 @@ pre {
   line-height: 1.4;
 }
 
+.timeline-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 0 0 10px;
+  color: var(--muted);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-size: 12px;
+}
+
+.timeline-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.timeline-legend-swatch {
+  width: 16px;
+  height: 8px;
+  border-radius: 999px;
+  display: inline-block;
+}
+
+.timeline-legend-observed {
+  background: linear-gradient(to right, var(--orange), var(--blue));
+}
+
+.timeline-legend-savings {
+  background: var(--green);
+  box-shadow: 0 0 10px rgba(126, 231, 135, 0.75);
+}
+
 .timeline-frame {
   display: grid;
   grid-template-columns: 64px 1fr;
@@ -308,6 +340,7 @@ pre {
   background: linear-gradient(to top, var(--orange), var(--blue));
   border: 0;
   outline: 0;
+  overflow: visible;
 }
 
 .timeline-bar:hover,
@@ -350,6 +383,43 @@ pre {
   right: 0;
   left: auto;
   transform: none;
+}
+
+.timeline-savings {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  border-radius: 2px 2px 0 0;
+  background: linear-gradient(
+    to bottom,
+    rgba(126, 231, 135, 0.9),
+    rgba(126, 231, 135, 0.3)
+  );
+  box-shadow:
+    0 0 14px rgba(126, 231, 135, 0.8),
+    inset 0 -1px 0 rgba(126, 231, 135, 0.85);
+  animation: savings-pulse 1.8s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes savings-pulse {
+  0%,
+  100% {
+    opacity: 0.62;
+    filter: saturate(1);
+  }
+
+  50% {
+    opacity: 1;
+    filter: saturate(1.35);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .timeline-savings {
+    animation: none;
+  }
 }
 
 .timeline-x-axis {
