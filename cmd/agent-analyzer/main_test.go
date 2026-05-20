@@ -32,25 +32,33 @@ func writeSampleLog(t *testing.T, dir string) string {
 	return path
 }
 
-// withLatestShim replaces the package-level latestClaudeLogFn with a shim
-// that returns the given path, restoring the original on test cleanup.
 func withLatestShim(t *testing.T, path string) {
 	t.Helper()
-	original := latestClaudeLogFn
-	latestClaudeLogFn = func() (string, error) { return path, nil }
-	t.Cleanup(func() { latestClaudeLogFn = original })
+	original := latestSupportedLogsFn
+	latestSupportedLogsFn = func() ([]logCandidate, error) {
+		return []logCandidate{fileCandidate("claude_code", "Claude Code", path)}, nil
+	}
+	t.Cleanup(func() { latestSupportedLogsFn = original })
 }
 
-func withRecentShim(t *testing.T, paths []string) {
+func withRecentShim(t *testing.T, candidates []logCandidate) {
 	t.Helper()
-	original := recentClaudeLogsFn
-	recentClaudeLogsFn = func(limit int) ([]string, error) {
-		if limit > 0 && len(paths) > limit {
-			return paths[:limit], nil
+	original := recentSupportedLogsFn
+	recentSupportedLogsFn = func(limit int) ([]logCandidate, error) {
+		if limit > 0 && len(candidates) > limit {
+			return candidates[:limit], nil
 		}
-		return paths, nil
+		return candidates, nil
 	}
-	t.Cleanup(func() { recentClaudeLogsFn = original })
+	t.Cleanup(func() { recentSupportedLogsFn = original })
+}
+
+func fileCandidate(sourceID, sourceLabel, path string) logCandidate {
+	return logCandidate{
+		SourceID:    sourceID,
+		SourceLabel: sourceLabel,
+		Display:     path,
+	}
 }
 
 func TestAnalyze_NoArgs_UsesLatest(t *testing.T) {
@@ -65,6 +73,127 @@ func TestAnalyze_NoArgs_UsesLatest(t *testing.T) {
 	}
 	if _, err := os.Stat(outPath); err != nil {
 		t.Fatalf("expected report at %s: %v", outPath, err)
+	}
+}
+
+func TestAnalyze_NoArgs_UsesOnePerSupportedSource(t *testing.T) {
+	dir := t.TempDir()
+	claude := writeSampleLog(t, dir)
+	codex := filepath.Join(dir, "codex.jsonl")
+	opencode := filepath.Join(dir, "opencode.json")
+	for _, path := range []string{codex, opencode} {
+		if err := os.WriteFile(path, []byte(sampleJSONL), 0o600); err != nil {
+			t.Fatalf("write source log: %v", err)
+		}
+	}
+	outPath := filepath.Join(dir, "report.json")
+	original := latestSupportedLogsFn
+	latestSupportedLogsFn = func() ([]logCandidate, error) {
+		return []logCandidate{
+			fileCandidate("claude_code", "Claude Code", claude),
+			fileCandidate("codex", "Codex", codex),
+			fileCandidate("opencode", "OpenCode", opencode),
+		}, nil
+	}
+	t.Cleanup(func() { latestSupportedLogsFn = original })
+
+	err := runAnalyze([]string{"--out", outPath})
+	if err != nil {
+		t.Fatalf("runAnalyze: %v", err)
+	}
+	data, err := os.ReadFile(outPath)
+	if err != nil {
+		t.Fatalf("read report: %v", err)
+	}
+	var report analyzer.Report
+	if err := json.Unmarshal(data, &report); err != nil {
+		t.Fatalf("report is not JSON: %v", err)
+	}
+	if report.AggregateEvent.ParserType != "multi_source" {
+		t.Fatalf("expected multi_source parser type, got %#v", report.AggregateEvent)
+	}
+	if report.Metrics.SessionCount != 3 {
+		t.Fatalf("expected one session per source, got %#v", report.Metrics)
+	}
+}
+
+func TestRecentSupportedLogs_LimitsPerSource(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	t.Setenv("PATH", "")
+	claudeRoot := filepath.Join(home, ".claude", "projects", "repo")
+	codexRoot := filepath.Join(home, ".codex", "sessions", "2026")
+	if err := os.MkdirAll(claudeRoot, 0o700); err != nil {
+		t.Fatalf("mkdir claude: %v", err)
+	}
+	if err := os.MkdirAll(codexRoot, 0o700); err != nil {
+		t.Fatalf("mkdir codex: %v", err)
+	}
+	paths := []string{
+		filepath.Join(claudeRoot, "old.jsonl"),
+		filepath.Join(claudeRoot, "new.jsonl"),
+		filepath.Join(codexRoot, "old.jsonl"),
+		filepath.Join(codexRoot, "new.jsonl"),
+	}
+	for index, path := range paths {
+		if err := os.WriteFile(path, []byte(sampleJSONL), 0o600); err != nil {
+			t.Fatalf("write log: %v", err)
+		}
+		mtime := time.Unix(int64(100+index), 0)
+		if err := os.Chtimes(path, mtime, mtime); err != nil {
+			t.Fatalf("chtimes: %v", err)
+		}
+	}
+
+	candidates, err := recentSupportedLogs(1)
+	if err != nil {
+		t.Fatalf("recentSupportedLogs: %v", err)
+	}
+	if len(candidates) != 2 {
+		t.Fatalf("expected one candidate per file-backed source, got %#v", candidates)
+	}
+	if candidates[0].SourceID != "claude_code" || filepath.Base(candidates[0].Display) != "new.jsonl" {
+		t.Fatalf("expected newest Claude log first, got %#v", candidates[0])
+	}
+	if candidates[1].SourceID != "codex" || filepath.Base(candidates[1].Display) != "new.jsonl" {
+		t.Fatalf("expected newest Codex log second, got %#v", candidates[1])
+	}
+}
+
+func TestLatestSupportedLogs_SkipsOversizedFreeAutoLogs(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	t.Setenv("PATH", "")
+	codexRoot := filepath.Join(home, ".codex", "sessions", "2026")
+	if err := os.MkdirAll(codexRoot, 0o700); err != nil {
+		t.Fatalf("mkdir codex: %v", err)
+	}
+	small := filepath.Join(codexRoot, "small.jsonl")
+	huge := filepath.Join(codexRoot, "huge.jsonl")
+	if err := os.WriteFile(small, []byte(sampleJSONL), 0o600); err != nil {
+		t.Fatalf("write small log: %v", err)
+	}
+	if err := os.WriteFile(huge, []byte(sampleJSONL), 0o600); err != nil {
+		t.Fatalf("write huge log: %v", err)
+	}
+	if err := os.Truncate(huge, freeAutoMaxLogBytes+1); err != nil {
+		t.Fatalf("truncate huge log: %v", err)
+	}
+	oldTime := time.Unix(100, 0)
+	newTime := time.Unix(200, 0)
+	if err := os.Chtimes(small, oldTime, oldTime); err != nil {
+		t.Fatalf("chtimes small: %v", err)
+	}
+	if err := os.Chtimes(huge, newTime, newTime); err != nil {
+		t.Fatalf("chtimes huge: %v", err)
+	}
+
+	candidates, err := latestSupportedLogs()
+	if err != nil {
+		t.Fatalf("latestSupportedLogs: %v", err)
+	}
+	if len(candidates) != 1 || filepath.Base(candidates[0].Display) != "small.jsonl" {
+		t.Fatalf("expected oversized newest log to be skipped for free auto scan, got %#v", candidates)
 	}
 }
 
@@ -173,7 +302,10 @@ func TestAnalyzePaid_WritesSanitizedAggregate(t *testing.T) {
 		t.Fatalf("write second log: %v", err)
 	}
 	outPath := filepath.Join(dir, "paid-report.json")
-	withRecentShim(t, []string{first, second})
+	withRecentShim(t, []logCandidate{
+		fileCandidate("claude_code", "Claude Code", first),
+		fileCandidate("codex", "Codex", second),
+	})
 
 	err := runAnalyze([]string{"--paid", "--limit", "100", "--out", outPath})
 	if err != nil {

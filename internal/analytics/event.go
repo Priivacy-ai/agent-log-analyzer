@@ -496,7 +496,7 @@ func knownStringSet(in map[string]bool) map[string]bool {
 	return out
 }
 
-var parserTypes = map[string]bool{"jsonl": true, "text": true, "paid_bundle": true, "unknown": true}
+var parserTypes = map[string]bool{"jsonl": true, "text": true, "multi_source": true, "paid_bundle": true, "unknown": true}
 var inputSizeBuckets = map[string]bool{"0_1024": true, "1024_1048576": true, "1048576_10485760": true, "10485760_52428800": true, "52428800_plus": true, "unknown": true}
 var turnBuckets = map[string]bool{"0_10": true, "10_50": true, "50_100": true, "100_200": true, "200_plus": true, "unknown": true}
 var scoreBuckets = map[string]bool{"0_20": true, "20_40": true, "40_60": true, "60_80": true, "80_plus": true, "unknown": true}

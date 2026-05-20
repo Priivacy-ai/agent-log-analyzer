@@ -8,13 +8,13 @@ The plugin should optimize Claude Code's harness, not nag on shell commands. The
 
 Free scan:
 
-- analyzes one Claude Code JSONL log
+- analyzes one newest log per supported source
 - shows deterministic problems, evidence, and generic fixes
 - offers the paid unlock
 
 Paid scan:
 
-- analyzes at most the 100 most recent Claude Code JSONL logs locally
+- analyzes at most the 100 most recent logs per supported source locally
 - writes a reviewable sanitized aggregate report JSON
 - uploads only the sanitized aggregate report to `POST /api/paid-client-reports`
 - aggregates deterministic metrics across sessions

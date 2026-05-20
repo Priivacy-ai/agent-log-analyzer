@@ -4,7 +4,7 @@ Deterministic performance profiler for AI coding workflows.
 
 This repo starts with a Docker-local, end-to-end implementation:
 
-- run the analyzer locally against one Claude Code JSONL log
+- run the analyzer locally against one supported agent log per source
 - write a sanitized report JSON that the user can inspect before upload
 - upload only the sanitized report JSON
 - detect waste patterns and ecosystem fingerprints
@@ -22,17 +22,17 @@ npx --yes agent-analyzer@latest run
 ```
 
 That command fetches a scriptless npm package, runs the bundled native Go binary,
-analyzes the latest Claude Code log locally, writes `agent-analyzer-report.json`,
+analyzes one newest log per supported agent source locally, writes `agent-analyzer-report.json`,
 shows the upload boundary, asks for confirmation, uploads only sanitized report
 JSON, and opens the short-lived report page.
 
 For users who do not want npm/NPX, versioned GitHub Release archives with
 `checksums.txt` remain available. See [docs/distribution.md](docs/distribution.md).
 
-There is intentionally no browser upload form. Claude Code logs live under `~/.claude`, which is awkward for Finder/browser upload flows. The public launch path is local-first:
+There is intentionally no browser upload form. Agent logs live in hidden tool-specific directories, which are awkward for Finder/browser upload flows. The public launch path is local-first:
 
 1. `npx --yes agent-analyzer@latest run` starts the local native analyzer.
-2. The analyzer finds the latest Claude Code JSONL log, parses and redacts it locally, and writes `agent-analyzer-report.json`.
+2. The analyzer finds one latest bounded-size log per supported source, currently Claude Code, Codex, and OpenCode, parses and redacts them locally, and writes `agent-analyzer-report.json`.
 3. The CLI prints the upload boundary and asks for confirmation.
 4. After confirmation, it sends only the sanitized report to `POST /api/client-reports`.
 5. The short-lived report opens at `/r/{job_id}/{report_token}` and expires on the retention schedule.
@@ -55,7 +55,7 @@ agent-analyzer analyze ~/.claude/projects/some-session.jsonl --out ./report.json
 agent-analyzer analyze --log ~/.claude/projects/some-session.jsonl --out ./report.json
 ```
 
-If neither form is supplied, the latest log under `~/.claude/projects/` is used.
+If neither form is supplied, the CLI auto-discovers one newest log per supported source, skipping files over 2 MiB in the free first pass so the one-line launch command stays responsive. The paid scan uses the same discovery model with up to 100 logs per source.
 
 ```bash
 docker compose up --build

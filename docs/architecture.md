@@ -20,7 +20,7 @@ API Gateway / tiny Go control plane
   +--> short-lived report storage
 ```
 
-The launch architecture keeps raw Claude Code logs on the user's machine. The public upload UX is local CLI analysis plus sanitized-report upload; there is no browser file upload form, no public multipart upload endpoint, and no public raw-log upload prompt.
+The launch architecture keeps raw agent logs on the user's machine. The public upload UX is local CLI analysis plus sanitized-report upload; there is no browser file upload form, no public multipart upload endpoint, and no public raw-log upload prompt.
 
 ## Local Target
 
@@ -68,14 +68,14 @@ The first AWS deployment scaffold lives in `infra/aws`. It provisions the S3/SQS
 
 Free scan:
 
-- local CLI analyzes one latest Claude Code JSONL log
+- local CLI analyzes one newest log per supported source, currently Claude Code, Codex, and OpenCode
 - user reviews `agent-analyzer-report.json`
 - server receives sanitized report JSON only
 - tokenized report URL
 
 Paid scan:
 
-- local CLI analyzes the 100 most recent `~/.claude/projects/**/*.jsonl` files after Stripe unlock
+- local CLI analyzes up to 100 recent logs per supported source after Stripe unlock
 - user reviews a sanitized aggregate report
 - server receives sanitized aggregate report JSON only
 - paid artifact retention is separate from the free report TTL

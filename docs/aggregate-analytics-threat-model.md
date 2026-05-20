@@ -2,7 +2,7 @@
 
 This document defines the retained analytics boundary for Agent Analyzer.
 It covers only aggregate ecosystem intelligence derived from sanitized
-reports. It does not weaken the launch rule that raw Claude Code logs stay on
+reports. It does not weaken the launch rule that raw agent logs stay on
 the user's machine.
 
 ## Assets

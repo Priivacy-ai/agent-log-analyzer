@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"flag"
@@ -13,6 +14,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -20,6 +22,7 @@ import (
 )
 
 const defaultBaseURL = "https://analyzer.spec-kitty.ai"
+const freeAutoMaxLogBytes = 2 * 1024 * 1024
 
 func main() {
 	if err := run(os.Args[1:]); err != nil {
@@ -49,18 +52,18 @@ func run(args []string) error {
 	}
 }
 
-// latestClaudeLogFn is a package-level indirection so tests can shim the
-// "find the latest log under ~/.claude/projects" behavior without touching
-// the user's real home directory.
-var latestClaudeLogFn = latestClaudeLog
-var recentClaudeLogsFn = recentClaudeLogs
+// latestSupportedLogsFn and recentSupportedLogsFn are package-level
+// indirections so tests can shim source discovery without touching the user's
+// real home directory or installed agent CLIs.
+var latestSupportedLogsFn = latestSupportedLogs
+var recentSupportedLogsFn = recentSupportedLogs
 
 func runAnalyze(args []string) error {
 	fs := flag.NewFlagSet("analyze", flag.ContinueOnError)
 	out := fs.String("out", "agent-analyzer-report.json", "path to write sanitized report JSON")
-	logPath := fs.String("log", "", "explicit Claude Code JSONL log path")
-	paid := fs.Bool("paid", false, "analyze recent Claude Code logs locally and write a sanitized paid aggregate report")
-	limit := fs.Int("limit", 100, "maximum recent Claude Code JSONL logs to analyze with --paid")
+	logPath := fs.String("log", "", "explicit supported JSON/JSONL log path")
+	paid := fs.Bool("paid", false, "analyze recent supported agent logs locally and write a sanitized paid aggregate report")
+	limit := fs.Int("limit", 100, "maximum recent logs per supported source to analyze with --paid")
 	orderedArgs := reorderAnalyzeArgs(args)
 	if err := fs.Parse(orderedArgs); err != nil {
 		return err
@@ -87,11 +90,11 @@ func runAnalyze(args []string) error {
 		path = positional[0]
 	}
 	if path == "" {
-		latest, err := latestClaudeLogFn()
+		candidates, err := latestSupportedLogsFn()
 		if err != nil {
 			return err
 		}
-		path = latest
+		return analyzeDiscovered(candidates, *out, false, true)
 	}
 	return analyzeSingle(path, *out, true)
 }
@@ -101,11 +104,34 @@ func analyzeSingle(path, out string, printNextSteps bool) error {
 	if err != nil {
 		return err
 	}
-	report, err := analyzer.Analyze("local", data)
+	report, err := analyzeBytes("local", data)
 	if err != nil {
 		return err
 	}
+	if err := writeReport(out, report); err != nil {
+		return err
+	}
+
+	fmt.Printf("Analyzed locally: %s\n", path)
+	fmt.Printf("Raw bytes read locally: %d\n", len(data))
+	fmt.Printf("Secrets redacted before report write: %d\n", report.SecurityReceipt.SecretsRedacted)
+	printReportWrite(out, report)
+	if printNextSteps {
+		printNextStepsFor(out)
+	}
+	return nil
+}
+
+func analyzeBytes(jobID string, data []byte) (analyzer.Report, error) {
+	report, err := analyzer.Analyze(jobID, data)
+	if err != nil {
+		return analyzer.Report{}, err
+	}
 	report.SecurityReceipt.RawLogTTL = "not uploaded"
+	return report, nil
+}
+
+func writeReport(out string, report analyzer.Report) error {
 	encoded, err := json.MarshalIndent(report, "", "  ")
 	if err != nil {
 		return err
@@ -113,15 +139,91 @@ func analyzeSingle(path, out string, printNextSteps bool) error {
 	if err := os.WriteFile(out, append(encoded, '\n'), 0o600); err != nil {
 		return err
 	}
+	return nil
+}
 
-	fmt.Printf("Analyzed locally: %s\n", path)
-	fmt.Printf("Raw bytes read locally: %d\n", len(data))
-	fmt.Printf("Secrets redacted before report write: %d\n", report.SecurityReceipt.SecretsRedacted)
-	fmt.Printf("Sanitized report: %s (%d bytes)\n", out, len(encoded)+1)
+func reportFileSize(path string) int64 {
+	info, err := os.Stat(path)
+	if err != nil {
+		return 0
+	}
+	return info.Size()
+}
+
+func printReportWrite(out string, report analyzer.Report) {
+	label := "Sanitized report"
+	if report.AggregateEvent.ParserType == "paid_bundle" {
+		label = "Sanitized paid aggregate report"
+	}
+	fmt.Printf("%s: %s (%d bytes)\n", label, out, reportFileSize(out))
+}
+
+func printNextStepsFor(out string) {
+	fmt.Println()
+	fmt.Printf("Review before upload: jq . %s\n", shellQuote(out))
+	fmt.Printf("Upload sanitized report: agent-analyzer upload %s\n", shellQuote(out))
+}
+
+func analyzeDiscovered(candidates []logCandidate, out string, paid bool, printNextSteps bool) error {
+	if len(candidates) == 0 {
+		return errors.New("no supported agent logs found; checked Claude Code, Codex, and OpenCode")
+	}
+	reports := make([]analyzer.Report, 0, len(candidates))
+	totalBytes := 0
+	totalRedacted := 0
+	for index, candidate := range candidates {
+		fmt.Printf("Analyzing %s log %d/%d: %s\n", candidate.SourceLabel, index+1, len(candidates), candidate.Display)
+		data, err := candidate.readBytes()
+		if err != nil {
+			return fmt.Errorf("read %s log %q: %w", candidate.SourceLabel, candidate.Display, err)
+		}
+		report, err := analyzer.Analyze(fmt.Sprintf("local-%s-%03d", candidate.SourceID, index+1), data)
+		if err != nil {
+			return fmt.Errorf("analyze %s log %d: %w", candidate.SourceLabel, index+1, err)
+		}
+		reports = append(reports, report)
+		totalBytes += len(data)
+		totalRedacted += report.SecurityReceipt.SecretsRedacted
+	}
+
+	var report analyzer.Report
+	var err error
+	if !paid && len(reports) == 1 {
+		report = reports[0]
+		report.SecurityReceipt.RawLogTTL = "not uploaded"
+	} else {
+		parserType := "multi_source"
+		jobID := "local-multi"
+		if paid {
+			parserType = "paid_bundle"
+			jobID = "local-paid"
+		}
+		report, err = analyzer.AggregateReportsWithParserType(jobID, reports, totalBytes, parserType)
+		if err != nil {
+			return err
+		}
+		report.SecurityReceipt.RawLogTTL = "not uploaded"
+	}
+	if err := writeReport(out, report); err != nil {
+		return err
+	}
+
+	if paid {
+		fmt.Printf("Analyzed locally: %d supported agent logs across %d sources (%s)\n", len(candidates), sourceCount(candidates), sourceSummary(candidates))
+	} else {
+		fmt.Printf("Analyzed locally: %d latest bounded-size supported agent log(s) across %d sources (%s)\n", len(candidates), sourceCount(candidates), sourceSummary(candidates))
+	}
+	fmt.Printf("Raw bytes read locally: %d\n", totalBytes)
+	fmt.Printf("Secrets redacted before report write: %d\n", totalRedacted)
+	printReportWrite(out, report)
 	if printNextSteps {
-		fmt.Println()
-		fmt.Printf("Review before upload: jq . %s\n", shellQuote(out))
-		fmt.Printf("Upload sanitized report: agent-analyzer upload %s\n", shellQuote(out))
+		if paid {
+			fmt.Println()
+			fmt.Printf("Review before upload: jq . %s\n", shellQuote(out))
+			fmt.Printf("Upload sanitized paid aggregate with the command from your paid unlock page.\n")
+		} else {
+			printNextStepsFor(out)
+		}
 	}
 	return nil
 }
@@ -141,18 +243,19 @@ func runOneShot(args []string) error {
 	}
 	path := *logPath
 	if path == "" {
-		latest, err := latestClaudeLogFn()
+		candidates, err := latestSupportedLogsFn()
 		if err != nil {
 			return err
 		}
-		path = latest
-	}
-	if err := analyzeSingle(path, *out, false); err != nil {
+		if err := analyzeDiscovered(candidates, *out, false, false); err != nil {
+			return err
+		}
+	} else if err := analyzeSingle(path, *out, false); err != nil {
 		return err
 	}
 	fmt.Println()
 	fmt.Println("Are you ready to get your report?")
-	fmt.Println("- raw Claude Code logs stayed on this machine")
+	fmt.Println("- raw agent logs stayed on this machine")
 	fmt.Println("- only the sanitized report JSON will be uploaded")
 	fmt.Printf("- report file: %s\n", *out)
 	if !*yes && !confirmUpload(os.Stdin, os.Stdout) {
@@ -206,50 +309,14 @@ func runAnalyzePaid(out string, limit int) error {
 	if limit > 100 {
 		return errors.New("agent-analyzer analyze: --limit cannot exceed 100")
 	}
-	paths, err := recentClaudeLogsFn(limit)
+	candidates, err := recentSupportedLogsFn(limit)
 	if err != nil {
 		return err
 	}
-	if len(paths) == 0 {
-		return errors.New("no Claude Code JSONL logs found under ~/.claude/projects")
+	if len(candidates) == 0 {
+		return errors.New("no supported agent logs found; checked Claude Code, Codex, and OpenCode")
 	}
-	reports := make([]analyzer.Report, 0, len(paths))
-	totalBytes := 0
-	totalRedacted := 0
-	for index, path := range paths {
-		data, err := os.ReadFile(path)
-		if err != nil {
-			return err
-		}
-		report, err := analyzer.Analyze(fmt.Sprintf("local-paid-%03d", index+1), data)
-		if err != nil {
-			return fmt.Errorf("analyze paid log %d: %w", index+1, err)
-		}
-		reports = append(reports, report)
-		totalBytes += len(data)
-		totalRedacted += report.SecurityReceipt.SecretsRedacted
-	}
-	report, err := analyzer.AggregateReports("local-paid", reports, totalBytes)
-	if err != nil {
-		return err
-	}
-	report.SecurityReceipt.RawLogTTL = "not uploaded"
-	encoded, err := json.MarshalIndent(report, "", "  ")
-	if err != nil {
-		return err
-	}
-	if err := os.WriteFile(out, append(encoded, '\n'), 0o600); err != nil {
-		return err
-	}
-
-	fmt.Printf("Analyzed locally: %d recent Claude Code logs\n", len(paths))
-	fmt.Printf("Raw bytes read locally: %d\n", totalBytes)
-	fmt.Printf("Secrets redacted before report write: %d\n", totalRedacted)
-	fmt.Printf("Sanitized paid aggregate report: %s (%d bytes)\n", out, len(encoded)+1)
-	fmt.Println()
-	fmt.Printf("Review before upload: jq . %s\n", shellQuote(out))
-	fmt.Printf("Upload sanitized paid aggregate with the command from your paid unlock page.\n")
-	return nil
+	return analyzeDiscovered(candidates, out, true, true)
 }
 
 func runUpload(args []string) error {
@@ -317,43 +384,102 @@ func uploadReport(reportPath, baseURL string) (uploadResult, error) {
 	return result, nil
 }
 
-func latestClaudeLog() (string, error) {
-	matches, err := recentClaudeLogs(1)
-	if err != nil {
-		return "", err
-	}
-	if len(matches) == 0 {
-		return "", errors.New("no Claude Code JSONL logs found under ~/.claude/projects")
-	}
-	return matches[0], nil
+type logCandidate struct {
+	SourceID    string
+	SourceLabel string
+	Display     string
+	ModTime     time.Time
+	Size        int64
+	Read        func() ([]byte, error)
 }
 
-func recentClaudeLogs(limit int) ([]string, error) {
+func (candidate logCandidate) readBytes() ([]byte, error) {
+	if candidate.Read != nil {
+		return candidate.Read()
+	}
+	return os.ReadFile(candidate.Display)
+}
+
+func latestSupportedLogs() ([]logCandidate, error) {
+	return recentSupportedLogsWithMaxBytes(1, freeAutoMaxLogBytes)
+}
+
+func recentSupportedLogs(limit int) ([]logCandidate, error) {
+	return recentSupportedLogsWithMaxBytes(limit, 0)
+}
+
+func recentSupportedLogsWithMaxBytes(limit int, maxBytes int64) ([]logCandidate, error) {
+	if limit <= 0 {
+		return nil, errors.New("log discovery limit must be greater than zero")
+	}
+	var candidates []logCandidate
+	fileSources := []struct {
+		id    string
+		label string
+		root  []string
+		exts  map[string]bool
+	}{
+		{
+			id:    "claude_code",
+			label: "Claude Code",
+			root:  []string{".claude", "projects"},
+			exts:  map[string]bool{".jsonl": true},
+		},
+		{
+			id:    "codex",
+			label: "Codex",
+			root:  []string{".codex", "sessions"},
+			exts:  map[string]bool{".jsonl": true},
+		},
+	}
+	for _, source := range fileSources {
+		found, err := recentFileLogs(source.id, source.label, source.root, source.exts, limit, maxBytes)
+		if err != nil {
+			return nil, err
+		}
+		candidates = append(candidates, found...)
+	}
+	openCode, err := recentOpenCodeSessions(limit)
+	if err != nil {
+		return nil, err
+	}
+	candidates = append(candidates, openCode...)
+	if len(candidates) == 0 {
+		return nil, errors.New("no supported agent logs found; checked Claude Code, Codex, and OpenCode")
+	}
+	return candidates, nil
+}
+
+func recentFileLogs(sourceID, sourceLabel string, rootParts []string, extensions map[string]bool, limit int, maxBytes int64) ([]logCandidate, error) {
 	home, err := os.UserHomeDir()
 	if err != nil {
 		return nil, err
 	}
-	root := filepath.Join(home, ".claude", "projects")
+	parts := append([]string{home}, rootParts...)
+	root := filepath.Join(parts...)
 	var matches []logMatch
 	err = filepath.WalkDir(root, func(path string, entry os.DirEntry, err error) error {
 		if err != nil {
 			return nil
 		}
-		if entry.IsDir() || filepath.Ext(path) != ".jsonl" {
+		if entry.IsDir() || !extensions[strings.ToLower(filepath.Ext(path))] {
 			return nil
 		}
 		info, err := entry.Info()
 		if err != nil {
 			return nil
 		}
-		matches = append(matches, logMatch{path: path, modTime: info.ModTime()})
+		if maxBytes > 0 && info.Size() > maxBytes {
+			return nil
+		}
+		matches = append(matches, logMatch{path: path, modTime: info.ModTime(), size: info.Size()})
 		return nil
 	})
 	if err != nil && !errors.Is(err, os.ErrNotExist) {
 		return nil, err
 	}
 	if len(matches) == 0 {
-		return nil, errors.New("no Claude Code JSONL logs found under ~/.claude/projects")
+		return nil, nil
 	}
 	sort.Slice(matches, func(i, j int) bool {
 		if matches[i].modTime.Equal(matches[j].modTime) {
@@ -364,16 +490,129 @@ func recentClaudeLogs(limit int) ([]string, error) {
 	if limit > 0 && len(matches) > limit {
 		matches = matches[:limit]
 	}
-	paths := make([]string, 0, len(matches))
+	candidates := make([]logCandidate, 0, len(matches))
 	for _, match := range matches {
-		paths = append(paths, match.path)
+		candidates = append(candidates, logCandidate{
+			SourceID:    sourceID,
+			SourceLabel: sourceLabel,
+			Display:     match.path,
+			ModTime:     match.modTime,
+			Size:        match.size,
+		})
 	}
-	return paths, nil
+	return candidates, nil
 }
 
 type logMatch struct {
 	path    string
 	modTime time.Time
+	size    int64
+}
+
+func recentOpenCodeSessions(limit int) ([]logCandidate, error) {
+	if _, err := exec.LookPath("opencode"); err != nil {
+		return nil, nil
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	args := []string{"session", "list", "--format", "json", "--max-count", strconv.Itoa(limit)}
+	output, err := exec.CommandContext(ctx, "opencode", args...).Output()
+	if err != nil {
+		return nil, nil
+	}
+	ids := openCodeSessionIDs(output, limit)
+	candidates := make([]logCandidate, 0, len(ids))
+	for _, id := range ids {
+		sessionID := id
+		candidates = append(candidates, logCandidate{
+			SourceID:    "opencode",
+			SourceLabel: "OpenCode",
+			Display:     "opencode session " + sessionID,
+			Read: func() ([]byte, error) {
+				ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+				defer cancel()
+				return exec.CommandContext(ctx, "opencode", "export", sessionID).Output()
+			},
+		})
+	}
+	return candidates, nil
+}
+
+func openCodeSessionIDs(data []byte, limit int) []string {
+	var decoded any
+	if err := json.Unmarshal(data, &decoded); err != nil {
+		return nil
+	}
+	var ids []string
+	seen := map[string]bool{}
+	var collect func(any)
+	collect = func(value any) {
+		if limit > 0 && len(ids) >= limit {
+			return
+		}
+		switch typed := value.(type) {
+		case []any:
+			for _, item := range typed {
+				collect(item)
+				if limit > 0 && len(ids) >= limit {
+					return
+				}
+			}
+		case map[string]any:
+			if id := sessionIDFromMap(typed); id != "" && !seen[id] {
+				seen[id] = true
+				ids = append(ids, id)
+			}
+			for _, key := range []string{"sessions", "data", "items", "results"} {
+				if nested, ok := typed[key]; ok {
+					collect(nested)
+				}
+			}
+		}
+	}
+	collect(decoded)
+	return ids
+}
+
+func sessionIDFromMap(value map[string]any) string {
+	for _, key := range []string{"id", "sessionID", "sessionId", "session_id"} {
+		raw, ok := value[key]
+		if !ok {
+			continue
+		}
+		id, ok := raw.(string)
+		if ok && strings.TrimSpace(id) != "" {
+			return strings.TrimSpace(id)
+		}
+	}
+	return ""
+}
+
+func sourceCount(candidates []logCandidate) int {
+	seen := map[string]bool{}
+	for _, candidate := range candidates {
+		seen[candidate.SourceID] = true
+	}
+	return len(seen)
+}
+
+func sourceSummary(candidates []logCandidate) string {
+	counts := map[string]int{}
+	labels := map[string]string{}
+	for _, candidate := range candidates {
+		counts[candidate.SourceID]++
+		labels[candidate.SourceID] = candidate.SourceLabel
+	}
+	keys := make([]string, 0, len(counts))
+	for key := range counts {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+	parts := make([]string, 0, len(keys))
+	for _, key := range keys {
+		parts = append(parts, fmt.Sprintf("%s=%d", labels[key], counts[key]))
+	}
+	return strings.Join(parts, ", ")
 }
 
 func shellQuote(value string) string {
@@ -409,13 +648,13 @@ func usage() {
 	fmt.Fprintln(os.Stderr, "       agent-analyzer analyze [<log-path>] [--log <path>] [--out <path>] ...")
 	fmt.Fprintln(os.Stderr, "")
 	fmt.Fprintln(os.Stderr, "  run            analyze locally, ask for upload confirmation, upload sanitized JSON, and open the report.")
-	fmt.Fprintln(os.Stderr, "  <log-path>     path to a Claude Code JSONL log; mutually exclusive with --log.")
-	fmt.Fprintln(os.Stderr, "                 if neither is supplied, the latest log in ~/.claude/projects/")
-	fmt.Fprintln(os.Stderr, "                 is used.")
+	fmt.Fprintln(os.Stderr, "  <log-path>     path to a supported JSON/JSONL log; mutually exclusive with --log.")
+	fmt.Fprintln(os.Stderr, "                 if neither is supplied, one latest bounded-size log per supported source is used.")
+	fmt.Fprintln(os.Stderr, "                 currently auto-discovers Claude Code, Codex, and OpenCode.")
 	fmt.Fprintln(os.Stderr, "  --log <path>   explicit log path; mutually exclusive with a positional <log-path>.")
 	fmt.Fprintln(os.Stderr, "  --out <path>   output path for the sanitized report JSON (default: ./agent-analyzer-report.json).")
-	fmt.Fprintln(os.Stderr, "  --paid         analyze recent logs locally and write a sanitized aggregate report.")
-	fmt.Fprintln(os.Stderr, "  --limit <n>    maximum recent logs for --paid, capped at 100 (default: 100).")
+	fmt.Fprintln(os.Stderr, "  --paid         analyze recent supported logs locally and write a sanitized aggregate report.")
+	fmt.Fprintln(os.Stderr, "  --limit <n>    maximum recent logs per source for --paid, capped at 100 (default: 100).")
 	fmt.Fprintln(os.Stderr, "")
 	fmt.Fprintln(os.Stderr, "  agent-analyzer upload <sanitized-report.json> [--base-url https://analyzer.spec-kitty.ai]")
 	fmt.Fprintln(os.Stderr, "  agent-analyzer version")

@@ -6,8 +6,15 @@ import (
 )
 
 func AggregateReports(jobID string, reports []Report, inputSize int) (Report, error) {
+	return AggregateReportsWithParserType(jobID, reports, inputSize, "paid_bundle")
+}
+
+func AggregateReportsWithParserType(jobID string, reports []Report, inputSize int, parserType string) (Report, error) {
 	if len(reports) == 0 {
 		return Report{}, errors.New("no reports to aggregate")
+	}
+	if parserType == "" {
+		parserType = "paid_bundle"
 	}
 	var metrics Metrics
 	metrics.SessionCount = len(reports)
@@ -57,7 +64,7 @@ func AggregateReports(jobID string, reports []Report, inputSize int) (Report, er
 		ImmediateFixes: immediateFixes(findings),
 	}
 	normalizeReportCollections(&report)
-	report.AggregateEvent = aggregateEvent(report, "paid_bundle", inputSize)
+	report.AggregateEvent = aggregateEvent(report, parserType, inputSize)
 	AttachRecommendation(&report)
 	return report, nil
 }
@@ -72,7 +79,7 @@ func aggregateFindings(metrics Metrics) []Finding {
 			CostImpact: "medium-high",
 			Evidence: FindingEvidence{
 				Count:       metrics.Rereads,
-				Description: "Repeated reads across paid scan sessions",
+				Description: "Repeated reads across analyzed sessions",
 			},
 			Recommendation: "Prefer targeted searches and summarize file state before rereading the same files.",
 			Deterministic:  true,
@@ -88,7 +95,7 @@ func aggregateFindings(metrics Metrics) []Finding {
 				CostImpact: "high",
 				Evidence: FindingEvidence{
 					TokenShare:  share,
-					Description: "Tool output share across paid scan sessions",
+					Description: "Tool output share across analyzed sessions",
 				},
 				Recommendation: "Cap command output and use narrower queries before pasting long terminal output into context.",
 				Deterministic:  true,
@@ -103,7 +110,7 @@ func aggregateFindings(metrics Metrics) []Finding {
 			CostImpact: "medium",
 			Evidence: FindingEvidence{
 				Count:       metrics.RetryDepthMax,
-				Description: "Maximum retry depth across paid scan sessions",
+				Description: "Maximum retry depth across analyzed sessions",
 			},
 			Recommendation: "Stop after repeated failures, inspect the invariant, and restart with a smaller debugging scope.",
 			Deterministic:  true,
@@ -117,7 +124,7 @@ func aggregateFindings(metrics Metrics) []Finding {
 			CostImpact: "medium",
 			Evidence: FindingEvidence{
 				Count:       metrics.ContextGrowthEvents,
-				Description: "Timeline windows exceeded growth threshold across paid scan sessions",
+				Description: "Timeline windows exceeded growth threshold across analyzed sessions",
 			},
 			Recommendation: "Compact after task pivots and avoid combining architecture, debugging, and implementation in one long session.",
 			Deterministic:  true,

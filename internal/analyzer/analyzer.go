@@ -13,6 +13,7 @@ import (
 )
 
 const Version = "0.1.0"
+const maxFlattenJSONStringBytes = 4096
 
 var fileReadRE = regexp.MustCompile(`(?i)\b(?:cat|sed|nl|bat|less|head|tail)\s+(?:-[^\s]+\s+)*([A-Za-z0-9_./@~+-]+\.[A-Za-z0-9_+-]+)`)
 
@@ -127,6 +128,9 @@ func flattenJSON(obj map[string]any) string {
 	walk = func(v any) {
 		switch typed := v.(type) {
 		case string:
+			if len(typed) > maxFlattenJSONStringBytes {
+				typed = typed[:maxFlattenJSONStringBytes] + " [truncated]"
+			}
 			parts = append(parts, typed)
 		case []any:
 			for _, item := range typed {

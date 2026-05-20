@@ -223,11 +223,11 @@ Redactions:
         </div>
         <div class="upsell">
           <h2>Install the optimization pack generated from this analysis</h2>
-          <p>Unlock a waiver-gated paid scan across your 100 most recent Claude Code logs, then install a generated optimization pack with vetted context, retrieval, telemetry, and CLAUDE.md recommendations.</p>
+          <p>Unlock a waiver-gated paid scan across up to 100 recent logs per supported agent source, then install a generated optimization pack with vetted context, retrieval, telemetry, and CLAUDE.md recommendations.</p>
           {{if .ArtifactURL}}
           <p>Optimization plugin artifact: <a href="{{.ArtifactURL}}">{{.ArtifactURL}}</a></p>
           {{else}}
-          <p>The paid scan will use the same local-first model: analyze the 100 most recent Claude Code sessions locally, review the sanitized aggregate, then upload only the generated report JSON.</p>
+          <p>The paid scan will use the same local-first model: analyze up to 100 recent Claude Code, Codex, and OpenCode sessions locally, review the sanitized aggregate, then upload only the generated report JSON.</p>
           {{end}}
         </div>
         {{else}}

@@ -10,7 +10,7 @@
   <body>
     <main class="shell doc-page">
       <p class="eyebrow">security</p>
-      <h1>Raw Claude Code logs stay on your machine.</h1>
+      <h1>Raw agent logs stay on your machine.</h1>
       <p class="subhead">The launch flow is local-first: parse, redact, and summarize locally; upload only the sanitized report JSON you can inspect first.</p>
       <p class="subhead">Agent Analyzer is an independent third-party tool and is not affiliated with Anthropic.</p>
 
@@ -31,7 +31,7 @@
           <li>No browser file picker and no hidden access to `~/.claude`.</li>
           <li>No one-time bearer token pasted into a web-provided shell snippet for the public flow.</li>
           <li>No raw transcript is sent to an LLM.</li>
-          <li>No raw Claude Code JSONL logs are received by the public web flow.</li>
+          <li>No raw Claude Code, Codex, or OpenCode logs are received by the public web flow.</li>
           <li>No model tools, browsing, shell, filesystem, memory, or MCP access are used for interpretation.</li>
           <li>Server intake is bounded to sanitized report JSON and rejects reports that claim raw transcript LLM exposure.</li>
           <li>Operational logs are allowlisted to metadata, timings, status, buckets, and error categories.</li>
@@ -40,7 +40,7 @@
 
       <section class="panel">
         <h2>Threat Model</h2>
-        <p>We assume Claude Code logs are sensitive and may contain source code, command output, API responses, secrets, hostnames, usernames, and customer data. The primary mitigation is to keep raw logs local. Server-side retention and redaction are defense in depth, not the primary trust boundary.</p>
+        <p>We assume agent logs are sensitive and may contain source code, command output, API responses, secrets, hostnames, usernames, and customer data. The primary mitigation is to keep raw logs local. Server-side retention and redaction are defense in depth, not the primary trust boundary.</p>
       </section>
     </main>
   </body>
