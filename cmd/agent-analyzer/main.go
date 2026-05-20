@@ -173,24 +173,72 @@ func printNextStepsFor(out string) {
 }
 
 type progressBar struct {
-	total   int
-	width   int
-	lastLen int
+	total       int
+	width       int
+	lastLen     int
+	lastDone    int
+	lastMessage string
+	mode        progressMode
 }
+
+type progressMode string
+
+const (
+	progressModeBar   progressMode = "bar"
+	progressModeLines progressMode = "lines"
+	progressModeNone  progressMode = "none"
+)
 
 func newProgressBar(total int) *progressBar {
 	if total < 1 {
 		total = 1
 	}
-	return &progressBar{total: total, width: 24}
+	return &progressBar{total: total, width: 24, lastDone: -1, mode: detectProgressMode()}
+}
+
+func detectProgressMode() progressMode {
+	switch strings.ToLower(strings.TrimSpace(os.Getenv("AGENT_ANALYZER_PROGRESS"))) {
+	case "bar":
+		return progressModeBar
+	case "line", "lines":
+		return progressModeLines
+	case "none", "off", "false", "0":
+		return progressModeNone
+	}
+
+	// Claude Code, Codex, CI logs, and dumb terminals often render carriage
+	// return updates as stacked lines. Prefer boring milestone output there.
+	if os.Getenv("CODEX_SHELL") != "" ||
+		os.Getenv("CODEX_CI") != "" ||
+		os.Getenv("CLAUDE_CODE_OAUTH_TOKEN") != "" ||
+		os.Getenv("CI") != "" ||
+		os.Getenv("TERM") == "dumb" {
+		return progressModeLines
+	}
+	if info, err := os.Stdout.Stat(); err == nil && info.Mode()&os.ModeCharDevice != 0 {
+		return progressModeBar
+	}
+	return progressModeLines
 }
 
 func (bar *progressBar) Update(done int, message string) {
+	if bar.mode == progressModeNone {
+		return
+	}
 	if done < 0 {
 		done = 0
 	}
 	if done > bar.total {
 		done = bar.total
+	}
+	if bar.mode == progressModeLines {
+		if done == bar.lastDone && message == bar.lastMessage {
+			return
+		}
+		fmt.Printf("[%d/%d] %s\n", done, bar.total, message)
+		bar.lastDone = done
+		bar.lastMessage = message
+		return
 	}
 	filled := done * bar.width / bar.total
 	empty := bar.width - filled
@@ -216,11 +264,13 @@ func (bar *progressBar) Update(done int, message string) {
 
 func (bar *progressBar) Finish(message string) {
 	bar.Update(bar.total, message)
-	fmt.Println()
+	if bar.mode == progressModeBar {
+		fmt.Println()
+	}
 }
 
 func (bar *progressBar) Fail() {
-	if bar.lastLen > 0 {
+	if bar.mode == progressModeBar && bar.lastLen > 0 {
 		fmt.Println()
 	}
 }

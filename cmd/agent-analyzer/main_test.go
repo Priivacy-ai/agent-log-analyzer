@@ -431,3 +431,61 @@ func TestVersion_PrintsProvenance(t *testing.T) {
 		}
 	}
 }
+
+func TestProgressLinesAvoidsCarriageReturnRepaints(t *testing.T) {
+	t.Setenv("AGENT_ANALYZER_PROGRESS", "lines")
+	output := captureStdout(t, func() {
+		progress := newProgressBar(3)
+		progress.Update(0, "reading")
+		progress.Update(1, "analyzing")
+		progress.Update(2, "writing")
+		progress.Finish("complete")
+	})
+
+	if strings.Contains(output, "\r") {
+		t.Fatalf("line progress should not repaint with carriage returns: %q", output)
+	}
+	for _, want := range []string{"[0/3] reading", "[1/3] analyzing", "[2/3] writing", "[3/3] complete"} {
+		if !strings.Contains(output, want) {
+			t.Fatalf("line progress missing %q:\n%s", want, output)
+		}
+	}
+}
+
+func TestProgressBarOverrideUsesSingleLineRepaints(t *testing.T) {
+	t.Setenv("AGENT_ANALYZER_PROGRESS", "bar")
+	output := captureStdout(t, func() {
+		progress := newProgressBar(2)
+		progress.Update(0, "reading")
+		progress.Finish("complete")
+	})
+
+	if !strings.Contains(output, "\r") {
+		t.Fatalf("bar override should repaint with carriage returns: %q", output)
+	}
+	if strings.Count(output, "\n") != 1 {
+		t.Fatalf("bar progress should only end with one newline: %q", output)
+	}
+}
+
+func captureStdout(t *testing.T, fn func()) string {
+	t.Helper()
+	var buf bytes.Buffer
+	original := os.Stdout
+	read, write, err := os.Pipe()
+	if err != nil {
+		t.Fatalf("pipe: %v", err)
+	}
+	os.Stdout = write
+	defer func() { os.Stdout = original }()
+
+	fn()
+
+	if err := write.Close(); err != nil {
+		t.Fatalf("close writer: %v", err)
+	}
+	if _, err := buf.ReadFrom(read); err != nil {
+		t.Fatalf("read stdout: %v", err)
+	}
+	return buf.String()
+}
