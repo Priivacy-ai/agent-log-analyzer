@@ -64,14 +64,14 @@ node npm/bin/agent-analyzer.js version
 ## Cutting A Release
 
 `v0.1.0` was cut before the public NPX rename and should not be used for the
-first npm launch. Start public npm distribution with `v0.1.1` or newer.
+first npm launch. Start public npm distribution with `v0.1.2` or newer.
 
 1. Confirm `main` is green and the working tree is clean.
 2. Create an annotated semver tag:
 
    ```sh
-   git tag -a v0.1.1 -m "v0.1.1"
-   git push origin v0.1.1
+   git tag -a v0.1.2 -m "v0.1.2"
+   git push origin v0.1.2
    ```
 
 3. The release workflow publishes a draft GitHub Release with archives and

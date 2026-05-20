@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: "Existing semver tag to release, for example v0.1.1"
+        description: "Existing semver tag to release, for example v0.1.2"
         required: true
         type: string
 
@@ -88,7 +88,7 @@ jobs:
           version="${tag#v}"
           commit="$(git rev-parse HEAD)"
           date="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-          npm version "$version" --no-git-tag-version
+          npm version "$version" --no-git-tag-version --allow-same-version
           mkdir -p npm/bin
           build() {
             goos="$1"
