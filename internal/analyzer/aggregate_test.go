@@ -12,6 +12,7 @@ package analyzer
 
 import (
 	"reflect"
+	"slices"
 	"testing"
 	"time"
 )
@@ -552,6 +553,78 @@ func deepCopyEcosystem(e Ecosystem) Ecosystem {
 		out.WorkflowFingerprints[i].Sources = append([]string(nil), fp.Sources...)
 	}
 	return out
+}
+
+// -----------------------------------------------------------------------------
+// FR-008: AggregateReports re-runs the recommendation engine on merged inputs
+// -----------------------------------------------------------------------------
+
+// TestAggregateReportsAttachesRecommendation locks the WP02 contract:
+// AggregateReports must invoke AttachRecommendation on the merged Report so
+// the engine output reflects the union of signals derived from every input.
+//
+// Inputs:
+//   - Report A: finding "tool_output_bloat" → SignalToolOutputBloat.
+//   - Report B: MCP WarningBand "severe"   → SignalMCPSkillBloat.
+//   - Report C: active ccusage fingerprint → suppresses SignalNoUsageVisibility.
+func TestAggregateReportsAttachesRecommendation(t *testing.T) {
+	// Report A drives the "tool_output_bloat" signal via the metrics that
+	// aggregateFindings rebuilds from on the merged report: tool-output
+	// share >= 35% of estimated tokens.
+	reportA := Report{
+		Metrics: Metrics{
+			EstimatedTokens:  1000,
+			ToolOutputTokens: 600, // 60% share → tool_output_bloat finding
+		},
+		Ecosystem: Ecosystem{
+			ToolingUtilization: ToolingUtilization{
+				MCP: MCPUtilization{WarningBand: WarningBandNormal},
+			},
+		},
+	}
+	reportB := Report{
+		Ecosystem: Ecosystem{
+			ToolingUtilization: ToolingUtilization{
+				MCP: MCPUtilization{WarningBand: WarningBandSevere},
+			},
+		},
+	}
+	reportC := Report{
+		Ecosystem: Ecosystem{
+			WorkflowFingerprints: []EcosystemFingerprint{
+				{
+					ID:            "ccusage",
+					Confidence:    "high",
+					Sources:       []string{"binary_present"},
+					EvidenceCount: 1,
+					Active:        true,
+				},
+			},
+		},
+	}
+
+	merged, err := AggregateReports("rec-merge", []Report{reportA, reportB, reportC}, 3)
+	if err != nil {
+		t.Fatalf("AggregateReports: %v", err)
+	}
+	if merged.Recommendation == nil {
+		t.Fatalf("expected merged.Recommendation to be non-nil after AggregateReports")
+	}
+	if got, want := merged.Recommendation.EngineVersion, EngineVersion(); got != want {
+		t.Errorf("EngineVersion: got %q want %q", got, want)
+	}
+	if !slices.Contains(merged.Recommendation.Signals, SignalToolOutputBloat) {
+		t.Errorf("expected merged signals to contain %q, got %v",
+			SignalToolOutputBloat, merged.Recommendation.Signals)
+	}
+	if !slices.Contains(merged.Recommendation.Signals, SignalMCPSkillBloat) {
+		t.Errorf("expected merged signals to contain %q, got %v",
+			SignalMCPSkillBloat, merged.Recommendation.Signals)
+	}
+	if slices.Contains(merged.Recommendation.Signals, SignalNoUsageVisibility) {
+		t.Errorf("expected merged signals to NOT contain %q (active ccusage present), got %v",
+			SignalNoUsageVisibility, merged.Recommendation.Signals)
+	}
 }
 
 // -----------------------------------------------------------------------------

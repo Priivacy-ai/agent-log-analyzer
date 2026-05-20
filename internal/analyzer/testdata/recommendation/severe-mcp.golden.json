@@ -1,0 +1,35 @@
+{
+  "primary": {
+    "recommendation_id": "rec.usage_visibility.ccusage.no_usage_visibility",
+    "primary_tool_id": "ccusage",
+    "reason": "absent",
+    "signal_ids": [
+      "no_usage_visibility"
+    ],
+    "confidence": "low",
+    "risk_level": "low",
+    "install_policy": "recommend",
+    "evidence_counts": {}
+  },
+  "secondary": {
+    "recommendation_id": "rec.mcp_skill_hygiene.none.mcp_skill_bloat",
+    "primary_tool_id": "",
+    "reason": "prune_first",
+    "signal_ids": [
+      "mcp_skill_bloat"
+    ],
+    "confidence": "medium",
+    "risk_level": "low",
+    "install_policy": "recommend",
+    "evidence_counts": {}
+  },
+  "registry_version": "phase-a-2026-05-19",
+  "engine_version": "v0.1-phase-a",
+  "signals": [
+    "mcp_skill_bloat",
+    "no_usage_visibility",
+    "repeated_file_reads",
+    "retry_loop"
+  ],
+  "unknown_id_count": 0
+}

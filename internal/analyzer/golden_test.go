@@ -373,3 +373,61 @@ func TestPrivacyLeakCorpus(t *testing.T) {
 		})
 	}
 }
+
+// TestGoldenRecommendation (T015) locks in the field-level shape of the
+// Report.Recommendation envelope. The severe-MCP fixture
+// (04-many-low-util-degraded.log) is the canonical input: it produces
+// WarningBandSevere on the MCP side, which fires SignalMCPSkillBloat
+// (S-05) and exercises a non-trivial RecommendationSet — Primary,
+// Secondary, and the always-emitted version/signals/unknown_id_count
+// scaffold are all populated.
+//
+// The golden file is regenerated via UPDATE_GOLDEN=1, matching the
+// existing convention in TestGoldenSampleReport. On mismatch the test
+// fails with a hint pointing at the same env-var.
+//
+// Determinism: this test runs the single-report Analyze path, then
+// invokes AttachRecommendation explicitly. Analyze already calls
+// AttachRecommendation internally (see analyzer.go), so report.Recommendation
+// is already populated; we marshal that value directly to keep the
+// golden anchored to the public report surface rather than a
+// re-derivation.
+func TestGoldenRecommendation(t *testing.T) {
+	fixturePath := filepath.Join("testdata", "tooling", "04-many-low-util-degraded.log")
+	goldenPath := filepath.Join("testdata", "recommendation", "severe-mcp.golden.json")
+
+	data, err := os.ReadFile(fixturePath)
+	if err != nil {
+		t.Fatalf("read fixture: %v", err)
+	}
+	report, err := Analyze("job-golden-recommendation", data)
+	if err != nil {
+		t.Fatalf("Analyze failed: %v", err)
+	}
+	if report.Recommendation == nil {
+		t.Fatalf("expected non-nil Recommendation after Analyze; AttachRecommendation must run as part of the pipeline")
+	}
+
+	actual, err := json.MarshalIndent(report.Recommendation, "", "  ")
+	if err != nil {
+		t.Fatalf("marshal Recommendation: %v", err)
+	}
+	actual = append(actual, '\n')
+
+	if os.Getenv("UPDATE_GOLDEN") == "1" {
+		if err := os.MkdirAll(filepath.Dir(goldenPath), 0o755); err != nil {
+			t.Fatalf("mkdir golden dir: %v", err)
+		}
+		if err := os.WriteFile(goldenPath, actual, 0o644); err != nil {
+			t.Fatalf("write golden: %v", err)
+		}
+	}
+
+	expected, err := os.ReadFile(goldenPath)
+	if err != nil {
+		t.Fatalf("read golden %s: %v (run UPDATE_GOLDEN=1 go test ./internal/analyzer -run TestGoldenRecommendation to generate)", goldenPath, err)
+	}
+	if !bytes.Equal(expected, actual) {
+		t.Fatalf("golden recommendation mismatch; run UPDATE_GOLDEN=1 go test ./internal/analyzer -run TestGoldenRecommendation\n--- want ---\n%s\n--- got ---\n%s", expected, actual)
+	}
+}
