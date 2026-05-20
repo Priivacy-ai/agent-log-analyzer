@@ -8,6 +8,8 @@ import (
 	"regexp"
 	"sort"
 	"sync"
+
+	"github.com/robertdouglass/claude-log-analyzer/internal/analyzer/sdd"
 )
 
 //go:embed signatures/*.json
@@ -97,4 +99,39 @@ func loadSignatures(path string) []signature {
 		signatures = append(signatures, signature{id: spec.ID, patterns: compiled})
 	}
 	return signatures
+}
+
+func KnownEcosystemIDs(category string) map[string]bool {
+	registry := ecosystemRegistry()
+	out := map[string]bool{}
+	var sigs []signature
+	switch category {
+	case "coding_agent":
+		sigs = registry.CodingAgents
+	case "framework":
+		sigs = registry.Frameworks
+	case "mcp":
+		sigs = registry.MCPServers
+	case "skill":
+		sigs = registry.Skills
+	case "plugin":
+		sigs = registry.Plugins
+	case "package_manager":
+		sigs = registry.PackageManagers
+	case "workflow_fingerprint":
+		for _, detector := range sdd.LoadRegistry() {
+			out[detector.ID] = true
+		}
+		return out
+	default:
+		return out
+	}
+	for _, sig := range sigs {
+		out[sig.id] = true
+	}
+	return out
+}
+
+func ValidEcosystemID(category, id string) bool {
+	return KnownEcosystemIDs(category)[id]
 }

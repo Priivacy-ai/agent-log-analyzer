@@ -3,6 +3,7 @@ package app
 import (
 	"time"
 
+	"github.com/robertdouglass/claude-log-analyzer/internal/analytics"
 	"github.com/robertdouglass/claude-log-analyzer/internal/analyzer"
 )
 
@@ -26,6 +27,10 @@ type ReportStore interface {
 
 type DirectReportStore interface {
 	CreateCompletedReport(job Job, report analyzer.Report) error
+}
+
+type AnalyticsStore interface {
+	AppendAnalyticsEvent(event analytics.Event) error
 }
 
 type APIStore interface {

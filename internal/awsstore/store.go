@@ -3,6 +3,7 @@ package awsstore
 import (
 	"bytes"
 	"context"
+	"crypto/rand"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -18,6 +19,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
 	sqstypes "github.com/aws/aws-sdk-go-v2/service/sqs/types"
+	"github.com/robertdouglass/claude-log-analyzer/internal/analytics"
 	"github.com/robertdouglass/claude-log-analyzer/internal/analyzer"
 	"github.com/robertdouglass/claude-log-analyzer/internal/app"
 )
@@ -75,6 +77,39 @@ func (s *Store) CreateUploadSession(job app.Job) error {
 	}
 	job.UpdatedAt = now
 	return s.putJob(job)
+}
+
+func (s *Store) AppendAnalyticsEvent(event analytics.Event) error {
+	data, err := analytics.MarshalJSONLine(event)
+	if err != nil {
+		return err
+	}
+	now := time.Now().UTC()
+	key, err := analyticsObjectKey(now)
+	if err != nil {
+		return err
+	}
+	_, err = s.s3.PutObject(context.Background(), &s3.PutObjectInput{
+		Bucket:               aws.String(s.reportBucket),
+		Key:                  aws.String(key),
+		Body:                 bytes.NewReader(data),
+		ServerSideEncryption: "AES256",
+		ContentType:          aws.String("application/x-ndjson"),
+	})
+	return err
+}
+
+func analyticsObjectKey(now time.Time) (string, error) {
+	var random [16]byte
+	if _, err := rand.Read(random[:]); err != nil {
+		return "", err
+	}
+	return fmt.Sprintf(
+		"analytics/events/date=%s/hour=%02d/%x.jsonl",
+		now.Format("2006-01-02"),
+		now.Hour(),
+		random[:],
+	), nil
 }
 
 func (s *Store) StoreUploadSession(job app.Job, data []byte) (app.Job, error) {

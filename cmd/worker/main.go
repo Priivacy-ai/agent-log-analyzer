@@ -5,6 +5,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/robertdouglass/claude-log-analyzer/internal/analytics"
 	"github.com/robertdouglass/claude-log-analyzer/internal/analyzer"
 	"github.com/robertdouglass/claude-log-analyzer/internal/app"
 	"github.com/robertdouglass/claude-log-analyzer/internal/backend"
@@ -53,6 +54,11 @@ func processOnce(store app.WorkerStore) error {
 	}
 	if err := store.CompleteJob(job, report); err != nil {
 		return err
+	}
+	if analyticsStore, ok := store.(app.AnalyticsStore); ok {
+		if err := analyticsStore.AppendAnalyticsEvent(analytics.FromReport(report, string(job.ScanType))); err != nil {
+			slog.Warn("analytics event append failed", "error_category", "analytics_append")
+		}
 	}
 	slog.Info(
 		"job completed",

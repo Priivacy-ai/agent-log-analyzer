@@ -255,6 +255,10 @@ resource "aws_s3_bucket_lifecycle_configuration" "reports" {
     id     = "backstop-expire-reports"
     status = "Enabled"
 
+    filter {
+      prefix = "reports/"
+    }
+
     expiration {
       days = 1
     }
