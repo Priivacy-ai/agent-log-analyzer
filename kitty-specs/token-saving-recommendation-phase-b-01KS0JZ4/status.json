@@ -1,0 +1,49 @@
+{
+  "event_count": 4,
+  "last_event_id": "01KS0YZQRQBMWPBSGNMRWD2M5R",
+  "materialized_at": "2026-05-19T20:31:39.799655+00:00",
+  "mission_number": "",
+  "mission_slug": "token-saving-recommendation-phase-b-01KS0JZ4",
+  "mission_type": "software-dev",
+  "summary": {
+    "approved": 0,
+    "blocked": 0,
+    "canceled": 0,
+    "claimed": 0,
+    "done": 0,
+    "for_review": 0,
+    "in_progress": 0,
+    "in_review": 0,
+    "planned": 4
+  },
+  "work_packages": {
+    "WP01": {
+      "actor": "finalize-tasks",
+      "force_count": 1,
+      "lane": "planned",
+      "last_event_id": "01KS0YZQKFM2Z4EWS25CM6CNK2",
+      "last_transition_at": "2026-05-19T20:31:39.631032+00:00"
+    },
+    "WP02": {
+      "actor": "finalize-tasks",
+      "force_count": 1,
+      "lane": "planned",
+      "last_event_id": "01KS0YZQPQ435SX3RY9FQTNWKC",
+      "last_transition_at": "2026-05-19T20:31:39.735535+00:00"
+    },
+    "WP03": {
+      "actor": "finalize-tasks",
+      "force_count": 1,
+      "lane": "planned",
+      "last_event_id": "01KS0YZQQSQH1NY6J107B6QEVN",
+      "last_transition_at": "2026-05-19T20:31:39.769207+00:00"
+    },
+    "WP04": {
+      "actor": "finalize-tasks",
+      "force_count": 1,
+      "lane": "planned",
+      "last_event_id": "01KS0YZQRQBMWPBSGNMRWD2M5R",
+      "last_transition_at": "2026-05-19T20:31:39.799655+00:00"
+    }
+  }
+}

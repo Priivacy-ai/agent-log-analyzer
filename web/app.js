@@ -196,6 +196,7 @@ function renderReport(report) {
   }
 
   renderTimeline(report.timeline || []);
+  renderRecommendation(report);
   renderWorkflowFingerprints(report);
   renderToolingUtilization(report);
   document.querySelector("#ecosystem").textContent = summarizeEcosystem(report.ecosystem);
@@ -311,6 +312,252 @@ function renderWorkflowFingerprints(report) {
 
     list.appendChild(row);
   }
+}
+
+// Token-saving recommendation rendering — kitty-specs/token-saving-recommendation-phase-b-01KS0JZ4.
+//
+// Every text node is composed via textContent from allowlisted enum values
+// produced by internal/analyzer/token_saving_*.go. Unknown values are never
+// echoed into the DOM; that keeps this renderer privacy-safe even if it is
+// handed malformed report JSON.
+
+const TOOL_LABEL = {
+  ccusage: "ccusage",
+  ccstatusline: "ccstatusline",
+  claude_code_usage_monitor: "Claude Code Usage Monitor",
+  claude_code_usage_tracker: "Claude Code Usage Tracker",
+  tokenusage: "tokenusage",
+  claude_meter: "Claude Meter",
+  context_mode: "Context Mode",
+  distill: "Distill",
+  token_optimizer_mcp: "Token Optimizer MCP",
+  rtk: "RTK",
+  leanctx: "LeanCtx",
+  headroom: "Headroom",
+  claude_context: "Claude Context",
+  grepai: "GrepAI",
+  serena: "Serena",
+  codegraph: "CodeGraph",
+  codebase_memory_mcp: "Codebase Memory MCP",
+  code_review_graph: "Code Review Graph",
+  semble: "Semble",
+  jcodemunch_mcp: "jcodemunch MCP",
+  token_savior: "Token Savior",
+  cocoindex_code: "CocoIndex Code",
+  read_once: "Read Once",
+  openwolf: "OpenWolf",
+  memsearch: "MemSearch",
+  claude_token_efficient: "Claude Token Efficient",
+  caveman: "Caveman",
+  claude_code_hooks_mastery: "Claude Code Hooks Mastery",
+  awesome_claude_code: "Awesome Claude Code",
+};
+
+const REASON_LABEL = {
+  absent: "Not detected yet",
+  installed_inactive: "Installed but not active",
+  configured_inactive: "Configured but not active",
+  active_persistent: "Already active",
+  rejected_alternative: "Previously rejected",
+  prune_first: "Prune your current tooling first",
+  audit_config: "Audit current config",
+  no_op: "No action needed",
+  server_quota_check: "Server quota check",
+};
+
+const CONFIDENCE_LABEL = {
+  low: "Low confidence",
+  medium: "Medium confidence",
+  high: "High confidence",
+};
+
+const RISK_LABEL = {
+  low: "Low risk",
+  medium: "Medium risk",
+  high: "High risk",
+};
+
+const POLICY_LABEL = {
+  bundle: "Bundled",
+  recommend: "Recommended",
+  recommend_with_waiver: "Recommended (waiver required)",
+  research_only: "Research only",
+  reference_only: "Reference only",
+};
+
+const SIGNAL_LABEL = {
+  tool_output_bloat: "Tool output bloat",
+  shell_output_bloat: "Shell output bloat",
+  mcp_tool_output_bloat: "MCP tool output bloat",
+  repeated_file_reads: "Repeated file reads",
+  broad_repo_exploration: "Broad repo exploration",
+  unchanged_file_rereads: "Unchanged file rereads",
+  mcp_skill_bloat: "MCP / skill bloat",
+  output_verbosity: "Output verbosity",
+  retry_loop: "Retry loop",
+  context_growth_spikes: "Context growth spikes",
+  no_usage_visibility: "No usage visibility",
+};
+
+const SAVINGS_BUCKET_LABEL = {
+  low: "Low estimated savings",
+  medium: "Medium estimated savings",
+  high: "High estimated savings",
+};
+
+function savingsBucket(report) {
+  const high = report?.estimated_waste_pct?.high ?? 0;
+  if (high < 10) return "low";
+  if (high < 30) return "medium";
+  return "high";
+}
+
+function labelFrom(table, value, fallback) {
+  return typeof value === "string" && Object.hasOwn(table, value) ? table[value] : fallback;
+}
+
+function renderRecommendation(report) {
+  const section = document.querySelector("#recommendation-section");
+  const primaryRoot = document.querySelector("#recommendation-primary");
+  const secondaryRoot = document.querySelector("#recommendation-secondary");
+  const emptyNote = document.querySelector("#recommendation-empty");
+  if (!section || !primaryRoot || !secondaryRoot || !emptyNote) return;
+
+  // Reset slot DOM on every render.
+  primaryRoot.replaceChildren();
+  secondaryRoot.replaceChildren();
+  emptyNote.replaceChildren();
+
+  // FR-012: legacy report JSON (no recommendation field) renders nothing.
+  if (report?.recommendation == null) {
+    section.hidden = true;
+    primaryRoot.hidden = true;
+    secondaryRoot.hidden = true;
+    emptyNote.hidden = true;
+    return;
+  }
+
+  const rec = report.recommendation;
+  section.hidden = false;
+
+  const primary = rec.primary;
+  if (primary && typeof primary === "object") {
+    primaryRoot.hidden = false;
+    primaryRoot.appendChild(buildRecommendationCard(primary, savingsBucket(report)));
+  } else {
+    primaryRoot.hidden = true;
+  }
+
+  const secondary = rec.secondary;
+  if (secondary && typeof secondary === "object") {
+    secondaryRoot.hidden = false;
+    secondaryRoot.appendChild(buildRecommendationCard(secondary, null));
+  } else {
+    secondaryRoot.hidden = true;
+  }
+
+  // FR-006 / FR-009: no-op note when both Primary and Secondary are absent.
+  const noActionable = !primary && !secondary;
+  if (noActionable) {
+    const skippedCount = Array.isArray(rec.skipped) ? rec.skipped.length : 0;
+    const unknownCount = typeof rec.unknown_id_count === "number" ? rec.unknown_id_count : 0;
+    const sentence = document.createElement("span");
+    let text =
+      `Engine evaluated ${skippedCount} candidate${skippedCount === 1 ? "" : "s"}; ` +
+      `none warranted a recommendation.`;
+    if (unknownCount > 0) {
+      text +=
+        ` (${unknownCount} unknown identifier${unknownCount === 1 ? "" : "s"} ` +
+        `${unknownCount === 1 ? "was" : "were"} counted only.)`;
+    }
+    sentence.textContent = text;
+    emptyNote.appendChild(sentence);
+    emptyNote.hidden = false;
+  } else {
+    emptyNote.hidden = true;
+  }
+}
+
+function buildRecommendationCard(rec, savingsBucketValue) {
+  const card = document.createElement("div");
+  card.className = "recommendation-card";
+
+  // Tool label. Advisory recommendations intentionally carry an empty
+  // PrimaryToolID; render those as actions instead of blank tool cards.
+  const toolID = typeof rec.primary_tool_id === "string" ? rec.primary_tool_id : "";
+  const toolEl = document.createElement("div");
+  toolEl.className = "recommendation-tool";
+  toolEl.textContent = toolID.length > 0
+    ? labelFrom(TOOL_LABEL, toolID, "Unknown tool")
+    : advisoryRecommendationLabel(rec);
+  card.appendChild(toolEl);
+
+  // Optional savings-bucket badge (Primary only).
+  if (typeof savingsBucketValue === "string" && savingsBucketValue.length > 0) {
+    const savings = document.createElement("span");
+    savings.className = "recommendation-savings-bucket";
+    savings.textContent = labelFrom(SAVINGS_BUCKET_LABEL, savingsBucketValue, "Estimated savings");
+    card.appendChild(savings);
+  }
+
+  const meta = document.createElement("div");
+  meta.className = "recommendation-meta";
+
+  const reason = typeof rec.reason === "string" ? rec.reason : "";
+  const reasonEl = document.createElement("span");
+  reasonEl.className = "recommendation-reason";
+  reasonEl.textContent = labelFrom(REASON_LABEL, reason, "Unknown reason");
+  meta.appendChild(reasonEl);
+
+  const confidence = typeof rec.confidence === "string" ? rec.confidence : "";
+  const confidenceEl = document.createElement("span");
+  confidenceEl.className = "recommendation-confidence";
+  confidenceEl.textContent = labelFrom(CONFIDENCE_LABEL, confidence, "Unknown confidence");
+  meta.appendChild(confidenceEl);
+
+  const risk = typeof rec.risk_level === "string" ? rec.risk_level : "";
+  const riskEl = document.createElement("span");
+  riskEl.className = "recommendation-risk";
+  riskEl.textContent = labelFrom(RISK_LABEL, risk, "Unknown risk");
+  meta.appendChild(riskEl);
+
+  const policy = typeof rec.install_policy === "string" ? rec.install_policy : "";
+  const policyEl = document.createElement("span");
+  policyEl.className = "recommendation-policy";
+  policyEl.textContent = labelFrom(POLICY_LABEL, policy, "Unknown policy");
+  meta.appendChild(policyEl);
+
+  card.appendChild(meta);
+
+  // Signal chips.
+  const signals = Array.isArray(rec.signal_ids) ? rec.signal_ids : [];
+  if (signals.length > 0) {
+    const signalList = document.createElement("ul");
+    signalList.className = "recommendation-signals";
+    for (const sig of signals) {
+      const id = typeof sig === "string" ? sig : "";
+      if (id.length === 0) continue;
+      const chip = document.createElement("li");
+      chip.className = "recommendation-signal";
+      chip.textContent = labelFrom(SIGNAL_LABEL, id, "Unknown signal");
+      signalList.appendChild(chip);
+    }
+    card.appendChild(signalList);
+  }
+
+  return card;
+}
+
+function advisoryRecommendationLabel(rec) {
+  const reason = typeof rec.reason === "string" ? rec.reason : "";
+  const signals = Array.isArray(rec.signal_ids) ? rec.signal_ids : [];
+  if (reason === "prune_first" || signals.includes("mcp_skill_bloat")) {
+    return "Prune / lazy-load MCPs and skills";
+  }
+  if (reason === "audit_config" || signals.includes("retry_loop") || signals.includes("context_growth_spikes")) {
+    return "Session hygiene audit";
+  }
+  return "Tooling recommendation";
 }
 
 // The four allowlisted advice IDs are emitted by internal/analyzer/analyzer.go:368-394.

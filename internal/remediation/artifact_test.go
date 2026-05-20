@@ -308,6 +308,107 @@ func TestGenerate_MergedAggregate_FlowsToArtifact(t *testing.T) {
 	}
 }
 
+// TestGenerateAttachesRecommendation locks the WP02 carry-through: the paid
+// artifact must surface report.Recommendation verbatim under the
+// `recommendation` JSON key, and the field must be omitted when the report
+// has no recommendation (omitempty contract).
+func TestGenerateAttachesRecommendation(t *testing.T) {
+	t.Run("populated round-trips and preserves VettedRecommendations", func(t *testing.T) {
+		recSet := &analyzer.RecommendationSet{
+			Primary: &analyzer.TokenSavingRecommendation{
+				RecommendationID: "ccusage::no_usage_visibility",
+				PrimaryToolID:    "ccusage",
+				Reason:           "absent",
+				SignalIDs:        []analyzer.Signal{analyzer.SignalNoUsageVisibility},
+				Confidence:       "high",
+				RiskLevel:        "low",
+				InstallPolicy:    "recommend",
+				EvidenceCounts:   map[analyzer.EvidenceSource]int{},
+			},
+			RegistryVersion: "v0-test",
+			EngineVersion:   analyzer.EngineVersion(),
+			Signals:         []analyzer.Signal{analyzer.SignalNoUsageVisibility},
+		}
+		report := analyzer.Report{
+			Version: "0.1.0",
+			AggregateEvent: analyzer.AggregateSafeEvent{
+				ScoreBucket: "40_60",
+				WasteBucket: "40_60",
+			},
+			Findings: []analyzer.Finding{
+				{
+					ID:         "repeated_file_reads",
+					Severity:   "high",
+					CostImpact: "medium-high",
+					Evidence:   analyzer.FindingEvidence{Count: 5},
+				},
+			},
+			Recommendation: recSet,
+		}
+
+		artifact := Generate(report, Options{
+			GeneratedAt: time.Date(2026, 5, 19, 12, 0, 0, 0, time.UTC),
+		})
+
+		// Pointer-assignment contract: artifact carries the same pointer.
+		if artifact.Recommendation != report.Recommendation {
+			t.Fatalf("expected artifact.Recommendation == report.Recommendation (pointer alias), got %p vs %p",
+				artifact.Recommendation, report.Recommendation)
+		}
+
+		body, err := json.Marshal(artifact)
+		if err != nil {
+			t.Fatalf("marshal artifact: %v", err)
+		}
+		if !strings.Contains(string(body), `"recommendation":`) {
+			t.Fatalf("expected JSON to include \"recommendation\" key, got %s", body)
+		}
+
+		var roundTripped Artifact
+		if err := json.Unmarshal(body, &roundTripped); err != nil {
+			t.Fatalf("unmarshal artifact: %v", err)
+		}
+		if roundTripped.Recommendation == nil {
+			t.Fatalf("expected round-tripped Recommendation to be non-nil")
+		}
+		if roundTripped.Recommendation.Primary == nil {
+			t.Fatalf("expected round-tripped Recommendation.Primary to be non-nil")
+		}
+		if got, want := roundTripped.Recommendation.Primary.PrimaryToolID, recSet.Primary.PrimaryToolID; got != want {
+			t.Errorf("Primary.PrimaryToolID: got %q want %q", got, want)
+		}
+
+		// C-004 regression guard: VettedRecommendations stays populated.
+		if len(artifact.VettedRecommendations) == 0 {
+			t.Errorf("expected VettedRecommendations to remain populated alongside Recommendation")
+		}
+	})
+
+	t.Run("nil recommendation omits the key", func(t *testing.T) {
+		report := analyzer.Report{
+			Version: "0.1.0",
+			AggregateEvent: analyzer.AggregateSafeEvent{
+				ScoreBucket: "60_80",
+				WasteBucket: "20_40",
+			},
+			// Recommendation deliberately left nil.
+		}
+		artifact := Generate(report, Options{
+			GeneratedAt: time.Date(2026, 5, 19, 12, 0, 0, 0, time.UTC),
+		})
+		if artifact.Recommendation != nil {
+			t.Fatalf("expected artifact.Recommendation to be nil when report.Recommendation is nil, got %#v", artifact.Recommendation)
+		}
+		body, err := json.Marshal(artifact)
+		if err != nil {
+			t.Fatalf("marshal artifact: %v", err)
+		}
+		if strings.Contains(string(body), `"recommendation":`) {
+			t.Fatalf("omitempty contract violated: JSON contains \"recommendation\" key when input was nil: %s", body)
+		}
+	})
+}
+
 func hasFile(artifact Artifact, path string) bool {
 	for _, file := range artifact.Files {
 		if file.Path == path {

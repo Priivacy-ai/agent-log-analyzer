@@ -63,6 +63,7 @@ func Analyze(jobID string, input []byte) (Report, error) {
 	}
 	normalizeReportCollections(&report)
 	report.AggregateEvent = aggregateEvent(report, parserType, len(input))
+	AttachRecommendation(&report)
 	return report, nil
 }
 

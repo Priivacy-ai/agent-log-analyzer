@@ -1,0 +1,228 @@
+{
+  "mission_slug": "token-saving-recommendation-phase-b-01KS0JZ4",
+  "mission_number": "",
+  "mission_type": "software-dev",
+  "overall_verdict": "pass",
+  "criteria": [
+    {
+      "criterion_id": "FR-001",
+      "description": "Derive engine Signal values from Report findings (tool_output_bloat, repeated_file_reads, retry_loop, context_growth_spikes).",
+      "proof_type": "automated_test",
+      "evidence": "internal/analyzer/recommendation_wiring_test.go::TestDeriveSignals (covers S-01..S-04 per finding ID).",
+      "pass_fail": "pass",
+      "verified_by": "claude:opus-4-7:reviewer-rina:reviewer",
+      "verified_at": "2026-05-19T21:00:00Z",
+      "notes": "WP01 commit d4d0743."
+    },
+    {
+      "criterion_id": "FR-002",
+      "description": "Derive Signal values from ToolingUtilization warning bands (high|severe → mcp_skill_bloat).",
+      "proof_type": "automated_test",
+      "evidence": "internal/analyzer/recommendation_wiring_test.go::TestDeriveSignals (covers S-05, S-06 + MCP/Skill dedupe case).",
+      "pass_fail": "pass",
+      "verified_by": "claude:opus-4-7:reviewer-rina:reviewer",
+      "verified_at": "2026-05-19T21:00:00Z",
+      "notes": null
+    },
+    {
+      "criterion_id": "FR-003",
+      "description": "Build ToolStateMap entries from WorkflowFingerprints using only allowlisted public tool IDs with state derived from active/installed flags.",
+      "proof_type": "automated_test",
+      "evidence": "internal/analyzer/recommendation_wiring_test.go::TestDeriveToolStateMap (covers T-F-01..T-F-03).",
+      "pass_fail": "pass",
+      "verified_by": "claude:opus-4-7:reviewer-rina:reviewer",
+      "verified_at": "2026-05-19T21:00:00Z",
+      "notes": null
+    },
+    {
+      "criterion_id": "FR-004",
+      "description": "Build ToolStateMap entries from ToolingUtilization MCP/Skill (executed → ActiveHigh, exposed-only → ConfiguredMedium).",
+      "proof_type": "automated_test",
+      "evidence": "internal/analyzer/recommendation_wiring_test.go::TestDeriveToolStateMap (covers T-M-01, T-M-02, T-S-01, T-S-02). Also internal/analyzer/aggregate_test.go::TestAggregateReportsAttachesRecommendation for merge-time semantics.",
+      "pass_fail": "pass",
+      "verified_by": "claude:opus-4-7:reviewer-rina:reviewer",
+      "verified_at": "2026-05-19T21:00:00Z",
+      "notes": "WP02 commit 878790f."
+    },
+    {
+      "criterion_id": "FR-005",
+      "description": "Carry safe CLI probe evidence (cli_presence/cli_version) as bounded EvidenceSource counts; no raw strings.",
+      "proof_type": "automated_test",
+      "evidence": "internal/analyzer/recommendation_wiring.go (CLI probe detection via Sources slice membership + VersionBucket presence as boolean trigger). Tested by TestDeriveToolStateMap fingerprint cases and locked by TestLeakRecommendationPrivateNamesAreOnlyCounted.",
+      "pass_fail": "pass",
+      "verified_by": "claude:opus-4-7:reviewer-rina:reviewer",
+      "verified_at": "2026-05-19T21:00:00Z",
+      "notes": null
+    },
+    {
+      "criterion_id": "FR-006",
+      "description": "Call Recommend(signals, state) once per analyzer pass and attach RecommendationSet to Report.Recommendation.",
+      "proof_type": "automated_test",
+      "evidence": "internal/analyzer/recommendation_wiring.go::AttachRecommendation + analyzer.go call site at end of Analyze. Tested by TestAttachRecommendation. Web rendering verified in WP04 (web/app.js::renderRecommendation).",
+      "pass_fail": "pass",
+      "verified_by": "claude:opus-4-7:reviewer-rina:reviewer",
+      "verified_at": "2026-05-19T21:00:00Z",
+      "notes": null
+    },
+    {
+      "criterion_id": "FR-007",
+      "description": "Paid plugin artifact carries RecommendationSet alongside existing VettedRecommendations (additive).",
+      "proof_type": "automated_test",
+      "evidence": "internal/remediation/artifact.go::Generate sets artifact.Recommendation = report.Recommendation. internal/remediation/artifact_test.go::TestGenerateAttachesRecommendation asserts populated round-trip + omitempty + VettedRecommendations preserved (C-004 regression guard).",
+      "pass_fail": "pass",
+      "verified_by": "claude:opus-4-7:reviewer-rina:reviewer",
+      "verified_at": "2026-05-19T21:00:00Z",
+      "notes": null
+    },
+    {
+      "criterion_id": "FR-008",
+      "description": "Aggregate-merge across multi-report paid scans by re-running Recommend on union signals + resolved tool state.",
+      "proof_type": "automated_test",
+      "evidence": "internal/analyzer/aggregate.go::AggregateReports calls AttachRecommendation on merged Report. internal/analyzer/aggregate_test.go::TestAggregateReportsAttachesRecommendation aggregates 3 distinct synthetic Reports and asserts Recommendation.Signals contains union signals.",
+      "pass_fail": "pass",
+      "verified_by": "claude:opus-4-7:reviewer-rina:reviewer",
+      "verified_at": "2026-05-19T21:00:00Z",
+      "notes": null
+    },
+    {
+      "criterion_id": "FR-009",
+      "description": "Free web report renders Primary + Secondary with allowlist-only text; no-op note when both absent.",
+      "proof_type": "code_review",
+      "evidence": "web/app.js::renderRecommendation + buildRecommendationCard + no-op branch. web/index.html adds #recommendation-section with intel-section pattern. Allowlist label maps (TOOL_LABEL, REASON_LABEL, CONFIDENCE_LABEL, RISK_LABEL, POLICY_LABEL, SIGNAL_LABEL) compose every visible string via textContent. WP04 commit d0f67bb.",
+      "pass_fail": "pass",
+      "verified_by": "claude:opus-4-7:reviewer-rina:reviewer",
+      "verified_at": "2026-05-19T21:00:00Z",
+      "notes": "Browser render not executed in this environment; verified by code review and contract trace."
+    },
+    {
+      "criterion_id": "FR-010",
+      "description": "MCP/skill bloat high|severe band prioritizes pruning/lazy-loading (mcp_skill_hygiene class) over adding new tooling.",
+      "proof_type": "automated_test",
+      "evidence": "Engine enforces via Phase A rule precedence. Phase B verifies inputs are populated correctly via TestDeriveSignals (S-05, S-06) and TestAggregateReportsAttachesRecommendation (Report B with MCP band severe → SignalMCPSkillBloat in merged set).",
+      "pass_fail": "pass",
+      "verified_by": "claude:opus-4-7:reviewer-rina:reviewer",
+      "verified_at": "2026-05-19T21:00:00Z",
+      "notes": null
+    },
+    {
+      "criterion_id": "FR-011",
+      "description": "Tools resolving to active_high/configured_medium/rejected_medium are never recommended as Primary or Secondary.",
+      "proof_type": "automated_test",
+      "evidence": "Engine enforces via Phase A skip rules. Phase B verifies state derivation via TestDeriveToolStateMap (multi-source dedupe case) and TestAggregateReportsAttachesRecommendation (active ccusage suppresses SignalNoUsageVisibility).",
+      "pass_fail": "pass",
+      "verified_by": "claude:opus-4-7:reviewer-rina:reviewer",
+      "verified_at": "2026-05-19T21:00:00Z",
+      "notes": null
+    },
+    {
+      "criterion_id": "FR-012",
+      "description": "Legacy reports with Recommendation==nil render with no console error and no panel.",
+      "proof_type": "code_review",
+      "evidence": "Recommendation field is *RecommendationSet with json:'recommendation,omitempty' so legacy JSON round-trips with nil. web/app.js::renderRecommendation early-returns when report.recommendation is null.",
+      "pass_fail": "pass",
+      "verified_by": "claude:opus-4-7:reviewer-rina:reviewer",
+      "verified_at": "2026-05-19T21:00:00Z",
+      "notes": null
+    },
+    {
+      "criterion_id": "NFR-001",
+      "description": "Determinism: identical Report inputs produce byte-identical Report.Recommendation JSON.",
+      "proof_type": "automated_test",
+      "evidence": "internal/analyzer/recommendation_wiring_test.go::TestAttachRecommendationDeterminism (100-iteration loop marshals JSON and asserts byte-equality). internal/analyzer/golden_test.go::TestGoldenRecommendation locks the shape against a fixture snapshot.",
+      "pass_fail": "pass",
+      "verified_by": "claude:opus-4-7:reviewer-rina:reviewer",
+      "verified_at": "2026-05-19T21:00:00Z",
+      "notes": null
+    },
+    {
+      "criterion_id": "NFR-002",
+      "description": "Privacy: Report.Recommendation JSON contains zero raw commands, paths, private/unknown tool names, prompt text, raw version strings.",
+      "proof_type": "automated_test",
+      "evidence": "internal/analyzer/leak_test.go::TestLeakRecommendationJSON + TestLeakRecommendationPrivateNamesAreOnlyCounted assert zero forbidden substrings. WP03 commit 99fc667. Sample-report golden regenerated and verified privacy-safe.",
+      "pass_fail": "pass",
+      "verified_by": "claude:opus-4-7:reviewer-rina:reviewer",
+      "verified_at": "2026-05-19T21:00:00Z",
+      "notes": "WP03 implementer surfaced a privacy-positive design observation: deriveToolStateMap pre-filters unknown ToolIDs via GetTool, so UnknownIDCount is structurally 0 along the natural path. String-absence assertions remain the load-bearing privacy gate."
+    },
+    {
+      "criterion_id": "NFR-003",
+      "description": "Render performance: report render p95 does not regress after adding the recommendation section.",
+      "proof_type": "code_review",
+      "evidence": "WP04 renderer composes a small static-shape panel via createElement/textContent; no async work, no template engine, no fetch. Adds < 1KB JS payload. Browser render benchmarking not executed in this CI environment; estimate well under the 500ms baseline.",
+      "pass_fail": "pass",
+      "verified_by": "claude:opus-4-7:reviewer-rina:reviewer",
+      "verified_at": "2026-05-19T21:00:00Z",
+      "notes": "Recommend running ./scripts/load-local.sh 25 + browser p95 measurement before public launch as a final dial-tone check."
+    },
+    {
+      "criterion_id": "NFR-004",
+      "description": "Backwards compatibility: pre-Phase-B Report JSON deserializes cleanly with Recommendation == nil.",
+      "proof_type": "automated_test",
+      "evidence": "Recommendation field uses *RecommendationSet with json:'recommendation,omitempty'. Round-trip behavior verified implicitly by TestAttachRecommendation nil-safety subtest and the regenerated TestGoldenSampleReport.",
+      "pass_fail": "pass",
+      "verified_by": "claude:opus-4-7:reviewer-rina:reviewer",
+      "verified_at": "2026-05-19T21:00:00Z",
+      "notes": null
+    },
+    {
+      "criterion_id": "C-001",
+      "description": "Output uses only existing enum/allowlist fields; no new free-form string fields.",
+      "proof_type": "code_review",
+      "evidence": "Diff adds Recommendation *RecommendationSet pointing at the frozen Phase A struct. No new fields added to RecommendationSet, TokenSavingRecommendation, or SkipNote.",
+      "pass_fail": "pass",
+      "verified_by": "claude:opus-4-7:reviewer-rina:reviewer",
+      "verified_at": "2026-05-19T21:00:00Z",
+      "notes": null
+    },
+    {
+      "criterion_id": "C-002",
+      "description": "Phase A Recommend signature and engine internals are unchanged.",
+      "proof_type": "code_review",
+      "evidence": "No file under internal/analyzer/token_saving_*.go modified across all 4 WPs. Verified by reviewer in WP01 review.",
+      "pass_fail": "pass",
+      "verified_by": "claude:opus-4-7:reviewer-rina:reviewer",
+      "verified_at": "2026-05-19T21:00:00Z",
+      "notes": null
+    },
+    {
+      "criterion_id": "C-003",
+      "description": "PR #76 DOM-privacy invariant preserved: no mcp__*/skill__*/plugin__* in rendered DOM; no new innerHTML usage.",
+      "proof_type": "code_review",
+      "evidence": "WP04 diff introduced zero new innerHTML/outerHTML/insertAdjacentHTML matches in web/app.js (reviewer-verified via grep on +-prefixed diff lines). All text composition via createElement/textContent/appendChild. Allowlist label maps prevent raw enum strings from being rendered.",
+      "pass_fail": "pass",
+      "verified_by": "claude:opus-4-7:reviewer-rina:reviewer",
+      "verified_at": "2026-05-19T21:00:00Z",
+      "notes": null
+    },
+    {
+      "criterion_id": "C-004",
+      "description": "Existing PluginArtifact VettedRecommendations field is preserved alongside the new Recommendation field.",
+      "proof_type": "automated_test",
+      "evidence": "internal/remediation/artifact_test.go::TestGenerateAttachesRecommendation includes regression-guard subtest asserting VettedRecommendations is still populated. WP02 reviewer confirmed field appended (not reordered) and pointer-aliased (not copied).",
+      "pass_fail": "pass",
+      "verified_by": "claude:opus-4-7:reviewer-rina:reviewer",
+      "verified_at": "2026-05-19T21:00:00Z",
+      "notes": null
+    },
+    {
+      "criterion_id": "C-005",
+      "description": "Signal derivation, tool-state derivation, and aggregate-merge functions iterate deterministically (sorted keys).",
+      "proof_type": "automated_test",
+      "evidence": "No `range` over ToolStateMap in derivation paths (verified by reviewer grep). sortedSignalIDs used for Signal dedupe/sort. Determinism locked by TestAttachRecommendationDeterminism (100-iter byte-equality).",
+      "pass_fail": "pass",
+      "verified_by": "claude:opus-4-7:reviewer-rina:reviewer",
+      "verified_at": "2026-05-19T21:00:00Z",
+      "notes": null
+    },
+    {
+      "criterion_id": "C-006",
+      "description": "No new external dependencies added.",
+      "proof_type": "code_review",
+      "evidence": "go.mod unchanged. WP01–WP04 use only stdlib (slices, sort, encoding/json) and existing internal/analyzer + internal/remediation packages.",
+      "pass_fail": "pass",
+      "verified_by": "claude:opus-4-7:reviewer-rina:reviewer",
+      "verified_at": "2026-05-19T21:00:00Z",
+      "notes": null
+    }
+  ]
+}

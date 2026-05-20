@@ -58,6 +58,7 @@ func AggregateReports(jobID string, reports []Report, inputSize int) (Report, er
 	}
 	normalizeReportCollections(&report)
 	report.AggregateEvent = aggregateEvent(report, "paid_bundle", inputSize)
+	AttachRecommendation(&report)
 	return report, nil
 }
 

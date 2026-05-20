@@ -13,6 +13,7 @@ type Report struct {
 	Timeline        []TimelinePoint    `json:"timeline"`
 	ImmediateFixes  []string           `json:"immediate_fixes"`
 	AggregateEvent  AggregateSafeEvent `json:"aggregate_event"`
+	Recommendation  *RecommendationSet `json:"recommendation,omitempty"`
 }
 
 type WasteRange struct {

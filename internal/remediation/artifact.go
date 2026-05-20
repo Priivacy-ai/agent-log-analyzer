@@ -52,17 +52,18 @@ type Options struct {
 }
 
 type Artifact struct {
-	SchemaVersion          string               `json:"schema_version"`
-	Generator              string               `json:"generator"`
-	PluginName             string               `json:"plugin_name"`
-	PluginVersion          string               `json:"plugin_version"`
-	GeneratedAt            time.Time            `json:"generated_at"`
-	Source                 SourceSummary        `json:"source"`
-	Customizations         []Customization      `json:"customizations"`
-	VettedRecommendations  []ToolRecommendation `json:"vetted_recommendations"`
-	RequiredAcknowledgment string               `json:"required_acknowledgment"`
-	Files                  []File               `json:"files"`
-	Install                Install              `json:"install"`
+	SchemaVersion          string                      `json:"schema_version"`
+	Generator              string                      `json:"generator"`
+	PluginName             string                      `json:"plugin_name"`
+	PluginVersion          string                      `json:"plugin_version"`
+	GeneratedAt            time.Time                   `json:"generated_at"`
+	Source                 SourceSummary               `json:"source"`
+	Customizations         []Customization             `json:"customizations"`
+	VettedRecommendations  []ToolRecommendation        `json:"vetted_recommendations"`
+	Recommendation         *analyzer.RecommendationSet `json:"recommendation,omitempty"`
+	RequiredAcknowledgment string                      `json:"required_acknowledgment"`
+	Files                  []File                      `json:"files"`
+	Install                Install                     `json:"install"`
 }
 
 type SourceSummary struct {
@@ -135,6 +136,7 @@ func Generate(report analyzer.Report, options Options) Artifact {
 		RequiredAcknowledgment: acknowledgment,
 		Files:                  files,
 	}
+	artifact.Recommendation = report.Recommendation
 	artifact.Install = installInstructions(pluginName, options.ArtifactURL)
 	return artifact
 }

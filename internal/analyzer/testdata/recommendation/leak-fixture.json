@@ -1,0 +1,96 @@
+{
+  "job_id": "leak-fixture",
+  "version": "test",
+  "score": 0,
+  "estimated_waste_pct": {"low": 0, "high": 0},
+  "metrics": {"turns": 0, "estimated_tokens": 0, "tool_output_tokens": 0, "rereads": 0, "retry_depth_max": 0, "context_growth_events": 0, "failed_commands": 0},
+  "findings": [
+    {"id": "tool_output_bloat", "title": "x", "severity": "high", "cost_impact": "", "evidence": {}, "recommendation": "", "deterministic": true}
+  ],
+  "ecosystem": {
+    "client": "",
+    "coding_agents": [],
+    "operating_system": "",
+    "shell": "",
+    "workflow_frameworks": [],
+    "mcp_servers_known": ["github"],
+    "unknown_mcp_server_count": 5,
+    "known_skills": [],
+    "unknown_skill_count": 3,
+    "known_plugins": [],
+    "unknown_plugin_count": 2,
+    "package_managers": [],
+    "version_control": "",
+    "tooling_utilization": {
+      "mcp": {
+        "known_server_ids": ["github"],
+        "unknown_server_count": 5,
+        "server_count_bucket": "many",
+        "exposed_tool_count_bucket": "high",
+        "context_token_bucket": "high",
+        "exposure_known": true,
+        "inference_source": "calls",
+        "call_count": 12,
+        "known_call_count": 2,
+        "unknown_call_count": 10,
+        "unique_known_called_ids": ["github"],
+        "unique_unknown_called_count": 4,
+        "utilization_ratio_pct": 16,
+        "context_efficiency_bucket": "under-utilized",
+        "warning_band": "severe"
+      },
+      "skill": {
+        "known_exposed_ids": ["review"],
+        "unknown_exposed_count": 3,
+        "exposed_count_bucket": "high",
+        "context_token_bucket": "high",
+        "exposure_known": true,
+        "inference_source": "calls",
+        "executed_count": 5,
+        "known_executed_ids": ["review"],
+        "unknown_executed_count": 4,
+        "utilization_ratio_pct": 20,
+        "context_efficiency_bucket": "under-utilized",
+        "warning_band": "high"
+      }
+    },
+    "workflow_fingerprints": [
+      {"id": "spec-kitty", "confidence": "high", "sources": ["cli_probe"], "evidence_count": 3, "active": true, "installed": true, "version_bucket": "recent"},
+      {"id": "private_mcp_acme", "confidence": "low", "sources": ["report_mention"], "evidence_count": 1, "active": false, "installed": false},
+      {"id": "mcp__skill__plugin__private_acme_unicorn", "confidence": "low", "sources": ["report_mention"], "evidence_count": 1, "active": false, "installed": false}
+    ]
+  },
+  "redactions": {},
+  "security_receipt": {"raw_transcript_sent_to_llm": false, "outbound_during_analysis": false, "secrets_redacted": 0, "raw_log_ttl": ""},
+  "timeline": [],
+  "immediate_fixes": [],
+  "aggregate_event": {
+    "event": "report.generated",
+    "parser_type": "",
+    "input_size_bucket": "",
+    "turn_bucket": "",
+    "score_bucket": "",
+    "waste_bucket": "",
+    "findings": {},
+    "redactions": {},
+    "ecosystem": {
+      "client": "",
+      "coding_agents": [],
+      "operating_system": "",
+      "shell": "",
+      "workflow_frameworks": [],
+      "mcp_servers_known": [],
+      "unknown_mcp_server_count": 0,
+      "known_skills": [],
+      "unknown_skill_count": 0,
+      "known_plugins": [],
+      "unknown_plugin_count": 0,
+      "package_managers": [],
+      "version_control": "",
+      "tooling_utilization": {
+        "mcp": {"known_server_ids": [], "unknown_server_count": 0, "server_count_bucket": "", "exposed_tool_count_bucket": "", "context_token_bucket": "", "exposure_known": false, "inference_source": "", "call_count": 0, "known_call_count": 0, "unknown_call_count": 0, "unique_known_called_ids": [], "unique_unknown_called_count": 0, "utilization_ratio_pct": 0, "context_efficiency_bucket": "", "warning_band": ""},
+        "skill": {"known_exposed_ids": [], "unknown_exposed_count": 0, "exposed_count_bucket": "", "context_token_bucket": "", "exposure_known": false, "inference_source": "", "executed_count": 0, "known_executed_ids": [], "unknown_executed_count": 0, "utilization_ratio_pct": 0, "context_efficiency_bucket": "", "warning_band": ""}
+      }
+    }
+  }
+}
