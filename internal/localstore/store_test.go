@@ -2,8 +2,12 @@ package localstore
 
 import (
 	"os"
+	"path/filepath"
+	"strings"
 	"testing"
 	"time"
+
+	"github.com/robertdouglass/claude-log-analyzer/internal/analytics"
 )
 
 func TestSweepExpiredDeletesOldUploadsAndReports(t *testing.T) {
@@ -64,5 +68,36 @@ func TestSweepExpiredKeepsFreshFiles(t *testing.T) {
 	}
 	if _, err := os.Stat(uploadPath); err != nil {
 		t.Fatalf("expected upload retained, stat err: %v", err)
+	}
+}
+
+func TestAppendAnalyticsEventWritesJSONLWithoutReportIdentifiers(t *testing.T) {
+	store, err := New(t.TempDir())
+	if err != nil {
+		t.Fatalf("New failed: %v", err)
+	}
+	event := analytics.Event{
+		SchemaVersion: analytics.SchemaVersion,
+		Event:         "analytics.report",
+		ScanType:      "free",
+		Ecosystem: analytics.EcosystemEvent{
+			Client:          "claude_code",
+			OperatingSystem: "macos",
+		},
+	}
+	if err := store.AppendAnalyticsEvent(event); err != nil {
+		t.Fatalf("AppendAnalyticsEvent failed: %v", err)
+	}
+	body, err := os.ReadFile(filepath.Join(store.root, "analytics", "events.jsonl"))
+	if err != nil {
+		t.Fatalf("read analytics JSONL: %v", err)
+	}
+	if !strings.Contains(string(body), `"analytics.report"`) {
+		t.Fatalf("analytics JSONL missing event payload: %s", body)
+	}
+	for _, forbidden := range []string{`"job_id"`, `"report_path"`, `"upload_path"`} {
+		if strings.Contains(string(body), forbidden) {
+			t.Fatalf("analytics JSONL leaked forbidden field %s: %s", forbidden, body)
+		}
 	}
 }

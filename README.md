@@ -67,6 +67,12 @@ COMPOSE_PROJECT_NAME=claude-log-analyzer-load docker compose up --build -d
 COMPOSE_PROJECT_NAME=claude-log-analyzer-load docker compose down -v
 ```
 
+Aggregate analytics summary, for retained `analytics.Event` JSONL only:
+
+```bash
+go run ./cmd/analytics-summary --input /tmp/claude-log-analyzer/analytics/events.jsonl --min-cohort 10
+```
+
 AWS-backend local smoke with LocalStack:
 
 ```bash

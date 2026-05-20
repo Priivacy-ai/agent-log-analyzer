@@ -31,11 +31,19 @@ Current enforcement:
 - API request logging uses route-level path sanitization.
 - Job status responses strip upload and report storage paths.
 - Worker logs job ID and score bucket only.
-- Aggregate ecosystem telemetry stores known public IDs and unknown counts only.
+- Retained aggregate analytics are extracted through `internal/analytics` and
+  stored separately from operational logs.
+- Analytics append failures log only `error_category=analytics_append`; event
+  bodies are not logged.
 
 ## MCP and Skill Utilization
 
 Analyzer aggregate events include privacy-safe utilization metrics for MCP servers and skills. See [ecosystem-signatures.md](./ecosystem-signatures.md) for what's measured and [data-retention-and-analytics.md](./data-retention-and-analytics.md) for the upload contract. Private MCP/skill names are counted only; nothing identifying is logged, stored, or uploaded.
+
+Retained analytics use the narrower event contract documented in
+[aggregate-analytics-threat-model.md](./aggregate-analytics-threat-model.md).
+Do not log `analytics.Event` values directly; only append them to the configured
+analytics store.
 
 ## CLI presence and version probes
 
@@ -63,4 +71,3 @@ the logging-side rules that follow from it:
   timeout the probe records `installed: true` (if `LookPath` succeeded) and
   no version bucket; no timeout-related log line may include the resolved
   path or the partial output.
-

@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/robertdouglass/claude-log-analyzer/internal/analytics"
 	"github.com/robertdouglass/claude-log-analyzer/internal/analyzer"
 	"github.com/robertdouglass/claude-log-analyzer/internal/app"
 )
@@ -28,12 +29,28 @@ func New(root string) (*Store, error) {
 		filepath.Join(root, "jobs", "completed"),
 		filepath.Join(root, "jobs", "failed"),
 		filepath.Join(root, "reports"),
+		filepath.Join(root, "analytics"),
 	} {
 		if err := os.MkdirAll(dir, 0o700); err != nil {
 			return nil, err
 		}
 	}
 	return &Store{root: root}, nil
+}
+
+func (s *Store) AppendAnalyticsEvent(event analytics.Event) error {
+	data, err := analytics.MarshalJSONLine(event)
+	if err != nil {
+		return err
+	}
+	path := filepath.Join(s.root, "analytics", "events.jsonl")
+	f, err := os.OpenFile(path, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0o600)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	_, err = f.Write(data)
+	return err
 }
 
 func (s *Store) SaveUpload(jobID string, data []byte) (string, error) {

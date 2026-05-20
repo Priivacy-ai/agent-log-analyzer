@@ -1,0 +1,22 @@
+{
+  "mission": "aggregate-intelligence-privacy-safe-analytics-01KS214Y",
+  "issues": [40, 58, 59, 60, 61, 65],
+  "requirements": {
+    "FR-001": ["internal/analytics/event.go", "internal/analytics/event_test.go"],
+    "FR-002": ["internal/analytics/event.go"],
+    "FR-003": ["internal/analyzer/registry.go", "internal/analytics/event.go"],
+    "FR-004": ["internal/analytics/event.go", "internal/analytics/event_test.go"],
+    "FR-005": ["internal/analytics/event.go"],
+    "FR-006": ["cmd/api/main.go"],
+    "FR-007": ["cmd/worker/main.go"],
+    "FR-008": ["internal/localstore/store.go", "internal/awsstore/store.go"],
+    "FR-009": ["internal/analytics/summary.go", "cmd/analytics-summary/main.go"],
+    "FR-010": ["docs/aggregate-analytics-threat-model.md"]
+  },
+  "validation": {
+    "go_test": "go test ./...",
+    "terraform_fmt": "terraform -chdir=infra/aws fmt -check -recursive",
+    "smoke": "./scripts/smoke-local.sh",
+    "load": "./scripts/load-local.sh 25 with compose stack"
+  }
+}

@@ -16,6 +16,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/robertdouglass/claude-log-analyzer/internal/analytics"
 	"github.com/robertdouglass/claude-log-analyzer/internal/analyzer"
 	"github.com/robertdouglass/claude-log-analyzer/internal/app"
 	"github.com/robertdouglass/claude-log-analyzer/internal/backend"
@@ -122,6 +123,7 @@ func createClientReportHandler(store app.APIStore, expiresIn time.Duration) http
 			writeError(w, http.StatusInternalServerError, "could not store sanitized report")
 			return
 		}
+		appendAnalyticsIfAvailable(store, analytics.FromReport(report, string(app.ScanTypeSingle)))
 		reportPath := "/r/" + jobID + "/" + reportToken
 		writeJSON(w, http.StatusCreated, analysisSessionResponse{
 			JobID:      jobID,
@@ -130,6 +132,16 @@ func createClientReportHandler(store app.APIStore, expiresIn time.Duration) http
 			ExpiresAt:  now.Add(expiresIn),
 			MaxBytes:   maxClientReportBytes,
 		})
+	}
+}
+
+func appendAnalyticsIfAvailable(store app.APIStore, event analytics.Event) {
+	analyticsStore, ok := store.(app.AnalyticsStore)
+	if !ok {
+		return
+	}
+	if err := analyticsStore.AppendAnalyticsEvent(event); err != nil {
+		slog.Warn("analytics event append failed", "error_category", "analytics_append")
 	}
 }
 

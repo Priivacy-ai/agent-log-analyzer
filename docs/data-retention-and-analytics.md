@@ -25,7 +25,7 @@ job metadata:
 
 aggregate analytics:
   local MVP: not exported
-  production: allowlisted numeric/categorical events
+  production: retained as `analytics.Event` JSONL
   analytics: yes, no raw strings
 ```
 
@@ -61,7 +61,7 @@ Forbidden:
 
 ## Aggregate Ecosystem Intelligence
 
-Collect by default:
+Collect by default through the retained `analytics.Event` shape:
 
 - known public workflow framework IDs
 - known public MCP server IDs
@@ -71,6 +71,9 @@ Collect by default:
 - shell category
 - package manager category
 - counts and buckets
+- SDD fingerprint confidence/source buckets
+- MCP and skill utilization warning bands
+- recommendation classes, known tool IDs, reasons, risk levels, install policies, and signal IDs
 
 Unknown private names are counted, not stored:
 
@@ -84,11 +87,41 @@ Unknown private names are counted, not stored:
 
 Exact unknown names require explicit opt-in.
 
+The retained event is intentionally narrower than `Report` and
+`AggregateSafeEvent`. Report JSON remains a short-lived product artifact; it is
+not the analytics storage format. See
+[`aggregate-analytics-threat-model.md`](aggregate-analytics-threat-model.md).
+
 ## Upload Scope
 
 Free scan analyzes exactly one Claude Code JSONL session selected by the local CLI. The server receives only the generated sanitized report JSON after the user has had a chance to inspect it.
 
 Paid scan must use the same local-first model for at most the 100 most recent Claude Code JSONL sessions. Aggregate analytics from paid scans must still use the same allowlist: known public ecosystem IDs, counts, buckets, timing, parser status, and redaction totals. Raw logs, raw paths, unknown private names, and report JSON are not retained as analytics.
+
+Paid analytics emit one retained event for the paid aggregate report. They do
+not emit one retained event per raw session inside the paid bundle.
+
+## Retained Analytics Storage
+
+Local backend:
+
+- appends retained analytics events to `/data/analytics/events.jsonl`
+- stores only `internal/analytics.Event` JSONL
+- does not store `Report` JSON as analytics
+
+AWS backend:
+
+- writes encrypted private S3 JSONL objects under
+  `analytics/events/date=YYYY-MM-DD/hour=HH/`
+- object keys use random server-generated names, not job IDs
+- event JSON contains no exact timestamp, token, job ID, session ID, path, or
+  stable private hash
+
+Offline analysis:
+
+- `cmd/analytics-summary` reads analytics JSONL and emits cohort summaries
+- `--min-cohort` defaults to 10
+- rows below the cohort threshold are suppressed
 
 ## Tooling Utilization Block
 
@@ -157,8 +190,8 @@ maintainer-facing overview.
   `UnknownPluginCount`. Their names, identifiers, and any derivable hashes
   do not appear in aggregate output or aggregate events. Tools not in the
   registry are simply absent from `WorkflowFingerprints`.
-- **Version buckets, not version strings.** `version_bucket` is the output
-  of `normalizeVersionBucket` only (e.g., `"1.2"`, `"unknown"`, or absent).
+- **Version buckets, not version strings.** `version_bucket` is normalized to
+  coarse buckets only (e.g., `"1.x"`, `"4_plus"`, `"unknown"`, or absent).
   The raw `--version` stdout/stderr is consumed in-package and discarded
   before serialization.
 - **Build-time enforcement (NFR-001).** A serialization-leak test asserts
