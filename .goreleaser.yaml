@@ -1,15 +1,15 @@
 version: 2
 
-project_name: claude-analyzer
+project_name: agent-analyzer
 
 before:
   hooks:
     - go mod download
 
 builds:
-  - id: claude-analyzer
-    main: ./cmd/claude-analyzer
-    binary: claude-analyzer
+  - id: agent-analyzer
+    main: ./cmd/agent-analyzer
+    binary: agent-analyzer
     env:
       - CGO_ENABLED=0
     goos:
@@ -31,7 +31,7 @@ builds:
 archives:
   - id: cli
     ids:
-      - claude-analyzer
+      - agent-analyzer
     name_template: >-
       {{ .ProjectName }}_
       {{- .Version }}_
@@ -76,34 +76,34 @@ release:
     - Checksums: checksums.txt
 
 brews:
-  - name: claude-analyzer
+  - name: agent-analyzer
     repository:
       owner: robertDouglass
-      name: homebrew-claude-log-analyzer
+      name: homebrew-agent-analyzer
       branch: main
       token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
     commit_author:
       name: goreleaserbot
       email: bot@goreleaser.com
     homepage: https://github.com/robertDouglass/claude-log-analyzer
-    description: Local-first Claude Code log profiler that uploads sanitized reports only.
+    description: Local-first agent coding log profiler that uploads sanitized reports only.
     license: Proprietary
     directory: Formula
     install: |
-      bin.install "claude-analyzer"
+      bin.install "agent-analyzer"
     test: |
-      system "#{bin}/claude-analyzer", "version"
+      system "#{bin}/agent-analyzer", "version"
 
 scoops:
-  - name: claude-analyzer
+  - name: agent-analyzer
     repository:
       owner: robertDouglass
-      name: scoop-claude-log-analyzer
+      name: scoop-agent-analyzer
       branch: main
       token: "{{ .Env.SCOOP_BUCKET_GITHUB_TOKEN }}"
     commit_author:
       name: goreleaserbot
       email: bot@goreleaser.com
     homepage: https://github.com/robertDouglass/claude-log-analyzer
-    description: Local-first Claude Code log profiler that uploads sanitized reports only.
+    description: Local-first agent coding log profiler that uploads sanitized reports only.
     license: Proprietary

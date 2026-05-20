@@ -100,7 +100,7 @@ func Generate(report analyzer.Report, options Options) Artifact {
 	if generatedAt.IsZero() {
 		generatedAt = time.Now().UTC()
 	}
-	pluginName := "claude-analyzer-optimization"
+	pluginName := "agent-analyzer-optimization"
 	recommendations := toolingRecommendations(report)
 	acknowledgment := liabilityAcknowledgment()
 	files := baseFiles(report, pluginName, recommendations, acknowledgment)
@@ -128,10 +128,10 @@ func baseFiles(report analyzer.Report, pluginName string, recommendations []Tool
 	manifest := map[string]any{
 		"$schema":     "https://json.schemastore.org/claude-code-plugin-manifest.json",
 		"name":        pluginName,
-		"description": "Deterministic Claude Code codebase-navigation and tooling recommendations generated from a Claude Analyzer report.",
+		"description": "Deterministic Claude Code codebase-navigation and tooling recommendations generated from an Agent Analyzer report.",
 		"version":     pluginVersion(report),
 		"author": map[string]string{
-			"name": "Claude Log Analyzer",
+			"name": "Agent Analyzer",
 		},
 		"keywords": []string{"claude-code", "tokens", "context", "profiler", "code-intelligence", "mcp"},
 	}
@@ -153,12 +153,12 @@ func baseFiles(report analyzer.Report, pluginName string, recommendations []Tool
 			Content: waiverFile(acknowledgment),
 		},
 		{
-			Path:    "commands/claude-analyzer-status.md",
+			Path:    "commands/agent-analyzer-status.md",
 			Mode:    "0644",
 			Content: statusCommand(report),
 		},
 		{
-			Path:    "commands/claude-analyzer-tooling.md",
+			Path:    "commands/agent-analyzer-tooling.md",
 			Mode:    "0644",
 			Content: toolingCommand(recommendations),
 		},
@@ -427,7 +427,7 @@ func toolingRecommendations(report analyzer.Report) []ToolRecommendation {
 			Category:       "manual_review",
 			Why:            "No high-confidence language-server recommendation was inferred from the sanitized aggregate report. Inspect package manifests before installing code intelligence.",
 			InstallCommand: "Ask Claude to inspect package manifests and recommend only official code-intelligence plugins with matching binaries.",
-			Source:         "Claude Analyzer deterministic fallback",
+			Source:         "Agent Analyzer deterministic fallback",
 		})
 	}
 	sort.Slice(out, func(i, j int) bool { return out[i].ID < out[j].ID })
@@ -591,11 +591,11 @@ func installInstructions(pluginName, artifactURL string) Install {
 	}
 	command := strings.Join([]string{
 		`PLUGIN_URL="` + artifactURL + `"`,
-		`PLUGIN_ZIP="$(mktemp -t claude-analyzer-plugin.XXXXXX.zip)"`,
+		`PLUGIN_ZIP="$(mktemp -t agent-analyzer-plugin.XXXXXX.zip)"`,
 		`curl -fsS "$PLUGIN_URL" -o "$PLUGIN_ZIP"`,
 		`claude --plugin-dir "$PLUGIN_ZIP"`,
 	}, "\n")
-	prompt := "Install the generated Claude Analyzer optimization plugin for this session. Run the command below, explain what it installs, and ask for approval before executing it. Do not print plugin archive contents.\n\n```sh\n" + command + "\n```"
+	prompt := "Install the generated Agent Analyzer optimization plugin for this session. Run the command below, explain what it installs, and ask for approval before executing it. Do not print plugin archive contents.\n\n```sh\n" + command + "\n```"
 	return Install{
 		Command:          command,
 		ClaudePrompt:     prompt,
@@ -608,9 +608,9 @@ func installInstructions(pluginName, artifactURL string) Install {
 }
 
 func readme(report analyzer.Report) string {
-	return fmt.Sprintf(`# Claude Analyzer Optimization Plugin
+	return fmt.Sprintf(`# Agent Analyzer Optimization Plugin
 
-Generated from deterministic Claude Analyzer metrics.
+Generated from deterministic Agent Analyzer metrics.
 
 - Efficiency score bucket: %s
 - Waste bucket: %s
@@ -636,7 +636,7 @@ Before installing anything:
 4. Approve each installation separately.
 5. Stop if Claude proposes an unvetted source, a destructive command, or a credential change you do not understand.
 
-Claude Analyzer is not responsible for damage, data loss, credential exposure, billing impact, or other consequences caused by Claude Code, recommended tools, package managers, language servers, plugins, MCP servers, or user-approved commands.
+Agent Analyzer is not responsible for damage, data loss, credential exposure, billing impact, or other consequences caused by Claude Code, recommended tools, package managers, language servers, plugins, MCP servers, or user-approved commands.
 `
 }
 
@@ -645,7 +645,7 @@ func toolingCommand(recommendations []ToolRecommendation) string {
 description: Review the generated token-saving, code-intelligence, and MCP setup recommendations.
 ---
 
-# Claude Analyzer Tooling Setup
+# Agent Analyzer Tooling Setup
 
 Read WAIVER.md first. Do not install anything until the user explicitly acknowledges the waiver and approves each command.
 
@@ -740,7 +740,7 @@ func recommendationMarkdown(recommendations []ToolRecommendation) string {
 }
 
 func liabilityAcknowledgment() string {
-	return "I understand that Claude Analyzer provides deterministic analysis and vetted setup recommendations, but any installation or code change is executed by Claude Code, my package manager, or third-party tools with my approval and at my own risk."
+	return "I understand that Agent Analyzer provides deterministic analysis and vetted setup recommendations, but any installation or code change is executed by Claude Code, my package manager, or third-party tools with my approval and at my own risk."
 }
 
 func statusCommand(report analyzer.Report) string {
@@ -749,10 +749,10 @@ func statusCommand(report analyzer.Report) string {
 		findings = "baseline-hygiene"
 	}
 	return fmt.Sprintf(`---
-description: Show the Claude Analyzer session hygiene summary generated from the paid scan.
+description: Show the Agent Analyzer session hygiene summary generated from the paid scan.
 ---
 
-# Claude Analyzer Status
+# Agent Analyzer Status
 
 Report the current workflow hygiene posture in one terse line:
 
@@ -767,7 +767,7 @@ description: Use when a Claude Code session changes task type, grows context qui
 
 # Session Hygiene
 
-This plugin was generated from deterministic Claude Analyzer metrics.
+This plugin was generated from deterministic Agent Analyzer metrics.
 
 Rules:
 

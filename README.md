@@ -1,4 +1,4 @@
-# Claude Log Analyzer
+# Agent Analyzer
 
 Deterministic performance profiler for AI coding workflows.
 
@@ -13,29 +13,29 @@ This repo starts with a Docker-local, end-to-end implementation:
 
 The production target is CDN + local deterministic CLI + report-only upload + short-lived report storage. Local development intentionally avoids cloud dependencies so the complete flow can be tested before any infrastructure is provisioned.
 
-## Install
+## Launch Command
 
-The public launch install path is the versioned CLI archive on
-[GitHub Releases](https://github.com/robertDouglass/claude-log-analyzer/releases).
-Download the archive for your platform, verify it against `checksums.txt` from
-the same release, and run:
+The public launch path is one copy/paste command:
 
-```bash
-claude-analyzer version
+```sh
+npx --yes agent-analyzer@latest run
 ```
 
-The version output shows the binary version, commit, build timestamp, and source
-repository. Homebrew and Scoop publishing are wired in release automation but
-require the tap/bucket repositories and write tokens before those install paths
-are advertised as live. See [docs/distribution.md](docs/distribution.md).
+That command fetches a scriptless npm package, runs the bundled native Go binary,
+analyzes the latest Claude Code log locally, writes `agent-analyzer-report.json`,
+shows the upload boundary, asks for confirmation, uploads only sanitized report
+JSON, and opens the short-lived report page.
+
+For users who do not want npm/NPX, versioned GitHub Release archives with
+`checksums.txt` remain available. See [docs/distribution.md](docs/distribution.md).
 
 There is intentionally no browser upload form. Claude Code logs live under `~/.claude`, which is awkward for Finder/browser upload flows. The public launch path is local-first:
 
-1. The user installs the source-available CLI from a versioned GitHub Release archive and verifies `checksums.txt`.
-2. `claude-analyzer analyze --out ./claude-analyzer-report.json` finds the latest Claude Code JSONL log, parses and redacts it locally, and writes a sanitized report.
-3. The user reviews the JSON with `jq . ./claude-analyzer-report.json`.
-4. `claude-analyzer upload ./claude-analyzer-report.json` sends only the sanitized report to `POST /api/client-reports`.
-5. The short-lived report is opened at `/r/{job_id}/{report_token}` and expires on the retention schedule.
+1. `npx --yes agent-analyzer@latest run` starts the local native analyzer.
+2. The analyzer finds the latest Claude Code JSONL log, parses and redacts it locally, and writes `agent-analyzer-report.json`.
+3. The CLI prints the upload boundary and asks for confirmation.
+4. After confirmation, it sends only the sanitized report to `POST /api/client-reports`.
+5. The short-lived report opens at `/r/{job_id}/{report_token}` and expires on the retention schedule.
 
 Legacy raw-log token upload endpoints still exist for internal Docker smoke coverage while the paid scan is moved to the same local-first model. They are not the public onboarding path.
 
@@ -49,10 +49,10 @@ passing more than one positional, fails fast with a non-zero exit:
 
 ```bash
 # positional form (equivalent to using --log):
-claude-analyzer analyze ~/.claude/projects/some-session.jsonl --out ./report.json
+agent-analyzer analyze ~/.claude/projects/some-session.jsonl --out ./report.json
 
 # explicit --log form:
-claude-analyzer analyze --log ~/.claude/projects/some-session.jsonl --out ./report.json
+agent-analyzer analyze --log ~/.claude/projects/some-session.jsonl --out ./report.json
 ```
 
 If neither form is supplied, the latest log under `~/.claude/projects/` is used.
@@ -61,7 +61,7 @@ If neither form is supplied, the latest log under `~/.claude/projects/` is used.
 docker compose up --build
 ```
 
-Open `http://localhost:8080`, click `Generate Local Commands`, and use the generated local analyze/review/upload flow. The smoke scripts still exercise the legacy token path with `testdata/fixtures/sample-claude.jsonl` for backend compatibility.
+Open `http://localhost:8080`, click `Generate NPX Command`, and use the generated one-line local analyze/review/upload flow. The smoke scripts still exercise the legacy token path with `testdata/fixtures/sample-claude.jsonl` for backend compatibility.
 
 Smoke test:
 
@@ -119,7 +119,7 @@ Cloud launch checklist: [docs/cloud-launch-todo.md](docs/cloud-launch-todo.md).
 
 ## License
 
-Claude Log Analyzer is source-available, not open source. You may inspect,
+Agent Analyzer is source-available, not open source. You may inspect,
 clone, and run the software for personal/internal evaluation and development
 testing, but production, hosted, commercial, redistribution, and managed-service
 uses require a separate written license.

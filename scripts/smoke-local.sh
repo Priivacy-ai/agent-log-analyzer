@@ -25,9 +25,9 @@ for _ in $(seq 1 60); do
   sleep 1
 done
 
-CLIENT_REPORT="$(mktemp -t claude-analyzer-client.XXXXXX.json)"
-go run ./cmd/claude-analyzer analyze --log "$FIXTURE" --out "$CLIENT_REPORT" >/dev/null
-CLIENT_UPLOAD=$(go run ./cmd/claude-analyzer upload --base-url http://127.0.0.1:8080 "$CLIENT_REPORT")
+CLIENT_REPORT="$(mktemp -t agent-analyzer-client.XXXXXX.json)"
+go run ./cmd/agent-analyzer analyze --log "$FIXTURE" --out "$CLIENT_REPORT" >/dev/null
+CLIENT_UPLOAD=$(go run ./cmd/agent-analyzer upload --base-url http://127.0.0.1:8080 "$CLIENT_REPORT")
 CLIENT_REPORT_URL=$(printf '%s\n' "$CLIENT_UPLOAD" | sed -n 's/^Report: //p')
 if [ -z "$CLIENT_REPORT_URL" ]; then
   echo "failed to upload sanitized client report"

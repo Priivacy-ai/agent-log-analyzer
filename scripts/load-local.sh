@@ -18,7 +18,7 @@ if ! curl -fsS "$URL/healthz" >/dev/null; then
 fi
 
 REPORT_JSON="$tmpdir/client-report.json"
-go run ./cmd/claude-analyzer analyze --log "$FIXTURE" --out "$REPORT_JSON" >/dev/null
+go run ./cmd/agent-analyzer analyze --log "$FIXTURE" --out "$REPORT_JSON" >/dev/null
 
 submit_one() {
   local index="$1"

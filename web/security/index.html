@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Security - Claude Log Analyzer</title>
+    <title>Security - Agent Analyzer</title>
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="/styles.css" />
   </head>
@@ -12,14 +12,14 @@
       <p class="eyebrow">security</p>
       <h1>Raw Claude Code logs stay on your machine.</h1>
       <p class="subhead">The launch flow is local-first: parse, redact, and summarize locally; upload only the sanitized report JSON you can inspect first.</p>
-      <p class="subhead">Claude Log Analyzer is an independent third-party tool and is not affiliated with Anthropic.</p>
+      <p class="subhead">Agent Analyzer is an independent third-party tool and is not affiliated with Anthropic.</p>
 
       <section class="panel">
         <h2>Data Flow</h2>
         <pre>~/.claude/projects/*.jsonl
-  -> claude-analyzer CLI on your machine
+  -> agent-analyzer CLI on your machine
   -> local secret scrubber and deterministic parser
-  -> ./claude-analyzer-report.json
+  -> ./agent-analyzer-report.json
   -> optional user review with jq/cat
   -> POST /api/client-reports
   -> short-lived report URL</pre>

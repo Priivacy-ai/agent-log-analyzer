@@ -14,7 +14,7 @@ Docker Compose smoke test
 
 ## CLI
 
-`cmd/claude-analyzer/main_test.go` exercises `claude-analyzer analyze` argument
+`cmd/agent-analyzer/main_test.go` exercises `agent-analyzer analyze` argument
 resolution: positional path, `--log` flag, mutual exclusivity, and the
 extra-argument refusal path (FR-001..FR-003).
 

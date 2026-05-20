@@ -11,7 +11,7 @@ var (
 )
 
 func printVersion() {
-	fmt.Printf("claude-analyzer %s\n", version)
+	fmt.Printf("agent-analyzer %s\n", version)
 	fmt.Printf("commit: %s\n", commit)
 	fmt.Printf("built: %s\n", date)
 	fmt.Printf("source: %s\n", sourceURL)

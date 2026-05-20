@@ -1,6 +1,10 @@
 .DS_Store
 bin/
+!npm/
+!npm/bin/
+!npm/bin/agent-analyzer.js
 dist/
+npm/bin/agent-analyzer-*
 .env
 *.log
 !internal/analyzer/testdata/tooling/*.log

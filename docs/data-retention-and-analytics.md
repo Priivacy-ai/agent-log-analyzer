@@ -5,7 +5,7 @@
 ```text
 raw uploaded logs:
   launch CLI flow: never received by the server
-  legacy internal token flow: deleted by claude-analyzer-sweeper
+  legacy internal token flow: deleted by agent-analyzer-sweeper
   analytics: never
 
 intermediate parsed transcript:
