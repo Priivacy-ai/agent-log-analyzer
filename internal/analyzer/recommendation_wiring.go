@@ -92,6 +92,22 @@ func deriveToolStateMap(report *Report) ToolStateMap {
 		return state
 	}
 
+	// T-W-01: allowlisted WorkflowFrameworks entries that are also
+	// token-saving registry tools contribute mentioned_low evidence so the
+	// engine can attribute "we saw this tool referenced in your logs" even
+	// when no SDD fingerprint or MCP/skill record exists. Stronger
+	// downstream signals (active fingerprint, configured MCP, etc.) win
+	// via mergeStateEntry's ToolStateMap.Resolve.
+	for _, framework := range report.Ecosystem.WorkflowFrameworks {
+		id := ToolID(framework)
+		if _, ok := GetTool(id); !ok {
+			continue
+		}
+		mergeStateEntry(state, id, ToolStateMentionedLow, map[EvidenceSource]int{
+			EvidenceReportMention: 1,
+		})
+	}
+
 	// Fingerprints (T-F-01..T-F-03).
 	for _, fp := range report.Ecosystem.WorkflowFingerprints {
 		id := ToolID(fp.ID)
@@ -110,7 +126,11 @@ func deriveToolStateMap(report *Report) ToolStateMap {
 		sources := map[EvidenceSource]int{
 			EvidenceReportMention: 1,
 		}
-		if slices.Contains(fp.Sources, "cli_probe") {
+		// Source enum values come from internal/analyzer/sdd: cli_binary is
+		// "binary present on PATH"; cli_version_probe is "--version probe
+		// matched" and only fires alongside a cli_binary peer. Either is
+		// evidence the CLI is present locally.
+		if slices.Contains(fp.Sources, "cli_binary") || slices.Contains(fp.Sources, "cli_version_probe") {
 			sources[EvidenceCLIPresence] = 1
 		}
 		if fp.VersionBucket != "" {
