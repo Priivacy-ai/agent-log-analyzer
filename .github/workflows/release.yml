@@ -114,5 +114,3 @@ jobs:
           node npm/bin/agent-analyzer.js version
       - name: Publish npm package
         run: npm publish --provenance --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
