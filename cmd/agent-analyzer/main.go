@@ -151,7 +151,7 @@ func runOneShot(args []string) error {
 		return err
 	}
 	fmt.Println()
-	fmt.Println("Upload boundary:")
+	fmt.Println("Are you ready to get your report?")
 	fmt.Println("- raw Claude Code logs stayed on this machine")
 	fmt.Println("- only the sanitized report JSON will be uploaded")
 	fmt.Printf("- report file: %s\n", *out)
