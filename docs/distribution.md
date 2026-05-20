@@ -1,24 +1,40 @@
-# CLI Distribution
+# Agent Analyzer Distribution
 
-Claude Log Analyzer releases are built from git tags by GoReleaser. Release
-artifacts are source-provenance assets: each binary embeds the semantic version,
-git commit, build timestamp, and source repository shown by
-`claude-analyzer version`.
+Agent Analyzer's public launch CTA is NPX first:
 
-## User Install Path
+```sh
+npx --yes agent-analyzer@latest run
+```
 
-The launch install path is GitHub Releases first:
+The npm package is deliberately boring:
+
+- package name: `agent-analyzer`
+- binary name: `agent-analyzer`
+- no lifecycle scripts
+- no runtime npm dependencies
+- no dynamic downloader
+- bundled native Go binaries for supported platforms
+- published from GitHub Actions with npm provenance
+
+The command runs the bundled native Go binary. Analysis still happens locally,
+the CLI writes `agent-analyzer-report.json`, the user sees the upload boundary,
+and only sanitized report JSON is uploaded after confirmation.
+
+## GitHub Release Fallback
+
+GitHub Releases remain the canonical binary provenance path for users who do
+not want npm/NPX:
 
 1. Open the tagged release at
    `https://github.com/robertDouglass/claude-log-analyzer/releases`.
 2. Download the archive for your platform:
-   - `claude-analyzer_<version>_darwin_amd64.tar.gz`
-   - `claude-analyzer_<version>_darwin_arm64.tar.gz`
-   - `claude-analyzer_<version>_linux_amd64.tar.gz`
-   - `claude-analyzer_<version>_linux_arm64.tar.gz`
-   - `claude-analyzer_<version>_windows_amd64.zip`
+   - `agent-analyzer_<version>_darwin_amd64.tar.gz`
+   - `agent-analyzer_<version>_darwin_arm64.tar.gz`
+   - `agent-analyzer_<version>_linux_amd64.tar.gz`
+   - `agent-analyzer_<version>_linux_arm64.tar.gz`
+   - `agent-analyzer_<version>_windows_amd64.zip`
 3. Verify the archive hash against `checksums.txt` from the same release.
-4. Run `claude-analyzer version` and confirm the source URL and commit match
+4. Run `agent-analyzer version` and confirm the source URL and commit match
    the release page.
 
 `go install` remains a developer fallback, not the public launch install path.
@@ -36,6 +52,15 @@ goreleaser release --snapshot --clean
 
 Snapshot artifacts are written under `dist/` and are not published.
 
+For local npm package smoke testing:
+
+```sh
+mkdir -p npm/bin
+go build -o npm/bin/agent-analyzer-$(node -p '`${process.platform}-${process.arch}`') ./cmd/agent-analyzer
+npm pack --dry-run
+node npm/bin/agent-analyzer.js version
+```
+
 ## Cutting A Release
 
 1. Confirm `main` is green and the working tree is clean.
@@ -48,8 +73,10 @@ Snapshot artifacts are written under `dist/` and are not published.
 
 3. The release workflow publishes a draft GitHub Release with archives and
    `checksums.txt`.
-4. Review the draft, checksum asset, changelog, and install commands before
-   publishing it.
+4. The release workflow also builds npm package binaries and publishes
+   `agent-analyzer` to npm with provenance.
+5. Review the draft, checksum asset, changelog, npm package page, and install
+   commands before broad launch.
 
 The workflow can also be run manually against an existing tag from GitHub
 Actions.
@@ -57,7 +84,7 @@ Actions.
 ## Package Manager Plan
 
 GoReleaser is configured to publish a Homebrew formula to
-`robertDouglass/homebrew-claude-log-analyzer` when the release workflow has a
+`robertDouglass/homebrew-agent-analyzer` when the release workflow has a
 `HOMEBREW_TAP_GITHUB_TOKEN` secret with write access to that tap.
 If the secret is absent, the workflow skips only the Homebrew publisher and
 still publishes GitHub Release archives.
@@ -65,20 +92,20 @@ still publishes GitHub Release archives.
 Expected install command after the tap exists:
 
 ```sh
-brew tap robertDouglass/claude-log-analyzer
-brew install claude-analyzer
+brew tap robertDouglass/agent-analyzer
+brew install agent-analyzer
 ```
 
 GoReleaser is also configured to publish a Scoop manifest to
-`robertDouglass/scoop-claude-log-analyzer` when the workflow has a
+`robertDouglass/scoop-agent-analyzer` when the workflow has a
 `SCOOP_BUCKET_GITHUB_TOKEN` secret with write access to that bucket.
 If the secret is absent, the workflow skips only the Scoop publisher.
 
 Expected Windows install command after the bucket exists:
 
 ```powershell
-scoop bucket add claude-log-analyzer https://github.com/robertDouglass/scoop-claude-log-analyzer
-scoop install claude-analyzer
+scoop bucket add agent-analyzer https://github.com/robertDouglass/scoop-agent-analyzer
+scoop install agent-analyzer
 ```
 
 ## Signing And Notarization Gap

@@ -13,6 +13,7 @@ on:
 
 permissions:
   contents: write
+  id-token: write
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
@@ -32,8 +33,8 @@ jobs:
           go-version-file: go.mod
       - name: Verify release inputs
         run: |
-          go test ./cmd/claude-analyzer
-          go vet ./cmd/claude-analyzer
+          go test ./cmd/agent-analyzer
+          go vet ./cmd/agent-analyzer
       - name: Select GoReleaser publishers
         id: goreleaser-args
         env:
@@ -58,3 +59,57 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           HOMEBREW_TAP_GITHUB_TOKEN: ${{ secrets.HOMEBREW_TAP_GITHUB_TOKEN }}
           SCOOP_BUCKET_GITHUB_TOKEN: ${{ secrets.SCOOP_BUCKET_GITHUB_TOKEN }}
+
+  npm:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref }}
+      - name: Set up Go
+        uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+      - name: Set up Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+      - name: Build npm package binaries
+        run: |
+          set -eu
+          tag="${GITHUB_REF_NAME}"
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            tag="${{ inputs.tag }}"
+          fi
+          version="${tag#v}"
+          commit="$(git rev-parse HEAD)"
+          date="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          npm version "$version" --no-git-tag-version
+          mkdir -p npm/bin
+          build() {
+            goos="$1"
+            goarch="$2"
+            node_platform="$3"
+            node_arch="$4"
+            suffix="$5"
+            output="npm/bin/agent-analyzer-${node_platform}-${node_arch}${suffix}"
+            GOOS="$goos" GOARCH="$goarch" CGO_ENABLED=0 go build \
+              -ldflags="-s -w -X main.version=${version} -X main.commit=${commit} -X main.date=${date}" \
+              -o "$output" ./cmd/agent-analyzer
+            chmod +x "$output" || true
+          }
+          build darwin amd64 darwin x64 ""
+          build darwin arm64 darwin arm64 ""
+          build linux amd64 linux x64 ""
+          build linux arm64 linux arm64 ""
+          build windows amd64 win32 x64 ".exe"
+      - name: Verify npm package
+        run: |
+          test -z "$(node -e 'const p=require("./package.json"); const s=p.scripts||{}; const bad=["preinstall","install","postinstall","prepare"].filter(k => s[k]); console.log(bad.join("\\n"))')"
+          npm pack --dry-run
+          node npm/bin/agent-analyzer.js version
+      - name: Publish npm package
+        run: npm publish --provenance --access public

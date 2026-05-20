@@ -3,10 +3,13 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/robertdouglass/claude-log-analyzer/internal/analyzer"
 )
@@ -210,6 +213,50 @@ func TestAnalyzePaid_RejectsUnsafeArguments(t *testing.T) {
 	}
 }
 
+func TestRunOneShot_AnalyzesAndUploadsSanitizedReport(t *testing.T) {
+	dir := t.TempDir()
+	logPath := writeSampleLog(t, dir)
+	outPath := filepath.Join(dir, "agent-analyzer-report.json")
+	var received analyzer.Report
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost || r.URL.Path != "/api/client-reports" {
+			t.Fatalf("unexpected request: %s %s", r.Method, r.URL.Path)
+		}
+		if err := json.NewDecoder(r.Body).Decode(&received); err != nil {
+			t.Fatalf("decode uploaded report: %v", err)
+		}
+		if received.SecurityReceipt.RawLogTTL != "not uploaded" || received.SecurityReceipt.RawTranscriptSentToLLM {
+			t.Fatalf("uploaded report violated local-first receipt: %#v", received.SecurityReceipt)
+		}
+		_ = json.NewEncoder(w).Encode(uploadResult{
+			ReportURL: serverURL(r) + "/r/job-token/report-token",
+			ExpiresAt: time.Now().Add(15 * time.Minute),
+		})
+	}))
+	defer server.Close()
+
+	err := runOneShot([]string{
+		"--log", logPath,
+		"--out", outPath,
+		"--base-url", server.URL,
+		"--yes",
+		"--no-open",
+	})
+	if err != nil {
+		t.Fatalf("runOneShot: %v", err)
+	}
+	if received.Version == "" {
+		t.Fatalf("expected uploaded report, got %#v", received)
+	}
+	if _, err := os.Stat(outPath); err != nil {
+		t.Fatalf("expected local report file at %s: %v", outPath, err)
+	}
+}
+
+func serverURL(r *http.Request) string {
+	return "http://" + r.Host
+}
+
 func TestVersion_PrintsProvenance(t *testing.T) {
 	var buf bytes.Buffer
 	original := os.Stdout
@@ -233,7 +280,7 @@ func TestVersion_PrintsProvenance(t *testing.T) {
 
 	output := buf.String()
 	for _, want := range []string{
-		"claude-analyzer ",
+		"agent-analyzer ",
 		"commit:",
 		"built:",
 		"source: https://github.com/robertDouglass/claude-log-analyzer",

@@ -38,7 +38,7 @@ The generator follows that structure so the paid artifact can be loaded as a Cla
 
 ```sh
 PLUGIN_URL="<short-lived-plugin-zip-url>"
-PLUGIN_ZIP="$(mktemp -t claude-analyzer-plugin.XXXXXX.zip)"
+PLUGIN_ZIP="$(mktemp -t agent-analyzer-plugin.XXXXXX.zip)"
 curl -fsS "$PLUGIN_URL" -o "$PLUGIN_ZIP"
 claude --plugin-dir "$PLUGIN_ZIP"
 ```
@@ -52,8 +52,8 @@ Always generated:
 - `.claude-plugin/plugin.json`
 - `README.md`
 - `WAIVER.md`
-- `commands/claude-analyzer-status.md`
-- `commands/claude-analyzer-tooling.md`
+- `commands/agent-analyzer-status.md`
+- `commands/agent-analyzer-tooling.md`
 - `skills/codebase-navigation/SKILL.md`
 - `skills/session-hygiene/SKILL.md`
 - `skills/tooling-setup/SKILL.md`
@@ -108,7 +108,7 @@ Third-party MCPs, skills, plugins, and shell tools are research candidates until
 
 Paid checkout and plugin install UX must require explicit acknowledgment before presenting install commands:
 
-> I understand that Claude Analyzer provides deterministic analysis and vetted setup recommendations, but any installation or code change is executed by Claude Code, my package manager, or third-party tools with my approval and at my own risk.
+> I understand that Agent Analyzer provides deterministic analysis and vetted setup recommendations, but any installation or code change is executed by Claude Code, my package manager, or third-party tools with my approval and at my own risk.
 
 The generated plugin also includes `WAIVER.md`. Claude-facing setup prompts must tell Claude to summarize the waiver, ask for acceptance, and ask again before each installation command.
 

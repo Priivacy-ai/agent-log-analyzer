@@ -5,9 +5,7 @@ const generateButton = document.querySelector("#generate-session");
 const sessionPanel = document.querySelector("#session-panel");
 const sessionStatus = document.querySelector("#session-status");
 const promptBlock = document.querySelector("#claude-prompt");
-const commandBlock = document.querySelector("#curl-command");
 const copyPromptButton = document.querySelector("#copy-prompt");
-const copyCommandButton = document.querySelector("#copy-command");
 const unlockPaidButton = document.querySelector("#unlock-paid");
 const waiverAccepted = document.querySelector("#waiver-accepted");
 const paidStatus = document.querySelector("#paid-status");
@@ -26,17 +24,15 @@ if (route) {
 
 generateButton?.addEventListener("click", async () => {
   generateButton.disabled = true;
-  generateButton.textContent = "Generating commands...";
+  generateButton.textContent = "Generating command...";
   setSessionStatus("", true);
-  promptBlock.textContent = analyzeCommand();
-  commandBlock.textContent = uploadCommand();
+  promptBlock.textContent = runCommand();
   sessionPanel.hidden = false;
   launchPanel.hidden = true;
-  setSessionStatus("No upload token. Step 1 writes a local sanitized report; Step 2 uploads only that report JSON.");
+  setSessionStatus("This one command analyzes locally, shows the upload boundary, asks for confirmation, uploads only sanitized JSON, and opens the report.");
 });
 
 copyPromptButton?.addEventListener("click", () => copyText(promptBlock.textContent, copyPromptButton));
-copyCommandButton?.addEventListener("click", () => copyText(commandBlock.textContent, copyCommandButton));
 copyPaidCommandButton?.addEventListener("click", () => copyText(paidCommand.textContent, copyPaidCommandButton));
 
 unlockPaidButton?.addEventListener("click", async () => {
@@ -67,33 +63,15 @@ async function createSession() {
   return response.json();
 }
 
-function analyzeCommand() {
+function runCommand() {
   return [
-    "# Install claude-analyzer from a GitHub Release archive first:",
-    "# https://github.com/robertDouglass/claude-log-analyzer/releases",
-    "# Verify checksums.txt, then confirm provenance:",
-    "claude-analyzer version",
-    "# omit the path to use the latest log under ~/.claude/projects/,",
-    "# or pass a path positionally (--log <path> also works):",
-    "claude-analyzer analyze --out ./claude-analyzer-report.json",
-  ].join("\n");
-}
-
-function uploadCommand() {
-  const baseURL = window.location.origin && window.location.origin !== "null"
-    ? window.location.origin
-    : "https://analyzer.spec-kitty.ai";
-  return [
-    "jq . ./claude-analyzer-report.json",
-    "claude-analyzer upload \\",
-    `  --base-url ${baseURL} \\`,
-    "  ./claude-analyzer-report.json",
+    "npx --yes agent-analyzer@latest run",
   ].join("\n");
 }
 
 async function createPaidSession() {
   const acknowledgment =
-    "I understand that Claude Analyzer provides deterministic analysis and vetted setup recommendations, but any installation or code change is executed by Claude Code, my package manager, or third-party tools with my approval and at my own risk.";
+    "I understand that Agent Analyzer provides deterministic analysis and vetted setup recommendations, but any installation or code change is executed by Claude Code, my package manager, or third-party tools with my approval and at my own risk.";
   const response = await fetch("/api/paid-sessions", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -798,12 +776,12 @@ function renderPaidCommandPreview(report) {
     const pluginURL = `${window.location.origin}/api/public-artifacts/${route.jobID}/${route.token}/plugin.zip`;
     const command = [
       `PLUGIN_URL="${pluginURL}"`,
-      'PLUGIN_ZIP="$(mktemp -t claude-analyzer-plugin.XXXXXX.zip)"',
+      'PLUGIN_ZIP="$(mktemp -t agent-analyzer-plugin.XXXXXX.zip)"',
       'curl -fsS "$PLUGIN_URL" -o "$PLUGIN_ZIP"',
       'claude --plugin-dir "$PLUGIN_ZIP"',
     ].join("\n");
     target.textContent =
-      "Install the generated Claude Analyzer optimization plugin for this session. Run the command below, explain what it installs, summarize the waiver, and ask for approval before executing it. Do not print plugin archive contents.\n\n```sh\n" +
+      "Install the generated Agent Analyzer optimization plugin for this session. Run the command below, explain what it installs, summarize the waiver, and ask for approval before executing it. Do not print plugin archive contents.\n\n```sh\n" +
       command +
       "\n```";
     if (paidStatus) paidStatus.textContent = "optimization plugin ready; artifact URL expires with this report";

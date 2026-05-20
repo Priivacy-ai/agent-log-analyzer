@@ -581,7 +581,7 @@ func getPublicArtifactHandler(store app.APIStore) http.HandlerFunc {
 			return
 		}
 		w.Header().Set("Content-Type", "application/zip")
-		w.Header().Set("Content-Disposition", `attachment; filename="claude-analyzer-optimization.zip"`)
+		w.Header().Set("Content-Disposition", `attachment; filename="agent-analyzer-optimization.zip"`)
 		w.Header().Set("Cache-Control", "no-store")
 		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write(buffer.Bytes())
@@ -750,8 +750,8 @@ func paidShellCommand(baseURL string, response analysisSessionResponse) string {
 	uploadURL := baseURL + response.UploadPath + "?limit=100"
 	finalizeURL := baseURL + response.FinalizePath
 	return strings.Join([]string{
-		`BUNDLE="$(mktemp -t claude-analyzer-paid.XXXXXX.tar.gz)"`,
-		`LIST="$(mktemp -t claude-analyzer-paid.XXXXXX.txt)"`,
+		`BUNDLE="$(mktemp -t agent-analyzer-paid.XXXXXX.tar.gz)"`,
+		`LIST="$(mktemp -t agent-analyzer-paid.XXXXXX.txt)"`,
 		`python3 - <<'PY' > "$LIST"`,
 		`from pathlib import Path`,
 		`home = Path.home()`,
@@ -795,8 +795,8 @@ func paidLocalFirstSessionResponse(baseURL string) analysisSessionResponse {
 func paidLocalFirstShellCommand(baseURL string) string {
 	endpoint := strings.TrimRight(baseURL, "/") + "/api/paid-client-reports"
 	return strings.Join([]string{
-		`REPORT="${REPORT:-claude-analyzer-paid-aggregate.json}"`,
-		`claude-analyzer analyze --paid --limit 100 --out "$REPORT"`,
+		`REPORT="${REPORT:-agent-analyzer-paid-aggregate.json}"`,
+		`npx --yes agent-analyzer@latest analyze --paid --limit 100 --out "$REPORT"`,
 		`echo "Review the sanitized aggregate before upload:"`,
 		`jq . "$REPORT" >/dev/null && jq '{version,score,metrics,findings,aggregate_event,security_receipt}' "$REPORT"`,
 		`printf 'Upload only this sanitized aggregate report? [y/N] '`,

@@ -69,7 +69,7 @@ The first AWS deployment scaffold lives in `infra/aws`. It provisions the S3/SQS
 Free scan:
 
 - local CLI analyzes one latest Claude Code JSONL log
-- user reviews `claude-analyzer-report.json`
+- user reviews `agent-analyzer-report.json`
 - server receives sanitized report JSON only
 - tokenized report URL
 

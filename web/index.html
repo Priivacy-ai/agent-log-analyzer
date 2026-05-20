@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Claude Log Analyzer</title>
+    <title>Agent Analyzer</title>
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="/styles.css" />
   </head>
@@ -24,11 +24,11 @@
           <li>Never used for training</li>
           <li>Secrets redacted before upload</li>
         </ul>
-        <p class="disclaimer">Claude Log Analyzer is an independent third-party tool and is not affiliated with Anthropic. The public flow runs analysis on your machine and uploads only the sanitized JSON report you review.</p>
+        <p class="disclaimer">Agent Analyzer is an independent third-party tool and is not affiliated with Anthropic. The public flow runs analysis on your machine and uploads only the sanitized JSON report you review.</p>
         <p class="trust-links"><a href="/security/">Security</a> <a href="/privacy/">Privacy</a></p>
 
         <section class="panel" id="launch-panel">
-          <button id="generate-session" type="button">Generate Local Commands</button>
+          <button id="generate-session" type="button">Generate NPX Command</button>
         </section>
 
         <section class="panel command-panel" id="session-panel" hidden>
@@ -36,20 +36,11 @@
           <div class="panel-heading">
             <div>
               <p class="eyebrow">step 1</p>
-              <h2>Analyze locally</h2>
+              <h2>Run the local analyzer</h2>
             </div>
-            <button id="copy-prompt" type="button">Copy Analyze Command</button>
+            <button id="copy-prompt" type="button">Copy NPX Command</button>
           </div>
           <pre id="claude-prompt"></pre>
-
-          <div class="panel-heading">
-            <div>
-              <p class="eyebrow">step 2</p>
-              <h2>Review, then upload sanitized JSON</h2>
-            </div>
-            <button id="copy-command" type="button">Copy Upload Command</button>
-          </div>
-          <pre id="curl-command"></pre>
         </section>
       </section>
 
@@ -106,7 +97,7 @@
           <p>The paid scan will use the same local-first model: analyze the 100 most recent Claude Code sessions locally, review the sanitized aggregate, then upload only the generated report JSON.</p>
           <label class="waiver">
             <input id="waiver-accepted" type="checkbox" />
-            I understand that Claude Analyzer provides deterministic analysis and vetted setup recommendations, but any installation or code change is executed by Claude Code, my package manager, or third-party tools with my approval and at my own risk.
+            I understand that Agent Analyzer provides deterministic analysis and vetted setup recommendations, but any installation or code change is executed by Claude Code, my package manager, or third-party tools with my approval and at my own risk.
           </label>
           <button id="unlock-paid" type="button">Unlock paid scan</button>
           <pre id="paid-status">paid checkout not started</pre>

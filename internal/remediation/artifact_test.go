@@ -66,7 +66,7 @@ func TestGenerateCreatesClaudePluginArtifact(t *testing.T) {
 		GeneratedAt: time.Date(2026, 5, 18, 14, 0, 0, 0, time.UTC),
 	})
 
-	if artifact.PluginName != "claude-analyzer-optimization" {
+	if artifact.PluginName != "agent-analyzer-optimization" {
 		t.Fatalf("unexpected plugin name: %s", artifact.PluginName)
 	}
 	for _, path := range []string{
@@ -79,14 +79,14 @@ func TestGenerateCreatesClaudePluginArtifact(t *testing.T) {
 		"skills/retrieval-hygiene/SKILL.md",
 		"skills/output-budget/SKILL.md",
 		"skills/retry-breaker/SKILL.md",
-		"commands/claude-analyzer-status.md",
-		"commands/claude-analyzer-tooling.md",
+		"commands/agent-analyzer-status.md",
+		"commands/agent-analyzer-tooling.md",
 	} {
 		if !hasFile(artifact, path) {
 			t.Fatalf("expected artifact file %s in %#v", path, artifact.Files)
 		}
 	}
-	for _, path := range []string{"hooks/hooks.json", "scripts/claude-analyzer-hook.py"} {
+	for _, path := range []string{"hooks/hooks.json", "scripts/agent-analyzer-hook.py"} {
 		if hasFile(artifact, path) {
 			t.Fatalf("did not expect bash nag hook file %s in %#v", path, artifact.Files)
 		}
