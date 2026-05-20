@@ -4,10 +4,15 @@ import (
 	"archive/tar"
 	"bytes"
 	"compress/gzip"
+	"crypto/hmac"
+	"crypto/sha256"
 	"encoding/json"
 	"errors"
+	"fmt"
+	"encoding/hex"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -648,6 +653,94 @@ func TestPaidBundleUploadRequiresPaidTokenAndLimit(t *testing.T) {
 	}
 }
 
+func TestStripeWebhookCreatesPaidSession(t *testing.T) {
+	t.Setenv("CLAUDE_ANALYZER_STRIPE_WEBHOOK_SECRET", "whsec_test_secret")
+	store, err := localstore.New(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	payload := `{"type":"checkout.session.completed","data":{"object":{"id":"cs_test_abc123","payment_status":"paid","mode":"payment","currency":"usd"}}}`
+	req := httptest.NewRequest(http.MethodPost, "/api/stripe/webhook", strings.NewReader(payload))
+	req.Host = "example.test"
+	req.Header.Set("Stripe-Signature", stripeTestSignature(payload, "whsec_test_secret", time.Now().UTC().Unix()))
+	rec := httptest.NewRecorder()
+
+	stripeWebhookHandler(store, 15*time.Minute).ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusCreated {
+		t.Fatalf("expected stripe webhook session status 201, got %d: %s", rec.Code, rec.Body.String())
+	}
+	var session analysisSessionResponse
+	if err := json.Unmarshal(rec.Body.Bytes(), &session); err != nil {
+		t.Fatalf("response is not valid session JSON: %v", err)
+	}
+	if !strings.Contains(session.Command, "CLAUDE_ANALYZER_SCAN_LIMIT=100") ||
+		!strings.Contains(session.Command, "limit=100") ||
+		!strings.Contains(session.Command, "X-Scan-Limit: 100") {
+		t.Fatalf("paid session command missing required scan-limit contract: %#v", session)
+	}
+	job, err := store.GetJob(session.JobID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if job.ScanType != app.ScanTypePaidBundle || job.PaymentProvider != "stripe" || job.PaymentSessionID != "cs_test_abc123" {
+		t.Fatalf("expected stripe paid session metadata, got %#v", job)
+	}
+}
+
+func TestStripeWebhookRejectsInvalidSignature(t *testing.T) {
+	t.Setenv("CLAUDE_ANALYZER_STRIPE_WEBHOOK_SECRET", "whsec_test_secret")
+	store, err := localstore.New(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	payload := `{"type":"checkout.session.completed","data":{"object":{"id":"cs_test_invalid","payment_status":"paid"}}}`
+	req := httptest.NewRequest(http.MethodPost, "/api/stripe/webhook", strings.NewReader(payload))
+	req.Header.Set("Stripe-Signature", "t=123,v1=deadbeef")
+	rec := httptest.NewRecorder()
+
+	stripeWebhookHandler(store, 15*time.Minute).ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusUnauthorized {
+		t.Fatalf("expected invalid signature rejection 401, got %d: %s", rec.Code, rec.Body.String())
+	}
+}
+
+func TestStripeWebhookReplayAndUnpaidHandling(t *testing.T) {
+	t.Setenv("CLAUDE_ANALYZER_STRIPE_WEBHOOK_SECRET", "whsec_test_secret")
+	store, err := localstore.New(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	paidPayload := `{"type":"checkout.session.completed","data":{"object":{"id":"cs_test_replay","payment_status":"paid","mode":"payment"}}}`
+	paidSig := stripeTestSignature(paidPayload, "whsec_test_secret", time.Now().UTC().Unix())
+	firstReq := httptest.NewRequest(http.MethodPost, "/api/stripe/webhook", strings.NewReader(paidPayload))
+	firstReq.Header.Set("Stripe-Signature", paidSig)
+	firstRec := httptest.NewRecorder()
+	stripeWebhookHandler(store, 15*time.Minute).ServeHTTP(firstRec, firstReq)
+	if firstRec.Code != http.StatusCreated {
+		t.Fatalf("expected first webhook status 201, got %d: %s", firstRec.Code, firstRec.Body.String())
+	}
+
+	replayReq := httptest.NewRequest(http.MethodPost, "/api/stripe/webhook", strings.NewReader(paidPayload))
+	replayReq.Header.Set("Stripe-Signature", paidSig)
+	replayRec := httptest.NewRecorder()
+	stripeWebhookHandler(store, 15*time.Minute).ServeHTTP(replayRec, replayReq)
+	if replayRec.Code != http.StatusConflict {
+		t.Fatalf("expected replay rejection 409, got %d: %s", replayRec.Code, replayRec.Body.String())
+	}
+
+	unpaidPayload := `{"type":"checkout.session.completed","data":{"object":{"id":"cs_test_unpaid","payment_status":"unpaid","mode":"payment"}}}`
+	unpaidReq := httptest.NewRequest(http.MethodPost, "/api/stripe/webhook", strings.NewReader(unpaidPayload))
+	unpaidReq.Header.Set("Stripe-Signature", stripeTestSignature(unpaidPayload, "whsec_test_secret", time.Now().UTC().Unix()))
+	unpaidRec := httptest.NewRecorder()
+	stripeWebhookHandler(store, 15*time.Minute).ServeHTTP(unpaidRec, unpaidReq)
+	if unpaidRec.Code != http.StatusAccepted {
+		t.Fatalf("expected unpaid session to be ignored with 202, got %d: %s", unpaidRec.Code, unpaidRec.Body.String())
+	}
+}
+
 func TestCreatePaidSessionRequiresLocalEnablementAndWaiver(t *testing.T) {
 	store, err := localstore.New(t.TempDir())
 	if err != nil {
@@ -870,4 +963,11 @@ func paidAggregateReport() analyzer.Report {
 			{ID: "repeated_file_reads", Severity: "high", CostImpact: "medium-high", Evidence: analyzer.FindingEvidence{Count: 6}},
 		},
 	}
+}
+
+func stripeTestSignature(payload, secret string, timestamp int64) string {
+	signedPayload := fmt.Sprintf("%d.%s", timestamp, payload)
+	mac := hmac.New(sha256.New, []byte(secret))
+	mac.Write([]byte(signedPayload))
+	return "t=" + strconv.FormatInt(timestamp, 10) + ",v1=" + hex.EncodeToString(mac.Sum(nil))
 }
