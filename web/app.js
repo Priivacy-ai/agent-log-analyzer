@@ -1,7 +1,5 @@
 const onboardingEl = document.querySelector("#onboarding");
 const reportEl = document.querySelector("#report");
-const launchPanel = document.querySelector("#launch-panel");
-const generateButton = document.querySelector("#generate-session");
 const sessionPanel = document.querySelector("#session-panel");
 const sessionStatus = document.querySelector("#session-status");
 const promptBlock = document.querySelector("#claude-prompt");
@@ -20,17 +18,9 @@ if (route) {
   pollReport(route.jobID, route.token);
 } else {
   reportEl.hidden = true;
+  if (promptBlock) promptBlock.textContent = runCommand();
+  if (sessionPanel) sessionPanel.hidden = false;
 }
-
-generateButton?.addEventListener("click", async () => {
-  generateButton.disabled = true;
-  generateButton.textContent = "Generating command...";
-  setSessionStatus("", true);
-  promptBlock.textContent = runCommand();
-  sessionPanel.hidden = false;
-  launchPanel.hidden = true;
-  setSessionStatus("This one command analyzes locally, shows the upload boundary, asks for confirmation, uploads only sanitized JSON, and opens the report.");
-});
 
 copyPromptButton?.addEventListener("click", () => copyText(promptBlock.textContent, copyPromptButton));
 copyPaidCommandButton?.addEventListener("click", () => copyText(paidCommand.textContent, copyPaidCommandButton));
