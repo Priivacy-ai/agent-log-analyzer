@@ -63,6 +63,9 @@ node npm/bin/agent-analyzer.js version
 
 ## Cutting A Release
 
+`v0.1.0` was cut before the public NPX rename and should not be used for the
+first npm launch. Start public npm distribution with `v0.1.1` or newer.
+
 1. Confirm `main` is green and the working tree is clean.
 2. Create an annotated semver tag:
 
@@ -74,7 +77,10 @@ node npm/bin/agent-analyzer.js version
 3. The release workflow publishes a draft GitHub Release with archives and
    `checksums.txt`.
 4. The release workflow also builds npm package binaries and publishes
-   `agent-analyzer` to npm with provenance.
+   `agent-analyzer` to npm with provenance. For the first publish of an
+   unclaimed package, add a short-lived npm automation token as the GitHub
+   `NPM_TOKEN` secret. After the package exists, configure npm Trusted
+   Publishing for `release.yml` and remove the token secret.
 5. Review the draft, checksum asset, changelog, npm package page, and install
    commands before broad launch.
 
