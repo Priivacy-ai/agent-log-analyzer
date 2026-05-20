@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/robertdouglass/claude-log-analyzer/internal/app"
-	"github.com/robertdouglass/claude-log-analyzer/internal/localstore"
+	"github.com/priivacy-ai/agent-log-analyzer/internal/app"
+	"github.com/priivacy-ai/agent-log-analyzer/internal/localstore"
 )
 
 func TestProcessOnceCompletesPaidBundleJob(t *testing.T) {

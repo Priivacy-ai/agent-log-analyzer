@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/robertdouglass/claude-log-analyzer/internal/analytics"
+	"github.com/priivacy-ai/agent-log-analyzer/internal/analytics"
 )
 
 func main() {

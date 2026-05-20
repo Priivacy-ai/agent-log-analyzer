@@ -4,15 +4,15 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/robertdouglass/claude-log-analyzer/internal/app"
-	"github.com/robertdouglass/claude-log-analyzer/internal/awsstore"
-	"github.com/robertdouglass/claude-log-analyzer/internal/localstore"
+	"github.com/priivacy-ai/agent-log-analyzer/internal/app"
+	"github.com/priivacy-ai/agent-log-analyzer/internal/awsstore"
+	"github.com/priivacy-ai/agent-log-analyzer/internal/localstore"
 )
 
 func NewAPIStore() (app.APIStore, error) {
 	switch backend := getenv("CLAUDE_ANALYZER_BACKEND", "local"); backend {
 	case "local":
-		return localstore.New(getenv("CLAUDE_ANALYZER_DATA_DIR", "/tmp/claude-log-analyzer"))
+		return localstore.New(getenv("CLAUDE_ANALYZER_DATA_DIR", "/tmp/agent-log-analyzer"))
 	case "aws":
 		return awsstore.NewFromEnv()
 	default:
@@ -23,7 +23,7 @@ func NewAPIStore() (app.APIStore, error) {
 func NewWorkerStore() (app.WorkerStore, error) {
 	switch backend := getenv("CLAUDE_ANALYZER_BACKEND", "local"); backend {
 	case "local":
-		return localstore.New(getenv("CLAUDE_ANALYZER_DATA_DIR", "/tmp/claude-log-analyzer"))
+		return localstore.New(getenv("CLAUDE_ANALYZER_DATA_DIR", "/tmp/agent-log-analyzer"))
 	case "aws":
 		return awsstore.NewFromEnv()
 	default:
@@ -34,7 +34,7 @@ func NewWorkerStore() (app.WorkerStore, error) {
 func NewSweeperStore() (app.SweeperStore, error) {
 	switch backend := getenv("CLAUDE_ANALYZER_BACKEND", "local"); backend {
 	case "local":
-		return localstore.New(getenv("CLAUDE_ANALYZER_DATA_DIR", "/tmp/claude-log-analyzer"))
+		return localstore.New(getenv("CLAUDE_ANALYZER_DATA_DIR", "/tmp/agent-log-analyzer"))
 	case "aws":
 		return awsstore.NewFromEnv()
 	default:

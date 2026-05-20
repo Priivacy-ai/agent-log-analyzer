@@ -20,8 +20,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/robertdouglass/claude-log-analyzer/internal/analyzer"
-	"github.com/robertdouglass/claude-log-analyzer/internal/remediation"
+	"github.com/priivacy-ai/agent-log-analyzer/internal/analyzer"
+	"github.com/priivacy-ai/agent-log-analyzer/internal/remediation"
 )
 
 func TestReportSerializationContainsNoForbiddenStrings(t *testing.T) {

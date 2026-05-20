@@ -1,4 +1,4 @@
-module github.com/robertdouglass/claude-log-analyzer
+module github.com/priivacy-ai/agent-log-analyzer
 
 go 1.25
 

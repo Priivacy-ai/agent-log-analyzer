@@ -5,7 +5,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/robertdouglass/claude-log-analyzer/internal/backend"
+	"github.com/priivacy-ai/agent-log-analyzer/internal/backend"
 )
 
 func main() {

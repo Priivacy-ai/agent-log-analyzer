@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/robertdouglass/claude-log-analyzer/internal/analyzer"
+	"github.com/priivacy-ai/agent-log-analyzer/internal/analyzer"
 )
 
 func TestGenerateCreatesClaudePluginArtifact(t *testing.T) {

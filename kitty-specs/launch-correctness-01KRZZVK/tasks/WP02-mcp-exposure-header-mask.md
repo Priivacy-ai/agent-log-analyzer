@@ -83,11 +83,11 @@ go vet ./internal/analyzer/...
 
 ## Context & Constraints
 
-- Spec: `/Users/robert/code-analyzer-dev/launch-completion-20260519-125840-dfxXcb/claude-log-analyzer/kitty-specs/launch-correctness-01KRZZVK/spec.md` — FR-005, FR-006, NFR-003, C-006, FR-010.
-- Plan: `/Users/robert/code-analyzer-dev/launch-completion-20260519-125840-dfxXcb/claude-log-analyzer/kitty-specs/launch-correctness-01KRZZVK/plan.md`.
-- Data model: `/Users/robert/code-analyzer-dev/launch-completion-20260519-125840-dfxXcb/claude-log-analyzer/kitty-specs/launch-correctness-01KRZZVK/data-model.md` — read the `byteRange` and `HeaderRanges` sections in full.
-- Contract: `/Users/robert/code-analyzer-dev/launch-completion-20260519-125840-dfxXcb/claude-log-analyzer/kitty-specs/launch-correctness-01KRZZVK/contracts/mcp-call-counting.md`. Read this in full — it contains the operational mask definition, the C-006 no-op rule, and the new fixture composition.
-- Research: `/Users/robert/code-analyzer-dev/launch-completion-20260519-125840-dfxXcb/claude-log-analyzer/kitty-specs/launch-correctness-01KRZZVK/research.md` — Bug #70 section explains why mask-then-skip beats alternative approaches.
+- Spec: `/Users/robert/code-analyzer-dev/launch-completion-20260519-125840-dfxXcb/agent-log-analyzer/kitty-specs/launch-correctness-01KRZZVK/spec.md` — FR-005, FR-006, NFR-003, C-006, FR-010.
+- Plan: `/Users/robert/code-analyzer-dev/launch-completion-20260519-125840-dfxXcb/agent-log-analyzer/kitty-specs/launch-correctness-01KRZZVK/plan.md`.
+- Data model: `/Users/robert/code-analyzer-dev/launch-completion-20260519-125840-dfxXcb/agent-log-analyzer/kitty-specs/launch-correctness-01KRZZVK/data-model.md` — read the `byteRange` and `HeaderRanges` sections in full.
+- Contract: `/Users/robert/code-analyzer-dev/launch-completion-20260519-125840-dfxXcb/agent-log-analyzer/kitty-specs/launch-correctness-01KRZZVK/contracts/mcp-call-counting.md`. Read this in full — it contains the operational mask definition, the C-006 no-op rule, and the new fixture composition.
+- Research: `/Users/robert/code-analyzer-dev/launch-completion-20260519-125840-dfxXcb/agent-log-analyzer/kitty-specs/launch-correctness-01KRZZVK/research.md` — Bug #70 section explains why mask-then-skip beats alternative approaches.
 - Existing code: `internal/analyzer/tooling_detect.go`. The bug site is `detectMCPCallsFromToolUse` (lines 212..271), specifically the raw-byte rescan around line 242. The header detector at line 114 already identifies header blocks; this WP teaches it to retain their byte ranges.
 
 **Constraints carried from spec/charter:**

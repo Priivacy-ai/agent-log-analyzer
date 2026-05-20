@@ -3,8 +3,8 @@ package app
 import (
 	"time"
 
-	"github.com/robertdouglass/claude-log-analyzer/internal/analytics"
-	"github.com/robertdouglass/claude-log-analyzer/internal/analyzer"
+	"github.com/priivacy-ai/agent-log-analyzer/internal/analytics"
+	"github.com/priivacy-ai/agent-log-analyzer/internal/analyzer"
 )
 
 type UploadStore interface {

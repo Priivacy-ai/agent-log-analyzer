@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-REPO="${REPO:-robertDouglass/claude-log-analyzer}"
+REPO="${REPO:-Priivacy-ai/agent-log-analyzer}"
 
 gh label create epic --repo "$REPO" --color 5319e7 --description "Large workstream" >/dev/null 2>&1 || true
 gh label create subissue --repo "$REPO" --color 1d76db --description "Planned child issue" >/dev/null 2>&1 || true

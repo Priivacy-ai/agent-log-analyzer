@@ -2,8 +2,8 @@
 
 **Branch**: `codex/launch-correctness` (created later, during implement)
 **Date**: 2026-05-19
-**Spec**: [/Users/robert/code-analyzer-dev/launch-completion-20260519-125840-dfxXcb/claude-log-analyzer/kitty-specs/launch-correctness-01KRZZVK/spec.md](./spec.md)
-**Input**: Phase 1 of the launch-completion handoff (`../start-here.md`) — GitHub issues [#74](https://github.com/robertDouglass/claude-log-analyzer/issues/74), [#70](https://github.com/robertDouglass/claude-log-analyzer/issues/70), [#72](https://github.com/robertDouglass/claude-log-analyzer/issues/72).
+**Spec**: [/Users/robert/code-analyzer-dev/launch-completion-20260519-125840-dfxXcb/agent-log-analyzer/kitty-specs/launch-correctness-01KRZZVK/spec.md](./spec.md)
+**Input**: Phase 1 of the launch-completion handoff (`../start-here.md`) — GitHub issues [#74](https://github.com/Priivacy-ai/agent-log-analyzer/issues/74), [#70](https://github.com/Priivacy-ai/agent-log-analyzer/issues/70), [#72](https://github.com/Priivacy-ai/agent-log-analyzer/issues/72).
 
 ## Summary
 
@@ -17,7 +17,7 @@ Privacy semantics, golden fixtures, and the verification baseline already exist;
 
 ## Technical Context
 
-**Language/Version**: Go 1.22+ (see `/Users/robert/code-analyzer-dev/launch-completion-20260519-125840-dfxXcb/claude-log-analyzer/go.mod`).
+**Language/Version**: Go 1.22+ (see `/Users/robert/code-analyzer-dev/launch-completion-20260519-125840-dfxXcb/agent-log-analyzer/go.mod`).
 **Primary Dependencies**: Go stdlib only on the hot path (`flag`, `regexp`, `encoding/json`, `os`, `bytes`). No new third-party deps introduced by this mission.
 **Storage**: None added. Reads Claude Code JSONL logs from local disk; writes sanitized report JSON to local disk. The paid scan path persists to existing AWS S3 / DynamoDB via `internal/awsstore` — unchanged by this mission.
 **Testing**:
@@ -48,7 +48,7 @@ Privacy semantics, golden fixtures, and the verification baseline already exist;
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-Source: `/Users/robert/code-analyzer-dev/launch-completion-20260519-125840-dfxXcb/claude-log-analyzer/.kittify/charter/charter.md` (governance.yaml, interview/answers.yaml).
+Source: `/Users/robert/code-analyzer-dev/launch-completion-20260519-125840-dfxXcb/agent-log-analyzer/.kittify/charter/charter.md` (governance.yaml, interview/answers.yaml).
 
 | Gate | Verdict | Notes |
 |------|---------|-------|
@@ -68,7 +68,7 @@ Source: `/Users/robert/code-analyzer-dev/launch-completion-20260519-125840-dfxXc
 ### Documentation (this feature)
 
 ```
-/Users/robert/code-analyzer-dev/launch-completion-20260519-125840-dfxXcb/claude-log-analyzer/kitty-specs/launch-correctness-01KRZZVK/
+/Users/robert/code-analyzer-dev/launch-completion-20260519-125840-dfxXcb/agent-log-analyzer/kitty-specs/launch-correctness-01KRZZVK/
 ├── plan.md                       # This file
 ├── spec.md                       # Approved spec (FRs/NFRs/Constraints)
 ├── meta.json                     # Mission identity
@@ -87,7 +87,7 @@ Source: `/Users/robert/code-analyzer-dev/launch-completion-20260519-125840-dfxXc
 ### Source Code (repository root)
 
 ```
-/Users/robert/code-analyzer-dev/launch-completion-20260519-125840-dfxXcb/claude-log-analyzer/
+/Users/robert/code-analyzer-dev/launch-completion-20260519-125840-dfxXcb/agent-log-analyzer/
 ├── cmd/
 │   └── claude-analyzer/
 │       ├── main.go                            # MODIFIED — positional arg handling (#74)

@@ -12,7 +12,7 @@
 
 ## Gate Results
 
-The four hard gates defined in this skill (Contract / Architectural / Cross-Repo E2E / Issue Matrix) target the Spec Kitty CLI's own Python codebase. **They are not applicable to this Go project** (`claude-log-analyzer`). Per Step 8.5's intent — gates exist where the project defines them — the equivalent gates for this project are the charter verification baseline (NFR-001). Recording those instead.
+The four hard gates defined in this skill (Contract / Architectural / Cross-Repo E2E / Issue Matrix) target the Spec Kitty CLI's own Python codebase. **They are not applicable to this Go project** (`agent-log-analyzer`). Per Step 8.5's intent — gates exist where the project defines them — the equivalent gates for this project are the charter verification baseline (NFR-001). Recording those instead.
 
 ### Gate 1 — Contract tests
 - N/A — this project has no `tests/contract/` subtree. Equivalent: charter verification baseline.

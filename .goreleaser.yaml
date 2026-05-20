@@ -64,28 +64,28 @@ changelog:
 
 release:
   github:
-    owner: robertDouglass
-    name: claude-log-analyzer
+    owner: Priivacy-ai
+    name: agent-log-analyzer
   draft: true
   prerelease: auto
   name_template: "{{ .ProjectName }} {{ .Tag }}"
   footer: |
     Release provenance:
-    - Source: https://github.com/robertDouglass/claude-log-analyzer
+    - Source: https://github.com/Priivacy-ai/agent-log-analyzer
     - Commit: {{ .Commit }}
     - Checksums: checksums.txt
 
 brews:
   - name: agent-analyzer
     repository:
-      owner: robertDouglass
+      owner: Priivacy-ai
       name: homebrew-agent-analyzer
       branch: main
       token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
     commit_author:
       name: goreleaserbot
       email: bot@goreleaser.com
-    homepage: https://github.com/robertDouglass/claude-log-analyzer
+    homepage: https://github.com/Priivacy-ai/agent-log-analyzer
     description: Local-first agent coding log profiler that uploads sanitized reports only.
     license: Proprietary
     directory: Formula
@@ -97,13 +97,13 @@ brews:
 scoops:
   - name: agent-analyzer
     repository:
-      owner: robertDouglass
+      owner: Priivacy-ai
       name: scoop-agent-analyzer
       branch: main
       token: "{{ .Env.SCOOP_BUCKET_GITHUB_TOKEN }}"
     commit_author:
       name: goreleaserbot
       email: bot@goreleaser.com
-    homepage: https://github.com/robertDouglass/claude-log-analyzer
+    homepage: https://github.com/Priivacy-ai/agent-log-analyzer
     description: Local-first agent coding log profiler that uploads sanitized reports only.
     license: Proprietary

@@ -17,7 +17,7 @@
   "mission_number": null,
   "mission_slug": "report-intelligence-ux-01KS070G",
   "mission_type": "software-dev",
-  "purpose_context": "Developers running claude-log-analyzer need to see which spec-driven-development tooling and MCP/skill bloat their workflow has, plus actionable pruning guidance, without the report ever rendering unknown private names. This mission ships the view layer over the already-bounded ecosystem data Phase 1 made aggregate-safe.",
+  "purpose_context": "Developers running agent-log-analyzer need to see which spec-driven-development tooling and MCP/skill bloat their workflow has, plus actionable pruning guidance, without the report ever rendering unknown private names. This mission ships the view layer over the already-bounded ecosystem data Phase 1 made aggregate-safe.",
   "purpose_tldr": "Surface SDD fingerprints and MCP/skill utilization in the report UI with deterministic pruning advice and zero private-name leakage.",
   "slug": "report-intelligence-ux-01KS070G",
   "target_branch": "main",

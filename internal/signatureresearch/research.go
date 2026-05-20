@@ -182,7 +182,7 @@ func fetch(ctx context.Context, client HTTPClient, rawURL string) ([]byte, strin
 		return nil, "", err
 	}
 	req.Header.Set("Accept", "application/json,text/html;q=0.8,*/*;q=0.5")
-	req.Header.Set("User-Agent", "claude-log-analyzer-signature-research/0.1")
+	req.Header.Set("User-Agent", "agent-log-analyzer-signature-research/0.1")
 	if token := strings.TrimSpace(getenv("GITHUB_TOKEN")); token != "" && strings.Contains(req.URL.Host, "github.com") {
 		req.Header.Set("Authorization", "Bearer "+token)
 	}

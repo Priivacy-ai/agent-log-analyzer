@@ -2,7 +2,7 @@ package main
 
 import "fmt"
 
-const sourceURL = "https://github.com/robertDouglass/claude-log-analyzer"
+const sourceURL = "https://github.com/Priivacy-ai/agent-log-analyzer"
 
 var (
 	version = "dev"

@@ -3,7 +3,7 @@
 ## Scope
 
 This doc covers the additive recommendation-engine surface introduced in
-Phase A of [issue #68](https://github.com/robertDouglass/claude-log-analyzer/issues/68).
+Phase A of [issue #68](https://github.com/Priivacy-ai/agent-log-analyzer/issues/68).
 The engine is a pure deterministic function that turns an analyzer's dominant
 waste signals and a per-tool state map into at most one primary and one
 secondary `TokenSavingRecommendation`. It does not read files, networks, or
@@ -11,11 +11,11 @@ the environment, and it never echoes raw log data into its output.
 
 Phase A defines the registry, the state model, the decision policy, and the
 test surface. Phase B wires real inputs into the engine — the
-[#38 fingerprint registry](https://github.com/robertDouglass/claude-log-analyzer/issues/38)
+[#38 fingerprint registry](https://github.com/Priivacy-ai/agent-log-analyzer/issues/38)
 populates `ToolStateMap`, the
-[#39 MCP/skill utilization analytics](https://github.com/robertDouglass/claude-log-analyzer/issues/39)
+[#39 MCP/skill utilization analytics](https://github.com/Priivacy-ai/agent-log-analyzer/issues/39)
 add `mcp_skill_bloat` signals, and the
-[#67 safe CLI probes](https://github.com/robertDouglass/claude-log-analyzer/issues/67)
+[#67 safe CLI probes](https://github.com/Priivacy-ai/agent-log-analyzer/issues/67)
 populate `cli_presence` / `cli_version` evidence. None of that work requires
 touching engine code.
 

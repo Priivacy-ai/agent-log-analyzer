@@ -93,11 +93,11 @@ go test ./internal/remediation/ -run TestArtifact -v
 
 ## Context & Constraints
 
-- Spec: `/Users/robert/code-analyzer-dev/launch-completion-20260519-125840-dfxXcb/claude-log-analyzer/kitty-specs/launch-correctness-01KRZZVK/spec.md` — FR-007..FR-009, NFR-002, NFR-005, C-007.
-- Plan: `/Users/robert/code-analyzer-dev/launch-completion-20260519-125840-dfxXcb/claude-log-analyzer/kitty-specs/launch-correctness-01KRZZVK/plan.md`.
-- Data model: `/Users/robert/code-analyzer-dev/launch-completion-20260519-125840-dfxXcb/claude-log-analyzer/kitty-specs/launch-correctness-01KRZZVK/data-model.md` — read the merge semantics tables in full.
-- Contract: `/Users/robert/code-analyzer-dev/launch-completion-20260519-125840-dfxXcb/claude-log-analyzer/kitty-specs/launch-correctness-01KRZZVK/contracts/aggregate-merge.md`. Read this in full — definitive merge rules, invariants, and consumer contract.
-- Research: `/Users/robert/code-analyzer-dev/launch-completion-20260519-125840-dfxXcb/claude-log-analyzer/kitty-specs/launch-correctness-01KRZZVK/research.md` — Bug #72 section.
+- Spec: `/Users/robert/code-analyzer-dev/launch-completion-20260519-125840-dfxXcb/agent-log-analyzer/kitty-specs/launch-correctness-01KRZZVK/spec.md` — FR-007..FR-009, NFR-002, NFR-005, C-007.
+- Plan: `/Users/robert/code-analyzer-dev/launch-completion-20260519-125840-dfxXcb/agent-log-analyzer/kitty-specs/launch-correctness-01KRZZVK/plan.md`.
+- Data model: `/Users/robert/code-analyzer-dev/launch-completion-20260519-125840-dfxXcb/agent-log-analyzer/kitty-specs/launch-correctness-01KRZZVK/data-model.md` — read the merge semantics tables in full.
+- Contract: `/Users/robert/code-analyzer-dev/launch-completion-20260519-125840-dfxXcb/agent-log-analyzer/kitty-specs/launch-correctness-01KRZZVK/contracts/aggregate-merge.md`. Read this in full — definitive merge rules, invariants, and consumer contract.
+- Research: `/Users/robert/code-analyzer-dev/launch-completion-20260519-125840-dfxXcb/agent-log-analyzer/kitty-specs/launch-correctness-01KRZZVK/research.md` — Bug #72 section.
 - Existing code:
   - `internal/analyzer/aggregate.go:8` (`AggregateReports`), `aggregate.go:30` (loop), `aggregate.go:128..143` (`mergeEcosystems` — bug site, skips two fields).
   - `internal/analyzer/types.go:51..67` (`Ecosystem` struct), `types.go:83..119` (`ToolingUtilization`, `MCPUtilization`, `SkillUtilization`).

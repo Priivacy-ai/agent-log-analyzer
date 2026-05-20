@@ -46,13 +46,13 @@ Required:
 go test ./...
 terraform -chdir=infra/aws fmt -check -recursive
 ./scripts/smoke-local.sh
-COMPOSE_PROJECT_NAME=claude-log-analyzer-aggregate docker compose up --build -d
+COMPOSE_PROJECT_NAME=agent-log-analyzer-aggregate docker compose up --build -d
 ./scripts/load-local.sh 25
-COMPOSE_PROJECT_NAME=claude-log-analyzer-aggregate docker compose down -v
+COMPOSE_PROJECT_NAME=agent-log-analyzer-aggregate docker compose down -v
 ```
 
 Optional manual summary check:
 
 ```sh
-go run ./cmd/analytics-summary --input /tmp/claude-log-analyzer/analytics/events.jsonl --min-cohort 10
+go run ./cmd/analytics-summary --input /tmp/agent-log-analyzer/analytics/events.jsonl --min-cohort 10
 ```

@@ -9,7 +9,7 @@ import (
 	"sort"
 	"sync"
 
-	"github.com/robertdouglass/claude-log-analyzer/internal/analyzer/sdd"
+	"github.com/priivacy-ai/agent-log-analyzer/internal/analyzer/sdd"
 )
 
 //go:embed signatures/*.json

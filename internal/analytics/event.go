@@ -5,7 +5,7 @@ import (
 	"regexp"
 	"sort"
 
-	"github.com/robertdouglass/claude-log-analyzer/internal/analyzer"
+	"github.com/priivacy-ai/agent-log-analyzer/internal/analyzer"
 )
 
 const SchemaVersion = "2026-05-20"

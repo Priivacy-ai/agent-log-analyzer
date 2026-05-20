@@ -3,8 +3,8 @@
 The Phase A package exposes exactly the symbols documented here. Anything not
 in this contract is package-private and may be reshaped without notice.
 
-Package: `github.com/robertdouglass/claude-log-analyzer/internal/analyzer`
-Module: `github.com/robertdouglass/claude-log-analyzer` (Go 1.25)
+Package: `github.com/priivacy-ai/agent-log-analyzer/internal/analyzer`
+Module: `github.com/priivacy-ai/agent-log-analyzer` (Go 1.25)
 
 ## Stable public surface
 

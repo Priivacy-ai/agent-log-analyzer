@@ -12,9 +12,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/robertdouglass/claude-log-analyzer/internal/analyzer"
-	"github.com/robertdouglass/claude-log-analyzer/internal/app"
-	"github.com/robertdouglass/claude-log-analyzer/internal/localstore"
+	"github.com/priivacy-ai/agent-log-analyzer/internal/analyzer"
+	"github.com/priivacy-ai/agent-log-analyzer/internal/app"
+	"github.com/priivacy-ai/agent-log-analyzer/internal/localstore"
 )
 
 type fakeStore struct {

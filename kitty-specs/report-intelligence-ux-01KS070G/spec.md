@@ -10,7 +10,7 @@
 
 **TLDR**: Surface SDD fingerprints and MCP/skill utilization in the report UI with deterministic pruning advice and zero private-name leakage.
 
-**Context**: Developers running claude-log-analyzer need to see which spec-driven-development tooling and MCP/skill bloat their workflow has, plus actionable pruning guidance, without the report ever rendering unknown private names. This mission ships the view layer over the already-bounded ecosystem data Phase 1 made aggregate-safe.
+**Context**: Developers running agent-log-analyzer need to see which spec-driven-development tooling and MCP/skill bloat their workflow has, plus actionable pruning guidance, without the report ever rendering unknown private names. This mission ships the view layer over the already-bounded ecosystem data Phase 1 made aggregate-safe.
 
 ## Primary User Scenario
 

@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/robertdouglass/claude-log-analyzer/internal/analyzer"
+	"github.com/priivacy-ai/agent-log-analyzer/internal/analyzer"
 )
 
 const GeneratorVersion = "0.1.0"
@@ -109,7 +109,7 @@ func Generate(report analyzer.Report, options Options) Artifact {
 	sort.Slice(files, func(i, j int) bool { return files[i].Path < files[j].Path })
 	artifact := Artifact{
 		SchemaVersion:          "2026-05-18",
-		Generator:              "claude-log-analyzer/remediation@" + GeneratorVersion,
+		Generator:              "agent-log-analyzer/remediation@" + GeneratorVersion,
 		PluginName:             pluginName,
 		PluginVersion:          pluginVersion(report),
 		GeneratedAt:            generatedAt,

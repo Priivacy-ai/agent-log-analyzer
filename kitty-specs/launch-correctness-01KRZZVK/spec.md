@@ -4,7 +4,7 @@
 **Slug:** `launch-correctness-01KRZZVK`
 **Mission type:** software-dev
 **Source brief:** `../start-here.md` (Phase 1: Correctness Bugs First)
-**Scope GitHub issues:** [#74](https://github.com/robertDouglass/claude-log-analyzer/issues/74), [#70](https://github.com/robertDouglass/claude-log-analyzer/issues/70), [#72](https://github.com/robertDouglass/claude-log-analyzer/issues/72)
+**Scope GitHub issues:** [#74](https://github.com/Priivacy-ai/agent-log-analyzer/issues/74), [#70](https://github.com/Priivacy-ai/agent-log-analyzer/issues/70), [#72](https://github.com/Priivacy-ai/agent-log-analyzer/issues/72)
 
 ## Purpose
 
@@ -279,11 +279,11 @@ the reviewer does not need to re-verify them by hand.
 - Launch brief: `../start-here.md` (Phase 1: Correctness Bugs First).
 - Charter: `.kittify/charter/charter.md`.
 - Issues:
-  [#74](https://github.com/robertDouglass/claude-log-analyzer/issues/74),
-  [#70](https://github.com/robertDouglass/claude-log-analyzer/issues/70),
-  [#72](https://github.com/robertDouglass/claude-log-analyzer/issues/72),
-  with parent epics [#38](https://github.com/robertDouglass/claude-log-analyzer/issues/38),
-  [#39](https://github.com/robertDouglass/claude-log-analyzer/issues/39),
-  [#40](https://github.com/robertDouglass/claude-log-analyzer/issues/40),
-  [#41](https://github.com/robertDouglass/claude-log-analyzer/issues/41)
+  [#74](https://github.com/Priivacy-ai/agent-log-analyzer/issues/74),
+  [#70](https://github.com/Priivacy-ai/agent-log-analyzer/issues/70),
+  [#72](https://github.com/Priivacy-ai/agent-log-analyzer/issues/72),
+  with parent epics [#38](https://github.com/Priivacy-ai/agent-log-analyzer/issues/38),
+  [#39](https://github.com/Priivacy-ai/agent-log-analyzer/issues/39),
+  [#40](https://github.com/Priivacy-ai/agent-log-analyzer/issues/40),
+  [#41](https://github.com/Priivacy-ai/agent-log-analyzer/issues/41)
   remaining open until acceptance is fully demonstrated.

@@ -85,9 +85,9 @@ go vet ./cmd/claude-analyzer/...
 
 ## Context & Constraints
 
-- Spec: `/Users/robert/code-analyzer-dev/launch-completion-20260519-125840-dfxXcb/claude-log-analyzer/kitty-specs/launch-correctness-01KRZZVK/spec.md` — see FR-001..FR-004 and FR-010.
-- Plan: `/Users/robert/code-analyzer-dev/launch-completion-20260519-125840-dfxXcb/claude-log-analyzer/kitty-specs/launch-correctness-01KRZZVK/plan.md`.
-- Contract: `/Users/robert/code-analyzer-dev/launch-completion-20260519-125840-dfxXcb/claude-log-analyzer/kitty-specs/launch-correctness-01KRZZVK/contracts/cli-analyze.md`. Read this file in full — it contains the argument resolution table, the error-message substring contract, and the test list.
+- Spec: `/Users/robert/code-analyzer-dev/launch-completion-20260519-125840-dfxXcb/agent-log-analyzer/kitty-specs/launch-correctness-01KRZZVK/spec.md` — see FR-001..FR-004 and FR-010.
+- Plan: `/Users/robert/code-analyzer-dev/launch-completion-20260519-125840-dfxXcb/agent-log-analyzer/kitty-specs/launch-correctness-01KRZZVK/plan.md`.
+- Contract: `/Users/robert/code-analyzer-dev/launch-completion-20260519-125840-dfxXcb/agent-log-analyzer/kitty-specs/launch-correctness-01KRZZVK/contracts/cli-analyze.md`. Read this file in full — it contains the argument resolution table, the error-message substring contract, and the test list.
 - Charter: `.kittify/charter/charter.md`. Privacy stance and verification baseline are non-negotiable; strict exception policy.
 - Existing parser: stdlib `flag` package via `flag.NewFlagSet`. Do NOT migrate to Cobra (rejected in `research.md` — out of scope).
 

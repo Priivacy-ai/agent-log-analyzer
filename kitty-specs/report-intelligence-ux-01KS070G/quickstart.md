@@ -5,7 +5,7 @@
 
 ## Prerequisites
 
-- Repo checked out at `/Users/robert/code-analyzer-dev/launch-completion-20260519-125840-dfxXcb/claude-log-analyzer`.
+- Repo checked out at `/Users/robert/code-analyzer-dev/launch-completion-20260519-125840-dfxXcb/agent-log-analyzer`.
 - Go toolchain available (project's existing version).
 - Docker available for local smoke + browser QA.
 - `main` at or beyond commit `5df679c` (Phase 1 squash).

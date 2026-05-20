@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-PROJECT="${COMPOSE_PROJECT_NAME:-claude-log-analyzer-aws}"
+PROJECT="${COMPOSE_PROJECT_NAME:-agent-log-analyzer-aws}"
 COMPOSE=(docker compose -p "$PROJECT" -f docker-compose.aws.yml)
 
 "${COMPOSE[@]}" up -d localstack

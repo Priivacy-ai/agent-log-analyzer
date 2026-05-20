@@ -6,7 +6,7 @@ steps to verify the mission against its acceptance criteria.
 ## 1. Build and run unit tests
 
 ```bash
-cd /path/to/claude-log-analyzer
+cd /path/to/agent-log-analyzer
 gofmt -w $(find . -name '*.go' -not -path './.git/*')
 go vet ./...
 go test ./...

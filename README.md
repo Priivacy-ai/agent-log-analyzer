@@ -78,15 +78,15 @@ If Docker Desktop is unavailable, the same API/worker path can be checked with:
 Local load gate:
 
 ```bash
-COMPOSE_PROJECT_NAME=claude-log-analyzer-load docker compose up --build -d
+COMPOSE_PROJECT_NAME=agent-log-analyzer-load docker compose up --build -d
 ./scripts/load-local.sh 25
-COMPOSE_PROJECT_NAME=claude-log-analyzer-load docker compose down -v
+COMPOSE_PROJECT_NAME=agent-log-analyzer-load docker compose down -v
 ```
 
 Aggregate analytics summary, for retained `analytics.Event` JSONL only:
 
 ```bash
-go run ./cmd/analytics-summary --input /tmp/claude-log-analyzer/analytics/events.jsonl --min-cohort 10
+go run ./cmd/analytics-summary --input /tmp/agent-log-analyzer/analytics/events.jsonl --min-cohort 10
 ```
 
 AWS-backend local smoke with LocalStack:
@@ -105,7 +105,7 @@ go run ./cmd/worker
 
 Useful local env vars:
 
-- `CLAUDE_ANALYZER_DATA_DIR`, default `/tmp/claude-log-analyzer`
+- `CLAUDE_ANALYZER_DATA_DIR`, default `/tmp/agent-log-analyzer`
 - `CLAUDE_ANALYZER_ADDR`, default `:8080`
 - `CLAUDE_ANALYZER_WORKER_INTERVAL`, default `2s`
 

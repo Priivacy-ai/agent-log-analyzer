@@ -5,11 +5,11 @@ import (
 	"os"
 	"time"
 
-	"github.com/robertdouglass/claude-log-analyzer/internal/analytics"
-	"github.com/robertdouglass/claude-log-analyzer/internal/analyzer"
-	"github.com/robertdouglass/claude-log-analyzer/internal/app"
-	"github.com/robertdouglass/claude-log-analyzer/internal/backend"
-	"github.com/robertdouglass/claude-log-analyzer/internal/paidscan"
+	"github.com/priivacy-ai/agent-log-analyzer/internal/analytics"
+	"github.com/priivacy-ai/agent-log-analyzer/internal/analyzer"
+	"github.com/priivacy-ai/agent-log-analyzer/internal/app"
+	"github.com/priivacy-ai/agent-log-analyzer/internal/backend"
+	"github.com/priivacy-ai/agent-log-analyzer/internal/paidscan"
 )
 
 func main() {

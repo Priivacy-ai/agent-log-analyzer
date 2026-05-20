@@ -7,7 +7,7 @@
 | Mission type | software-dev |
 | Target branch | `main` |
 | Source brief | `/Users/robert/code-analyzer-dev/aggregate-intelligence-20260520-081911-cbwF6i/start-here.md` |
-| Upstream issues | [#40](https://github.com/robertDouglass/claude-log-analyzer/issues/40), [#58](https://github.com/robertDouglass/claude-log-analyzer/issues/58), [#59](https://github.com/robertDouglass/claude-log-analyzer/issues/59), [#60](https://github.com/robertDouglass/claude-log-analyzer/issues/60), [#61](https://github.com/robertDouglass/claude-log-analyzer/issues/61), [#65](https://github.com/robertDouglass/claude-log-analyzer/issues/65) |
+| Upstream issues | [#40](https://github.com/Priivacy-ai/agent-log-analyzer/issues/40), [#58](https://github.com/Priivacy-ai/agent-log-analyzer/issues/58), [#59](https://github.com/Priivacy-ai/agent-log-analyzer/issues/59), [#60](https://github.com/Priivacy-ai/agent-log-analyzer/issues/60), [#61](https://github.com/Priivacy-ai/agent-log-analyzer/issues/61), [#65](https://github.com/Priivacy-ai/agent-log-analyzer/issues/65) |
 
 ## Purpose
 

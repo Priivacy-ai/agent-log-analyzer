@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/robertdouglass/claude-log-analyzer/kitty-specs/top-20-sdd-fingerprint-registry-01KRZEQ3/contracts/sdd-detector.schema.json",
+  "$id": "https://github.com/priivacy-ai/agent-log-analyzer/kitty-specs/top-20-sdd-fingerprint-registry-01KRZEQ3/contracts/sdd-detector.schema.json",
   "title": "SDDDetector",
   "description": "Registry record describing how to identify one named spec-driven-development (SDD) tool. Stored as elements of internal/analyzer/signatures/sdd_detectors.json.",
   "type": "array",

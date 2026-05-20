@@ -1,6 +1,6 @@
 # Phase 1: Data Model — Launch Correctness Fixes
 
-This mission introduces no new serialized fields. It refines existing in-memory and merged shapes. All paths are absolute against the repo root `/Users/robert/code-analyzer-dev/launch-completion-20260519-125840-dfxXcb/claude-log-analyzer`.
+This mission introduces no new serialized fields. It refines existing in-memory and merged shapes. All paths are absolute against the repo root `/Users/robert/code-analyzer-dev/launch-completion-20260519-125840-dfxXcb/agent-log-analyzer`.
 
 ## In-memory additions (never serialized)
 
