@@ -350,6 +350,16 @@ pre {
   font-weight: 600;
 }
 
+.timeline-empty {
+  min-height: 120px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #080b10;
+  color: var(--muted);
+}
+
 .timeline-y-axis {
   display: flex;
   flex-direction: column;
@@ -480,6 +490,75 @@ pre {
   text-align: right;
 }
 
+.source-reports {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 14px;
+}
+
+.source-reports > h2 {
+  margin-bottom: 0;
+}
+
+.source-report {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 16px;
+  background: #0a0f14;
+}
+
+.source-report-header,
+.source-report-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(180px, 260px);
+  gap: 16px;
+  align-items: start;
+}
+
+.source-report h3,
+.source-report h4 {
+  margin: 0 0 6px;
+}
+
+.source-report-header p,
+.source-report-grid p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.source-score {
+  justify-self: end;
+  display: grid;
+  justify-items: end;
+  color: var(--muted);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+}
+
+.source-score strong {
+  color: var(--orange);
+  font-size: 34px;
+  line-height: 1;
+}
+
+.source-report-grid {
+  margin: 14px 0;
+}
+
+.source-findings {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding-left: 20px;
+}
+
+.source-findings span {
+  display: block;
+  margin-top: 2px;
+  color: var(--orange);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-size: 13px;
+}
+
 .upsell {
   grid-column: 1 / -1;
   border-top: 1px solid var(--line);
@@ -504,6 +583,24 @@ pre {
 @media (max-width: 720px) {
   .report {
     grid-template-columns: 1fr;
+  }
+
+  .source-report-header,
+  .source-report-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .source-score {
+    justify-self: start;
+    justify-items: start;
+  }
+
+  .timeline-frame {
+    grid-template-columns: 48px 1fr;
+  }
+
+  .timeline-x-axis {
+    margin-left: 58px;
   }
 
   .panel-heading {

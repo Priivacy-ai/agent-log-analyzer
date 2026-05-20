@@ -225,11 +225,74 @@ func (bar *progressBar) Fail() {
 	}
 }
 
+type sourceAnalysisResult struct {
+	Candidate logCandidate
+	Report    analyzer.Report
+	Bytes     int
+}
+
+func reportsFromResults(results []sourceAnalysisResult) []analyzer.Report {
+	reports := make([]analyzer.Report, 0, len(results))
+	for _, result := range results {
+		reports = append(reports, result.Report)
+	}
+	return reports
+}
+
+func buildSourceReports(results []sourceAnalysisResult) []analyzer.SourceReport {
+	if len(results) == 0 {
+		return nil
+	}
+	type group struct {
+		sourceID    string
+		sourceLabel string
+		reports     []analyzer.Report
+		bytes       int
+	}
+	order := []string{}
+	groups := map[string]*group{}
+	for _, result := range results {
+		key := result.Candidate.SourceID
+		if _, ok := groups[key]; !ok {
+			order = append(order, key)
+			groups[key] = &group{
+				sourceID:    result.Candidate.SourceID,
+				sourceLabel: result.Candidate.SourceLabel,
+			}
+		}
+		groups[key].reports = append(groups[key].reports, result.Report)
+		groups[key].bytes += result.Bytes
+	}
+	sourceReports := make([]analyzer.SourceReport, 0, len(order))
+	for _, key := range order {
+		group := groups[key]
+		report := group.reports[0]
+		if len(group.reports) > 1 {
+			merged, err := analyzer.AggregateReportsWithParserType("local-"+group.sourceID, group.reports, group.bytes, "multi_source")
+			if err == nil {
+				report = merged
+			}
+		}
+		sourceReports = append(sourceReports, analyzer.SourceReport{
+			SourceID:       group.sourceID,
+			SourceLabel:    group.sourceLabel,
+			LogCount:       len(group.reports),
+			Score:          report.Score,
+			EstimatedWaste: report.EstimatedWaste,
+			Metrics:        report.Metrics,
+			Findings:       report.Findings,
+			Timeline:       report.Timeline,
+			ImmediateFixes: report.ImmediateFixes,
+		})
+	}
+	return sourceReports
+}
+
 func analyzeDiscovered(candidates []logCandidate, out string, paid bool, printNextSteps bool) error {
 	if len(candidates) == 0 {
 		return errors.New("no supported agent logs found; checked Claude Code, Codex, and OpenCode")
 	}
-	reports := make([]analyzer.Report, 0, len(candidates))
+	results := make([]sourceAnalysisResult, 0, len(candidates))
 	totalBytes := 0
 	totalRedacted := 0
 	progress := newProgressBar(len(candidates)*2 + 1)
@@ -248,7 +311,11 @@ func analyzeDiscovered(candidates []logCandidate, out string, paid bool, printNe
 			progress.Fail()
 			return fmt.Errorf("analyze %s log %d: %w", candidate.SourceLabel, index+1, err)
 		}
-		reports = append(reports, report)
+		results = append(results, sourceAnalysisResult{
+			Candidate: candidate,
+			Report:    report,
+			Bytes:     len(data),
+		})
 		totalBytes += len(data)
 		totalRedacted += report.SecurityReceipt.SecretsRedacted
 		step++
@@ -257,6 +324,7 @@ func analyzeDiscovered(candidates []logCandidate, out string, paid bool, printNe
 
 	var report analyzer.Report
 	var err error
+	reports := reportsFromResults(results)
 	if !paid && len(reports) == 1 {
 		report = reports[0]
 		report.SecurityReceipt.RawLogTTL = "not uploaded"
@@ -274,6 +342,7 @@ func analyzeDiscovered(candidates []logCandidate, out string, paid bool, printNe
 		}
 		report.SecurityReceipt.RawLogTTL = "not uploaded"
 	}
+	report.SourceReports = buildSourceReports(results)
 	progress.Update(step, "writing sanitized report")
 	if err := writeReport(out, report); err != nil {
 		progress.Fail()

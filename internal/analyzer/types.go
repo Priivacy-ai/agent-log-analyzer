@@ -12,6 +12,7 @@ type Report struct {
 	SecurityReceipt SecurityReceipt    `json:"security_receipt"`
 	Timeline        []TimelinePoint    `json:"timeline"`
 	ImmediateFixes  []string           `json:"immediate_fixes"`
+	SourceReports   []SourceReport     `json:"source_reports,omitempty"`
 	AggregateEvent  AggregateSafeEvent `json:"aggregate_event"`
 	Recommendation  *RecommendationSet `json:"recommendation,omitempty"`
 }
@@ -132,6 +133,18 @@ type TimelinePoint struct {
 	ToolTokens      int `json:"tool_tokens"`
 	Rereads         int `json:"rereads"`
 	Retries         int `json:"retries"`
+}
+
+type SourceReport struct {
+	SourceID       string          `json:"source_id"`
+	SourceLabel    string          `json:"source_label"`
+	LogCount       int             `json:"log_count"`
+	Score          int             `json:"score"`
+	EstimatedWaste WasteRange      `json:"estimated_waste_pct"`
+	Metrics        Metrics         `json:"metrics"`
+	Findings       []Finding       `json:"findings"`
+	Timeline       []TimelinePoint `json:"timeline"`
+	ImmediateFixes []string        `json:"immediate_fixes"`
 }
 
 type AggregateSafeEvent struct {

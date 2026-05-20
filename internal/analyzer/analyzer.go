@@ -504,6 +504,17 @@ func normalizeReportCollections(report *Report) {
 	if report.Redactions == nil {
 		report.Redactions = map[string]int{}
 	}
+	for index := range report.SourceReports {
+		if report.SourceReports[index].Findings == nil {
+			report.SourceReports[index].Findings = []Finding{}
+		}
+		if report.SourceReports[index].Timeline == nil {
+			report.SourceReports[index].Timeline = []TimelinePoint{}
+		}
+		if report.SourceReports[index].ImmediateFixes == nil {
+			report.SourceReports[index].ImmediateFixes = []string{}
+		}
+	}
 	normalizeEcosystemCollections(&report.Ecosystem)
 }
 

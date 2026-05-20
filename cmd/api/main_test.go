@@ -141,6 +141,41 @@ func TestReportPageServerRendersCompletedReport(t *testing.T) {
 				Rereads:         2,
 				Retries:         1,
 			}},
+			SourceReports: []analyzer.SourceReport{
+				{
+					SourceID:       "claude_code",
+					SourceLabel:    "Claude Code",
+					LogCount:       1,
+					Score:          42,
+					EstimatedWaste: analyzer.WasteRange{Low: 22, High: 30},
+					Metrics:        analyzer.Metrics{EstimatedTokens: 10000, ToolOutputTokens: 3000, Rereads: 2, FailedCommands: 1},
+					Findings: []analyzer.Finding{{
+						Title:      "Large shell/tool output overhead",
+						Severity:   "high",
+						CostImpact: "high",
+					}},
+					Timeline: []analyzer.TimelinePoint{{
+						Turn:            10,
+						EstimatedTokens: 10000,
+						ToolTokens:      3000,
+						Rereads:         2,
+						Retries:         1,
+					}},
+				},
+				{
+					SourceID:       "codex",
+					SourceLabel:    "Codex",
+					LogCount:       1,
+					Score:          55,
+					EstimatedWaste: analyzer.WasteRange{Low: 12, High: 20},
+					Metrics:        analyzer.Metrics{EstimatedTokens: 2000, ToolOutputTokens: 200},
+					Timeline: []analyzer.TimelinePoint{{
+						Turn:            5,
+						EstimatedTokens: 2000,
+						ToolTokens:      200,
+					}},
+				},
+			},
 			ImmediateFixes: []string{"Use narrower shell commands."},
 			Ecosystem: analyzer.Ecosystem{
 				Client:          "claude-code",
@@ -203,10 +238,18 @@ func TestReportPageServerRendersCompletedReport(t *testing.T) {
 		"https://github.com/rtk-ai/rtk",
 		"Raw log TTL: not uploaded",
 		"MCP:",
+		"Agent Logs Analyzed",
+		"Claude Code",
+		"Codex",
+		"timeline-bar",
+		"optimized potential",
 	} {
 		if !strings.Contains(body, want) {
 			t.Fatalf("server-rendered report missing %q:\n%s", want, body)
 		}
+	}
+	if strings.Contains(body, "<table>") || strings.Contains(body, "<th>Turn</th>") {
+		t.Fatalf("server-rendered report regressed to tabular timeline: %s", body)
 	}
 	if strings.Contains(body, "Find out what&#39;s wasting your Claude Code tokens") || strings.Contains(body, "Run the local analyzer") {
 		t.Fatalf("server-rendered report returned onboarding shell instead of report: %s", body)

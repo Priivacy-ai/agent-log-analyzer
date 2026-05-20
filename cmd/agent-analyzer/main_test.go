@@ -115,6 +115,12 @@ func TestAnalyze_NoArgs_UsesOnePerSupportedSource(t *testing.T) {
 	if report.Metrics.SessionCount != 3 {
 		t.Fatalf("expected one session per source, got %#v", report.Metrics)
 	}
+	if len(report.SourceReports) != 3 {
+		t.Fatalf("expected source reports for three sources, got %#v", report.SourceReports)
+	}
+	if report.SourceReports[0].SourceID != "claude_code" || report.SourceReports[1].SourceID != "codex" || report.SourceReports[2].SourceID != "opencode" {
+		t.Fatalf("expected source reports to preserve discovery order, got %#v", report.SourceReports)
+	}
 }
 
 func TestRecentSupportedLogs_LimitsPerSource(t *testing.T) {
@@ -324,6 +330,9 @@ func TestAnalyzePaid_WritesSanitizedAggregate(t *testing.T) {
 	}
 	if report.Metrics.SessionCount != 2 {
 		t.Fatalf("expected two paid sessions, got %#v", report.Metrics)
+	}
+	if len(report.SourceReports) != 2 {
+		t.Fatalf("expected per-source paid report sections, got %#v", report.SourceReports)
 	}
 	if report.SecurityReceipt.RawLogTTL != "not uploaded" || report.SecurityReceipt.RawTranscriptSentToLLM {
 		t.Fatalf("expected local-only security receipt, got %#v", report.SecurityReceipt)

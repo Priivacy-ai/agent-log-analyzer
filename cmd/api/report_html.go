@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	htmlstd "html"
 	"html/template"
 	"net/http"
 	"os"
@@ -93,11 +94,14 @@ var reportHTMLTemplate = template.Must(template.New("report").Funcs(template.Fun
 	"recommendationSignals": recommendationSignals,
 	"recommendationURL":     recommendationURL,
 	"savingsRange":          savingsRange,
+	"sourceLogLabel":        sourceLogLabel,
+	"timelineChart":         timelineChartHTML,
 }).Parse(`<!doctype html>
 <html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    {{if ne .Job.Status "completed"}}<meta http-equiv="refresh" content="2" />{{end}}
     <title>Agent Analyzer Report</title>
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="/styles.css" />
@@ -134,35 +138,46 @@ var reportHTMLTemplate = template.Must(template.New("report").Funcs(template.Fun
         <div>
           <h2>Session Timeline</h2>
           <p id="timeline-caption" class="timeline-caption">Estimated context size by turn. Highlighted area shows avoidable spend.</p>
-          <div class="timeline-frame ssr-timeline">
-            <table>
-              <thead>
-                <tr>
-                  <th>Turn</th>
-                  <th>Estimated tokens</th>
-                  <th>Potentially avoidable tokens</th>
-                  <th>Tool-output tokens</th>
-                  <th>Rereads</th>
-                  <th>Retries</th>
-                </tr>
-              </thead>
-              <tbody>
-                {{range .Report.Timeline}}
-                <tr>
-                  <td>{{.Turn}}</td>
-                  <td>{{.EstimatedTokens}}</td>
-                  <td>{{savingsRange .EstimatedTokens $.Report.EstimatedWaste}}</td>
-                  <td>{{.ToolTokens}}</td>
-                  <td>{{.Rereads}}</td>
-                  <td>{{.Retries}}</td>
-                </tr>
-                {{else}}
-                <tr><td colspan="6">No timeline points were available.</td></tr>
-                {{end}}
-              </tbody>
-            </table>
-          </div>
+          {{timelineChart .Report.Timeline .Report.EstimatedWaste}}
         </div>
+        {{if .Report.SourceReports}}
+        <section class="source-reports">
+          <h2>Agent Logs Analyzed</h2>
+          {{range .Report.SourceReports}}
+          <article class="source-report">
+            <header class="source-report-header">
+              <div>
+                <h3>{{.SourceLabel}}</h3>
+                <p>{{sourceLogLabel .LogCount}} analyzed locally</p>
+              </div>
+              <div class="source-score">
+                <strong>{{.Score}}</strong>
+                <span>efficiency</span>
+              </div>
+            </header>
+            <div class="source-report-grid">
+              <div>
+                <h4>Waste</h4>
+                <p>{{.EstimatedWaste.Low}}-{{.EstimatedWaste.High}}% avoidable token spend</p>
+                <p class="command-note">{{.Metrics.EstimatedTokens}} estimated tokens; {{.Metrics.ToolOutputTokens}} tool-output tokens; {{.Metrics.Rereads}} rereads; {{.Metrics.FailedCommands}} retries.</p>
+              </div>
+              <div>
+                <h4>Top Problems</h4>
+                <ol class="source-findings">
+                  {{range .Findings}}
+                  <li><strong>{{.Title}}</strong><span>{{.Severity}} - {{.CostImpact}}</span></li>
+                  {{else}}
+                  <li>No major deterministic problems detected.</li>
+                  {{end}}
+                </ol>
+              </div>
+            </div>
+            <p class="timeline-caption">Context growth for this source.</p>
+            {{timelineChart .Timeline .EstimatedWaste}}
+          </article>
+          {{end}}
+        </section>
+        {{end}}
         <div>
           <h2>Suggested Immediate Fixes</h2>
           <ul id="fixes">
@@ -239,7 +254,6 @@ Redactions:
         {{end}}
       </section>
     </main>
-    <script src="/app.js"></script>
   </body>
 </html>
 {{define "recommendation"}}
@@ -344,6 +358,140 @@ func savingsRange(tokens int, waste analyzer.WasteRange) string {
 	low := tokens * waste.Low / 100
 	high := tokens * waste.High / 100
 	return fmt.Sprintf("%d-%d", low, high)
+}
+
+func sourceLogLabel(count int) string {
+	if count == 1 {
+		return "1 log"
+	}
+	return fmt.Sprintf("%d logs", count)
+}
+
+func timelineChartHTML(points []analyzer.TimelinePoint, waste analyzer.WasteRange) template.HTML {
+	if len(points) == 0 {
+		return template.HTML(`<div class="timeline-empty">No timeline points were available.</div>`)
+	}
+	visible := points
+	if len(visible) > 60 {
+		visible = visible[len(visible)-60:]
+	}
+	maxTokens := 1
+	for _, point := range visible {
+		if point.EstimatedTokens > maxTokens {
+			maxTokens = point.EstimatedTokens
+		}
+	}
+	wasteLow, wasteHigh := normalizedWaste(waste)
+	savingsPct := (wasteLow + wasteHigh) / 2
+	if savingsPct > 95 {
+		savingsPct = 95
+	}
+	firstTurn := visible[0].Turn
+	lastTurn := visible[len(visible)-1].Turn
+	var b strings.Builder
+	fmt.Fprintf(&b, `<div class="timeline-legend" aria-hidden="true"><span class="timeline-legend-item"><span class="timeline-legend-swatch timeline-legend-observed"></span>observed context</span><span class="timeline-legend-item"><span class="timeline-legend-swatch timeline-legend-savings"></span>%d-%d%% optimized potential</span></div>`, wasteLow, wasteHigh)
+	fmt.Fprintf(&b, `<div class="timeline-frame"><div class="timeline-y-axis" aria-hidden="true"><span>%s tokens</span><span>0</span></div>`, compactNumber(maxTokens))
+	fmt.Fprintf(&b, `<div class="timeline" role="img" aria-label="%s">`, htmlstd.EscapeString(fmt.Sprintf("Session timeline from turn %d to turn %d; maximum %d estimated tokens; estimated avoidable spend %d-%d percent.", firstTurn, lastTurn, maxTokens, wasteLow, wasteHigh)))
+	for _, point := range visible {
+		height := point.EstimatedTokens * 100 / maxTokens
+		if height < 4 {
+			height = 4
+		}
+		savedLow := point.EstimatedTokens * wasteLow / 100
+		savedHigh := point.EstimatedTokens * wasteHigh / 100
+		tooltip := fmt.Sprintf("turn %d | %s estimated tokens | %s-%s potentially avoidable tokens | %s tool-output tokens | %s rereads | %s retries",
+			point.Turn,
+			groupNumber(point.EstimatedTokens),
+			groupNumber(savedLow),
+			groupNumber(savedHigh),
+			groupNumber(point.ToolTokens),
+			groupNumber(point.Rereads),
+			groupNumber(point.Retries),
+		)
+		escapedTooltip := htmlstd.EscapeString(tooltip)
+		fmt.Fprintf(&b, `<span class="timeline-bar" style="height:%d%%" data-tooltip="%s" tabindex="0" role="img" aria-label="%s">`, height, escapedTooltip, escapedTooltip)
+		if savingsPct > 0 {
+			fmt.Fprintf(&b, `<span class="timeline-savings" style="height:%d%%" aria-hidden="true"></span>`, savingsPct)
+		}
+		b.WriteString(`</span>`)
+	}
+	b.WriteString(`</div></div>`)
+	b.WriteString(timelineAxisHTML(visible))
+	return template.HTML(b.String())
+}
+
+func normalizedWaste(waste analyzer.WasteRange) (int, int) {
+	low := clampPercent(waste.Low)
+	high := clampPercent(waste.High)
+	if low > high {
+		low, high = high, low
+	}
+	return low, high
+}
+
+func clampPercent(value int) int {
+	if value < 0 {
+		return 0
+	}
+	if value > 100 {
+		return 100
+	}
+	return value
+}
+
+func timelineAxisHTML(points []analyzer.TimelinePoint) string {
+	if len(points) == 0 {
+		return ""
+	}
+	type tick struct {
+		class string
+		label string
+	}
+	candidates := []tick{
+		{class: "first", label: fmt.Sprintf("turn %d", points[0].Turn)},
+		{class: "middle", label: fmt.Sprintf("turn %d", points[(len(points)-1)/2].Turn)},
+		{class: "last", label: fmt.Sprintf("turn %d", points[len(points)-1].Turn)},
+	}
+	seen := map[string]bool{}
+	var b strings.Builder
+	b.WriteString(`<div class="timeline-x-axis" aria-hidden="true">`)
+	for _, candidate := range candidates {
+		if seen[candidate.label] {
+			continue
+		}
+		seen[candidate.label] = true
+		fmt.Fprintf(&b, `<span class="timeline-tick timeline-tick-%s">%s</span>`, candidate.class, htmlstd.EscapeString(candidate.label))
+	}
+	b.WriteString(`</div>`)
+	return b.String()
+}
+
+func compactNumber(value int) string {
+	if value >= 1000000 {
+		return fmt.Sprintf("%.1fM", float64(value)/1000000)
+	}
+	if value >= 1000 {
+		return fmt.Sprintf("%.1fK", float64(value)/1000)
+	}
+	return fmt.Sprintf("%d", value)
+}
+
+func groupNumber(value int) string {
+	text := fmt.Sprintf("%d", value)
+	if len(text) <= 3 {
+		return text
+	}
+	var b strings.Builder
+	prefix := len(text) % 3
+	if prefix == 0 {
+		prefix = 3
+	}
+	b.WriteString(text[:prefix])
+	for i := prefix; i < len(text); i += 3 {
+		b.WriteByte(',')
+		b.WriteString(text[i : i+3])
+	}
+	return b.String()
 }
 
 func mapLines(values map[string]int) string {
