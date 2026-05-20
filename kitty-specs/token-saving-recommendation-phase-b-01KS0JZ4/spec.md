@@ -7,7 +7,7 @@
 | Mission type | software-dev |
 | Target branch | `main` |
 | Source brief | `start-here.md` (workspace root) |
-| Upstream issue | [robertDouglass/claude-log-analyzer#73](https://github.com/robertDouglass/claude-log-analyzer/issues/73) |
+| Upstream issue | [Priivacy-ai/agent-log-analyzer#73](https://github.com/Priivacy-ai/agent-log-analyzer/issues/73) |
 | Depends on | Mission `token-saving-recommendation-engine-phase-a-01KRZKCJ` (engine, frozen contract); PR #76 report intelligence UX |
 
 ## Purpose

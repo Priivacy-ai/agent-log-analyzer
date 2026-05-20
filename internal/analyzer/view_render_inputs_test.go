@@ -30,7 +30,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/robertdouglass/claude-log-analyzer/internal/analyzer"
+	"github.com/priivacy-ai/agent-log-analyzer/internal/analyzer"
 )
 
 // Literal strings emitted by internal/analyzer/analyzer.go:381-393. These are

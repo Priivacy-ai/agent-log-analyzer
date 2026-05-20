@@ -12,7 +12,7 @@ import (
     "encoding/json"
     "fmt"
 
-    "github.com/robertdouglass/claude-log-analyzer/internal/analyzer"
+    "github.com/priivacy-ai/agent-log-analyzer/internal/analyzer"
 )
 ```
 

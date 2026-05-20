@@ -394,7 +394,7 @@ You **must not** modify:
 
 **Steps**:
 
-1. Create `internal/analyzer/view_render_inputs_test.go`. Use the same `package analyzer_test` as `leak_test.go`. Import the project's analyzer package via the same module path used in `leak_test.go` (`github.com/robertdouglass/claude-log-analyzer/internal/analyzer`).
+1. Create `internal/analyzer/view_render_inputs_test.go`. Use the same `package analyzer_test` as `leak_test.go`. Import the project's analyzer package via the same module path used in `leak_test.go` (`github.com/priivacy-ai/agent-log-analyzer/internal/analyzer`).
 
 2. Add `TestRenderInputs_NoCanaryInRendererJSON` — extends the existing leak canary to **all** fields the renderers consume:
    - Reuse the `buildHostileInput` helper pattern from `leak_test.go` (clone it locally to avoid editing `leak_test.go`, which is not in `owned_files`).

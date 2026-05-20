@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
 set -eu
 
-COMPOSE_PROJECT_NAME="${COMPOSE_PROJECT_NAME:-claude-log-analyzer-smoke}"
+COMPOSE_PROJECT_NAME="${COMPOSE_PROJECT_NAME:-agent-log-analyzer-smoke}"
 export COMPOSE_PROJECT_NAME
 FIXTURE="${CLAUDE_ANALYZER_FIXTURE:-testdata/fixtures/sample-claude.jsonl}"
 

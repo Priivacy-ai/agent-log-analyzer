@@ -2,7 +2,7 @@
 
 This guide walks a developer through manually verifying each of the three fixes shipped by mission `launch-correctness-01KRZZVK`. It mirrors the per-FR acceptance criteria in `spec.md` and the contracts in `contracts/`.
 
-Run all commands from the repository root: `/Users/robert/code-analyzer-dev/launch-completion-20260519-125840-dfxXcb/claude-log-analyzer`.
+Run all commands from the repository root: `/Users/robert/code-analyzer-dev/launch-completion-20260519-125840-dfxXcb/agent-log-analyzer`.
 
 ## Prerequisites
 

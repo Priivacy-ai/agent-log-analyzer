@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/robertdouglass/claude-log-analyzer/contracts/tooling-utilization.json",
+  "$id": "https://github.com/priivacy-ai/agent-log-analyzer/contracts/tooling-utilization.json",
   "title": "ToolingUtilization",
   "description": "Bounded, privacy-safe MCP and skill bloat metrics nested inside Ecosystem in the analyzer report. Every string value comes from a closed enumeration or the public allowlist. Free-form strings (raw names, paths, schema text) MUST NOT appear here.",
   "type": "object",

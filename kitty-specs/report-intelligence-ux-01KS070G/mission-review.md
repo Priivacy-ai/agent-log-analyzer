@@ -5,7 +5,7 @@
 **Mission Branch**: `kitty/mission-report-intelligence-ux-01KS070G`
 **Baseline (mission divergence)**: `5df679c feat(launch-correctness): CLI positional path, MCP header mask, aggregate merge`
 **Mission Status**: WP01 `approved`; mission-acceptance commit (`900dfb1`) merged into mission branch (`f46b949`). PR-to-`main` pending (focused-PR path). For purposes of this review the lane is "effectively merged into the mission branch."
-**Project**: `claude-log-analyzer` (a Spec Kitty *consumer* repo — **not** the spec-kitty source repo). Spec-kitty-internal Step 8.5 Gates 1–4 (contract / architectural / cross-repo E2E / issue-matrix) are inapplicable and have been substituted with the project's own validation baseline declared in `plan.md` § "Verification Baseline" (`gofmt`, `go vet`, `go test ./...`, `terraform fmt`).
+**Project**: `agent-log-analyzer` (a Spec Kitty *consumer* repo — **not** the spec-kitty source repo). Spec-kitty-internal Step 8.5 Gates 1–4 (contract / architectural / cross-repo E2E / issue-matrix) are inapplicable and have been substituted with the project's own validation baseline declared in `plan.md` § "Verification Baseline" (`gofmt`, `go vet`, `go test ./...`, `terraform fmt`).
 
 ---
 
@@ -134,7 +134,7 @@ For each FR I independently verified: spec → WP coverage → test (or structur
 
 ## 10. Gates (substituted for spec-kitty Step 8.5 Gates 1–4)
 
-This is the `claude-log-analyzer` consumer repo. Spec-kitty-repo-internal Gates 1–4 are inapplicable. Substituted gates per `plan.md` § "Verification Baseline":
+This is the `agent-log-analyzer` consumer repo. Spec-kitty-repo-internal Gates 1–4 are inapplicable. Substituted gates per `plan.md` § "Verification Baseline":
 
 | Gate | Command | Result |
 |---|---|---|

@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/robertdouglass/claude-log-analyzer/internal/analytics"
+	"github.com/priivacy-ai/agent-log-analyzer/internal/analytics"
 )
 
 func TestSweepExpiredDeletesOldUploadsAndReports(t *testing.T) {

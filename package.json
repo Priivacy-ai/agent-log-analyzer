@@ -1,15 +1,15 @@
 {
   "name": "agent-analyzer",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Local-first deterministic profiler for agentic coding logs.",
   "license": "SEE LICENSE IN LICENSE",
-  "homepage": "https://github.com/robertDouglass/claude-log-analyzer#readme",
+  "homepage": "https://github.com/Priivacy-ai/agent-log-analyzer#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/robertDouglass/claude-log-analyzer.git"
+    "url": "git+https://github.com/Priivacy-ai/agent-log-analyzer.git"
   },
   "bugs": {
-    "url": "https://github.com/robertDouglass/claude-log-analyzer/issues"
+    "url": "https://github.com/Priivacy-ai/agent-log-analyzer/issues"
   },
   "bin": {
     "agent-analyzer": "npm/bin/agent-analyzer.js"

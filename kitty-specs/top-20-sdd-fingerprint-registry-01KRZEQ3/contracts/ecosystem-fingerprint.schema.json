@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/robertdouglass/claude-log-analyzer/kitty-specs/top-20-sdd-fingerprint-registry-01KRZEQ3/contracts/ecosystem-fingerprint.schema.json",
+  "$id": "https://github.com/priivacy-ai/agent-log-analyzer/kitty-specs/top-20-sdd-fingerprint-registry-01KRZEQ3/contracts/ecosystem-fingerprint.schema.json",
   "title": "EcosystemFingerprint",
   "description": "Report-emitted fingerprint for one detected SDD tool. Member of Ecosystem.workflow_fingerprints. MUST contain no raw private content of any kind.",
   "type": "object",

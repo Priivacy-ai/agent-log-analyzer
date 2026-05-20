@@ -17,7 +17,7 @@ Build a privacy-safe, deterministic registry for the top-20 spec-driven-developm
 **Storage**: Embedded JSON registry files under `internal/analyzer/signatures/` (existing pattern); no databases, no on-disk caches.
 **Testing**: Go `testing` package; table-driven unit tests; golden-file tests for report shape (existing pattern in `golden_test.go`); fixture-based fixtures for tool-specific detection; injectable `CLIProbe` interface for hermetic CLI tests.
 **Target Platform**: Cross-platform local CLI / library — macOS, Linux, Windows. CLI probes must work on all three; gracefully degrade on Windows where `exec.LookPath` semantics differ.
-**Project Type**: Single Go module (`github.com/robertdouglass/claude-log-analyzer`); analyzer is a library package consumed by the CLI and the web service.
+**Project Type**: Single Go module (`github.com/priivacy-ai/agent-log-analyzer`); analyzer is a library package consumed by the CLI and the web service.
 **Performance Goals**: No measurable regression on existing `go test ./...` runtime (target: ≤ 10% increase). CLI version probes complete within 2 s wall-clock per binary (NFR-002). Detector evaluation over typical scrubbed transcript input adds < 50 ms total at p95.
 **Constraints**:
 - Zero forbidden raw strings in any aggregate output (NFR-001, 16 categories).

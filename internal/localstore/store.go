@@ -8,9 +8,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/robertdouglass/claude-log-analyzer/internal/analytics"
-	"github.com/robertdouglass/claude-log-analyzer/internal/analyzer"
-	"github.com/robertdouglass/claude-log-analyzer/internal/app"
+	"github.com/priivacy-ai/agent-log-analyzer/internal/analytics"
+	"github.com/priivacy-ai/agent-log-analyzer/internal/analyzer"
+	"github.com/priivacy-ai/agent-log-analyzer/internal/app"
 )
 
 type Store struct {
@@ -19,7 +19,7 @@ type Store struct {
 
 func New(root string) (*Store, error) {
 	if root == "" {
-		root = "/tmp/claude-log-analyzer"
+		root = "/tmp/agent-log-analyzer"
 	}
 	for _, dir := range []string{
 		filepath.Join(root, "uploads"),

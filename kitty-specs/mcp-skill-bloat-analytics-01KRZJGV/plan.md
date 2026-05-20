@@ -6,7 +6,7 @@
 
 ## Summary
 
-Extend the existing `claude-log-analyzer` Go report with a `tooling_utilization` object nested inside `Ecosystem`, containing `mcp` and `skill` sub-objects. Each sub-object emits inventory (known IDs from allowlist, unknown count, bounded buckets for count and context footprint, `exposure_known` flag), usage (executed counts, integer utilization ratio %, context-efficiency bucket), and a deterministic warning band (`normal`/`watch`/`high`/`severe`/`unknown`). Bands are gated on the combination of count, footprint, utilization, and existing degradation signals from `Metrics` (Rereads/RetryDepthMax/ContextGrowthEvents). Remediation strings are appended to `Report.ImmediateFixes` via new findings when bands reach `high` or `severe`. Nesting inside `Ecosystem` causes the new fields to auto-flow into `AggregateSafeEvent.Ecosystem` with no additional plumbing. The aggregate is privacy-safe because every string field comes from a closed enumeration (bucket labels, band labels, allowlist IDs).
+Extend the existing `agent-log-analyzer` Go report with a `tooling_utilization` object nested inside `Ecosystem`, containing `mcp` and `skill` sub-objects. Each sub-object emits inventory (known IDs from allowlist, unknown count, bounded buckets for count and context footprint, `exposure_known` flag), usage (executed counts, integer utilization ratio %, context-efficiency bucket), and a deterministic warning band (`normal`/`watch`/`high`/`severe`/`unknown`). Bands are gated on the combination of count, footprint, utilization, and existing degradation signals from `Metrics` (Rereads/RetryDepthMax/ContextGrowthEvents). Remediation strings are appended to `Report.ImmediateFixes` via new findings when bands reach `high` or `severe`. Nesting inside `Ecosystem` causes the new fields to auto-flow into `AggregateSafeEvent.Ecosystem` with no additional plumbing. The aggregate is privacy-safe because every string field comes from a closed enumeration (bucket labels, band labels, allowlist IDs).
 
 ## Technical Context
 
@@ -15,7 +15,7 @@ Extend the existing `claude-log-analyzer` Go report with a `tooling_utilization`
 **Storage**: None. The analyzer is a pure function over the input transcript bytes.
 **Testing**: `go test ./...` with table-driven tests under `internal/analyzer/`. Golden fixtures live alongside under `internal/analyzer/testdata/` (existing pattern in `golden_test.go`).
 **Target Platform**: Same as parent CLI — Linux/macOS/Windows binary, plus the AWS Lambda deployment used by `scripts/smoke-aws-local.sh`. No platform-specific code added.
-**Project Type**: Single project (Go module `github.com/robertdouglass/claude-log-analyzer`). All work is contained in `internal/analyzer/` plus `docs/`.
+**Project Type**: Single project (Go module `github.com/priivacy-ai/agent-log-analyzer`). All work is contained in `internal/analyzer/` plus `docs/`.
 **Performance Goals**: New code adds O(n) passes over the transcript (n = byte size and line count). Total analyzer runtime on a 10MB transcript stays under 1 second on a developer laptop — the existing analyzer is already well under this and new passes are simple regex+string ops over the same `parsedLine` slice already produced.
 **Constraints**:
 - Determinism — same input → byte-identical `tooling_utilization` JSON (no maps in serialization order, no goroutine-induced reordering, no time-based values).

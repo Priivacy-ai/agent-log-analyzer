@@ -16,11 +16,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/robertdouglass/claude-log-analyzer/internal/analytics"
-	"github.com/robertdouglass/claude-log-analyzer/internal/analyzer"
-	"github.com/robertdouglass/claude-log-analyzer/internal/app"
-	"github.com/robertdouglass/claude-log-analyzer/internal/backend"
-	"github.com/robertdouglass/claude-log-analyzer/internal/remediation"
+	"github.com/priivacy-ai/agent-log-analyzer/internal/analytics"
+	"github.com/priivacy-ai/agent-log-analyzer/internal/analyzer"
+	"github.com/priivacy-ai/agent-log-analyzer/internal/app"
+	"github.com/priivacy-ai/agent-log-analyzer/internal/backend"
+	"github.com/priivacy-ai/agent-log-analyzer/internal/remediation"
 )
 
 const maxUploadBytes = 50 * 1024 * 1024

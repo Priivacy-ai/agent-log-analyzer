@@ -26,7 +26,7 @@ GitHub Releases remain the canonical binary provenance path for users who do
 not want npm/NPX:
 
 1. Open the tagged release at
-   `https://github.com/robertDouglass/claude-log-analyzer/releases`.
+   `https://github.com/Priivacy-ai/agent-log-analyzer/releases`.
 2. Download the archive for your platform:
    - `agent-analyzer_<version>_darwin_amd64.tar.gz`
    - `agent-analyzer_<version>_darwin_arm64.tar.gz`
@@ -70,8 +70,8 @@ first npm launch. Start public npm distribution with `v0.1.1` or newer.
 2. Create an annotated semver tag:
 
    ```sh
-   git tag -a v0.1.0 -m "v0.1.0"
-   git push origin v0.1.0
+   git tag -a v0.1.1 -m "v0.1.1"
+   git push origin v0.1.1
    ```
 
 3. The release workflow publishes a draft GitHub Release with archives and
@@ -90,7 +90,7 @@ Actions.
 ## Package Manager Plan
 
 GoReleaser is configured to publish a Homebrew formula to
-`robertDouglass/homebrew-agent-analyzer` when the release workflow has a
+`Priivacy-ai/homebrew-agent-analyzer` when the release workflow has a
 `HOMEBREW_TAP_GITHUB_TOKEN` secret with write access to that tap.
 If the secret is absent, the workflow skips only the Homebrew publisher and
 still publishes GitHub Release archives.
@@ -98,19 +98,19 @@ still publishes GitHub Release archives.
 Expected install command after the tap exists:
 
 ```sh
-brew tap robertDouglass/agent-analyzer
+brew tap Priivacy-ai/agent-analyzer
 brew install agent-analyzer
 ```
 
 GoReleaser is also configured to publish a Scoop manifest to
-`robertDouglass/scoop-agent-analyzer` when the workflow has a
+`Priivacy-ai/scoop-agent-analyzer` when the workflow has a
 `SCOOP_BUCKET_GITHUB_TOKEN` secret with write access to that bucket.
 If the secret is absent, the workflow skips only the Scoop publisher.
 
 Expected Windows install command after the bucket exists:
 
 ```powershell
-scoop bucket add agent-analyzer https://github.com/robertDouglass/scoop-agent-analyzer
+scoop bucket add agent-analyzer https://github.com/Priivacy-ai/scoop-agent-analyzer
 scoop install agent-analyzer
 ```
 

@@ -16,7 +16,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/robertdouglass/claude-log-analyzer/internal/analyzer"
+	"github.com/priivacy-ai/agent-log-analyzer/internal/analyzer"
 )
 
 const defaultBaseURL = "https://analyzer.spec-kitty.ai"

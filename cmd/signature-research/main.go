@@ -10,7 +10,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/robertdouglass/claude-log-analyzer/internal/signatureresearch"
+	"github.com/priivacy-ai/agent-log-analyzer/internal/signatureresearch"
 )
 
 func main() {

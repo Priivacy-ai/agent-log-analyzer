@@ -16,7 +16,7 @@
 
 | Gate | Status | Note |
 | --- | --- | --- |
-| Spec-kitty contract tests (`tests/contract/`) | N/A | Spec-kitty-internal gate; mission is in `claude-log-analyzer` Go repo, not spec-kitty platform. |
+| Spec-kitty contract tests (`tests/contract/`) | N/A | Spec-kitty-internal gate; mission is in `agent-log-analyzer` Go repo, not spec-kitty platform. |
 | Spec-kitty architectural tests (`tests/architectural/`) | N/A | Same as above. |
 | Cross-repo e2e (`spec-kitty-end-to-end-testing/scenarios/`) | N/A | Same as above. |
 | `issue-matrix.md` | N/A | Phase A is a greenfield feature mission, not a bug-triage mission; no `issue-matrix.md` was authored, none required. |

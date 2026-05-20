@@ -29,7 +29,7 @@ The following are explicitly **out of scope** for this mission (tracked as separ
 
 ### Primary Actor
 
-A developer who runs the `claude-log-analyzer` CLI against one or more session transcripts and reads the resulting report (JSON and/or rendered output).
+A developer who runs the `agent-log-analyzer` CLI against one or more session transcripts and reads the resulting report (JSON and/or rendered output).
 
 ### Primary Scenario (happy path)
 

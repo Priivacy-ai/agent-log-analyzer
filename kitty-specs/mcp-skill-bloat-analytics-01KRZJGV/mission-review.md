@@ -13,7 +13,7 @@
 
 ## Gate Results
 
-The four hard gates defined in Step 8.5 are spec-kitty meta-tooling gates that target the spec-kitty repository itself (contract tests, architectural tests, the cross-repo `spec-kitty-end-to-end-testing` scenarios, and a `kitty-specs/<slug>/issue-matrix.md` artifact). They do not apply to this mission, which is a Go-only analyzer feature delivered into `github.com/robertdouglass/claude-log-analyzer`. In place of those gates, this mission has its own deterministic acceptance gate: the synthetic golden fixtures + privacy-leak corpus in `internal/analyzer/golden_test.go` (FR-009, NFR-004). That gate is exercised below.
+The four hard gates defined in Step 8.5 are spec-kitty meta-tooling gates that target the spec-kitty repository itself (contract tests, architectural tests, the cross-repo `spec-kitty-end-to-end-testing` scenarios, and a `kitty-specs/<slug>/issue-matrix.md` artifact). They do not apply to this mission, which is a Go-only analyzer feature delivered into `github.com/priivacy-ai/agent-log-analyzer`. In place of those gates, this mission has its own deterministic acceptance gate: the synthetic golden fixtures + privacy-leak corpus in `internal/analyzer/golden_test.go` (FR-009, NFR-004). That gate is exercised below.
 
 ### Gate 1 — Contract tests
 - **Not applicable.** No `tests/contract/` directory exists in this repo. The mission's contract is `kitty-specs/mcp-skill-bloat-analytics-01KRZJGV/contracts/tooling-utilization.json` (JSON Schema). Schema conformance is enforced implicitly by Go struct JSON tags (verified in WP01 review) plus the golden tests in WP05.

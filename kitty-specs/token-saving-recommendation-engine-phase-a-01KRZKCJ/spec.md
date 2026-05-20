@@ -8,7 +8,7 @@
 | Target branch | `main` |
 | Work branch (planned) | `codex/token-recommendations-phase-a` (timestamp suffix if collision) |
 | Source brief | `start-here.md` (workspace root) |
-| Upstream issue | [robertDouglass/claude-log-analyzer#68](https://github.com/robertDouglass/claude-log-analyzer/issues/68) |
+| Upstream issue | [Priivacy-ai/agent-log-analyzer#68](https://github.com/Priivacy-ai/agent-log-analyzer/issues/68) |
 | Parallel epics | #38 fingerprint registry; #39 MCP/skill bloat utilization analytics |
 
 ## Purpose

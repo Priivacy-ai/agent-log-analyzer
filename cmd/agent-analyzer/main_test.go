@@ -11,7 +11,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/robertdouglass/claude-log-analyzer/internal/analyzer"
+	"github.com/priivacy-ai/agent-log-analyzer/internal/analyzer"
 )
 
 // sampleJSONL is a minimal Claude Code JSONL log fixture used by the CLI
@@ -283,7 +283,7 @@ func TestVersion_PrintsProvenance(t *testing.T) {
 		"agent-analyzer ",
 		"commit:",
 		"built:",
-		"source: https://github.com/robertDouglass/claude-log-analyzer",
+		"source: https://github.com/Priivacy-ai/agent-log-analyzer",
 	} {
 		if !strings.Contains(output, want) {
 			t.Fatalf("version output missing %q:\n%s", want, output)
