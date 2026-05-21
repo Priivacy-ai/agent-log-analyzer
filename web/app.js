@@ -170,18 +170,7 @@ function renderReport(report) {
     findings.appendChild(item);
   }
 
-  const fixes = document.querySelector("#fixes");
-  fixes.innerHTML = "";
-  for (const fix of report.immediate_fixes || []) {
-    const item = document.createElement("li");
-    item.textContent = fix;
-    fixes.appendChild(item);
-  }
-  if ((report.immediate_fixes || []).length === 0) {
-    const item = document.createElement("li");
-    item.textContent = "No immediate deterministic fix was required, but the paid scan can still generate broader workflow and tooling guidance from more sessions.";
-    fixes.appendChild(item);
-  }
+  renderActionPlan(report);
 
   const timelineSection = document.querySelector("#timeline-section");
   if ((report.source_reports || []).length > 0) {
@@ -196,6 +185,110 @@ function renderReport(report) {
   renderEcosystem(report.ecosystem);
   renderReceipt(report.security_receipt, report.redactions);
   renderPaidCommandPreview(report);
+}
+
+function renderActionPlan(report) {
+  const fixes = document.querySelector("#fixes");
+  if (!fixes) return;
+  fixes.replaceChildren();
+  const findings = Array.isArray(report?.findings) ? report.findings : [];
+  const actionableFindings = findings.slice(0, 4);
+  if (actionableFindings.length > 0) {
+    actionableFindings.forEach((finding) => fixes.appendChild(buildActionItem(finding)));
+    return;
+  }
+  const fallbackFixes = Array.isArray(report?.immediate_fixes) ? report.immediate_fixes : [];
+  if (fallbackFixes.length > 0) {
+    fallbackFixes.slice(0, 4).forEach((fix) => fixes.appendChild(buildFallbackActionItem(fix)));
+    return;
+  }
+  const item = document.createElement("li");
+  item.className = "action-item";
+  item.innerHTML = [
+    "<strong>No urgent manual fix detected.</strong>",
+    "<span>Still run the full scan if you want plugin guidance across more sessions, tools, and projects.</span>",
+  ].join("");
+  fixes.appendChild(item);
+}
+
+function buildActionItem(finding) {
+  const action = actionForFinding(finding);
+  const item = document.createElement("li");
+  item.className = "action-item";
+  const title = document.createElement("strong");
+  title.textContent = action.title;
+  const now = document.createElement("span");
+  now.textContent = action.now;
+  const plugin = document.createElement("em");
+  plugin.textContent = action.plugin;
+  item.append(title, now, plugin);
+  return item;
+}
+
+function buildFallbackActionItem(fix) {
+  const item = document.createElement("li");
+  item.className = "action-item";
+  const title = document.createElement("strong");
+  title.textContent = "Apply the detected fix";
+  const now = document.createElement("span");
+  now.textContent = String(fix || "Use a narrower workflow before continuing.");
+  const plugin = document.createElement("em");
+  plugin.textContent = "The full scan turns recurring fixes into a generated plugin instead of a one-off note.";
+  item.append(title, now, plugin);
+  return item;
+}
+
+function actionForFinding(finding) {
+  switch (finding?.id) {
+    case "repeated_file_reads":
+      return {
+        title: "Stop rereading files blindly",
+        now: "Before another broad read, name the exact file or symbol and ask Claude to summarize only what changed since the last read.",
+        plugin: "The full report finds repeated paths across up to 100 logs; the plugin adds retrieval hygiene prompts.",
+      };
+    case "tool_output_bloat":
+      return {
+        title: "Cap noisy command output",
+        now: "Use rg filters, head/tail, --json summaries, or redirect logs to a file. Paste only the failing excerpt back into context.",
+        plugin: "The plugin can recommend shell-output reducers and context-safe command habits for your setup.",
+      };
+    case "retry_loop":
+    case "args_hashed_retry_loop":
+      return {
+        title: "Break retry loops after two misses",
+        now: "After two similar failures, stop editing. Restate the invariant, inspect the diff/test output, then restart with a smaller scope.",
+        plugin: "The full scan surfaces recurring retry signatures and turns them into session hygiene rules.",
+      };
+    case "context_growth_spikes":
+    case "cache_invalidation_spike":
+      return {
+        title: "Treat context spikes as boundaries",
+        now: "Use /compact or start a fresh session after large tool output, model/config changes, or a pivot from debugging to architecture.",
+        plugin: "The plugin adds compact/split/restart nudges at the points your history shows degradation.",
+      };
+    case "mcp_bloat_high":
+    case "mcp_bloat_severe":
+      return {
+        title: "Disable unused MCPs by default",
+        now: "Move project-specific MCPs out of global config and lazy-load heavy servers only when the task needs them.",
+        plugin: "The full report converts MCP bloat into a concrete setup checklist.",
+      };
+    case "skill_bloat_high":
+    case "skill_bloat_severe":
+      return {
+        title: "Trim always-on skills",
+        now: "Keep only high-use skills active by default. Move rarely used skills behind explicit invocation.",
+        plugin: "The plugin can recommend a smaller skill surface from observed usage ratios.",
+      };
+    default:
+      return {
+        title: typeof finding?.title === "string" && finding.title.length > 0 ? finding.title : "Apply the detected fix",
+        now: typeof finding?.recommendation === "string" && finding.recommendation.length > 0
+          ? finding.recommendation
+          : "Use a narrower workflow before continuing.",
+        plugin: "The full scan turns this from one-session advice into a generated remediation pack.",
+      };
+  }
 }
 
 function buildFindingItem(finding, report, index, estimatedTokens, maxEstimate) {
