@@ -92,8 +92,11 @@ var reportHTMLTemplate = template.Must(template.New("report").Funcs(template.Fun
 	"ecosystemPanel":        ecosystemPanelHTML,
 	"findingEvidence":       findingEvidence,
 	"findingsBubbleChart":   findingsBubbleChartHTML,
+	"formatInt":             formatInt,
+	"formatTokens":          formatTokens,
 	"helpTip":               helpTip,
 	"join":                  joinStrings,
+	"logRefs":               logRefsHTML,
 	"mapLines":              mapLines,
 	"recommendationLabel":   recommendationLabel,
 	"recommendationName":    recommendationName,
@@ -119,41 +122,46 @@ var reportHTMLTemplate = template.Must(template.New("report").Funcs(template.Fun
   <body>
     <main class="shell">
       <section class="report" id="report">
-        <p class="expiry" id="report-status">{{.StatusText}}</p>
+        <p class="expiry" id="report-status">{{.StatusText}} {{helpTip "Why only 15 minutes? The hosted report is short-lived because even sanitized workflow metadata can be sensitive. Raw logs are not uploaded; rerun the local command to regenerate a fresh report link."}}</p>
         {{if eq .Job.Status "completed"}}
+        <div class="zero-token-banner">
+          <strong>0 model tokens used to generate this report.</strong>
+          <span>Agent Analyzer uses deterministic local parsing and server-side rendering, not an LLM reading your logs. {{helpTip "How can report generation cost zero model tokens? The CLI parses local logs with deterministic Go code, writes sanitized JSON, and the hosted page renders that JSON. No raw transcript is sent to a model and no model call is made to produce this report."}}</span>
+        </div>
         <div class="score">
           <span id="score">{{.Report.Score}}</span>
-          <small>efficiency score {{helpTip "Heuristic score from deterministic findings: repeated reads, retry depth, context-growth events, tool-output share, and normalized signal findings. It is a profiler score, not a model-quality grade."}}</small>
+          <small>efficiency score {{helpTip "What does this score mean? It is a heuristic score from deterministic findings: repeated reads, retry depth, context-growth events, tool-output share, and normalized signal findings. It is a profiler score, not a model-quality grade."}}</small>
         </div>
         <div>
-          <h2>Estimated Waste {{helpTip "Avoidable spend is a heuristic range derived from the efficiency score and detected waste patterns. It is intended to rank severity and prompt investigation, not to reproduce provider billing."}}</h2>
+          <h2>Estimated Waste {{helpTip "How is waste estimated? Avoidable spend is a heuristic range derived from the efficiency score and detected waste patterns. It is intended to rank severity and prompt investigation, not to reproduce provider billing."}}</h2>
           <p id="waste">{{.Report.EstimatedWaste.Low}}-{{.Report.EstimatedWaste.High}}% avoidable token spend</p>
-          <p class="command-note">Analyzed token volume: {{.Report.Metrics.EstimatedTokens}} estimated input/output tokens; {{.Report.Metrics.ToolOutputTokens}} estimated from tool output. {{helpTip "Accuracy depends on the source log. When native usage fields exist, we use them. Otherwise we estimate roughly one token per four characters. Tool-output volume is derived from tool-result payload size and similar estimates. This is directional, not invoice-grade accounting."}}</p>
+          <p class="command-note">Analyzed token volume: {{formatTokens .Report.Metrics.EstimatedTokens}} estimated input/output tokens; {{formatTokens .Report.Metrics.ToolOutputTokens}} estimated from tool output. {{helpTip "What is counted here? Accuracy depends on the source log. When native usage fields exist, we use them. Otherwise we estimate roughly one token per four characters. Tool-output volume is derived from tool-result payload size and similar estimates. This is directional, not invoice-grade accounting."}}</p>
           <div class="report-cta-row" aria-label="Report actions">
             <a class="report-primary-cta" href="#email-unlock">Get the optimization plugin</a>
             <a class="report-secondary-cta" href="#email-unlock-section">Skip to full scan</a>
           </div>
         </div>
         <div class="problem-section">
-          <h2>Top Problems {{helpTip "Bubble size is representative impact, not a precise measurement. Tool-output and cache issues use token fields when available; rereads, retries, and context spikes use bounded count-scaled estimates so the graph shows relative severity without exposing raw content."}}</h2>
+          <h2>Top Problems {{helpTip "Why are these bubbles different sizes? Bubble size is representative impact, not a precise measurement. Tool-output and cache issues use token fields when available; rereads, retries, and context spikes use bounded count-scaled estimates so the graph shows relative severity without exposing raw content."}}</h2>
           {{findingsBubbleChart .Report}}
         </div>
         {{if not .Report.SourceReports}}
         <div>
-          <h2>Session Timeline {{helpTip "Timeline points are sampled from parsed log rows, usually every ten rows plus the final row. Token height is estimated context/token volume at that point, not a guaranteed exact provider context window."}}</h2>
-          <p id="timeline-caption" class="timeline-caption">Estimated context/token volume by parsed turn. Highlighted area shows potential savings.</p>
+          <h2>Session Timeline {{helpTip "What are the turns? Timeline points are sampled from parsed log rows, usually every ten rows plus the final row. Token height is estimated context/token volume at that point, not a guaranteed exact provider context window."}}</h2>
+          <p id="timeline-caption" class="timeline-caption">Estimated context/token volume by parsed turn. Green overlay = estimated tokens you can save.</p>
           {{timelineChart .Report.Timeline .Report.EstimatedWaste}}
         </div>
         {{end}}
         {{if .Report.SourceReports}}
         <section class="source-reports">
-          <h2>Agent Logs Analyzed {{helpTip "Each section is built from logs parsed locally for that supported agent source. The top-level report is an aggregate; source timelines are the only charts that represent parsed turns."}}</h2>
+          <h2>Agent Logs Analyzed {{helpTip "Which sessions were analyzed? Each section is built from logs parsed locally for that supported agent source. Full local paths and raw session IDs are intentionally not uploaded; the report shows privacy-safe local references instead."}}</h2>
           {{range .Report.SourceReports}}
           <article class="source-report">
             <header class="source-report-header">
               <div>
                 <h3>{{.SourceLabel}}</h3>
                 <p>{{sourceLogLabel .LogCount}} analyzed locally</p>
+                {{logRefs .LogRefs}}
               </div>
               <div class="source-score">
                 <strong>{{.Score}}</strong>
@@ -164,7 +172,7 @@ var reportHTMLTemplate = template.Must(template.New("report").Funcs(template.Fun
               <div>
                 <h4>Waste {{helpTip "Source-level waste is computed with the same deterministic heuristic as the full report, using only this source's parsed logs."}}</h4>
                 <p>{{.EstimatedWaste.Low}}-{{.EstimatedWaste.High}}% avoidable token spend</p>
-                <p class="command-note">{{.Metrics.EstimatedTokens}} estimated input/output tokens; {{.Metrics.ToolOutputTokens}} estimated tool-output tokens; {{.Metrics.Rereads}} rereads; {{.Metrics.FailedCommands}} retries. {{helpTip "Token counts use native usage fields when available and fall back to rough text-size estimates. Rereads and retries are deterministic pattern detections over sanitized local parse output."}}</p>
+                <p class="command-note">{{formatTokens .Metrics.EstimatedTokens}} estimated input/output tokens; {{formatTokens .Metrics.ToolOutputTokens}} estimated tool-output tokens; {{formatInt .Metrics.Rereads}} rereads; {{formatInt .Metrics.FailedCommands}} retries. {{helpTip "What is counted for this agent? Token counts use native usage fields when available and fall back to rough text-size estimates. Rereads and retries are deterministic pattern detections over sanitized local parse output."}}</p>
               </div>
               <div>
                 <h4>Top Problems</h4>
@@ -178,7 +186,7 @@ var reportHTMLTemplate = template.Must(template.New("report").Funcs(template.Fun
               </div>
             </div>
             {{if .Timeline}}
-            <p class="timeline-caption">Estimated context/token volume by parsed turn for this source. Highlighted area shows potential savings. {{helpTip "This source timeline is based on parsed log-row order, sampled for readability. It should be used to spot growth shape and spikes, not exact provider billing."}}</p>
+            <p class="timeline-caption">Estimated context/token volume by parsed turn for this source. Green overlay = estimated tokens you can save. {{helpTip "How should I read this chart? This source timeline is based on parsed log-row order, sampled for readability. It should be used to spot growth shape and spikes, not exact provider billing."}}</p>
             {{timelineChart .Timeline .EstimatedWaste}}
             {{else}}
             <p class="timeline-caption">Per-turn timeline unavailable for this aggregated source. Totals above cover {{sourceLogLabel .LogCount}}.</p>
@@ -190,7 +198,7 @@ var reportHTMLTemplate = template.Must(template.New("report").Funcs(template.Fun
         <section class="plugin-pitch" id="plugin-pitch">
           <div>
             <p class="eyebrow">generated remediation</p>
-            <h2>Do the quick fixes now. Let the plugin enforce them next. {{helpTip "Fixes are generated from deterministic finding IDs and bounded evidence, not from raw prompts or an LLM reading your transcript. The full scan turns those findings into a generated plugin artifact and vetted setup instructions."}}</h2>
+            <h2>Do the quick fixes now. Let the plugin enforce them next. {{helpTip "Where do these fixes come from? Fixes are generated from deterministic finding IDs and bounded evidence, not from raw prompts or an LLM reading your transcript. The full scan turns those findings into a generated plugin artifact and vetted setup instructions."}}</h2>
             <p>These are the manual moves that will reduce waste immediately. If you want this to become an operating habit instead of another checklist, run the full scan and get the generated plugin: it turns these patterns into Claude-facing instructions, context hygiene rules, retrieval guidance, and setup recommendations.</p>
             <ul class="plugin-benefits">
               <li>Session hygiene nudges before context contamination gets expensive.</li>
@@ -202,12 +210,14 @@ var reportHTMLTemplate = template.Must(template.New("report").Funcs(template.Fun
           </div>
           <div class="plugin-fixes-card">
             <h3>Do these now</h3>
+            <p class="command-note">Copy the AGENTS.md line into the relevant repo. The hosted report cannot safely append to local files; the generated plugin can package these rules locally after the full scan.</p>
             {{actionPlan .Report}}
           </div>
         </section>
         {{if .Report.Recommendation}}
         <section id="recommendation-section" class="intel-section">
-          <h2>Next-best recommendation {{helpTip "Recommendation ranking comes from allowlisted tool metadata and deterministic signals such as tool-output bloat, retrieval friction, usage visibility, and MCP/skill utilization. Unknown private names are not echoed."}}</h2>
+          <h2>Next-best recommendation {{helpTip "Why this recommendation? Ranking comes from public allowlisted tool metadata and deterministic signals such as tool-output bloat, retrieval friction, usage visibility, and MCP/skill utilization. Unknown private names are not echoed."}}</h2>
+          <p class="section-note">Recommendations come from a public vetted allowlist. <a href="/allowed-tools.html">Review the allowlist and source URLs.</a></p>
           {{with .Report.Recommendation.Primary}}{{template "recommendation" .}}{{end}}
           {{with .Report.Recommendation.Secondary}}{{template "recommendation" .}}{{end}}
           {{if and (not .Report.Recommendation.Primary) (not .Report.Recommendation.Secondary)}}
@@ -229,7 +239,7 @@ var reportHTMLTemplate = template.Must(template.New("report").Funcs(template.Fun
             {{ecosystemPanel .Report}}
           </div>
           <div class="evidence-card receipt-card">
-            <h2>Security Receipt {{helpTip "The public flow analyzes locally and uploads sanitized report JSON. This receipt records the report's own privacy flags and redaction counts; it is not a third-party audit."}}</h2>
+            <h2>Security Receipt {{helpTip "What happened to my raw logs? The public flow analyzes locally and uploads sanitized report JSON. This receipt records the report's own privacy flags and redaction counts; it is not a third-party audit."}}</h2>
             {{receiptPanel .Report}}
           </div>
         </section>
@@ -241,14 +251,14 @@ var reportHTMLTemplate = template.Must(template.New("report").Funcs(template.Fun
           <ul class="upsell-proof">
             <li>Raw transcripts stay local.</li>
             <li>Email confirmation unlocks the second NPX command.</li>
-            <li>The plugin and full report use the same 15-minute report boundary.</li>
+            <li>The plugin and full report use the same short-lived report boundary.</li>
           </ul>
           </div>
           <div class="upsell-action">
           {{if .ArtifactURL}}
           <p>Optimization plugin artifact: <a href="{{.ArtifactURL}}">{{.ArtifactURL}}</a></p>
           {{else}}
-          <p>For launch testing this is email-confirmed and free. Confirm your email and we will send a one-line NPX command that authorizes the full local scan. Raw transcripts still stay on your machine; only sanitized aggregate JSON is uploaded.</p>
+          <p>For launch testing this is email-confirmed and free. We use your email to confirm you own the address, send the one-line full-scan NPX command, and send plugin retrieval instructions. Raw transcripts still stay on your machine; only sanitized aggregate JSON is uploaded. Product updates are sent only if you opt in below.</p>
           <form id="email-unlock" class="email-unlock-form" method="post" action="/api/email-unlocks">
             <input type="hidden" name="source_report_job_id" value="{{.Job.ID}}">
             <input type="hidden" name="source_report_token" value="{{.ReportToken}}">
@@ -276,6 +286,7 @@ var reportHTMLTemplate = template.Must(template.New("report").Funcs(template.Fun
     <script src="/vendor/tippy/popper.min.js"></script>
     <script src="/vendor/tippy/tippy-bundle.umd.min.js"></script>
     <script src="/tooltips.js"></script>
+    <script src="/report-actions.js"></script>
   </body>
 </html>
 {{define "recommendation"}}
@@ -370,9 +381,11 @@ func boolText(v bool) string {
 }
 
 type actionCopy struct {
-	Title  string
-	Now    string
-	Plugin string
+	Title      string
+	Now        string
+	Why        string
+	AgentsLine string
+	Plugin     string
 }
 
 func actionPlanHTML(report analyzer.Report) template.HTML {
@@ -416,9 +429,12 @@ func actionPlanHTML(report analyzer.Report) template.HTML {
 func actionItemHTML(b *strings.Builder, action actionCopy) {
 	fmt.Fprintf(
 		b,
-		`<li class="action-item"><strong>%s</strong><span>%s</span><em>%s</em></li>`,
+		`<li class="action-item"><strong>%s</strong><span><b>Do now:</b> %s</span><span><b>Why:</b> %s</span><code>%s</code><button type="button" class="copy-agents-line" data-copy="%s">Copy AGENTS.md line</button><em>%s</em></li>`,
 		htmlstd.EscapeString(action.Title),
 		htmlstd.EscapeString(action.Now),
+		htmlstd.EscapeString(defaultString(action.Why, "deterministic evidence recorded")),
+		htmlstd.EscapeString(defaultString(action.AgentsLine, "Keep agent sessions scoped and avoid unnecessary context.")),
+		htmlstd.EscapeString(defaultString(action.AgentsLine, "Keep agent sessions scoped and avoid unnecessary context.")),
 		htmlstd.EscapeString(action.Plugin),
 	)
 }
@@ -427,39 +443,51 @@ func actionForFinding(finding analyzer.Finding) actionCopy {
 	switch finding.ID {
 	case "repeated_file_reads":
 		return actionCopy{
-			Title:  "Stop rereading files blindly",
-			Now:    "Before another broad read, name the exact file or symbol and ask Claude to summarize only what changed since the last read.",
-			Plugin: "The full report finds repeated paths across up to 100 logs; the plugin adds retrieval hygiene prompts.",
+			Title:      "Stop rereading files blindly",
+			Now:        "Before another broad read, name the exact file or symbol and ask the agent to summarize only what changed since the last read.",
+			Why:        findingEvidence(finding.Evidence),
+			AgentsLine: "Before rereading files, summarize known state and prefer targeted symbol searches or narrow line ranges over whole-file reads.",
+			Plugin:     "The full report finds repeated paths across up to 100 logs; the plugin adds retrieval hygiene prompts.",
 		}
 	case "tool_output_bloat":
 		return actionCopy{
-			Title:  "Cap noisy command output",
-			Now:    "Use rg filters, head/tail, --json summaries, or redirect logs to a file. Paste only the failing excerpt back into context.",
-			Plugin: "The plugin can recommend shell-output reducers and context-safe command habits for your setup.",
+			Title:      "Cap noisy command output",
+			Now:        "Use rg filters, head/tail, --json summaries, or redirect logs to a file. Paste only the failing excerpt back into context.",
+			Why:        findingEvidence(finding.Evidence),
+			AgentsLine: "Cap shell command output by default; use focused filters and paste only the relevant failing excerpt back into context.",
+			Plugin:     "The plugin can recommend shell-output reducers and context-safe command habits for your setup.",
 		}
 	case "retry_loop", "args_hashed_retry_loop":
 		return actionCopy{
-			Title:  "Break retry loops after two misses",
-			Now:    "After two similar failures, stop editing. Restate the invariant, inspect the diff/test output, then restart with a smaller scope.",
-			Plugin: "The full scan surfaces recurring retry signatures and turns them into session hygiene rules.",
+			Title:      "Break retry loops after two misses",
+			Now:        "After two similar failures, stop editing. Restate the invariant, inspect the diff/test output, then restart with a smaller scope.",
+			Why:        findingEvidence(finding.Evidence),
+			AgentsLine: "After two failed attempts on the same issue, stop, inspect the invariant and latest error, then restart with a smaller scope.",
+			Plugin:     "The full scan surfaces recurring retry signatures and turns them into session hygiene rules.",
 		}
 	case "context_growth_spikes", "cache_invalidation_spike":
 		return actionCopy{
-			Title:  "Treat context spikes as boundaries",
-			Now:    "Use /compact or start a fresh session after large tool output, model/config changes, or a pivot from debugging to architecture.",
-			Plugin: "The plugin adds compact/split/restart nudges at the points your history shows degradation.",
+			Title:      "Treat context spikes as boundaries",
+			Now:        "Use /compact or start a fresh session after large tool output, model/config changes, or a pivot from debugging to architecture.",
+			Why:        findingEvidence(finding.Evidence),
+			AgentsLine: "Treat major tool-output, model/config changes, and task pivots as context boundaries; compact or split the session before continuing.",
+			Plugin:     "The plugin adds compact/split/restart nudges at the points your history shows degradation.",
 		}
 	case "mcp_bloat_high", "mcp_bloat_severe":
 		return actionCopy{
-			Title:  "Disable unused MCPs by default",
-			Now:    "Move project-specific MCPs out of global config and lazy-load heavy servers only when the task needs them.",
-			Plugin: "The full report converts MCP bloat into a concrete setup checklist.",
+			Title:      "Disable unused MCPs by default",
+			Now:        "Move project-specific MCPs out of global config and lazy-load heavy servers only when the task needs them.",
+			Why:        findingEvidence(finding.Evidence),
+			AgentsLine: "Keep only frequently used MCP servers enabled by default; lazy-load project-specific or heavy MCPs when the task requires them.",
+			Plugin:     "The full report converts MCP bloat into a concrete setup checklist.",
 		}
 	case "skill_bloat_high", "skill_bloat_severe":
 		return actionCopy{
-			Title:  "Trim always-on skills",
-			Now:    "Keep only high-use skills active by default. Move rarely used skills behind explicit invocation.",
-			Plugin: "The plugin can recommend a smaller skill surface from observed usage ratios.",
+			Title:      "Trim always-on skills",
+			Now:        "Keep only high-use skills active by default. Move rarely used skills behind explicit invocation.",
+			Why:        findingEvidence(finding.Evidence),
+			AgentsLine: "Keep only high-signal skills in default context; invoke rare or project-specific skills explicitly when needed.",
+			Plugin:     "The plugin can recommend a smaller skill surface from observed usage ratios.",
 		}
 	default:
 		title := finding.Title
@@ -471,9 +499,11 @@ func actionForFinding(finding analyzer.Finding) actionCopy {
 			now = "Use a narrower workflow before continuing."
 		}
 		return actionCopy{
-			Title:  title,
-			Now:    now,
-			Plugin: "The full scan turns this from one-session advice into a generated remediation pack.",
+			Title:      title,
+			Now:        now,
+			Why:        findingEvidence(finding.Evidence),
+			AgentsLine: "Keep agent sessions scoped, evidence-backed, and explicit about when context should be compacted or split.",
+			Plugin:     "The full scan turns this from one-session advice into a generated remediation pack.",
 		}
 	}
 }
@@ -719,6 +749,7 @@ func receiptPanelHTML(report analyzer.Report) template.HTML {
 	var b strings.Builder
 	b.WriteString(`<div id="receipt" class="receipt-panel">`)
 	b.WriteString(`<div class="receipt-status-grid">`)
+	receiptTileHTML(&b, "Model tokens for report", "0", "good")
 	receiptTileHTML(&b, "Raw transcript to LLM", boolText(receipt.RawTranscriptSentToLLM), receiptTone(!receipt.RawTranscriptSentToLLM))
 	receiptTileHTML(&b, "Outbound during analysis", boolText(receipt.OutboundDuringAnalysis), receiptTone(!receipt.OutboundDuringAnalysis))
 	rawTTL := defaultString(receipt.RawLogTTL, "unknown")
@@ -832,7 +863,7 @@ func bucketValue(value string) string {
 func savingsRange(tokens int, waste analyzer.WasteRange) string {
 	low := tokens * waste.Low / 100
 	high := tokens * waste.High / 100
-	return fmt.Sprintf("%d-%d", low, high)
+	return fmt.Sprintf("%s-%s", formatTokens(low), formatTokens(high))
 }
 
 func sourceLogLabel(count int) string {
@@ -840,6 +871,72 @@ func sourceLogLabel(count int) string {
 		return "1 log"
 	}
 	return fmt.Sprintf("%d logs", count)
+}
+
+func logRefsHTML(refs []analyzer.AnalyzedLogRef) template.HTML {
+	if len(refs) == 0 {
+		return ""
+	}
+	var b strings.Builder
+	b.WriteString(`<div class="log-ref-list" aria-label="Privacy-safe local log references">`)
+	for _, ref := range refs {
+		label := defaultString(ref.Label, "analyzed log")
+		localRef := defaultString(ref.LocalRef, "local-ref")
+		sizeBucket := defaultString(ref.SizeBucket, "size unknown")
+		fmt.Fprintf(
+			&b,
+			`<span><strong>%s</strong><code>%s</code><small>%s</small></span>`,
+			htmlstd.EscapeString(label),
+			htmlstd.EscapeString(localRef),
+			htmlstd.EscapeString(sizeBucket),
+		)
+	}
+	b.WriteString(`</div>`)
+	return template.HTML(b.String())
+}
+
+func formatInt(n int) string {
+	sign := ""
+	if n < 0 {
+		sign = "-"
+		n = -n
+	}
+	s := fmt.Sprintf("%d", n)
+	if len(s) <= 3 {
+		return sign + s
+	}
+	var out []byte
+	first := len(s) % 3
+	if first == 0 {
+		first = 3
+	}
+	out = append(out, s[:first]...)
+	for i := first; i < len(s); i += 3 {
+		out = append(out, ',')
+		out = append(out, s[i:i+3]...)
+	}
+	return sign + string(out)
+}
+
+func formatTokens(n int) string {
+	sign := ""
+	if n < 0 {
+		sign = "-"
+		n = -n
+	}
+	switch {
+	case n >= 1_000_000:
+		return sign + trimOneDecimal(float64(n)/1_000_000) + "M"
+	case n >= 1_000:
+		return sign + trimOneDecimal(float64(n)/1_000) + "k"
+	default:
+		return sign + formatInt(n)
+	}
+}
+
+func trimOneDecimal(value float64) string {
+	text := fmt.Sprintf("%.1f", value)
+	return strings.TrimSuffix(text, ".0")
 }
 
 func helpTip(text string) template.HTML {
@@ -1041,9 +1138,9 @@ func timelineChartHTML(points []analyzer.TimelinePoint, waste analyzer.WasteRang
 	firstTurn := visible[0].Turn
 	lastTurn := visible[len(visible)-1].Turn
 	var b strings.Builder
-	fmt.Fprintf(&b, `<div class="timeline-legend" aria-hidden="true"><span class="timeline-legend-item"><span class="timeline-legend-swatch timeline-legend-observed"></span>estimated volume</span><span class="timeline-legend-item"><span class="timeline-legend-swatch timeline-legend-savings"></span>%d-%d%% potential savings</span></div>`, wasteLow, wasteHigh)
+	fmt.Fprintf(&b, `<div class="timeline-legend" aria-hidden="true"><span class="timeline-legend-item"><span class="timeline-legend-swatch timeline-legend-observed"></span>estimated volume consumed</span><span class="timeline-legend-item"><span class="timeline-legend-swatch timeline-legend-savings"></span>green overlay = %d-%d%% you may save</span></div>`, wasteLow, wasteHigh)
 	fmt.Fprintf(&b, `<div class="timeline-frame"><div class="timeline-y-axis" aria-hidden="true"><span>%s tokens</span><span>0</span></div>`, compactNumber(maxTokens))
-	fmt.Fprintf(&b, `<div class="timeline" role="img" aria-label="%s">`, htmlstd.EscapeString(fmt.Sprintf("Session timeline from turn %d to turn %d; maximum %d estimated token volume; potential savings range %d-%d percent.", firstTurn, lastTurn, maxTokens, wasteLow, wasteHigh)))
+	fmt.Fprintf(&b, `<div class="timeline" role="img" aria-label="%s"><div class="timeline-savings-callout" aria-hidden="true"><span>This is what you can save</span></div>`, htmlstd.EscapeString(fmt.Sprintf("Session timeline from turn %d to turn %d; maximum %d estimated token volume; potential savings range %d-%d percent.", firstTurn, lastTurn, maxTokens, wasteLow, wasteHigh)))
 	for _, point := range visible {
 		height := point.EstimatedTokens * 100 / maxTokens
 		if height < 4 {
@@ -1053,12 +1150,12 @@ func timelineChartHTML(points []analyzer.TimelinePoint, waste analyzer.WasteRang
 		savedHigh := point.EstimatedTokens * wasteHigh / 100
 		tooltip := fmt.Sprintf("turn %d | %s estimated token volume | %s-%s estimated potential savings | %s estimated tool-output tokens | %s rereads | %s retries",
 			point.Turn,
-			groupNumber(point.EstimatedTokens),
-			groupNumber(savedLow),
-			groupNumber(savedHigh),
-			groupNumber(point.ToolTokens),
-			groupNumber(point.Rereads),
-			groupNumber(point.Retries),
+			formatTokens(point.EstimatedTokens),
+			formatTokens(savedLow),
+			formatTokens(savedHigh),
+			formatTokens(point.ToolTokens),
+			formatInt(point.Rereads),
+			formatInt(point.Retries),
 		)
 		escapedTooltip := htmlstd.EscapeString(tooltip)
 		fmt.Fprintf(&b, `<span class="timeline-bar" style="height:%d%%" data-tooltip="%s" tabindex="0" role="img" aria-label="%s">`, height, escapedTooltip, escapedTooltip)
@@ -1119,31 +1216,7 @@ func timelineAxisHTML(points []analyzer.TimelinePoint) string {
 }
 
 func compactNumber(value int) string {
-	if value >= 1000000 {
-		return fmt.Sprintf("%.1fM", float64(value)/1000000)
-	}
-	if value >= 1000 {
-		return fmt.Sprintf("%.1fK", float64(value)/1000)
-	}
-	return fmt.Sprintf("%d", value)
-}
-
-func groupNumber(value int) string {
-	text := fmt.Sprintf("%d", value)
-	if len(text) <= 3 {
-		return text
-	}
-	var b strings.Builder
-	prefix := len(text) % 3
-	if prefix == 0 {
-		prefix = 3
-	}
-	b.WriteString(text[:prefix])
-	for i := prefix; i < len(text); i += 3 {
-		b.WriteByte(',')
-		b.WriteString(text[i : i+3])
-	}
-	return b.String()
+	return formatTokens(value)
 }
 
 func mapLines(values map[string]int) string {
