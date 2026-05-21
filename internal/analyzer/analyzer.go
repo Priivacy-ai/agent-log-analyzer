@@ -332,10 +332,11 @@ func buildFindings(m Metrics, lines []parsedLine, eco Ecosystem) []Finding {
 	var findings []Finding
 	if m.Rereads >= 3 {
 		findings = append(findings, Finding{
-			ID:         "repeated_file_reads",
-			Title:      "Excessive repeated file reads",
-			Severity:   severity(m.Rereads, 3, 10),
-			CostImpact: "medium-high",
+			ID:          "repeated_file_reads",
+			Title:       "Excessive repeated file reads",
+			FailureMode: FailureRepeatedNavigation,
+			Severity:    severity(m.Rereads, 3, 10),
+			CostImpact:  "medium-high",
 			Evidence: FindingEvidence{
 				Count:    m.Rereads,
 				TopFiles: topRereadFiles(lines),
@@ -348,10 +349,11 @@ func buildFindings(m Metrics, lines []parsedLine, eco Ecosystem) []Finding {
 		share := int(float64(m.ToolOutputTokens) / float64(m.EstimatedTokens) * 100)
 		if share >= 35 {
 			findings = append(findings, Finding{
-				ID:         "tool_output_bloat",
-				Title:      "Large shell/tool output overhead",
-				Severity:   severity(share, 35, 55),
-				CostImpact: "high",
+				ID:          "tool_output_bloat",
+				Title:       "Large shell/tool output overhead",
+				FailureMode: FailureToolOutputFlooding,
+				Severity:    severity(share, 35, 55),
+				CostImpact:  "high",
 				Evidence: FindingEvidence{
 					TokenShare: share,
 				},
@@ -362,10 +364,11 @@ func buildFindings(m Metrics, lines []parsedLine, eco Ecosystem) []Finding {
 	}
 	if m.RetryDepthMax >= 3 {
 		findings = append(findings, Finding{
-			ID:         "retry_loop",
-			Title:      "Retry-loop behavior",
-			Severity:   severity(m.RetryDepthMax, 3, 6),
-			CostImpact: "medium",
+			ID:          "retry_loop",
+			Title:       "Retry-loop behavior",
+			FailureMode: FailureCrossCutting,
+			Severity:    severity(m.RetryDepthMax, 3, 6),
+			CostImpact:  "medium",
 			Evidence: FindingEvidence{
 				Count: m.RetryDepthMax,
 			},
@@ -375,10 +378,11 @@ func buildFindings(m Metrics, lines []parsedLine, eco Ecosystem) []Finding {
 	}
 	if m.ContextGrowthEvents >= 2 {
 		findings = append(findings, Finding{
-			ID:         "context_growth_spikes",
-			Title:      "Context growth spikes",
-			Severity:   severity(m.ContextGrowthEvents, 2, 5),
-			CostImpact: "medium",
+			ID:          "context_growth_spikes",
+			Title:       "Context growth spikes",
+			FailureMode: FailureToolOutputFlooding,
+			Severity:    severity(m.ContextGrowthEvents, 2, 5),
+			CostImpact:  "medium",
 			Evidence: FindingEvidence{
 				Count:       m.ContextGrowthEvents,
 				Description: fmt.Sprintf("%d timeline windows exceeded the growth threshold", m.ContextGrowthEvents),
@@ -396,6 +400,7 @@ func buildFindings(m Metrics, lines []parsedLine, eco Ecosystem) []Finding {
 		findings = append(findings, Finding{
 			ID:             id,
 			Title:          title,
+			FailureMode:    FailureCrossCutting,
 			Severity:       sev,
 			CostImpact:     "medium-high",
 			Evidence:       FindingEvidence{Description: "Bloat band: " + band},

@@ -88,6 +88,12 @@ func allReasons() []Reason {
 		ReasonAuditConfig, ReasonNoOp, ReasonServerQuotaCheck}
 }
 
+func allDefocusFailureModes() []DefocusFailureMode {
+	return []DefocusFailureMode{FailureNoisyTerminalLogs, FailureToolOutputFlooding,
+		FailureRepeatedNavigation, FailureBroadReadsOrVerbosity, FailureMemoryGaps,
+		FailureCrossCutting}
+}
+
 // Positive-list privacy scanner (NFR-002 / AS-14) --------------------------
 
 // recommendationAllowlist is the closed set of tokens permitted in
@@ -99,6 +105,11 @@ func recommendationAllowlist() map[string]bool {
 		allow[string(t.ID)] = true
 		for _, safeToolValue := range []string{t.DisplayName, t.SourceURL} {
 			for _, tok := range regexp.MustCompile(`[A-Za-z0-9_]+`).FindAllString(safeToolValue, -1) {
+				allow[tok] = true
+			}
+		}
+		if warning := ambiguityWarningForTool(t.ID); warning != "" {
+			for _, tok := range regexp.MustCompile(`[A-Za-z0-9_]+`).FindAllString(warning, -1) {
 				allow[tok] = true
 			}
 		}
@@ -127,10 +138,28 @@ func recommendationAllowlist() map[string]bool {
 	for _, v := range allReasons() {
 		allow[string(v)] = true
 	}
+	for _, v := range allDefocusFailureModes() {
+		allow[string(v)] = true
+	}
+	for _, v := range []string{
+		"local_binary_plus_claude_hook",
+		"claude_plugin_plus_mcp",
+		"mcp_plus_external_vector_store",
+		"local_binary_plus_optional_embedding_provider",
+		"local_cli_or_local_config",
+		"mcp_server",
+		"retrieval_tool",
+		"local_instruction_config",
+		"prune_or_lazy_load_existing_mcp_and_skills",
+		"session_workflow_and_config_audit",
+	} {
+		allow[v] = true
+	}
 	for _, v := range []string{
 		"recommendation_id", "primary_tool_id", "primary_tool_name", "primary_tool_url", "skipped_tool_ids",
-		"reason", "signal_ids", "confidence", "risk_level",
-		"install_policy", "evidence_counts", "tool_id", "for_signal",
+		"failure_modes", "reason", "signal_ids", "confidence", "risk_level", "data_movement_risk",
+		"install_policy", "install_surface", "conflicts_with", "vetting_notes", "ambiguity_warning",
+		"evidence_counts", "tool_id", "for_signal",
 		"primary", "secondary", "skipped", "registry_version",
 		"engine_version", "signals", "unknown_id_count",
 		// Recommendation-ID structural literals.
