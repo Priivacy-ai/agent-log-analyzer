@@ -43,7 +43,7 @@ const (
 // artifactPrefixToCategory maps the public-artifact prefix space used in
 // SourceSummary.KnownEcosystem to the analyzer's signature-registry
 // category keys (see analyzer.KnownEcosystemIDs). Keeping a single source
-// of truth — the embedded signature registries — prevents drift between
+// of truth â€” the embedded signature registries â€” prevents drift between
 // the analyzer's allowlist and the paid-artifact allowlist.
 var artifactPrefixToCategory = map[string]string{
 	"agent":           "coding_agent",
@@ -107,6 +107,7 @@ type ToolRecommendation struct {
 	ID                string   `json:"id"`
 	Category          string   `json:"category"`
 	FailureModes      []string `json:"failure_modes,omitempty"`
+	SelectionReason   string   `json:"selection_reason,omitempty"`
 	Why               string   `json:"why"`
 	InstallCommand    string   `json:"install_command"`
 	RequiredBinary    string   `json:"required_binary,omitempty"`
@@ -192,7 +193,7 @@ func baseFiles(report analyzer.Report, pluginName string, recommendations []Tool
 		{
 			Path:    "commands/agent-analyzer-tooling.md",
 			Mode:    "0644",
-			Content: toolingCommand(recommendations),
+			Content: toolingCommand(report, recommendations),
 		},
 		{
 			Path:    "skills/codebase-navigation/SKILL.md",
@@ -207,7 +208,7 @@ func baseFiles(report analyzer.Report, pluginName string, recommendations []Tool
 		{
 			Path:    "skills/tooling-setup/SKILL.md",
 			Mode:    "0644",
-			Content: toolingSetupSkill(recommendations),
+			Content: toolingSetupSkill(report, recommendations),
 		},
 	}
 	return files
@@ -465,6 +466,170 @@ func toolingRecommendations(report analyzer.Report) []ToolRecommendation {
 		})
 	}
 	sort.Slice(out, func(i, j int) bool { return out[i].ID < out[j].ID })
+	return applySelectionAndConflictGates(report, out)
+}
+
+func applySelectionAndConflictGates(report analyzer.Report, recommendations []ToolRecommendation) []ToolRecommendation {
+	if len(recommendations) == 0 {
+		return recommendations
+	}
+	selectedByEngine, selectedReasons := selectedToolIDs(report.Recommendation)
+	deferNewIntegrations := shouldDeferNewIntegrations(report)
+	var kept []ToolRecommendation
+
+	for _, rec := range recommendations {
+		if deferNewIntegrations && isPluginOrMCPRecommendation(rec) {
+			continue
+		}
+		if len(selectedByEngine) > 0 && !selectedByEngine[rec.ID] && rec.ID != "ccusage" && rec.ID != "awesome-claude-code" {
+			continue
+		}
+		if len(selectedByEngine) > 0 {
+			conflictWithKept := ""
+			for _, existing := range kept {
+				if recommendationsConflict(rec, existing) {
+					conflictWithKept = existing.ID
+					break
+				}
+			}
+			if conflictWithKept != "" {
+				continue
+			}
+		}
+		if reason, ok := selectedReasons[rec.ID]; ok {
+			rec.SelectionReason = reason
+		} else if len(selectedByEngine) == 0 {
+			rec.SelectionReason = "Selected by deterministic failure-mode mapping."
+		} else {
+			rec.SelectionReason = "Kept as baseline telemetry/reference context."
+		}
+		kept = append(kept, rec)
+	}
+
+	if len(kept) == 0 {
+		for _, rec := range recommendations {
+			if rec.ID == "ccusage" {
+				rec.SelectionReason = "Fallback baseline telemetry recommendation."
+				kept = append(kept, rec)
+				break
+			}
+		}
+	}
+	return kept
+}
+
+func selectedToolIDs(set *analyzer.RecommendationSet) (map[string]bool, map[string]string) {
+	selected := map[string]bool{}
+	reasons := map[string]string{}
+	if set == nil {
+		return selected, reasons
+	}
+	add := func(rec *analyzer.TokenSavingRecommendation) {
+		if rec == nil || rec.PrimaryToolID == "" {
+			return
+		}
+		id := recommendationArtifactID(rec.PrimaryToolID)
+		selected[id] = true
+		modes := make([]string, 0, len(rec.FailureModes))
+		for _, mode := range rec.FailureModes {
+			modes = append(modes, string(mode))
+		}
+		if len(modes) == 0 {
+			reasons[id] = fmt.Sprintf("Selected by engine reason `%s`.", rec.Reason)
+			return
+		}
+		reasons[id] = fmt.Sprintf(
+			"Selected by engine for failure modes `%s` (reason `%s`).",
+			strings.Join(modes, "`, `"),
+			rec.Reason,
+		)
+	}
+	add(set.Primary)
+	add(set.Secondary)
+	return selected, reasons
+}
+
+func recommendationArtifactID(toolID analyzer.ToolID) string {
+	switch toolID {
+	case "context_mode":
+		return "context-mode"
+	case "claude_context":
+		return "claude-context"
+	case "claude_token_efficient":
+		return "claude-token-efficient"
+	case "claude_code_usage_monitor":
+		return "claude-code-usage-monitor"
+	default:
+		return strings.ReplaceAll(string(toolID), "_", "-")
+	}
+}
+
+func shouldDeferNewIntegrations(report analyzer.Report) bool {
+	mcp := report.Ecosystem.ToolingUtilization.MCP
+	skill := report.Ecosystem.ToolingUtilization.Skill
+	highBand := map[string]bool{"watch": true, "high": true, "severe": true}
+	if highBand[mcp.WarningBand] || highBand[skill.WarningBand] {
+		return true
+	}
+	return mcp.UtilizationRatioPct > 0 && mcp.UtilizationRatioPct < 25
+}
+
+func isPluginOrMCPRecommendation(rec ToolRecommendation) bool {
+	if rec.Category == "mcp_integration" {
+		return true
+	}
+	if strings.Contains(rec.InstallCommand, "/plugin install") || strings.Contains(rec.InstallCommand, "/plugin marketplace add") {
+		return true
+	}
+	return strings.Contains(rec.Category, "mcp")
+}
+
+func recommendationsConflict(a, b ToolRecommendation) bool {
+	if containsString(a.ConflictsWith, b.ID) || containsString(b.ConflictsWith, a.ID) {
+		return true
+	}
+	for _, id := range a.ConflictsWith {
+		if containsString(b.ConflictsWith, id) {
+			return true
+		}
+	}
+	return false
+}
+
+func recommendationSkipNotes(report analyzer.Report) []string {
+	notes := map[string]bool{}
+	add := func(note string) {
+		if note == "" {
+			return
+		}
+		notes[note] = true
+	}
+	if report.Recommendation != nil {
+		for _, rec := range []*analyzer.TokenSavingRecommendation{report.Recommendation.Primary, report.Recommendation.Secondary} {
+			if rec == nil {
+				continue
+			}
+			for _, skipped := range rec.SkippedToolIDs {
+				add(fmt.Sprintf("`%s` skipped as an alternative to `%s` for the same failure mode.", recommendationArtifactID(skipped), recommendationArtifactID(rec.PrimaryToolID)))
+			}
+		}
+		for _, skipped := range report.Recommendation.Skipped {
+			add(fmt.Sprintf("`%s` rejected by engine reason `%s` for signal `%s`.", recommendationArtifactID(skipped.ToolID), skipped.Reason, skipped.ForSignal))
+		}
+	}
+	if shouldDeferNewIntegrations(report) {
+		mcp := report.Ecosystem.ToolingUtilization.MCP
+		skill := report.Ecosystem.ToolingUtilization.Skill
+		add(fmt.Sprintf("No new MCP/plugin additions while utilization is low (mcp_ratio=%d%%, mcp_band=`%s`, skill_ratio=%d%%, skill_band=`%s`).", mcp.UtilizationRatioPct, mcp.WarningBand, skill.UtilizationRatioPct, skill.WarningBand))
+	}
+	if report.Ecosystem.UnknownMCPServerCount > 0 || report.Ecosystem.UnknownPluginCount > 0 || report.Ecosystem.UnknownSkillCount > 0 {
+		add(fmt.Sprintf("Unknown private tool names remain count-only (unknown_mcp=%d, unknown_plugins=%d, unknown_skills=%d).", report.Ecosystem.UnknownMCPServerCount, report.Ecosystem.UnknownPluginCount, report.Ecosystem.UnknownSkillCount))
+	}
+	out := make([]string, 0, len(notes))
+	for note := range notes {
+		out = append(out, note)
+	}
+	sort.Strings(out)
 	return out
 }
 
@@ -695,7 +860,7 @@ func safeKnownEcosystem(ecosystem analyzer.Ecosystem) []string {
 	// IDs through the same allowlisted-prefix space so the paid artifact
 	// reflects values from `AggregateReports`. Every token here passes the
 	// same publicEcosystemIDs / safeValueRE gate as the existing fields, so
-	// the privacy stance (NFR-002) is preserved structurally — unknown names
+	// the privacy stance (NFR-002) is preserved structurally â€” unknown names
 	// are caught by safePublicID and silently dropped.
 	add("mcp", ecosystem.ToolingUtilization.MCP.KnownServerIDs)
 	add("mcp", ecosystem.ToolingUtilization.MCP.UniqueKnownCalledIDs)
@@ -704,8 +869,8 @@ func safeKnownEcosystem(ecosystem analyzer.Ecosystem) []string {
 	for _, fp := range ecosystem.WorkflowFingerprints {
 		// Fingerprint IDs come from the SDD detector registry
 		// (internal/analyzer/sdd/), a separate closed allowlist from the
-		// frameworks-signature registry. Gate against the SDD registry —
-		// not the framework one — and emit under the existing "framework:"
+		// frameworks-signature registry. Gate against the SDD registry â€”
+		// not the framework one â€” and emit under the existing "framework:"
 		// prefix to preserve the public artifact schema.
 		if safeIdentifier(fp.ID) && analyzer.ValidEcosystemID("workflow_fingerprint", fp.ID) {
 			addID("framework:" + fp.ID)
@@ -800,7 +965,7 @@ Agent Analyzer is not responsible for damage, data loss, credential exposure, bi
 `
 }
 
-func toolingCommand(recommendations []ToolRecommendation) string {
+func toolingCommand(report analyzer.Report, recommendations []ToolRecommendation) string {
 	return `---
 description: Review the generated token-saving, code-intelligence, and MCP setup recommendations.
 ---
@@ -811,7 +976,7 @@ Read WAIVER.md first. Do not install anything until the user explicitly acknowle
 
 Recommended actions:
 
-` + recommendationMarkdown(recommendations) + `
+` + recommendationMarkdown(report, recommendations) + `
 
 Procedure:
 
@@ -846,7 +1011,7 @@ Generated waste bucket: %s
 `, report.AggregateEvent.ScoreBucket, report.AggregateEvent.WasteBucket)
 }
 
-func toolingSetupSkill(recommendations []ToolRecommendation) string {
+func toolingSetupSkill(report analyzer.Report, recommendations []ToolRecommendation) string {
 	return `---
 description: Use when setting up vetted token-saving tools, language servers, Claude Code plugins, or MCP integrations.
 ---
@@ -855,7 +1020,7 @@ description: Use when setting up vetted token-saving tools, language servers, Cl
 
 Install only with explicit user approval.
 
-` + recommendationMarkdown(recommendations) + `
+` + recommendationMarkdown(report, recommendations) + `
 
 Installation discipline:
 
@@ -869,7 +1034,7 @@ Installation discipline:
 `
 }
 
-func recommendationMarkdown(recommendations []ToolRecommendation) string {
+func recommendationMarkdown(report analyzer.Report, recommendations []ToolRecommendation) string {
 	var b strings.Builder
 	for _, rec := range recommendations {
 		b.WriteString("- ")
@@ -879,6 +1044,11 @@ func recommendationMarkdown(recommendations []ToolRecommendation) string {
 		b.WriteString("): ")
 		b.WriteString(rec.Why)
 		b.WriteString("\n")
+		if rec.SelectionReason != "" {
+			b.WriteString("  Selection: ")
+			b.WriteString(rec.SelectionReason)
+			b.WriteString("\n")
+		}
 		if len(rec.FailureModes) > 0 {
 			b.WriteString("  Failure modes: `")
 			b.WriteString(strings.Join(rec.FailureModes, "`, `"))
@@ -922,6 +1092,15 @@ func recommendationMarkdown(recommendations []ToolRecommendation) string {
 		if rec.VettingNotes != "" {
 			b.WriteString("  Vetting notes: ")
 			b.WriteString(rec.VettingNotes)
+			b.WriteString("\n")
+		}
+	}
+	skipNotes := recommendationSkipNotes(report)
+	if len(skipNotes) > 0 {
+		b.WriteString("\nSkipped/Deferred:\n")
+		for _, note := range skipNotes {
+			b.WriteString("- ")
+			b.WriteString(note)
 			b.WriteString("\n")
 		}
 	}
