@@ -163,6 +163,20 @@ const (
 	ReasonServerQuotaCheck    Reason = "server_quota_check"
 )
 
+// DefocusFailureMode is the bounded taxonomy used to explain why a
+// recommendation exists. It is adapted from the context-defocus tooling
+// audit and intentionally names problem classes, not private user data.
+type DefocusFailureMode string
+
+const (
+	FailureNoisyTerminalLogs     DefocusFailureMode = "noisy_terminal_logs"
+	FailureToolOutputFlooding    DefocusFailureMode = "tool_output_flooding"
+	FailureRepeatedNavigation    DefocusFailureMode = "repeated_codebase_navigation"
+	FailureBroadReadsOrVerbosity DefocusFailureMode = "broad_file_reads_or_verbose_output"
+	FailureMemoryGaps            DefocusFailureMode = "memory_gaps"
+	FailureCrossCutting          DefocusFailureMode = "cross_cutting_telemetry"
+)
+
 // -----------------------------------------------------------------------------
 // Engine input shape
 // -----------------------------------------------------------------------------
@@ -262,12 +276,18 @@ type TokenSavingRecommendation struct {
 	PrimaryToolID    ToolID                 `json:"primary_tool_id"`
 	PrimaryToolName  string                 `json:"primary_tool_name,omitempty"`
 	PrimaryToolURL   string                 `json:"primary_tool_url,omitempty"`
+	FailureModes     []DefocusFailureMode   `json:"failure_modes,omitempty"`
 	SkippedToolIDs   []ToolID               `json:"skipped_tool_ids,omitempty"`
 	Reason           Reason                 `json:"reason"`
 	SignalIDs        []Signal               `json:"signal_ids"`
 	Confidence       Confidence             `json:"confidence"`
 	RiskLevel        RiskLevel              `json:"risk_level"`
+	DataMovementRisk RiskLevel              `json:"data_movement_risk,omitempty"`
 	InstallPolicy    InstallPolicy          `json:"install_policy"`
+	InstallSurface   string                 `json:"install_surface,omitempty"`
+	ConflictsWith    []ToolID               `json:"conflicts_with,omitempty"`
+	VettingNotes     string                 `json:"vetting_notes,omitempty"`
+	AmbiguityWarning string                 `json:"ambiguity_warning,omitempty"`
 	EvidenceCounts   map[EvidenceSource]int `json:"evidence_counts"`
 }
 

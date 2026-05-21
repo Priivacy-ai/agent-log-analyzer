@@ -53,13 +53,14 @@ type AnalysisSignals struct {
 }
 
 type Finding struct {
-	ID             string          `json:"id"`
-	Title          string          `json:"title"`
-	Severity       string          `json:"severity"`
-	CostImpact     string          `json:"cost_impact"`
-	Evidence       FindingEvidence `json:"evidence"`
-	Recommendation string          `json:"recommendation"`
-	Deterministic  bool            `json:"deterministic"`
+	ID             string             `json:"id"`
+	Title          string             `json:"title"`
+	FailureMode    DefocusFailureMode `json:"failure_mode,omitempty"`
+	Severity       string             `json:"severity"`
+	CostImpact     string             `json:"cost_impact"`
+	Evidence       FindingEvidence    `json:"evidence"`
+	Recommendation string             `json:"recommendation"`
+	Deterministic  bool               `json:"deterministic"`
 }
 
 type FindingEvidence struct {

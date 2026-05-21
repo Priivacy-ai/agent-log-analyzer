@@ -4,18 +4,26 @@
     "primary_tool_id": "ccusage",
     "primary_tool_name": "ccusage",
     "primary_tool_url": "https://github.com/ryoppippi/ccusage",
+    "failure_modes": [
+      "cross_cutting_telemetry"
+    ],
     "reason": "absent",
     "signal_ids": [
       "no_usage_visibility"
     ],
     "confidence": "low",
     "risk_level": "low",
+    "data_movement_risk": "low",
     "install_policy": "recommend",
+    "install_surface": "local_cli_or_local_config",
     "evidence_counts": {}
   },
   "secondary": {
     "recommendation_id": "rec.mcp_skill_hygiene.none.mcp_skill_bloat",
     "primary_tool_id": "",
+    "failure_modes": [
+      "cross_cutting_telemetry"
+    ],
     "reason": "prune_first",
     "signal_ids": [
       "mcp_skill_bloat"
@@ -23,6 +31,7 @@
     "confidence": "medium",
     "risk_level": "low",
     "install_policy": "recommend",
+    "install_surface": "prune_or_lazy_load_existing_mcp_and_skills",
     "evidence_counts": {}
   },
   "registry_version": "phase-a-2026-05-20-tool-url-audit",

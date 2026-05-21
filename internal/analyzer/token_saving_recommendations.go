@@ -207,6 +207,8 @@ func pickPrimary(rule ruleSpec, state ToolStateMap, present map[Signal]bool) pic
 			SignalIDs:      signalIDs,
 			Confidence:     ConfidenceMedium,
 			RiskLevel:      RiskLow,
+			FailureModes:   failureModesForClass(rule.Class),
+			InstallSurface: installSurfaceForClass(rule.Class),
 			InstallPolicy:  PolicyRecommend,
 			EvidenceCounts: map[EvidenceSource]int{},
 		}
@@ -300,16 +302,99 @@ func buildRecommendation(
 		counts[src] = entry.Sources[src]
 	}
 	return &TokenSavingRecommendation{
-		PrimaryToolID:   cand.ID,
-		PrimaryToolName: cand.DisplayName,
-		PrimaryToolURL:  cand.SourceURL,
-		Reason:          reason,
-		SignalIDs:       signalIDs,
-		Confidence:      conf,
-		RiskLevel:       cand.InstallRisk,
-		InstallPolicy:   cand.InstallPolicy,
-		EvidenceCounts:  counts,
+		PrimaryToolID:    cand.ID,
+		PrimaryToolName:  cand.DisplayName,
+		PrimaryToolURL:   cand.SourceURL,
+		FailureModes:     failureModesForClass(cand.RecommendationClass),
+		Reason:           reason,
+		SignalIDs:        signalIDs,
+		Confidence:       conf,
+		RiskLevel:        cand.InstallRisk,
+		DataMovementRisk: cand.DataMovementRisk,
+		InstallPolicy:    cand.InstallPolicy,
+		InstallSurface:   installSurfaceForTool(cand),
+		ConflictsWith:    conflictsForTool(cand.ID),
+		AmbiguityWarning: ambiguityWarningForTool(cand.ID),
+		EvidenceCounts:   counts,
 	}
+}
+
+func failureModesForClass(class RecommendationClass) []DefocusFailureMode {
+	switch class {
+	case ClassShellOutputReducer:
+		return []DefocusFailureMode{FailureNoisyTerminalLogs}
+	case ClassMCPOutputReducer:
+		return []DefocusFailureMode{FailureToolOutputFlooding}
+	case ClassRetrieval, ClassRereadGuard:
+		return []DefocusFailureMode{FailureRepeatedNavigation}
+	case ClassOutputVerbosity:
+		return []DefocusFailureMode{FailureBroadReadsOrVerbosity}
+	case ClassContextHygiene, ClassUsageVisibility, ClassMCPSkillHygiene:
+		return []DefocusFailureMode{FailureCrossCutting}
+	default:
+		return nil
+	}
+}
+
+func installSurfaceForClass(class RecommendationClass) string {
+	switch class {
+	case ClassMCPSkillHygiene:
+		return "prune_or_lazy_load_existing_mcp_and_skills"
+	case ClassContextHygiene:
+		return "session_workflow_and_config_audit"
+	default:
+		return ""
+	}
+}
+
+func installSurfaceForTool(tool TokenSavingTool) string {
+	switch tool.ID {
+	case "rtk":
+		return "local_binary_plus_claude_hook"
+	case "context_mode":
+		return "claude_plugin_plus_mcp"
+	case "claude_context":
+		return "mcp_plus_external_vector_store"
+	case "grepai":
+		return "local_binary_plus_optional_embedding_provider"
+	case "ccusage", "ccstatusline", "claude_token_efficient":
+		return "local_cli_or_local_config"
+	default:
+		switch tool.Category {
+		case "mcp":
+			return "mcp_server"
+		case "retrieval":
+			return "retrieval_tool"
+		case "style":
+			return "local_instruction_config"
+		default:
+			return tool.Category
+		}
+	}
+}
+
+func conflictsForTool(id ToolID) []ToolID {
+	switch id {
+	case "rtk":
+		return []ToolID{"leanctx", "headroom"}
+	case "context_mode":
+		return []ToolID{"token_optimizer_mcp", "headroom"}
+	case "claude_context":
+		return []ToolID{"grepai", "serena", "codegraph", "semble"}
+	case "grepai":
+		return []ToolID{"claude_context", "serena", "codegraph", "semble"}
+	case "claude_token_efficient":
+		return []ToolID{"caveman"}
+	default:
+		return nil
+	}
+}
+
+func ambiguityWarningForTool(id ToolID) string {
+	if id == "rtk" {
+		return "RTK means github.com/rtk-ai/rtk. Do not install or recommend the unrelated npm package named rtk."
+	}
+	return ""
 }
 
 // -----------------------------------------------------------------------------

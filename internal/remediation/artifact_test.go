@@ -107,6 +107,12 @@ func TestGenerateCreatesClaudePluginArtifact(t *testing.T) {
 		if !isHTTPSURL(recommendation.Source) {
 			t.Fatalf("recommendation %s has non-URL source %q", recommendation.ID, recommendation.Source)
 		}
+		if recommendation.RiskLevel == "" || recommendation.DataMovementRisk == "" || recommendation.InstallSurface == "" {
+			t.Fatalf("recommendation %s missing risk/surface metadata: %#v", recommendation.ID, recommendation)
+		}
+		if len(recommendation.FailureModes) == 0 {
+			t.Fatalf("recommendation %s missing failure mode metadata: %#v", recommendation.ID, recommendation)
+		}
 	}
 	if !strings.Contains(artifact.RequiredAcknowledgment, "at my own risk") {
 		t.Fatalf("expected liability acknowledgment, got %q", artifact.RequiredAcknowledgment)
@@ -150,6 +156,12 @@ func TestToolRecommendationsUsePreciseSources(t *testing.T) {
 	}
 	if !strings.Contains(rtk.Why, "rtk-ai/rtk") || !strings.Contains(rtk.BinaryInstallHint, "unrelated npm package named rtk") {
 		t.Fatalf("RTK recommendation must disambiguate from npm rtk: %#v", *rtk)
+	}
+	if !strings.Contains(rtk.AmbiguityWarning, "unrelated npm package named rtk") {
+		t.Fatalf("RTK recommendation must carry an ambiguity warning: %#v", *rtk)
+	}
+	if len(rtk.ConflictsWith) == 0 {
+		t.Fatalf("RTK recommendation must include conflict metadata: %#v", *rtk)
 	}
 }
 

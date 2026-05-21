@@ -4,6 +4,19 @@ This matrix is the starting allowlist for paid remediation recommendations. The 
 
 Every installable recommendation must carry a precise source URL. Do not recommend a bare package name when that name can resolve to a different package in another ecosystem.
 
+## Recommendation Taxonomy
+
+Recommendations are grouped by bounded context-defocus failure modes:
+
+- `noisy_terminal_logs`: shell/build/test/CLI output that pollutes context.
+- `tool_output_flooding`: MCP, browser, or tool result payloads that enter the session as large raw blocks.
+- `repeated_codebase_navigation`: repeated grep/read/list exploration that should be replaced by targeted retrieval or code intelligence.
+- `broad_file_reads_or_verbose_output`: whole-file reads or assistant verbosity that bloat future turns.
+- `memory_gaps`: project decisions or debugging state repeatedly reintroduced across sessions.
+- `cross_cutting_telemetry`: usage visibility, MCP/skill hygiene, retry loops, and session-boundary discipline.
+
+Every recommendation must carry install risk, data-movement risk, install surface, known overlaps, and any package-name ambiguity warning. Unknown private MCP, plugin, and skill names remain count-only and must never be copied into reports or plugin artifacts.
+
 ## Tier 1: Bundle Or Strongly Recommend
 
 | Tool | Source | Role | Product Decision |

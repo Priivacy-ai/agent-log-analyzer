@@ -83,10 +83,11 @@ func aggregateFindings(metrics Metrics) []Finding {
 	var findings []Finding
 	if metrics.Rereads >= 3 {
 		findings = append(findings, Finding{
-			ID:         "repeated_file_reads",
-			Title:      "Excessive repeated file reads",
-			Severity:   severity(metrics.Rereads, 3, 25),
-			CostImpact: "medium-high",
+			ID:          "repeated_file_reads",
+			Title:       "Excessive repeated file reads",
+			FailureMode: FailureRepeatedNavigation,
+			Severity:    severity(metrics.Rereads, 3, 25),
+			CostImpact:  "medium-high",
 			Evidence: FindingEvidence{
 				Count:       metrics.Rereads,
 				Description: "Repeated reads across analyzed sessions",
@@ -99,10 +100,11 @@ func aggregateFindings(metrics Metrics) []Finding {
 		share := int(float64(metrics.ToolOutputTokens) / float64(metrics.EstimatedTokens) * 100)
 		if share >= 35 {
 			findings = append(findings, Finding{
-				ID:         "tool_output_bloat",
-				Title:      "Large shell/tool output overhead",
-				Severity:   severity(share, 35, 55),
-				CostImpact: "high",
+				ID:          "tool_output_bloat",
+				Title:       "Large shell/tool output overhead",
+				FailureMode: FailureToolOutputFlooding,
+				Severity:    severity(share, 35, 55),
+				CostImpact:  "high",
 				Evidence: FindingEvidence{
 					TokenShare:  share,
 					Description: "Tool output share across analyzed sessions",
@@ -114,10 +116,11 @@ func aggregateFindings(metrics Metrics) []Finding {
 	}
 	if metrics.RetryDepthMax >= 3 {
 		findings = append(findings, Finding{
-			ID:         "retry_loop",
-			Title:      "Retry-loop behavior",
-			Severity:   severity(metrics.RetryDepthMax, 3, 6),
-			CostImpact: "medium",
+			ID:          "retry_loop",
+			Title:       "Retry-loop behavior",
+			FailureMode: FailureCrossCutting,
+			Severity:    severity(metrics.RetryDepthMax, 3, 6),
+			CostImpact:  "medium",
 			Evidence: FindingEvidence{
 				Count:       metrics.RetryDepthMax,
 				Description: "Maximum retry depth across analyzed sessions",
@@ -128,10 +131,11 @@ func aggregateFindings(metrics Metrics) []Finding {
 	}
 	if metrics.ContextGrowthEvents >= 2 {
 		findings = append(findings, Finding{
-			ID:         "context_growth_spikes",
-			Title:      "Context growth spikes",
-			Severity:   severity(metrics.ContextGrowthEvents, 2, 5),
-			CostImpact: "medium",
+			ID:          "context_growth_spikes",
+			Title:       "Context growth spikes",
+			FailureMode: FailureToolOutputFlooding,
+			Severity:    severity(metrics.ContextGrowthEvents, 2, 5),
+			CostImpact:  "medium",
 			Evidence: FindingEvidence{
 				Count:       metrics.ContextGrowthEvents,
 				Description: "Timeline windows exceeded growth threshold across analyzed sessions",

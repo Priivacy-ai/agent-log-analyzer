@@ -637,6 +637,28 @@ const SAVINGS_BUCKET_LABEL = {
   high: "High estimated savings",
 };
 
+const FAILURE_MODE_LABEL = {
+  noisy_terminal_logs: "Noisy terminal logs",
+  tool_output_flooding: "Tool output flooding",
+  repeated_codebase_navigation: "Repeated codebase navigation",
+  broad_file_reads_or_verbose_output: "Broad reads / verbose output",
+  memory_gaps: "Memory gaps",
+  cross_cutting_telemetry: "Cross-cutting hygiene",
+};
+
+const INSTALL_SURFACE_LABEL = {
+  local_binary_plus_claude_hook: "Local binary + Claude hook",
+  claude_plugin_plus_mcp: "Claude plugin + MCP",
+  mcp_plus_external_vector_store: "MCP + external vector store",
+  local_binary_plus_optional_embedding_provider: "Local binary + optional embeddings",
+  local_cli_or_local_config: "Local CLI/config",
+  mcp_server: "MCP server",
+  retrieval_tool: "Retrieval tool",
+  local_instruction_config: "Local instruction config",
+  prune_or_lazy_load_existing_mcp_and_skills: "Prune / lazy-load existing tools",
+  session_workflow_and_config_audit: "Session workflow audit",
+};
+
 function savingsBucket(report) {
   const high = report?.estimated_waste_pct?.high ?? 0;
   if (high < 10) return "low";
@@ -775,6 +797,51 @@ function buildRecommendationCard(rec, savingsBucketValue) {
   meta.appendChild(policyEl);
 
   card.appendChild(meta);
+
+  const failureModes = Array.isArray(rec.failure_modes) ? rec.failure_modes : [];
+  if (failureModes.length > 0 || typeof rec.install_surface === "string" || typeof rec.data_movement_risk === "string") {
+    const fit = document.createElement("div");
+    fit.className = "recommendation-fit";
+    for (const mode of failureModes) {
+      const id = typeof mode === "string" ? mode : "";
+      if (!Object.hasOwn(FAILURE_MODE_LABEL, id)) continue;
+      const chip = document.createElement("span");
+      chip.textContent = FAILURE_MODE_LABEL[id];
+      fit.appendChild(chip);
+    }
+    const surface = typeof rec.install_surface === "string" ? rec.install_surface : "";
+    if (surface.length > 0) {
+      const chip = document.createElement("span");
+      chip.textContent = labelFrom(INSTALL_SURFACE_LABEL, surface, "Install surface reviewed");
+      fit.appendChild(chip);
+    }
+    const dataRisk = typeof rec.data_movement_risk === "string" ? rec.data_movement_risk : "";
+    if (Object.hasOwn(RISK_LABEL, dataRisk)) {
+      const chip = document.createElement("span");
+      chip.textContent = `Data movement: ${RISK_LABEL[dataRisk].toLowerCase()}`;
+      fit.appendChild(chip);
+    }
+    if (fit.childElementCount > 0) card.appendChild(fit);
+  }
+
+  const conflicts = Array.isArray(rec.conflicts_with) ? rec.conflicts_with : [];
+  const safeConflicts = conflicts
+    .map((id) => (typeof id === "string" && Object.hasOwn(TOOL_LABEL, id) ? TOOL_LABEL[id] : ""))
+    .filter(Boolean);
+  if (safeConflicts.length > 0) {
+    const conflict = document.createElement("p");
+    conflict.className = "recommendation-conflicts";
+    conflict.textContent = `Overlaps with ${safeConflicts.join(", ")}. Choose one tool for this failure mode unless you explicitly approve both.`;
+    card.appendChild(conflict);
+  }
+
+  const ambiguity = typeof rec.ambiguity_warning === "string" ? rec.ambiguity_warning : "";
+  if (ambiguity.length > 0 && toolID === "rtk") {
+    const warning = document.createElement("p");
+    warning.className = "recommendation-warning";
+    warning.textContent = "RTK means github.com/rtk-ai/rtk. Do not install the unrelated npm package named rtk.";
+    card.appendChild(warning);
+  }
 
   // Signal chips.
   const signals = Array.isArray(rec.signal_ids) ? rec.signal_ids : [];

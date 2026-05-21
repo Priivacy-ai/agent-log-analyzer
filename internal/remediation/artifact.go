@@ -104,13 +104,20 @@ type File struct {
 }
 
 type ToolRecommendation struct {
-	ID                string `json:"id"`
-	Category          string `json:"category"`
-	Why               string `json:"why"`
-	InstallCommand    string `json:"install_command"`
-	RequiredBinary    string `json:"required_binary,omitempty"`
-	BinaryInstallHint string `json:"binary_install_hint,omitempty"`
-	Source            string `json:"source"`
+	ID                string   `json:"id"`
+	Category          string   `json:"category"`
+	FailureModes      []string `json:"failure_modes,omitempty"`
+	Why               string   `json:"why"`
+	InstallCommand    string   `json:"install_command"`
+	RequiredBinary    string   `json:"required_binary,omitempty"`
+	BinaryInstallHint string   `json:"binary_install_hint,omitempty"`
+	Source            string   `json:"source"`
+	RiskLevel         string   `json:"risk_level,omitempty"`
+	DataMovementRisk  string   `json:"data_movement_risk,omitempty"`
+	InstallSurface    string   `json:"install_surface,omitempty"`
+	ConflictsWith     []string `json:"conflicts_with,omitempty"`
+	AmbiguityWarning  string   `json:"ambiguity_warning,omitempty"`
+	VettingNotes      string   `json:"vetting_notes,omitempty"`
 }
 
 type Install struct {
@@ -262,6 +269,7 @@ func toolingRecommendations(report analyzer.Report) []ToolRecommendation {
 		if rec.ID == "" || seen[rec.ID] {
 			return
 		}
+		rec = enrichToolRecommendation(rec)
 		seen[rec.ID] = true
 		out = append(out, rec)
 	}
@@ -458,6 +466,132 @@ func toolingRecommendations(report analyzer.Report) []ToolRecommendation {
 	}
 	sort.Slice(out, func(i, j int) bool { return out[i].ID < out[j].ID })
 	return out
+}
+
+func enrichToolRecommendation(rec ToolRecommendation) ToolRecommendation {
+	if tool, ok := analyzer.GetTool(recommendationRegistryID(rec.ID)); ok {
+		if rec.RiskLevel == "" {
+			rec.RiskLevel = string(tool.InstallRisk)
+		}
+		if rec.DataMovementRisk == "" {
+			rec.DataMovementRisk = string(tool.DataMovementRisk)
+		}
+		if len(rec.FailureModes) == 0 {
+			rec.FailureModes = remediationFailureModes(tool.RecommendationClass)
+		}
+		if rec.InstallSurface == "" {
+			rec.InstallSurface = remediationInstallSurface(tool.ID, tool.Category)
+		}
+		if len(rec.ConflictsWith) == 0 {
+			rec.ConflictsWith = remediationConflicts(tool.ID)
+		}
+		if rec.AmbiguityWarning == "" && tool.ID == "rtk" {
+			rec.AmbiguityWarning = "RTK means github.com/rtk-ai/rtk. Never install the unrelated npm package named rtk."
+		}
+		if rec.VettingNotes == "" {
+			rec.VettingNotes = tool.Notes
+		}
+		return rec
+	}
+
+	if rec.RiskLevel == "" {
+		rec.RiskLevel = "medium"
+	}
+	if rec.DataMovementRisk == "" {
+		rec.DataMovementRisk = "medium"
+	}
+	if rec.InstallSurface == "" {
+		rec.InstallSurface = "reviewed_third_party_or_official_plugin"
+	}
+	if len(rec.FailureModes) == 0 {
+		rec.FailureModes = remediationFailureModesForCategory(rec.Category)
+	}
+	if rec.VettingNotes == "" {
+		rec.VettingNotes = "Exact source URL is included; confirm current install instructions before running commands."
+	}
+	return rec
+}
+
+func recommendationRegistryID(id string) analyzer.ToolID {
+	switch id {
+	case "context-mode":
+		return "context_mode"
+	case "claude-context":
+		return "claude_context"
+	case "claude-token-efficient":
+		return "claude_token_efficient"
+	case "claude-code-usage-monitor":
+		return "claude_code_usage_monitor"
+	default:
+		return analyzer.ToolID(strings.ReplaceAll(id, "-", "_"))
+	}
+}
+
+func remediationFailureModes(class analyzer.RecommendationClass) []string {
+	switch class {
+	case analyzer.ClassShellOutputReducer:
+		return []string{string(analyzer.FailureNoisyTerminalLogs)}
+	case analyzer.ClassMCPOutputReducer:
+		return []string{string(analyzer.FailureToolOutputFlooding)}
+	case analyzer.ClassRetrieval, analyzer.ClassRereadGuard:
+		return []string{string(analyzer.FailureRepeatedNavigation)}
+	case analyzer.ClassOutputVerbosity:
+		return []string{string(analyzer.FailureBroadReadsOrVerbosity)}
+	default:
+		return []string{string(analyzer.FailureCrossCutting)}
+	}
+}
+
+func remediationFailureModesForCategory(category string) []string {
+	switch category {
+	case "code_intelligence", "local_semantic_retrieval", "semantic_retrieval_mcp":
+		return []string{string(analyzer.FailureRepeatedNavigation)}
+	case "context_defense", "mcp_integration":
+		return []string{string(analyzer.FailureToolOutputFlooding)}
+	case "advanced_shell_compression":
+		return []string{string(analyzer.FailureNoisyTerminalLogs)}
+	case "claude_md_optimization":
+		return []string{string(analyzer.FailureBroadReadsOrVerbosity)}
+	default:
+		return []string{string(analyzer.FailureCrossCutting)}
+	}
+}
+
+func remediationInstallSurface(id analyzer.ToolID, category string) string {
+	switch id {
+	case "rtk":
+		return "local_binary_plus_claude_hook"
+	case "context_mode":
+		return "claude_plugin_plus_mcp"
+	case "claude_context":
+		return "mcp_plus_external_vector_store"
+	case "grepai":
+		return "local_binary_plus_optional_embedding_provider"
+	case "ccusage", "ccstatusline", "claude_token_efficient":
+		return "local_cli_or_local_config"
+	default:
+		if category == "mcp" {
+			return "mcp_server"
+		}
+		return category
+	}
+}
+
+func remediationConflicts(id analyzer.ToolID) []string {
+	switch id {
+	case "rtk":
+		return []string{"leanctx", "headroom"}
+	case "context_mode":
+		return []string{"token_optimizer_mcp", "headroom"}
+	case "claude_context":
+		return []string{"grepai", "serena", "codegraph", "semble"}
+	case "grepai":
+		return []string{"claude_context", "serena", "codegraph", "semble"}
+	case "claude_token_efficient":
+		return []string{"caveman"}
+	default:
+		return nil
+	}
 }
 
 func customizationFiles(customizations []Customization) []File {
@@ -745,6 +879,30 @@ func recommendationMarkdown(recommendations []ToolRecommendation) string {
 		b.WriteString("): ")
 		b.WriteString(rec.Why)
 		b.WriteString("\n")
+		if len(rec.FailureModes) > 0 {
+			b.WriteString("  Failure modes: `")
+			b.WriteString(strings.Join(rec.FailureModes, "`, `"))
+			b.WriteString("`\n")
+		}
+		if rec.RiskLevel != "" || rec.DataMovementRisk != "" || rec.InstallSurface != "" {
+			b.WriteString("  Risk/surface: install=`")
+			b.WriteString(rec.RiskLevel)
+			b.WriteString("`, data=`")
+			b.WriteString(rec.DataMovementRisk)
+			b.WriteString("`, surface=`")
+			b.WriteString(rec.InstallSurface)
+			b.WriteString("`\n")
+		}
+		if len(rec.ConflictsWith) > 0 {
+			b.WriteString("  Conflicts/overlap: `")
+			b.WriteString(strings.Join(rec.ConflictsWith, "`, `"))
+			b.WriteString("`; choose one tool for this failure mode unless the user explicitly approves both.\n")
+		}
+		if rec.AmbiguityWarning != "" {
+			b.WriteString("  Ambiguity warning: ")
+			b.WriteString(rec.AmbiguityWarning)
+			b.WriteString("\n")
+		}
 		b.WriteString("  Install: `")
 		b.WriteString(rec.InstallCommand)
 		b.WriteString("`\n")
@@ -761,6 +919,11 @@ func recommendationMarkdown(recommendations []ToolRecommendation) string {
 		b.WriteString("  Source: ")
 		b.WriteString(rec.Source)
 		b.WriteString("\n")
+		if rec.VettingNotes != "" {
+			b.WriteString("  Vetting notes: ")
+			b.WriteString(rec.VettingNotes)
+			b.WriteString("\n")
+		}
 	}
 	return b.String()
 }
