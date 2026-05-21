@@ -46,3 +46,37 @@ Production notes:
 - Put CloudFront and WAF in front of the ALB before a public launch.
 - The public upload UX is Claude/prompt/curl only. There is no browser multipart upload form.
 - Scale tokenized upload traffic by isolating the API upload path behind the ALB, keeping workers asynchronous, and autoscaling API tasks independently from workers.
+
+Transactional email:
+
+- SES remains supported and is the default Terraform provider (`email_provider=ses`) for the testing phase.
+- Postmark is optional and can be enabled after account review by setting `email_provider=postmark`, `email_from=robert@spec-kitty.ai`, and `postmark_server_token_secret_arn`.
+- Store the Postmark server token in AWS Secrets Manager, not Terraform variables:
+
+```sh
+AWS_PROFILE=claude-analyzer-prod AWS_REGION=us-east-1 \
+aws secretsmanager create-secret \
+  --name claude-analyzer-prod/postmark/server-token \
+  --secret-string 'PASTE_TOKEN_HERE'
+```
+
+Then obtain the ARN:
+
+```sh
+AWS_PROFILE=claude-analyzer-prod AWS_REGION=us-east-1 \
+aws secretsmanager describe-secret \
+  --secret-id claude-analyzer-prod/postmark/server-token \
+  --query ARN --output text
+```
+
+Apply with:
+
+```sh
+AWS_PROFILE=claude-analyzer-prod AWS_REGION=us-east-1 terraform -chdir=infra/aws apply \
+  -var='email_provider=postmark' \
+  -var='email_from=robert@spec-kitty.ai' \
+  -var='postmark_message_stream=outbound' \
+  -var='postmark_server_token_secret_arn=arn:aws:secretsmanager:us-east-1:...:secret:claude-analyzer-prod/postmark/server-token-...'
+```
+
+Do not switch production to Postmark until Postmark account review is complete. Until then, keep SES/fallback behavior for testing.
