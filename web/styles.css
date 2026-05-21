@@ -180,6 +180,13 @@ h2 {
   line-height: 1.4;
 }
 
+.capacity-note {
+  max-width: 760px;
+  color: #d8dee4;
+  font-size: 17px;
+  line-height: 1.5;
+}
+
 .trust {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));

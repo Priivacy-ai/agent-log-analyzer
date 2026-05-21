@@ -23,6 +23,7 @@
           tokens.
         </h1>
         <p class="subhead">Analyze one session locally. Upload only the sanitized report.</p>
+        <p class="capacity-note">Every wasted reread, retry, and bloated context window burns the same plan capacity you need for actual coding. Recover it so your agentic coding plan ships more software before you hit token limits.</p>
         <ul class="proof">
           <li>Detect context bloat</li>
           <li>Find retry loops and wasted reads</li>
@@ -93,7 +94,7 @@
           <div>
             <p class="eyebrow">outcome preview</p>
             <h2>One command should end in a concrete profiler report.</h2>
-            <p>The report is designed to show the waste signal, the evidence behind it, and the next remediation step without asking an LLM to read your raw transcript.</p>
+            <p>The report is designed to show the waste signal, the evidence behind it, and the next remediation step without asking an LLM to read your raw transcript. The goal is simple: spend fewer plan tokens on drift and more on writing software.</p>
           </div>
           <div class="preview-frame" aria-hidden="true">
             <div class="preview-terminal">
@@ -128,6 +129,7 @@
           <h2>Estimated Waste <button type="button" class="help-tip" data-tippy-content="How is waste estimated? Avoidable spend is a heuristic range derived from the efficiency score and detected waste patterns. It is intended to rank severity and prompt investigation, not to reproduce provider billing." aria-label="More information">?</button></h2>
           <p id="waste"></p>
           <p id="token-volume" class="command-note"></p>
+          <p class="capacity-note">Cutting this waste helps the same coding plan produce more useful implementation work before you run out of tokens.</p>
           <div class="report-cta-row" aria-label="Report actions">
             <a class="report-primary-cta" href="#email-unlock">Get the optimization plugin</a>
             <a class="report-secondary-cta" href="#plugin-pitch">See what it fixes</a>
