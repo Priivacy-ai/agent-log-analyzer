@@ -763,7 +763,7 @@ func receiptPanelHTML(report analyzer.Report) template.HTML {
 	if receipt.SecretsRedacted > 0 {
 		redactionTone = "warn"
 	}
-		receiptTileHTML(&b, "Secrets redacted locally", fmt.Sprintf("%d", receipt.SecretsRedacted), redactionTone)
+	receiptTileHTML(&b, "Secrets redacted locally", fmt.Sprintf("%d", receipt.SecretsRedacted), redactionTone)
 	b.WriteString(`</div>`)
 	redactionGroupHTML(&b, report.Redactions)
 	b.WriteString(`</div>`)
