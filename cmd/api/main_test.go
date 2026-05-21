@@ -32,6 +32,14 @@ func (sender *captureEmailSender) Send(message emailMessage) error {
 	return nil
 }
 
+type failingEmailSender struct {
+	err error
+}
+
+func (sender failingEmailSender) Send(emailMessage) error {
+	return sender.err
+}
+
 func (f fakeStore) SaveUpload(jobID string, data []byte) (string, error) {
 	return "", errors.New("not implemented")
 }
@@ -742,6 +750,54 @@ func TestEmailUnlockConfirmAndFullScanUploadLifecycle(t *testing.T) {
 	createFullScanClientReportHandler(store, sender, 15*time.Minute).ServeHTTP(reuseRec, reuseReq)
 	if reuseRec.Code != http.StatusConflict {
 		t.Fatalf("expected reused token conflict, got %d: %s", reuseRec.Code, reuseRec.Body.String())
+	}
+}
+
+func TestEmailUnlockSendFailureRendersActionablePage(t *testing.T) {
+	t.Setenv("CLAUDE_ANALYZER_EMAIL_SCREEN_FALLBACK", "")
+	store, err := localstore.New(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	sender := failingEmailSender{err: errEmailDelivery{provider: "ses", detail: "sandbox", err: errors.New("MessageRejected: sandbox")}}
+	req := httptest.NewRequest(http.MethodPost, "/api/email-unlocks", strings.NewReader("email=dev%40example.com"))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Set("Accept", "text/html")
+	rec := httptest.NewRecorder()
+
+	createEmailUnlockHandler(store, sender).ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusServiceUnavailable {
+		t.Fatalf("expected service unavailable, got %d: %s", rec.Code, rec.Body.String())
+	}
+	if !strings.Contains(rec.Body.String(), "Email delivery is not active yet") {
+		t.Fatalf("expected actionable SES message, got %s", rec.Body.String())
+	}
+	if strings.Contains(rec.Body.String(), "Request failed") {
+		t.Fatalf("expected specialized email page, got %s", rec.Body.String())
+	}
+}
+
+func TestEmailUnlockScreenFallbackRendersConfirmationLink(t *testing.T) {
+	t.Setenv("CLAUDE_ANALYZER_EMAIL_SCREEN_FALLBACK", "1")
+	store, err := localstore.New(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	sender := failingEmailSender{err: errEmailDelivery{provider: "ses", detail: "sandbox", err: errors.New("MessageRejected: sandbox")}}
+	req := httptest.NewRequest(http.MethodPost, "/api/email-unlocks", strings.NewReader("email=dev%40example.com"))
+	req.Host = "example.test"
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Set("Accept", "text/html")
+	rec := httptest.NewRecorder()
+
+	createEmailUnlockHandler(store, sender).ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusAccepted {
+		t.Fatalf("expected accepted fallback page, got %d: %s", rec.Code, rec.Body.String())
+	}
+	if !strings.Contains(rec.Body.String(), "Continue launch test") || !strings.Contains(rec.Body.String(), "/email/confirm/") {
+		t.Fatalf("expected launch-test confirmation link, got %s", rec.Body.String())
 	}
 }
 

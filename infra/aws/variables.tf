@@ -58,6 +58,12 @@ variable "email_from" {
   default     = "noreply@spec-kitty.ai"
 }
 
+variable "email_screen_fallback_enabled" {
+  type        = bool
+  description = "Temporarily show the confirmation link on screen when email delivery fails. Use only for launch testing while SES production access is unavailable."
+  default     = false
+}
+
 variable "certificate_arn" {
   type        = string
   description = "Optional ACM certificate ARN for HTTPS listener."

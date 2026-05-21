@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	htmlstd "html"
+	"log/slog"
 	"net/http"
 	"net/mail"
 	"os"
@@ -85,7 +86,12 @@ func createEmailUnlockHandler(store app.APIStore, sender emailSender) http.Handl
 				writeErrorOrHTML(w, r, http.StatusConflict, "email address is suppressed for transactional delivery")
 				return
 			}
-			writeErrorOrHTML(w, r, http.StatusInternalServerError, "could not send confirmation email")
+			slogEmailDeliveryFailure("confirmation", unlock.ID, err)
+			if emailScreenFallbackEnabled() && wantsHTML(r) {
+				renderEmailFallbackPage(w, confirmURL)
+				return
+			}
+			writeEmailDeliveryErrorOrHTML(w, r, err)
 			return
 		}
 		if wantsHTML(r) {
@@ -333,6 +339,41 @@ func writeErrorOrHTML(w http.ResponseWriter, r *http.Request, status int, messag
 	writeError(w, status, message)
 }
 
+func writeEmailDeliveryErrorOrHTML(w http.ResponseWriter, r *http.Request, err error) {
+	message := "Email delivery is temporarily unavailable. Your request was created, but we could not send the confirmation email."
+	var delivery errEmailDelivery
+	if errors.As(err, &delivery) && delivery.provider == "ses" && (delivery.detail == "sandbox" || delivery.detail == "message_rejected") {
+		message = "Email delivery is not active yet. AWS SES is still in sandbox or has not granted production access, so confirmation mail cannot be sent to arbitrary recipient addresses."
+	}
+	if wantsHTML(r) {
+		renderSimpleHTMLStatus(w, http.StatusServiceUnavailable, "Email delivery unavailable", "<p>"+htmlstd.EscapeString(message)+"</p><p>The local scan and report are still valid. The full-scan email flow will work once transactional email is enabled.</p>")
+		return
+	}
+	writeError(w, http.StatusServiceUnavailable, message)
+}
+
+func slogEmailDeliveryFailure(stage, unlockID string, err error) {
+	detail := emailFailureDetail(err)
+	provider := "unknown"
+	var delivery errEmailDelivery
+	if errors.As(err, &delivery) && delivery.provider != "" {
+		provider = delivery.provider
+	}
+	slog.Warn("transactional email send failed", "stage", stage, "unlock_id", unlockID, "provider", provider, "detail", detail)
+}
+
+func emailScreenFallbackEnabled() bool {
+	return strings.EqualFold(os.Getenv("CLAUDE_ANALYZER_EMAIL_SCREEN_FALLBACK"), "1") ||
+		strings.EqualFold(os.Getenv("CLAUDE_ANALYZER_EMAIL_SCREEN_FALLBACK"), "true")
+}
+
+func renderEmailFallbackPage(w http.ResponseWriter, confirmURL string) {
+	renderSimpleHTMLStatus(w, http.StatusAccepted, "Continue launch test", fmt.Sprintf(
+		`<p>Transactional email is not available in this environment yet. For internal launch testing, continue with the confirmation link below.</p><p>This bypass is controlled by <code>CLAUDE_ANALYZER_EMAIL_SCREEN_FALLBACK</code> and must stay disabled for public launch.</p><p><a class="button-link" href="%s">Confirm email and get the full-scan command</a></p>`,
+		htmlstd.EscapeString(confirmURL),
+	))
+}
+
 func renderConfirmedPage(w http.ResponseWriter, command string, expiresAt time.Time) {
 	renderSimpleHTML(w, "Email confirmed", fmt.Sprintf(
 		`<p>Your email is confirmed. Run this command to analyze up to 100 recent logs per supported agent source and generate your plugin:</p><pre><code>%s</code></pre><p>This full-scan token expires at %s.</p>`,
@@ -349,7 +390,7 @@ func renderSimpleHTMLStatus(w http.ResponseWriter, status int, title, body strin
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.Header().Set("Cache-Control", "no-store")
 	w.WriteHeader(status)
-	_, _ = fmt.Fprintf(w, `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>%s</title><link rel="stylesheet" href="/styles.css"></head><body><main class="shell"><section class="report"><h1>%s</h1>%s</section></main></body></html>`, htmlstd.EscapeString(title), htmlstd.EscapeString(title), body)
+	_, _ = fmt.Fprintf(w, `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>%s</title><link rel="stylesheet" href="/styles.css"></head><body><main class="shell"><section class="simple-page"><h1>%s</h1>%s</section></main></body></html>`, htmlstd.EscapeString(title), htmlstd.EscapeString(title), body)
 }
 
 func confirmationEmailBody(confirmURL string) string {

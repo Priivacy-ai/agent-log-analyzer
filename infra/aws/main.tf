@@ -573,7 +573,8 @@ locals {
     { name = "CLAUDE_ANALYZER_JOB_TABLE", value = aws_dynamodb_table.jobs.name },
     { name = "CLAUDE_ANALYZER_JOB_QUEUE_URL", value = aws_sqs_queue.jobs.url },
     { name = "CLAUDE_ANALYZER_EMAIL_PROVIDER", value = var.email_provider },
-    { name = "CLAUDE_ANALYZER_EMAIL_FROM", value = var.email_from }
+    { name = "CLAUDE_ANALYZER_EMAIL_FROM", value = var.email_from },
+    { name = "CLAUDE_ANALYZER_EMAIL_SCREEN_FALLBACK", value = tostring(var.email_screen_fallback_enabled) }
   ]
 }
 

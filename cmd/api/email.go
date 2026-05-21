@@ -27,6 +27,23 @@ type emailSender interface {
 	Send(message emailMessage) error
 }
 
+type errEmailDelivery struct {
+	provider string
+	detail   string
+	err      error
+}
+
+func (err errEmailDelivery) Error() string {
+	if err.detail == "" {
+		return err.provider + " email delivery failed"
+	}
+	return err.provider + " email delivery failed: " + err.detail
+}
+
+func (err errEmailDelivery) Unwrap() error {
+	return err.err
+}
+
 type loggingEmailSender struct{}
 
 func (loggingEmailSender) Send(message emailMessage) error {
@@ -63,7 +80,10 @@ func (sender sesEmailSender) Send(message emailMessage) error {
 		input.ConfigurationSetName = aws.String(sender.configurationSet)
 	}
 	_, err := sender.client.SendEmail(context.Background(), input)
-	return err
+	if err != nil {
+		return errEmailDelivery{provider: "ses", detail: classifySESError(err), err: err}
+	}
+	return nil
 }
 
 type errEmailSuppressed struct {
@@ -94,7 +114,7 @@ func (sender suppressionGuardedEmailSender) Send(message emailMessage) error {
 	detail := ""
 	if err != nil {
 		eventType = app.EmailEventSendFailure
-		detail = "provider_error"
+		detail = emailFailureDetail(err)
 	}
 	recordErr := sender.store.RecordEmailEvent(app.EmailDeliveryEvent{
 		EmailHash: emailHash,
@@ -154,6 +174,32 @@ func guardEmailSender(sender emailSender, store app.APIStore) emailSender {
 		return sender
 	}
 	return suppressionGuardedEmailSender{next: sender, store: emailOps}
+}
+
+func emailFailureDetail(err error) string {
+	var delivery errEmailDelivery
+	if errors.As(err, &delivery) && delivery.detail != "" {
+		return delivery.provider + "_" + delivery.detail
+	}
+	return "provider_error"
+}
+
+func classifySESError(err error) string {
+	message := strings.ToLower(err.Error())
+	switch {
+	case strings.Contains(message, "sandbox"):
+		return "sandbox"
+	case strings.Contains(message, "not verified") || strings.Contains(message, "verified"):
+		return "identity_unverified"
+	case strings.Contains(message, "configuration set"):
+		return "configuration_set"
+	case strings.Contains(message, "message rejected"):
+		return "message_rejected"
+	case strings.Contains(message, "accessdenied") || strings.Contains(message, "access denied"):
+		return "access_denied"
+	default:
+		return "provider_error"
+	}
 }
 
 func safeEmailFilename(email string) string {
