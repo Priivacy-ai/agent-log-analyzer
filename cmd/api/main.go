@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"crypto/rand"
 	"crypto/sha256"
 	"crypto/subtle"
@@ -9,8 +10,10 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"io"
 	"log/slog"
 	"net/http"
+	"net/url"
 	"os"
 	"strconv"
 	"strings"
@@ -45,6 +48,24 @@ type paidSessionRequest struct {
 	Acknowledgment string `json:"acknowledgment"`
 }
 
+type stripeCheckoutSessionRequest struct {
+	WaiverAccepted bool   `json:"waiver_accepted"`
+	Acknowledgment string `json:"acknowledgment"`
+	ReturnPath     string `json:"return_path"`
+}
+
+type stripeCheckoutSessionResponse struct {
+	CheckoutSessionID string `json:"checkout_session_id"`
+	CheckoutURL       string `json:"checkout_url"`
+}
+
+type stripeCheckoutSessionStatus struct {
+	ID            string `json:"id"`
+	Status        string `json:"status"`
+	PaymentStatus string `json:"payment_status"`
+	URL           string `json:"url"`
+}
+
 func main() {
 	addr := getenv("CLAUDE_ANALYZER_ADDR", ":8080")
 	store, err := backend.NewAPIStore()
@@ -69,6 +90,8 @@ func buildMux(store app.APIStore) http.Handler {
 	})
 	mux.HandleFunc("POST /api/analysis-sessions", createAnalysisSessionHandler(store, maxQueueDepth(), uploadTokenTTL()))
 	mux.HandleFunc("POST /api/paid-sessions", createPaidSessionHandler(store, uploadTokenTTL()))
+	mux.HandleFunc("POST /api/stripe/checkout-sessions", createStripeCheckoutSessionHandler())
+	mux.HandleFunc("GET /api/stripe/checkout-sessions/{id}/unlock", unlockStripeCheckoutSessionHandler())
 	mux.HandleFunc("POST /api/client-reports", createClientReportHandler(store, reportTTL()))
 	mux.HandleFunc("POST /api/paid-client-reports", createPaidClientReportHandler(store, reportTTL()))
 	mux.HandleFunc("POST /api/email-unlocks", createEmailUnlockHandler(store, emailSender))
@@ -317,6 +340,152 @@ func createPaidSessionHandler(store app.APIStore, expiresIn time.Duration) http.
 		response.Prompt = paidClaudePrompt(response.Command)
 		writeJSON(w, http.StatusCreated, response)
 	}
+}
+
+func createStripeCheckoutSessionHandler() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if !localPaidSessionsEnabled() || stripeSecretKey() == "" {
+			writeError(w, http.StatusPaymentRequired, "paid checkout is not configured")
+			return
+		}
+		var request stripeCheckoutSessionRequest
+		if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+			writeError(w, http.StatusBadRequest, "invalid checkout session request")
+			return
+		}
+		if !request.WaiverAccepted || !strings.Contains(strings.ToLower(request.Acknowledgment), "own risk") {
+			writeError(w, http.StatusBadRequest, "waiver acknowledgment required")
+			return
+		}
+
+		baseURL := publicBaseURL(r)
+		returnPath := sanitizeCheckoutReturnPath(request.ReturnPath)
+		successURL, cancelURL := checkoutReturnURLs(baseURL, returnPath)
+
+		form := url.Values{}
+		form.Set("mode", "payment")
+		form.Set("success_url", successURL)
+		form.Set("cancel_url", cancelURL)
+		form.Set("line_items[0][quantity]", "1")
+		form.Set("line_items[0][price_data][currency]", "usd")
+		form.Set("line_items[0][price_data][unit_amount]", "5000")
+		form.Set("line_items[0][price_data][product_data][name]", "Agent Analyzer Optimization Pack")
+		form.Set("metadata[product]", "agent-analyzer-optimization-pack")
+		form.Set("metadata[return_path]", returnPath)
+
+		var checkout stripeCheckoutSessionStatus
+		if err := callStripeAPI(r.Context(), http.MethodPost, "/v1/checkout/sessions", form, &checkout); err != nil {
+			slog.Warn("stripe checkout create failed", "error_category", "stripe_checkout")
+			writeError(w, http.StatusBadGateway, "could not create stripe checkout session")
+			return
+		}
+		if checkout.ID == "" || checkout.URL == "" {
+			writeError(w, http.StatusBadGateway, "stripe checkout session is incomplete")
+			return
+		}
+
+		writeJSON(w, http.StatusCreated, stripeCheckoutSessionResponse{
+			CheckoutSessionID: checkout.ID,
+			CheckoutURL:       checkout.URL,
+		})
+	}
+}
+
+func unlockStripeCheckoutSessionHandler() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if !localPaidSessionsEnabled() || stripeSecretKey() == "" {
+			writeError(w, http.StatusPaymentRequired, "paid checkout is not configured")
+			return
+		}
+		sessionID := strings.TrimSpace(r.PathValue("id"))
+		if sessionID == "" {
+			writeError(w, http.StatusBadRequest, "checkout session id is required")
+			return
+		}
+		var session stripeCheckoutSessionStatus
+		if err := callStripeAPI(r.Context(), http.MethodGet, "/v1/checkout/sessions/"+url.PathEscape(sessionID), nil, &session); err != nil {
+			slog.Warn("stripe checkout fetch failed", "error_category", "stripe_checkout")
+			writeError(w, http.StatusBadGateway, "could not verify stripe checkout session")
+			return
+		}
+		if session.ID == "" {
+			writeError(w, http.StatusBadGateway, "stripe checkout session lookup failed")
+			return
+		}
+		if strings.ToLower(session.PaymentStatus) != "paid" {
+			writeJSON(w, http.StatusAccepted, map[string]any{
+				"status":         "pending_payment",
+				"checkout_id":    session.ID,
+				"checkout_state": session.Status,
+				"payment_status": session.PaymentStatus,
+			})
+			return
+		}
+
+		writeJSON(w, http.StatusCreated, paidLocalFirstSessionResponse(publicBaseURL(r)))
+	}
+}
+
+func callStripeAPI(ctx context.Context, method, path string, form url.Values, out any) error {
+	endpoint := strings.TrimRight(stripeAPIBaseURL(), "/") + path
+	var body io.Reader
+	if form != nil {
+		body = strings.NewReader(form.Encode())
+	}
+	req, err := http.NewRequestWithContext(ctx, method, endpoint, body)
+	if err != nil {
+		return err
+	}
+	req.SetBasicAuth(stripeSecretKey(), "")
+	if form != nil {
+		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	}
+	client := &http.Client{Timeout: 20 * time.Second}
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		io.Copy(io.Discard, resp.Body)
+		return errors.New("stripe api request failed")
+	}
+	return json.NewDecoder(resp.Body).Decode(out)
+}
+
+func sanitizeCheckoutReturnPath(path string) string {
+	path = strings.TrimSpace(path)
+	if path == "" {
+		return "/"
+	}
+	if !strings.HasPrefix(path, "/") {
+		return "/"
+	}
+	parsed, err := url.Parse(path)
+	if err != nil {
+		return "/"
+	}
+	return parsed.Path
+}
+
+func checkoutReturnURLs(baseURL, returnPath string) (string, string) {
+	root := strings.TrimRight(baseURL, "/")
+	target := root + returnPath
+	success := target
+	if strings.Contains(success, "?") {
+		success += "&"
+	} else {
+		success += "?"
+	}
+	success += "paid=success&session_id={CHECKOUT_SESSION_ID}"
+	cancel := target
+	if strings.Contains(cancel, "?") {
+		cancel += "&"
+	} else {
+		cancel += "?"
+	}
+	cancel += "paid=cancelled"
+	return success, cancel
 }
 
 func waiverAccepted(r *http.Request) bool {
@@ -904,4 +1073,15 @@ func maxQueueDepth() int {
 func localPaidSessionsEnabled() bool {
 	value := strings.ToLower(os.Getenv("CLAUDE_ANALYZER_ENABLE_LOCAL_PAID_SESSIONS"))
 	return value == "1" || value == "true" || value == "yes"
+}
+
+func stripeSecretKey() string {
+	return strings.TrimSpace(os.Getenv("CLAUDE_ANALYZER_STRIPE_SECRET_KEY"))
+}
+
+func stripeAPIBaseURL() string {
+	if base := strings.TrimSpace(os.Getenv("CLAUDE_ANALYZER_STRIPE_API_BASE_URL")); base != "" {
+		return base
+	}
+	return "https://api.stripe.com"
 }

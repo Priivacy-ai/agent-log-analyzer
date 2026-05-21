@@ -1033,6 +1033,96 @@ func TestCreatePaidSessionReturnsLegacyPaidBundleOnlyWhenExplicit(t *testing.T) 
 	}
 }
 
+func TestCreateStripeCheckoutSession(t *testing.T) {
+	t.Setenv("CLAUDE_ANALYZER_ENABLE_LOCAL_PAID_SESSIONS", "true")
+	t.Setenv("CLAUDE_ANALYZER_STRIPE_SECRET_KEY", "sk_test_example")
+
+	stripe := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/v1/checkout/sessions" || r.Method != http.MethodPost {
+			t.Fatalf("unexpected stripe request %s %s", r.Method, r.URL.Path)
+		}
+		if err := r.ParseForm(); err != nil {
+			t.Fatalf("parse form: %v", err)
+		}
+		if got := r.Form.Get("line_items[0][price_data][unit_amount]"); got != "5000" {
+			t.Fatalf("expected $50 unit amount, got %q", got)
+		}
+		if !strings.Contains(r.Form.Get("success_url"), "paid=success") || !strings.Contains(r.Form.Get("success_url"), "session_id={CHECKOUT_SESSION_ID}") {
+			t.Fatalf("unexpected success_url %q", r.Form.Get("success_url"))
+		}
+		if !strings.Contains(r.Form.Get("cancel_url"), "paid=cancelled") {
+			t.Fatalf("unexpected cancel_url %q", r.Form.Get("cancel_url"))
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"id":"cs_test_123","url":"https://checkout.stripe.com/c/pay/cs_test_123","status":"open","payment_status":"unpaid"}`))
+	}))
+	defer stripe.Close()
+	t.Setenv("CLAUDE_ANALYZER_STRIPE_API_BASE_URL", stripe.URL)
+
+	req := httptest.NewRequest(http.MethodPost, "/api/stripe/checkout-sessions", strings.NewReader(`{"waiver_accepted":true,"acknowledgment":"I accept at my own risk","return_path":"/r/job-1/token-1"}`))
+	req.Host = "example.test"
+	rec := httptest.NewRecorder()
+
+	createStripeCheckoutSessionHandler().ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusCreated {
+		t.Fatalf("expected checkout session status 201, got %d: %s", rec.Code, rec.Body.String())
+	}
+	var response stripeCheckoutSessionResponse
+	if err := json.Unmarshal(rec.Body.Bytes(), &response); err != nil {
+		t.Fatalf("response is not valid checkout JSON: %v", err)
+	}
+	if response.CheckoutSessionID != "cs_test_123" || !strings.Contains(response.CheckoutURL, "checkout.stripe.com") {
+		t.Fatalf("unexpected checkout response: %#v", response)
+	}
+}
+
+func TestUnlockStripeCheckoutSessionPendingAndPaid(t *testing.T) {
+	t.Setenv("CLAUDE_ANALYZER_ENABLE_LOCAL_PAID_SESSIONS", "true")
+	t.Setenv("CLAUDE_ANALYZER_STRIPE_SECRET_KEY", "sk_test_example")
+
+	stripe := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/v1/checkout/sessions/cs_pending":
+			_, _ = w.Write([]byte(`{"id":"cs_pending","status":"open","payment_status":"unpaid"}`))
+		case "/v1/checkout/sessions/cs_paid":
+			_, _ = w.Write([]byte(`{"id":"cs_paid","status":"complete","payment_status":"paid"}`))
+		default:
+			t.Fatalf("unexpected stripe request path %s", r.URL.Path)
+		}
+	}))
+	defer stripe.Close()
+	t.Setenv("CLAUDE_ANALYZER_STRIPE_API_BASE_URL", stripe.URL)
+
+	pendingReq := httptest.NewRequest(http.MethodGet, "/api/stripe/checkout-sessions/cs_pending/unlock", nil)
+	pendingReq.SetPathValue("id", "cs_pending")
+	pendingReq.Host = "example.test"
+	pendingRec := httptest.NewRecorder()
+	unlockStripeCheckoutSessionHandler().ServeHTTP(pendingRec, pendingReq)
+	if pendingRec.Code != http.StatusAccepted {
+		t.Fatalf("expected pending status 202, got %d: %s", pendingRec.Code, pendingRec.Body.String())
+	}
+	if !strings.Contains(pendingRec.Body.String(), "pending_payment") {
+		t.Fatalf("expected pending payment payload, got %s", pendingRec.Body.String())
+	}
+
+	paidReq := httptest.NewRequest(http.MethodGet, "/api/stripe/checkout-sessions/cs_paid/unlock", nil)
+	paidReq.SetPathValue("id", "cs_paid")
+	paidReq.Host = "example.test"
+	paidRec := httptest.NewRecorder()
+	unlockStripeCheckoutSessionHandler().ServeHTTP(paidRec, paidReq)
+	if paidRec.Code != http.StatusCreated {
+		t.Fatalf("expected paid status 201, got %d: %s", paidRec.Code, paidRec.Body.String())
+	}
+	var session analysisSessionResponse
+	if err := json.Unmarshal(paidRec.Body.Bytes(), &session); err != nil {
+		t.Fatalf("response is not valid paid session JSON: %v", err)
+	}
+	if !strings.Contains(session.Command, "analyze --paid --limit 100") || !strings.Contains(session.Command, "/api/paid-client-reports") {
+		t.Fatalf("expected paid local-first command, got %#v", session)
+	}
+}
+
 func TestPaidBundleUploadRejectsFreeToken(t *testing.T) {
 	store, err := localstore.New(t.TempDir())
 	if err != nil {

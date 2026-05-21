@@ -11,12 +11,14 @@ const paidCommand = document.querySelector("#paid-command");
 const copyPaidCommandButton = document.querySelector("#copy-paid-command");
 
 const route = parseReportRoute();
+const checkoutReturn = parseCheckoutReturn();
 
 if (route) {
   onboardingEl.hidden = true;
   reportEl.hidden = false;
   updateReportDownloadLinks(route);
   pollReport(route.jobID, route.token);
+  handleCheckoutReturn();
 } else {
   reportEl.hidden = true;
   if (promptBlock) promptBlock.textContent = runCommand();
@@ -28,18 +30,13 @@ copyPaidCommandButton?.addEventListener("click", () => copyText(paidCommand.text
 
 unlockPaidButton?.addEventListener("click", async () => {
   unlockPaidButton.disabled = true;
-  paidStatus.textContent = "creating waiver-gated paid scan commands";
+  paidStatus.textContent = "opening secure checkout";
   try {
-    const session = await createPaidSession();
-    paidCommand.textContent = session.prompt;
-    copyPaidCommandButton.hidden = false;
-    if (session.job_id && session.report_path) {
-      paidStatus.textContent =
-        `paid token expires ${new Date(session.expires_at).toLocaleTimeString()} - review these commands before running them`;
-      pollPaidJob(session.job_id, session.report_path);
-    } else {
-      paidStatus.textContent = "review these local-first commands; they upload only the sanitized aggregate JSON";
+    if (!waiverAccepted?.checked) {
+      throw new Error("waiver acknowledgment required");
     }
+    const checkout = await createStripeCheckoutSession();
+    window.location.assign(checkout.checkout_url);
   } catch (error) {
     paidStatus.textContent = `could not unlock paid scan: ${error.message}`;
     unlockPaidButton.disabled = false;
@@ -75,6 +72,65 @@ async function createPaidSession() {
     throw await responseError(response);
   }
   return response.json();
+}
+
+async function createStripeCheckoutSession() {
+  const acknowledgment =
+    "I understand that Agent Analyzer provides deterministic analysis and vetted setup recommendations, but any installation or code change is executed by Claude Code, my package manager, or third-party tools with my approval and at my own risk.";
+  const response = await fetch("/api/stripe/checkout-sessions", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      waiver_accepted: Boolean(waiverAccepted?.checked),
+      acknowledgment,
+      return_path: window.location.pathname,
+    }),
+  });
+  if (!response.ok) {
+    throw await responseError(response);
+  }
+  return response.json();
+}
+
+async function unlockPaidSessionFromCheckout(sessionID) {
+  const response = await fetch(`/api/stripe/checkout-sessions/${encodeURIComponent(sessionID)}/unlock`);
+  if (!response.ok) {
+    throw await responseError(response);
+  }
+  return response.json();
+}
+
+async function handleCheckoutReturn() {
+  if (!checkoutReturn || !paidStatus) return;
+  if (checkoutReturn.status === "cancelled") {
+    paidStatus.textContent = "checkout cancelled";
+    clearCheckoutQuery();
+    return;
+  }
+  if (checkoutReturn.status !== "success" || !checkoutReturn.sessionID) return;
+
+  unlockPaidButton.disabled = true;
+  paidStatus.textContent = "verifying checkout";
+  try {
+    const session = await unlockPaidSessionFromCheckout(checkoutReturn.sessionID);
+    if (session.status === "pending_payment") {
+      paidStatus.textContent = "payment is still pending; refresh in a moment";
+      return;
+    }
+    paidCommand.textContent = session.prompt;
+    copyPaidCommandButton.hidden = false;
+    if (session.job_id && session.report_path) {
+      paidStatus.textContent =
+        `paid token expires ${new Date(session.expires_at).toLocaleTimeString()} - review these commands before running them`;
+      pollPaidJob(session.job_id, session.report_path);
+    } else {
+      paidStatus.textContent = "review these local-first commands; they upload only the sanitized aggregate JSON";
+    }
+    clearCheckoutQuery();
+  } catch (error) {
+    paidStatus.textContent = `could not verify checkout: ${error.message}`;
+    unlockPaidButton.disabled = false;
+  }
 }
 
 async function pollJob(jobID, reportPath) {
@@ -1679,6 +1735,23 @@ function parseReportRoute() {
   const match = window.location.pathname.match(/^\/r\/([^/]+)\/([^/]+)$/);
   if (!match) return null;
   return { jobID: match[1], token: match[2] };
+}
+
+function parseCheckoutReturn() {
+  const params = new URLSearchParams(window.location.search);
+  const status = params.get("paid");
+  if (!status) return null;
+  return {
+    status,
+    sessionID: params.get("session_id"),
+  };
+}
+
+function clearCheckoutQuery() {
+  const url = new URL(window.location.href);
+  url.searchParams.delete("paid");
+  url.searchParams.delete("session_id");
+  window.history.replaceState({}, "", `${url.pathname}${url.search}${url.hash}`);
 }
 
 function setReportStatus(message) {
