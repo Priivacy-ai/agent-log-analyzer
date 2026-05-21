@@ -12,6 +12,7 @@ import (
 	"encoding/hex"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strconv"
 	"strings"
 	"testing"
@@ -738,6 +739,31 @@ func TestStripeWebhookReplayAndUnpaidHandling(t *testing.T) {
 	stripeWebhookHandler(store, 15*time.Minute).ServeHTTP(unpaidRec, unpaidReq)
 	if unpaidRec.Code != http.StatusAccepted {
 		t.Fatalf("expected unpaid session to be ignored with 202, got %d: %s", unpaidRec.Code, unpaidRec.Body.String())
+	}
+}
+
+func TestStripeWebhookIgnoresUnsupportedCheckoutMode(t *testing.T) {
+	t.Setenv("CLAUDE_ANALYZER_STRIPE_WEBHOOK_SECRET", "whsec_test_secret")
+	store, err := localstore.New(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	payload := `{"type":"checkout.session.completed","data":{"object":{"id":"cs_test_setup_mode","payment_status":"paid","mode":"setup"}}}`
+	req := httptest.NewRequest(http.MethodPost, "/api/stripe/webhook", strings.NewReader(payload))
+	req.Header.Set("Stripe-Signature", stripeTestSignature(payload, "whsec_test_secret", time.Now().UTC().Unix()))
+	rec := httptest.NewRecorder()
+
+	stripeWebhookHandler(store, 15*time.Minute).ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusAccepted {
+		t.Fatalf("expected unsupported mode to be ignored with 202, got %d: %s", rec.Code, rec.Body.String())
+	}
+	if !strings.Contains(rec.Body.String(), "unsupported_checkout_mode") {
+		t.Fatalf("expected unsupported checkout mode reason, got %s", rec.Body.String())
+	}
+	if _, err := store.GetJob(stripePaidJobID("cs_test_setup_mode")); !errors.Is(err, os.ErrNotExist) {
+		t.Fatalf("expected no paid session to be created for unsupported mode, got err=%v", err)
 	}
 }
 
