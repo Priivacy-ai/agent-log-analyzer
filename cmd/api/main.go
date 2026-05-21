@@ -422,6 +422,10 @@ func tokenUploadHandler(store app.APIStore) http.HandlerFunc {
 			writeError(w, http.StatusRequestEntityTooLarge, "upload too large")
 			return
 		}
+		if len(data) == 0 {
+			writeError(w, http.StatusBadRequest, "upload empty")
+			return
+		}
 		job, err = sessionStore.StoreUploadSession(job, data)
 		if err != nil {
 			writeError(w, http.StatusInternalServerError, "could not store upload")
@@ -474,6 +478,10 @@ func paidBundleUploadHandler(store app.APIStore) http.HandlerFunc {
 		data, err := analyzer.ReadAllLimited(r.Body, maxBytes)
 		if err != nil {
 			writeError(w, http.StatusRequestEntityTooLarge, "upload too large")
+			return
+		}
+		if len(data) == 0 {
+			writeError(w, http.StatusBadRequest, "upload empty")
 			return
 		}
 		job, err = sessionStore.StoreUploadSession(job, data)

@@ -828,6 +828,132 @@ func TestTokenUploadRejectsExpiredToken(t *testing.T) {
 	}
 }
 
+func TestTokenUploadRejectsEmptyBody(t *testing.T) {
+	store, err := localstore.New(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	token := "empty-token"
+	job := app.Job{
+		ID:                   "job-empty-token",
+		Status:               app.StatusUploading,
+		MaxUploadBytes:       maxUploadBytes,
+		UploadTokenHash:      tokenHash(token),
+		ReportTokenHash:      tokenHash("report-token"),
+		UploadTokenExpiresAt: time.Now().UTC().Add(15 * time.Minute),
+	}
+	if err := store.CreateUploadSession(job); err != nil {
+		t.Fatal(err)
+	}
+
+	req := httptest.NewRequest(http.MethodPut, "/api/uploads/job-empty-token", bytes.NewReader(nil))
+	req.SetPathValue("id", "job-empty-token")
+	req.Header.Set("Authorization", "Bearer "+token)
+	rec := httptest.NewRecorder()
+
+	tokenUploadHandler(store).ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected empty upload status 400, got %d: %s", rec.Code, rec.Body.String())
+	}
+}
+
+func TestTokenUploadRejectsOversizedBody(t *testing.T) {
+	store, err := localstore.New(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	token := "oversize-token"
+	job := app.Job{
+		ID:                   "job-oversize-token",
+		Status:               app.StatusUploading,
+		MaxUploadBytes:       8,
+		UploadTokenHash:      tokenHash(token),
+		ReportTokenHash:      tokenHash("report-token"),
+		UploadTokenExpiresAt: time.Now().UTC().Add(15 * time.Minute),
+	}
+	if err := store.CreateUploadSession(job); err != nil {
+		t.Fatal(err)
+	}
+
+	req := httptest.NewRequest(http.MethodPut, "/api/uploads/job-oversize-token", strings.NewReader("123456789"))
+	req.SetPathValue("id", "job-oversize-token")
+	req.Header.Set("Authorization", "Bearer "+token)
+	rec := httptest.NewRecorder()
+
+	tokenUploadHandler(store).ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusRequestEntityTooLarge {
+		t.Fatalf("expected oversized upload status 413, got %d: %s", rec.Code, rec.Body.String())
+	}
+}
+
+func TestPaidBundleUploadRejectsEmptyBody(t *testing.T) {
+	store, err := localstore.New(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	token := "paid-empty-token"
+	job := app.Job{
+		ID:                   "job-paid-empty-token",
+		Status:               app.StatusUploading,
+		ScanType:             app.ScanTypePaidBundle,
+		MaxUploadBytes:       maxPaidUploadBytes,
+		UploadTokenHash:      tokenHash(token),
+		ReportTokenHash:      tokenHash("report-token"),
+		UploadTokenExpiresAt: time.Now().UTC().Add(15 * time.Minute),
+	}
+	if err := store.CreateUploadSession(job); err != nil {
+		t.Fatal(err)
+	}
+
+	req := httptest.NewRequest(http.MethodPut, "/api/paid-uploads/job-paid-empty-token?limit=100", bytes.NewReader(nil))
+	req.SetPathValue("id", "job-paid-empty-token")
+	req.Header.Set("Authorization", "Bearer "+token)
+	req.Header.Set("Content-Type", "application/gzip")
+	req.Header.Set("X-Scan-Limit", "100")
+	rec := httptest.NewRecorder()
+
+	paidBundleUploadHandler(store).ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected empty paid upload status 400, got %d: %s", rec.Code, rec.Body.String())
+	}
+}
+
+func TestPaidBundleUploadRejectsOversizedBody(t *testing.T) {
+	store, err := localstore.New(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	token := "paid-oversize-token"
+	job := app.Job{
+		ID:                   "job-paid-oversize-token",
+		Status:               app.StatusUploading,
+		ScanType:             app.ScanTypePaidBundle,
+		MaxUploadBytes:       32,
+		UploadTokenHash:      tokenHash(token),
+		ReportTokenHash:      tokenHash("report-token"),
+		UploadTokenExpiresAt: time.Now().UTC().Add(15 * time.Minute),
+	}
+	if err := store.CreateUploadSession(job); err != nil {
+		t.Fatal(err)
+	}
+
+	req := httptest.NewRequest(http.MethodPut, "/api/paid-uploads/job-paid-oversize-token?limit=100", bytes.NewReader(testPaidBundle(t)))
+	req.SetPathValue("id", "job-paid-oversize-token")
+	req.Header.Set("Authorization", "Bearer "+token)
+	req.Header.Set("Content-Type", "application/gzip")
+	req.Header.Set("X-Scan-Limit", "100")
+	rec := httptest.NewRecorder()
+
+	paidBundleUploadHandler(store).ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusRequestEntityTooLarge {
+		t.Fatalf("expected oversized paid upload status 413, got %d: %s", rec.Code, rec.Body.String())
+	}
+}
+
 func testPaidBundle(t *testing.T) []byte {
 	t.Helper()
 	var buf bytes.Buffer
