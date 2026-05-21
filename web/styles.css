@@ -377,14 +377,6 @@ pre {
   font-size: 12px;
 }
 
-.path-rail span:not(:last-child)::after {
-  content: "v";
-  position: absolute;
-  right: 12px;
-  bottom: -16px;
-  color: var(--blue);
-}
-
 .data-path p,
 .read-only-note p,
 .outcome-preview p {
