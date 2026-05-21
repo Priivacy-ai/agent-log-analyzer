@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 	"os"
@@ -13,6 +14,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/sesv2"
 	sestypes "github.com/aws/aws-sdk-go-v2/service/sesv2/types"
+	"github.com/priivacy-ai/agent-log-analyzer/internal/app"
 )
 
 type emailMessage struct {
@@ -28,7 +30,7 @@ type emailSender interface {
 type loggingEmailSender struct{}
 
 func (loggingEmailSender) Send(message emailMessage) error {
-	slog.Info("email queued", "to_hash", tokenHash(strings.ToLower(strings.TrimSpace(message.To))), "subject", message.Subject)
+	slog.Info("email queued", "to_hash", app.HashEmail(message.To), "subject", message.Subject)
 	return nil
 }
 
@@ -37,12 +39,13 @@ type fileEmailSender struct {
 }
 
 type sesEmailSender struct {
-	client *sesv2.Client
-	from   string
+	client           *sesv2.Client
+	from             string
+	configurationSet string
 }
 
 func (sender sesEmailSender) Send(message emailMessage) error {
-	_, err := sender.client.SendEmail(context.Background(), &sesv2.SendEmailInput{
+	input := &sesv2.SendEmailInput{
 		FromEmailAddress: aws.String(sender.from),
 		Destination: &sestypes.Destination{
 			ToAddresses: []string{message.To},
@@ -55,8 +58,54 @@ func (sender sesEmailSender) Send(message emailMessage) error {
 				},
 			},
 		},
-	})
+	}
+	if sender.configurationSet != "" {
+		input.ConfigurationSetName = aws.String(sender.configurationSet)
+	}
+	_, err := sender.client.SendEmail(context.Background(), input)
 	return err
+}
+
+type errEmailSuppressed struct {
+	emailHash string
+	reason    app.EmailEventType
+}
+
+func (err errEmailSuppressed) Error() string {
+	return "recipient suppressed"
+}
+
+type suppressionGuardedEmailSender struct {
+	next  emailSender
+	store app.EmailOperationsStore
+}
+
+func (sender suppressionGuardedEmailSender) Send(message emailMessage) error {
+	emailHash := app.HashEmail(message.To)
+	suppression, err := sender.store.GetEmailSuppression(emailHash)
+	if err == nil {
+		return errEmailSuppressed{emailHash: emailHash, reason: suppression.Reason}
+	}
+	if err != nil && !errors.Is(err, os.ErrNotExist) {
+		return err
+	}
+	err = sender.next.Send(message)
+	eventType := app.EmailEventSend
+	detail := ""
+	if err != nil {
+		eventType = app.EmailEventSendFailure
+		detail = "provider_error"
+	}
+	recordErr := sender.store.RecordEmailEvent(app.EmailDeliveryEvent{
+		EmailHash: emailHash,
+		Type:      eventType,
+		Source:    "app_send",
+		Detail:    detail,
+	})
+	if err != nil {
+		return err
+	}
+	return recordErr
 }
 
 func (sender fileEmailSender) Send(message emailMessage) error {
@@ -90,9 +139,21 @@ func configuredEmailSender() emailSender {
 			slog.Error("SES email provider configuration failed", "error_category", "email_provider")
 			return loggingEmailSender{}
 		}
-		return sesEmailSender{client: sesv2.NewFromConfig(cfg), from: from}
+		return sesEmailSender{
+			client:           sesv2.NewFromConfig(cfg),
+			from:             from,
+			configurationSet: strings.TrimSpace(os.Getenv("CLAUDE_ANALYZER_SES_CONFIGURATION_SET")),
+		}
 	}
 	return loggingEmailSender{}
+}
+
+func guardEmailSender(sender emailSender, store app.APIStore) emailSender {
+	emailOps, ok := store.(app.EmailOperationsStore)
+	if !ok {
+		return sender
+	}
+	return suppressionGuardedEmailSender{next: sender, store: emailOps}
 }
 
 func safeEmailFilename(email string) string {

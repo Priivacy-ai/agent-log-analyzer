@@ -2,6 +2,8 @@ data "aws_availability_zones" "available" {
   state = "available"
 }
 
+data "aws_caller_identity" "current" {}
+
 resource "random_id" "suffix" {
   byte_length = 4
 }
@@ -273,6 +275,97 @@ resource "aws_sqs_queue" "jobs" {
   tags                       = local.common_tags
 }
 
+resource "aws_sqs_queue" "email_events" {
+  name                       = "${local.name}-email-events"
+  visibility_timeout_seconds = 90
+  message_retention_seconds  = 1209600
+  sqs_managed_sse_enabled    = true
+  tags                       = local.common_tags
+}
+
+resource "aws_sns_topic" "ses_events" {
+  name = "${local.name}-ses-events"
+  tags = local.common_tags
+}
+
+resource "aws_sns_topic_policy" "ses_events" {
+  arn = aws_sns_topic.ses_events.arn
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Principal = {
+        Service = "ses.amazonaws.com"
+      }
+      Action   = "SNS:Publish"
+      Resource = aws_sns_topic.ses_events.arn
+      Condition = {
+        StringEquals = {
+          "AWS:SourceAccount" = data.aws_caller_identity.current.account_id
+        }
+      }
+    }]
+  })
+}
+
+resource "aws_sqs_queue_policy" "email_events" {
+  queue_url = aws_sqs_queue.email_events.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Principal = {
+        Service = "sns.amazonaws.com"
+      }
+      Action   = "sqs:SendMessage"
+      Resource = aws_sqs_queue.email_events.arn
+      Condition = {
+        ArnEquals = {
+          "aws:SourceArn" = aws_sns_topic.ses_events.arn
+        }
+      }
+    }]
+  })
+}
+
+resource "aws_sns_topic_subscription" "ses_events_email_queue" {
+  topic_arn = aws_sns_topic.ses_events.arn
+  protocol  = "sqs"
+  endpoint  = aws_sqs_queue.email_events.arn
+}
+
+resource "aws_sesv2_account_suppression_attributes" "account" {
+  suppressed_reasons = ["BOUNCE", "COMPLAINT"]
+}
+
+resource "aws_sesv2_configuration_set" "transactional" {
+  configuration_set_name = "${local.name}-transactional"
+}
+
+resource "aws_sesv2_configuration_set_event_destination" "transactional_sns" {
+  configuration_set_name = aws_sesv2_configuration_set.transactional.configuration_set_name
+  event_destination_name = "${local.name}-sns"
+
+  event_destination {
+    enabled = true
+    matching_event_types = [
+      "SEND",
+      "DELIVERY",
+      "BOUNCE",
+      "COMPLAINT",
+      "REJECT",
+      "RENDERING_FAILURE",
+      "DELIVERY_DELAY"
+    ]
+
+    sns_destination {
+      topic_arn = aws_sns_topic.ses_events.arn
+    }
+  }
+}
+
 resource "aws_dynamodb_table" "jobs" {
   name         = "${local.name}-jobs"
   billing_mode = "PAY_PER_REQUEST"
@@ -364,7 +457,7 @@ resource "aws_iam_role_policy" "task" {
       {
         Effect   = "Allow"
         Action   = ["sqs:SendMessage", "sqs:ReceiveMessage", "sqs:DeleteMessage", "sqs:GetQueueAttributes"]
-        Resource = aws_sqs_queue.jobs.arn
+        Resource = [aws_sqs_queue.jobs.arn, aws_sqs_queue.email_events.arn]
       },
       {
         Effect   = "Allow"
@@ -501,7 +594,8 @@ resource "aws_ecs_task_definition" "api" {
     portMappings = [{ containerPort = 8080, protocol = "tcp" }]
     environment = concat(local.env, [
       { name = "CLAUDE_ANALYZER_ADDR", value = ":8080" },
-      { name = "CLAUDE_ANALYZER_MAX_QUEUE_DEPTH", value = tostring(var.max_queue_depth) }
+      { name = "CLAUDE_ANALYZER_MAX_QUEUE_DEPTH", value = tostring(var.max_queue_depth) },
+      { name = "CLAUDE_ANALYZER_SES_CONFIGURATION_SET", value = aws_sesv2_configuration_set.transactional.configuration_set_name }
     ])
     logConfiguration = {
       logDriver = "awslogs"
@@ -575,6 +669,36 @@ resource "aws_ecs_task_definition" "sweeper" {
   tags = local.common_tags
 }
 
+resource "aws_ecs_task_definition" "email_events" {
+  family                   = "${local.name}-email-events"
+  requires_compatibilities = ["FARGATE"]
+  network_mode             = "awsvpc"
+  cpu                      = 256
+  memory                   = 512
+  execution_role_arn       = aws_iam_role.execution.arn
+  task_role_arn            = aws_iam_role.task.arn
+
+  container_definitions = jsonencode([{
+    name      = "email-events"
+    image     = local.image
+    command   = ["claude-analyzer-email-events"]
+    essential = true
+    environment = concat(local.env, [
+      { name = "CLAUDE_ANALYZER_EMAIL_EVENTS_QUEUE_URL", value = aws_sqs_queue.email_events.url }
+    ])
+    logConfiguration = {
+      logDriver = "awslogs"
+      options = {
+        awslogs-group         = aws_cloudwatch_log_group.app.name
+        awslogs-region        = var.aws_region
+        awslogs-stream-prefix = "email-events"
+      }
+    }
+  }])
+
+  tags = local.common_tags
+}
+
 resource "aws_ecs_service" "api" {
   name            = "${local.name}-api"
   cluster         = aws_ecs_cluster.main.id
@@ -603,6 +727,22 @@ resource "aws_ecs_service" "worker" {
   cluster         = aws_ecs_cluster.main.id
   task_definition = aws_ecs_task_definition.worker.arn
   desired_count   = var.worker_desired_count
+  launch_type     = "FARGATE"
+
+  network_configuration {
+    subnets          = local.private_subnets
+    security_groups  = [aws_security_group.tasks.id]
+    assign_public_ip = false
+  }
+
+  tags = local.common_tags
+}
+
+resource "aws_ecs_service" "email_events" {
+  name            = "${local.name}-email-events"
+  cluster         = aws_ecs_cluster.main.id
+  task_definition = aws_ecs_task_definition.email_events.arn
+  desired_count   = var.email_events_desired_count
   launch_type     = "FARGATE"
 
   network_configuration {

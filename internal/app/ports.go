@@ -40,6 +40,11 @@ type EmailUnlockStore interface {
 	UpdateEmailUnlock(unlock EmailUnlock) error
 }
 
+type EmailOperationsStore interface {
+	GetEmailSuppression(emailHash string) (EmailSuppression, error)
+	RecordEmailEvent(event EmailDeliveryEvent) error
+}
+
 type APIStore interface {
 	UploadStore
 	JobQueue

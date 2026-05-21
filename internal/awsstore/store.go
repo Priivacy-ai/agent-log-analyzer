@@ -342,6 +342,61 @@ func (s *Store) UpdateEmailUnlock(unlock app.EmailUnlock) error {
 	return s.putEmailUnlock(unlock)
 }
 
+func (s *Store) GetEmailSuppression(emailHash string) (app.EmailSuppression, error) {
+	if emailHash == "" {
+		return app.EmailSuppression{}, os.ErrNotExist
+	}
+	output, err := s.dynamodb.GetItem(context.Background(), &dynamodb.GetItemInput{
+		TableName: aws.String(s.jobTable),
+		Key: map[string]dynamodbtypes.AttributeValue{
+			"id": &dynamodbtypes.AttributeValueMemberS{Value: emailSuppressionID(emailHash)},
+		},
+	})
+	if err != nil {
+		return app.EmailSuppression{}, err
+	}
+	if len(output.Item) == 0 {
+		return app.EmailSuppression{}, os.ErrNotExist
+	}
+	return emailSuppressionFromItem(output.Item)
+}
+
+func (s *Store) RecordEmailEvent(event app.EmailDeliveryEvent) error {
+	now := time.Now().UTC()
+	if event.ID == "" {
+		event.ID = app.NewJobID()
+	}
+	if event.CreatedAt.IsZero() {
+		event.CreatedAt = now
+	}
+	if err := s.putEmailEvent(event); err != nil {
+		return err
+	}
+	if !event.IsSuppressing() {
+		return nil
+	}
+	suppression, err := s.GetEmailSuppression(event.EmailHash)
+	if err != nil && !errors.Is(err, os.ErrNotExist) {
+		return err
+	}
+	if suppression.EmailHash == "" {
+		suppression.EmailHash = event.EmailHash
+		suppression.SuppressedAt = event.CreatedAt
+	}
+	suppression.Reason = event.Type
+	suppression.LastMessageID = event.MessageID
+	suppression.UpdatedAt = event.CreatedAt
+	switch event.Type {
+	case app.EmailEventBounce:
+		suppression.BounceCount++
+	case app.EmailEventComplaint:
+		suppression.ComplaintCount++
+	case app.EmailEventReject:
+		suppression.RejectCount++
+	}
+	return s.putEmailSuppression(suppression)
+}
+
 func (s *Store) FailJob(job app.Job, jobErr error) error {
 	job.Status = app.StatusFailed
 	job.Error = jobErr.Error()
@@ -539,6 +594,52 @@ func (s *Store) putEmailUnlock(unlock app.EmailUnlock) error {
 	return err
 }
 
+func (s *Store) putEmailEvent(event app.EmailDeliveryEvent) error {
+	item := map[string]dynamodbtypes.AttributeValue{
+		"id":          &dynamodbtypes.AttributeValueMemberS{Value: "email_event#" + event.ID},
+		"record_type": &dynamodbtypes.AttributeValueMemberS{Value: "email_event"},
+		"email_hash":  &dynamodbtypes.AttributeValueMemberS{Value: event.EmailHash},
+		"type":        &dynamodbtypes.AttributeValueMemberS{Value: string(event.Type)},
+		"source":      &dynamodbtypes.AttributeValueMemberS{Value: event.Source},
+		"created_at":  &dynamodbtypes.AttributeValueMemberS{Value: event.CreatedAt.Format(time.RFC3339Nano)},
+	}
+	if event.MessageID != "" {
+		item["message_id"] = &dynamodbtypes.AttributeValueMemberS{Value: event.MessageID}
+	}
+	if event.Detail != "" {
+		item["detail"] = &dynamodbtypes.AttributeValueMemberS{Value: event.Detail}
+	}
+	_, err := s.dynamodb.PutItem(context.Background(), &dynamodb.PutItemInput{
+		TableName: aws.String(s.jobTable),
+		Item:      item,
+	})
+	return err
+}
+
+func (s *Store) putEmailSuppression(suppression app.EmailSuppression) error {
+	item := map[string]dynamodbtypes.AttributeValue{
+		"id":           &dynamodbtypes.AttributeValueMemberS{Value: emailSuppressionID(suppression.EmailHash)},
+		"record_type":  &dynamodbtypes.AttributeValueMemberS{Value: "email_suppression"},
+		"email_hash":   &dynamodbtypes.AttributeValueMemberS{Value: suppression.EmailHash},
+		"reason":       &dynamodbtypes.AttributeValueMemberS{Value: string(suppression.Reason)},
+		"bounce_count": &dynamodbtypes.AttributeValueMemberN{Value: strconv.Itoa(suppression.BounceCount)},
+		"complaint_count": &dynamodbtypes.AttributeValueMemberN{
+			Value: strconv.Itoa(suppression.ComplaintCount),
+		},
+		"reject_count":  &dynamodbtypes.AttributeValueMemberN{Value: strconv.Itoa(suppression.RejectCount)},
+		"suppressed_at": &dynamodbtypes.AttributeValueMemberS{Value: suppression.SuppressedAt.Format(time.RFC3339Nano)},
+		"updated_at":    &dynamodbtypes.AttributeValueMemberS{Value: suppression.UpdatedAt.Format(time.RFC3339Nano)},
+	}
+	if suppression.LastMessageID != "" {
+		item["last_message_id"] = &dynamodbtypes.AttributeValueMemberS{Value: suppression.LastMessageID}
+	}
+	_, err := s.dynamodb.PutItem(context.Background(), &dynamodb.PutItemInput{
+		TableName: aws.String(s.jobTable),
+		Item:      item,
+	})
+	return err
+}
+
 func (s *Store) deleteQueueMessage(job app.Job) error {
 	if job.QueueReceipt == "" {
 		return nil
@@ -625,6 +726,28 @@ func emailUnlockFromItem(item map[string]dynamodbtypes.AttributeValue) (app.Emai
 	}
 	unlock.LastTransactionalEmailSentAt, err = parseTimeAttr(item, "last_transactional_email_sent_at")
 	return unlock, err
+}
+
+func emailSuppressionFromItem(item map[string]dynamodbtypes.AttributeValue) (app.EmailSuppression, error) {
+	suppression := app.EmailSuppression{
+		EmailHash:      stringAttr(item, "email_hash"),
+		Reason:         app.EmailEventType(stringAttr(item, "reason")),
+		BounceCount:    int(int64Attr(item, "bounce_count")),
+		ComplaintCount: int(int64Attr(item, "complaint_count")),
+		RejectCount:    int(int64Attr(item, "reject_count")),
+		LastMessageID:  stringAttr(item, "last_message_id"),
+	}
+	var err error
+	suppression.SuppressedAt, err = parseTimeAttr(item, "suppressed_at")
+	if err != nil {
+		return suppression, err
+	}
+	suppression.UpdatedAt, err = parseTimeAttr(item, "updated_at")
+	return suppression, err
+}
+
+func emailSuppressionID(emailHash string) string {
+	return "email_suppression#" + emailHash
 }
 
 func stringAttr(item map[string]dynamodbtypes.AttributeValue, key string) string {
