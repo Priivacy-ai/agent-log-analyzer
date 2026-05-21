@@ -119,6 +119,10 @@ var reportHTMLTemplate = template.Must(template.New("report").Funcs(template.Fun
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex,nofollow,noarchive" />
+    <meta name="description" content="Private Agent Analyzer deterministic report generated from sanitized local analysis JSON." />
+    <meta name="application-name" content="Agent Analyzer" />
+    <meta name="theme-color" content="#0d1117" />
     {{if ne .Job.Status "completed"}}<meta http-equiv="refresh" content="2" />{{end}}
     <title>Agent Analyzer Report</title>
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
