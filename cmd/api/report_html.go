@@ -216,7 +216,7 @@ var reportHTMLTemplate = template.Must(template.New("report").Funcs(template.Fun
         </section>
         {{if .Report.Recommendation}}
         <section id="recommendation-section" class="intel-section">
-          <h2>Next-best recommendation {{helpTip "Why this recommendation? Ranking comes from public allowlisted tool metadata and deterministic signals such as tool-output bloat, retrieval friction, usage visibility, and MCP/skill utilization. Unknown private names are not echoed."}}</h2>
+          <h2>Recommended tools to address waste {{helpTip "Why this recommendation? Ranking comes from public allowlisted tool metadata and deterministic signals such as tool-output bloat, retrieval friction, usage visibility, and MCP/skill utilization. Unknown private names are not echoed."}}</h2>
           <p class="section-note">Recommendations come from a public vetted allowlist. <a href="/allowed-tools.html">Review the allowlist and source URLs.</a></p>
           {{with .Report.Recommendation.Primary}}{{template "recommendation" .}}{{end}}
           {{with .Report.Recommendation.Secondary}}{{template "recommendation" .}}{{end}}
