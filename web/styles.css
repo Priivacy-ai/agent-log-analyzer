@@ -26,6 +26,18 @@ body {
   font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 .shell {
   width: min(1080px, calc(100vw - 32px));
   margin: 0 auto;
@@ -66,6 +78,43 @@ h1 {
   font-size: clamp(40px, 6vw, 76px);
   line-height: 0.96;
   letter-spacing: 0;
+}
+
+.tool-rotator {
+  display: inline-grid;
+  min-width: 5.35em;
+  color: var(--green);
+  white-space: nowrap;
+  vertical-align: baseline;
+}
+
+.tool-rotator span {
+  grid-area: 1 / 1;
+  opacity: 0;
+  transform: translateY(0.18em);
+  animation: tool-name-rotate 7.5s ease-in-out infinite;
+}
+
+.tool-rotator span:nth-child(2) {
+  animation-delay: 2.5s;
+}
+
+.tool-rotator span:nth-child(3) {
+  animation-delay: 5s;
+}
+
+@keyframes tool-name-rotate {
+  0%,
+  30% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  36%,
+  100% {
+    opacity: 0;
+    transform: translateY(-0.18em);
+  }
 }
 
 h2 {
@@ -822,6 +871,15 @@ pre {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .tool-rotator span {
+    animation: none;
+  }
+
+  .tool-rotator span:first-child {
+    opacity: 1;
+    transform: none;
+  }
+
   .timeline-savings {
     animation: none;
   }
