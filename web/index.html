@@ -177,20 +177,10 @@
           <p id="recommendation-empty" hidden>No high-priority recommendation detected from current signals.</p>
         </section>
 
-        <section id="workflow-fingerprints" class="intel-section" hidden>
-          <h2>Workflow Fingerprints <button type="button" class="help-tip" data-tippy-content="Fingerprints are bounded detections for known public tools. Evidence comes from verified signatures such as command names, config markers, MCP namespaces, package manifests, and optional CLI presence/version buckets. Private names are counted, not shown." aria-label="More information">?</button></h2>
-          <ol id="workflow-fingerprints-list"></ol>
-        </section>
-
-        <section id="tooling-utilization" class="intel-section" hidden>
-          <h2>MCP &amp; Skill Utilization <button type="button" class="help-tip" data-tippy-content="Utilization compares bounded exposed MCP/skill context against observed calls/executions. The warning band is a heuristic for context bloat risk, not a claim that a specific private tool is bad." aria-label="More information">?</button></h2>
-          <div id="tooling-utilization-rows"></div>
-        </section>
-
         <section class="evidence-grid">
-          <div class="evidence-card ecosystem-card">
-            <h2>Ecosystem <button type="button" class="help-tip" data-tippy-content="Ecosystem fields are bounded categories and allowlisted public names. Unknown/private MCPs, skills, plugins, and tools are counted without exposing their raw names." aria-label="More information">?</button></h2>
-            <div id="ecosystem" class="ecosystem-panel"></div>
+          <div class="evidence-card environment-card">
+            <h2>Environment signals <button type="button" class="help-tip" data-tippy-content="This condenses bounded ecosystem fingerprints, MCP utilization, and skill utilization into the few signals that affect token waste. Unknown/private names are counted without exposing raw names." aria-label="More information">?</button></h2>
+            <div id="environment-signals" class="environment-panel"></div>
           </div>
           <div class="evidence-card receipt-card">
             <h2>Security Receipt <button type="button" class="help-tip" data-tippy-content="The public flow analyzes and redacts locally, then uploads sanitized report JSON. This receipt records the report's own privacy flags and local redaction counts; it is not a third-party audit." aria-label="More information">?</button></h2>

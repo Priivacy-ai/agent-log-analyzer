@@ -1257,6 +1257,7 @@ pre {
     #0a0f14;
 }
 
+.environment-card,
 .receipt-card {
   background:
     linear-gradient(135deg, rgba(126, 231, 135, 0.08), transparent 44%),
@@ -1268,9 +1269,57 @@ pre {
 }
 
 .ecosystem-panel,
+.environment-panel,
 .receipt-panel {
   display: grid;
   gap: 14px;
+}
+
+.environment-table {
+  width: 100%;
+  border-collapse: collapse;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  background: rgba(8, 11, 16, 0.48);
+}
+
+.environment-table th,
+.environment-table td {
+  padding: 11px 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  text-align: left;
+  vertical-align: top;
+}
+
+.environment-table thead th {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.environment-table tbody th {
+  width: 130px;
+  color: var(--green);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-size: 13px;
+}
+
+.environment-table td {
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.35;
+}
+
+.environment-table td:last-child {
+  color: var(--muted);
+}
+
+.environment-table tr:last-child th,
+.environment-table tr:last-child td {
+  border-bottom: 0;
 }
 
 .receipt-boundary {
@@ -1714,6 +1763,38 @@ pre {
   .evidence-groups,
   .receipt-status-grid {
     grid-template-columns: 1fr;
+  }
+
+  .environment-table,
+  .environment-table thead,
+  .environment-table tbody,
+  .environment-table tr,
+  .environment-table th,
+  .environment-table td {
+    display: block;
+  }
+
+  .environment-table thead {
+    display: none;
+  }
+
+  .environment-table tr {
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  }
+
+  .environment-table tr:last-child {
+    border-bottom: 0;
+  }
+
+  .environment-table th,
+  .environment-table td {
+    border-bottom: 0;
+    padding: 4px 12px;
+  }
+
+  .environment-table tbody th {
+    width: auto;
   }
 
   .upsell {

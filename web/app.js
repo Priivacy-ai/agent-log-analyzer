@@ -180,9 +180,7 @@ function renderReport(report) {
     renderTimeline(report.timeline || [], report.estimated_waste_pct);
   }
   renderRecommendation(report);
-  renderWorkflowFingerprints(report);
-  renderToolingUtilization(report);
-  renderEcosystem(report.ecosystem);
+  renderEnvironmentSignals(report);
   renderReceipt(report.security_receipt, report.redactions);
   renderPaidCommandPreview(report);
 }
@@ -1223,6 +1221,137 @@ function utilizationRatioText(exposureKnown, ratioPct, source) {
   }
   const src = typeof source === "string" && source.length > 0 ? source : "unknown exposure";
   return `inferred from ${src}`;
+}
+
+function renderEnvironmentSignals(report) {
+  const target = document.querySelector("#environment-signals");
+  if (!target) return;
+  target.replaceChildren();
+  const ecosystem = report?.ecosystem;
+  if (!ecosystem) {
+    target.appendChild(emptyPanel("No environment signals detected."));
+    return;
+  }
+
+  const table = document.createElement("table");
+  table.className = "environment-table";
+  table.innerHTML = "<thead><tr><th>Signal</th><th>Summary</th><th>Why it matters</th></tr></thead>";
+  const body = document.createElement("tbody");
+  environmentRows(report).forEach((row) => body.appendChild(environmentRow(row[0], row[1], row[2])));
+  table.appendChild(body);
+  target.appendChild(table);
+}
+
+function environmentRows(report) {
+  const ecosystem = report?.ecosystem || {};
+  const util = ecosystem.tooling_utilization || {};
+  const mcp = util.mcp || {};
+  const skill = util.skill || {};
+  const fingerprints = Array.isArray(ecosystem.workflow_fingerprints) ? ecosystem.workflow_fingerprints : [];
+  return [
+    [
+      "Runtime",
+      joinCompact([ecosystem.client, ecosystem.operating_system, ecosystem.shell, ecosystem.version_control], "unknown"),
+      "Basic host and client context for interpreting the scan.",
+    ],
+    [
+      "Coding agents",
+      summarizeList(ecosystem.coding_agents, 4),
+      "Which agent surfaces appeared in the local scan.",
+    ],
+    [
+      "Workflow tools",
+      summarizeFingerprints(fingerprints),
+      "Spec-driven or workflow tooling detected from bounded public fingerprints.",
+    ],
+    [
+      "MCP surface",
+      summarizeMCP(mcp),
+      "High exposure with low use is a context-bloat signal.",
+    ],
+    [
+      "Skill surface",
+      summarizeSkills(skill),
+      "Loaded skills should earn their context by being used.",
+    ],
+    [
+      "Tooling inventory",
+      summarizeInventory(ecosystem),
+      "Package managers and plugins influence remediation recommendations.",
+    ],
+  ];
+}
+
+function environmentRow(signal, summary, detail) {
+  const tr = document.createElement("tr");
+  const signalCell = document.createElement("th");
+  signalCell.scope = "row";
+  signalCell.textContent = signal;
+  const summaryCell = document.createElement("td");
+  summaryCell.textContent = summary;
+  const detailCell = document.createElement("td");
+  detailCell.textContent = detail;
+  tr.append(signalCell, summaryCell, detailCell);
+  return tr;
+}
+
+function joinCompact(values, fallback) {
+  const safe = (Array.isArray(values) ? values : []).filter((value) => typeof value === "string" && value.length > 0);
+  return safe.length > 0 ? safe.join(" / ") : fallback;
+}
+
+function summarizeList(values, limit) {
+  const safe = Array.isArray(values) ? values.filter(Boolean) : [];
+  if (safe.length === 0) return "none detected";
+  const shown = safe.slice(0, limit).join(", ");
+  const hidden = safe.length - limit;
+  return hidden > 0 ? `${shown} +${hidden} more` : shown;
+}
+
+function summarizeFingerprints(fingerprints) {
+  const ranked = fingerprints
+    .filter((fp) => fp && typeof fp.id === "string" && fp.id.length > 0)
+    .slice()
+    .sort((a, b) => numberOrZero(b.evidence_count) - numberOrZero(a.evidence_count));
+  if (ranked.length === 0) return "none detected";
+  const shown = ranked.slice(0, 4).map((fp) => {
+    const flags = [];
+    if (fp.active === true) flags.push("active");
+    if (fp.installed === true) flags.push("installed");
+    const confidence = typeof fp.confidence === "string" && fp.confidence ? fp.confidence : "unknown";
+    return flags.length > 0 ? `${fp.id} (${flags.join(", ")})` : `${fp.id} (${confidence})`;
+  });
+  const hidden = ranked.length - shown.length;
+  return hidden > 0 ? `${shown.join(", ")} +${hidden} more` : shown.join(", ");
+}
+
+function summarizeMCP(mcp) {
+  const band = normalizeBand(mcp.warning_band);
+  const ratio = utilizationRatioText(mcp.exposure_known, mcp.utilization_ratio_pct, mcp.inference_source);
+  const calls = numberOrZero(mcp.call_count);
+  const called = summarizeList(mcp.unique_known_called_ids, 3);
+  const unknown = numberOrZero(mcp.unique_unknown_called_count);
+  return `${band} band; ${ratio}; ${formatCompactNumber(calls)} calls; called ${called}${unknown > 0 ? ` +${unknown} unknown` : ""}`;
+}
+
+function summarizeSkills(skill) {
+  const band = normalizeBand(skill.warning_band);
+  const ratio = utilizationRatioText(skill.exposure_known, skill.utilization_ratio_pct, skill.inference_source);
+  const executions = numberOrZero(skill.executed_count);
+  const executed = summarizeList(skill.known_executed_ids, 3);
+  const unknown = numberOrZero(skill.unknown_executed_count);
+  return `${band} band; ${ratio}; ${formatCompactNumber(executions)} executions; used ${executed}${unknown > 0 ? ` +${unknown} unknown` : ""}`;
+}
+
+function summarizeInventory(ecosystem) {
+  const parts = [];
+  const plugins = summarizeList(ecosystem.known_plugins, 2);
+  if (plugins !== "none detected") parts.push(`plugins: ${plugins}`);
+  const packages = summarizeList(ecosystem.package_managers, 4);
+  if (packages !== "none detected") parts.push(`packages: ${packages}`);
+  const frameworks = summarizeList(ecosystem.workflow_frameworks, 3);
+  if (frameworks !== "none detected") parts.push(`frameworks: ${frameworks}`);
+  return parts.length > 0 ? parts.join("; ") : "no notable inventory";
 }
 
 function utilizationGroup(label, entries) {

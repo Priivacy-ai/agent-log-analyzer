@@ -294,7 +294,8 @@ func TestReportPageServerRendersCompletedReport(t *testing.T) {
 		"RTK (Rust Token Killer, rtk-ai/rtk)",
 		"https://github.com/rtk-ai/rtk",
 		"Raw log TTL: not uploaded",
-		"MCP:",
+		"Environment signals",
+		"MCP surface",
 		"Agent Logs Analyzed",
 		"Claude Code",
 		"Codex",
@@ -305,7 +306,7 @@ func TestReportPageServerRendersCompletedReport(t *testing.T) {
 			t.Fatalf("server-rendered report missing %q:\n%s", want, body)
 		}
 	}
-	if strings.Contains(body, "<table>") || strings.Contains(body, "<th>Turn</th>") {
+	if strings.Contains(body, "<th>Turn</th>") {
 		t.Fatalf("server-rendered report regressed to tabular timeline: %s", body)
 	}
 	if strings.Contains(body, "Find out what&#39;s wasting your Claude Code tokens") || strings.Contains(body, "Run the local analyzer") {
