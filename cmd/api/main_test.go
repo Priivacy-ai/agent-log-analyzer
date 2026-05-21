@@ -720,6 +720,9 @@ func TestEmailUnlockConfirmAndFullScanUploadLifecycle(t *testing.T) {
 	if !strings.Contains(confirmRec.Body.String(), "npx --yes agent-analyzer@latest full-scan --token") {
 		t.Fatalf("confirmation page missing full-scan command: %s", confirmRec.Body.String())
 	}
+	if !strings.Contains(confirmRec.Body.String(), `class="copy-agents-line"`) || !strings.Contains(confirmRec.Body.String(), "Copy command") || !strings.Contains(confirmRec.Body.String(), "/report-actions.js") {
+		t.Fatalf("confirmation page missing command copy widget: %s", confirmRec.Body.String())
+	}
 	if len(sender.messages) != 2 || !strings.Contains(sender.messages[1].Body, "full-scan --token") {
 		t.Fatalf("expected full-scan command email, got %#v", sender.messages)
 	}
