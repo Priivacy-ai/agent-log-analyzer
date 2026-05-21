@@ -1018,10 +1018,10 @@ pre {
   grid-column: 1 / -1;
   min-width: 0;
   display: grid;
-  grid-template-columns: minmax(0, 1.08fr) minmax(280px, 0.92fr);
-  gap: 18px;
+  grid-template-columns: 1fr;
+  gap: 22px;
   align-items: stretch;
-  padding: 20px;
+  padding: clamp(18px, 2.4vw, 28px);
   border: 1px solid var(--line);
   border-radius: 8px;
   background:
@@ -1029,14 +1029,19 @@ pre {
     #0a0f14;
 }
 
+.plugin-pitch > div:first-child {
+  max-width: 1180px;
+}
+
 .plugin-pitch h2 {
   margin-bottom: 10px;
-  font-size: clamp(22px, 3vw, 34px);
-  line-height: 1.05;
+  max-width: 980px;
+  font-size: clamp(24px, 3.4vw, 44px);
+  line-height: 1;
 }
 
 .plugin-pitch p {
-  max-width: 720px;
+  max-width: 980px;
   margin: 0 0 16px;
   color: var(--muted);
   line-height: 1.45;
@@ -1051,13 +1056,18 @@ pre {
 
 .plugin-benefits {
   display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: 10px;
   margin-bottom: 18px;
 }
 
 .plugin-benefits li {
   position: relative;
-  padding-left: 20px;
+  min-height: 100%;
+  padding: 12px 14px 12px 28px;
+  border: 1px solid rgba(126, 231, 135, 0.14);
+  border-radius: 8px;
+  background: rgba(126, 231, 135, 0.035);
   color: var(--text);
   line-height: 1.35;
 }
@@ -1065,8 +1075,8 @@ pre {
 .plugin-benefits li::before {
   content: "";
   position: absolute;
-  top: 0.62em;
-  left: 0;
+  top: 1.05em;
+  left: 13px;
   width: 7px;
   height: 7px;
   border-radius: 999px;
@@ -1140,7 +1150,7 @@ pre {
   display: grid;
   align-content: start;
   gap: 12px;
-  padding: 18px;
+  padding: clamp(16px, 2vw, 24px);
   border: 1px solid rgba(121, 192, 255, 0.22);
   border-radius: 8px;
   background:
@@ -1156,6 +1166,7 @@ pre {
 
 #fixes {
   display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
   gap: 12px;
 }
 
