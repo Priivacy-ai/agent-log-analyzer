@@ -9,6 +9,8 @@ const waiverAccepted = document.querySelector("#waiver-accepted");
 const paidStatus = document.querySelector("#paid-status");
 const paidCommand = document.querySelector("#paid-command");
 const copyPaidCommandButton = document.querySelector("#copy-paid-command");
+const REQUIRED_WAIVER_TEXT =
+  "I understand that Claude Analyzer provides deterministic analysis and vetted setup recommendations, but any installation or code change is executed by Claude Code, my package manager, or third-party tools with my approval and at my own risk.";
 
 const route = parseReportRoute();
 
@@ -1660,7 +1662,9 @@ function findingEvidence(evidence) {
 
 function renderPluginDownloadPreview() {
   if (!route) return;
+  ensurePluginWaiverGate();
   updateReportDownloadLinks(route);
+  applyPluginWaiverGate();
 }
 
 function updateReportDownloadLinks(activeRoute) {
@@ -1671,8 +1675,64 @@ function updateReportDownloadLinks(activeRoute) {
     extended.href = `${window.location.origin}/api/public-reports/${activeRoute.jobID}/${activeRoute.token}/extended.md`;
   }
   if (plugin) {
-    plugin.href = `${window.location.origin}/api/public-artifacts/${activeRoute.jobID}/${activeRoute.token}/plugin.zip`;
+    plugin.dataset.targetHref = `${window.location.origin}/api/public-artifacts/${activeRoute.jobID}/${activeRoute.token}/plugin.zip`;
   }
+}
+
+function ensurePluginWaiverGate() {
+  const pluginAction = document.querySelector("#plugin-purchase");
+  const pluginLink = document.querySelector("#plugin-download-link");
+  if (!pluginAction || !pluginLink) return;
+  if (document.querySelector("#plugin-waiver-accepted")) return;
+
+  const row = document.createElement("label");
+  row.className = "waiver-row";
+  row.htmlFor = "plugin-waiver-accepted";
+
+  const checkbox = document.createElement("input");
+  checkbox.type = "checkbox";
+  checkbox.id = "plugin-waiver-accepted";
+  checkbox.name = "plugin-waiver-accepted";
+  checkbox.checked = false;
+  row.appendChild(checkbox);
+
+  const text = document.createElement("span");
+  text.textContent = REQUIRED_WAIVER_TEXT;
+  row.appendChild(text);
+
+  const status = document.createElement("p");
+  status.id = "plugin-waiver-status";
+  status.className = "command-note";
+  status.textContent = "Acknowledge the waiver to enable plugin download.";
+
+  pluginLink.addEventListener("click", (event) => {
+    if (!checkbox.checked) {
+      event.preventDefault();
+      applyPluginWaiverGate();
+    }
+  });
+  checkbox.addEventListener("change", () => applyPluginWaiverGate());
+
+  pluginAction.insertBefore(status, pluginLink.parentElement);
+  pluginAction.insertBefore(row, status);
+}
+
+function applyPluginWaiverGate() {
+  const pluginLink = document.querySelector("#plugin-download-link");
+  const checkbox = document.querySelector("#plugin-waiver-accepted");
+  const status = document.querySelector("#plugin-waiver-status");
+  if (!pluginLink || !checkbox) return;
+
+  const targetHref = pluginLink.dataset.targetHref || pluginLink.getAttribute("href") || "#";
+  if (!checkbox.checked) {
+    pluginLink.setAttribute("href", "#");
+    pluginLink.setAttribute("aria-disabled", "true");
+    if (status) status.textContent = "Acknowledge the waiver to enable plugin download.";
+    return;
+  }
+  pluginLink.setAttribute("href", targetHref);
+  pluginLink.removeAttribute("aria-disabled");
+  if (status) status.textContent = "Waiver acknowledged. Plugin download enabled.";
 }
 
 function parseReportRoute() {
