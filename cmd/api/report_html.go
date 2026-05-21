@@ -102,6 +102,8 @@ var reportHTMLTemplate = template.Must(template.New("report").Funcs(template.Fun
 	"savingsRange":          savingsRange,
 	"sourceLogLabel":        sourceLogLabel,
 	"timelineChart":         timelineChartHTML,
+	"toolingUtilization":    toolingUtilizationHTML,
+	"workflowFingerprints":  workflowFingerprintsHTML,
 }).Parse(`<!doctype html>
 <html lang="en">
   <head>
@@ -202,20 +204,11 @@ var reportHTMLTemplate = template.Must(template.New("report").Funcs(template.Fun
         {{end}}
         <section id="workflow-fingerprints" class="intel-section">
           <h2>Workflow Fingerprints {{helpTip "Fingerprints are bounded detections for known public tools. Evidence comes from verified signatures such as command names, config markers, MCP namespaces, package manifests, and optional CLI presence/version buckets. Private names are counted, not shown."}}</h2>
-          <ol id="workflow-fingerprints-list">
-            {{range .Report.Ecosystem.WorkflowFingerprints}}
-            <li>{{.ID}} — {{.Confidence}} confidence; sources: {{join .Sources}}; evidence: {{.EvidenceCount}}{{if .Active}}; active{{end}}{{if .Installed}}; installed{{end}}{{if .VersionBucket}}; version: {{.VersionBucket}}{{end}}</li>
-            {{else}}
-            <li>No known workflow fingerprints detected.</li>
-            {{end}}
-          </ol>
+          {{workflowFingerprints .Report.Ecosystem.WorkflowFingerprints}}
         </section>
         <section id="tooling-utilization" class="intel-section">
           <h2>MCP &amp; Skill Utilization {{helpTip "Utilization compares bounded exposed MCP/skill context against observed calls/executions. The warning band is a heuristic for context bloat risk, not a claim that a specific private tool is bad."}}</h2>
-          <div id="tooling-utilization-rows">
-            <p><strong>MCP:</strong> {{.Report.Ecosystem.ToolingUtilization.MCP.WarningBand}} band; {{.Report.Ecosystem.ToolingUtilization.MCP.UtilizationRatioPct}}% utilization; exposed servers {{.Report.Ecosystem.ToolingUtilization.MCP.ServerCountBucket}}; context {{.Report.Ecosystem.ToolingUtilization.MCP.ContextTokenBucket}}; calls {{.Report.Ecosystem.ToolingUtilization.MCP.CallCount}}; known called: {{join .Report.Ecosystem.ToolingUtilization.MCP.UniqueKnownCalledIDs}}; unknown called count: {{.Report.Ecosystem.ToolingUtilization.MCP.UniqueUnknownCalledCount}}</p>
-            <p><strong>Skills:</strong> {{.Report.Ecosystem.ToolingUtilization.Skill.WarningBand}} band; {{.Report.Ecosystem.ToolingUtilization.Skill.UtilizationRatioPct}}% utilization; exposed {{.Report.Ecosystem.ToolingUtilization.Skill.ExposedCountBucket}}; context {{.Report.Ecosystem.ToolingUtilization.Skill.ContextTokenBucket}}; executions {{.Report.Ecosystem.ToolingUtilization.Skill.ExecutedCount}}; known executed: {{join .Report.Ecosystem.ToolingUtilization.Skill.KnownExecutedIDs}}; unknown executed count: {{.Report.Ecosystem.ToolingUtilization.Skill.UnknownExecutedCount}}</p>
-          </div>
+          {{toolingUtilization .Report.Ecosystem.ToolingUtilization}}
         </section>
         <section class="evidence-grid">
           <div class="evidence-card ecosystem-card">
@@ -361,6 +354,221 @@ func boolText(v bool) string {
 		return "yes"
 	}
 	return "no"
+}
+
+func workflowFingerprintsHTML(fingerprints []analyzer.EcosystemFingerprint) template.HTML {
+	var b strings.Builder
+	b.WriteString(`<ol id="workflow-fingerprints-list">`)
+	if len(fingerprints) == 0 {
+		b.WriteString(`<li class="fingerprint-card"><p class="empty-evidence">No known workflow fingerprints detected.</p></li>`)
+		b.WriteString(`</ol>`)
+		return template.HTML(b.String())
+	}
+	for _, fp := range fingerprints {
+		b.WriteString(`<li class="fingerprint-card">`)
+		b.WriteString(`<div class="fingerprint-header">`)
+		fmt.Fprintf(&b, `<strong class="fingerprint-id">%s</strong>`, htmlstd.EscapeString(fp.ID))
+		confidence := defaultString(fp.Confidence, "unknown")
+		fmt.Fprintf(&b, `<span class="fingerprint-confidence status-chip confidence-%s">%s confidence</span>`, htmlstd.EscapeString(confidence), htmlstd.EscapeString(confidence))
+		if fp.Active {
+			statusChipHTML(&b, "active", "good")
+		}
+		if fp.Installed {
+			statusChipHTML(&b, "installed", "good")
+		}
+		if fp.VersionBucket != "" {
+			statusChipHTML(&b, "version "+fp.VersionBucket, "")
+		}
+		b.WriteString(`</div>`)
+		b.WriteString(`<div class="fingerprint-body">`)
+		factTileHTML(&b, "Evidence", fmt.Sprintf("%d", fp.EvidenceCount))
+		sourceGroupsHTML(&b, fp.Sources)
+		b.WriteString(`</div></li>`)
+	}
+	b.WriteString(`</ol>`)
+	return template.HTML(b.String())
+}
+
+func toolingUtilizationHTML(util analyzer.ToolingUtilization) template.HTML {
+	var b strings.Builder
+	b.WriteString(`<div id="tooling-utilization-rows">`)
+	mcpUtilizationHTML(&b, util.MCP)
+	skillUtilizationHTML(&b, util.Skill)
+	b.WriteString(`</div>`)
+	return template.HTML(b.String())
+}
+
+func mcpUtilizationHTML(b *strings.Builder, mcp analyzer.MCPUtilization) {
+	b.WriteString(`<div class="utilization-card" aria-label="MCP: utilization summary">`)
+	utilizationHeaderHTML(b, "MCP", normalizeBandString(mcp.WarningBand), utilizationRatioText(mcp.ExposureKnown, mcp.UtilizationRatioPct, mcp.InferenceSource))
+	b.WriteString(`<div class="utilization-body">`)
+	utilizationGroupHTML(b, "Exposure", [][2]string{
+		{"Servers", bucketLabel(mcp.ServerCountBucket)},
+		{"Tools", bucketLabel(mcp.ExposedToolCountBucket)},
+		{"Context", bucketLabel(mcp.ContextTokenBucket)},
+		{"Efficiency", bucketLabel(mcp.ContextEfficiencyBucket)},
+	})
+	utilizationGroupHTML(b, "Usage", [][2]string{
+		{"Calls", fmt.Sprintf("%d", mcp.CallCount)},
+		{"Known", fmt.Sprintf("%d", mcp.KnownCallCount)},
+		{"Unknown", fmt.Sprintf("%d", mcp.UnknownCallCount)},
+	})
+	chipPanelHTML(b, "Known called", mcp.UniqueKnownCalledIDs, unknownCountLabelWithSuffix(mcp.UniqueUnknownCalledCount, "unknown called"))
+	chipPanelHTML(b, "Inventory", mcp.KnownServerIDs, unknownCountLabelWithSuffix(mcp.UnknownServerCount, "unknown servers"))
+	b.WriteString(`</div></div>`)
+}
+
+func skillUtilizationHTML(b *strings.Builder, skill analyzer.SkillUtilization) {
+	b.WriteString(`<div class="utilization-card" aria-label="Skills: utilization summary">`)
+	utilizationHeaderHTML(b, "Skills", normalizeBandString(skill.WarningBand), utilizationRatioText(skill.ExposureKnown, skill.UtilizationRatioPct, skill.InferenceSource))
+	b.WriteString(`<div class="utilization-body">`)
+	utilizationGroupHTML(b, "Exposure", [][2]string{
+		{"Skills", bucketLabel(skill.ExposedCountBucket)},
+		{"Context", bucketLabel(skill.ContextTokenBucket)},
+		{"Efficiency", bucketLabel(skill.ContextEfficiencyBucket)},
+	})
+	utilizationGroupHTML(b, "Usage", [][2]string{
+		{"Executions", fmt.Sprintf("%d", skill.ExecutedCount)},
+		{"Known", fmt.Sprintf("%d", len(skill.KnownExecutedIDs))},
+		{"Unknown", fmt.Sprintf("%d", skill.UnknownExecutedCount)},
+	})
+	chipPanelHTML(b, "Known executed", skill.KnownExecutedIDs, unknownCountLabelWithSuffix(skill.UnknownExecutedCount, "unknown executed"))
+	chipPanelHTML(b, "Known exposed", skill.KnownExposedIDs, unknownCountLabelWithSuffix(skill.UnknownExposedCount, "unknown exposed"))
+	b.WriteString(`</div></div>`)
+}
+
+func utilizationHeaderHTML(b *strings.Builder, label, band, ratio string) {
+	b.WriteString(`<header class="utilization-header">`)
+	fmt.Fprintf(b, `<strong>%s</strong>`, htmlstd.EscapeString(label))
+	b.WriteString(`<div class="utilization-header-meta">`)
+	fmt.Fprintf(b, `<span class="band-chip band-%s">%s band</span>`, htmlstd.EscapeString(band), htmlstd.EscapeString(band))
+	fmt.Fprintf(b, `<span class="utilization-ratio">%s</span>`, htmlstd.EscapeString(ratio))
+	b.WriteString(`</div></header>`)
+}
+
+func utilizationGroupHTML(b *strings.Builder, label string, entries [][2]string) {
+	fmt.Fprintf(b, `<section class="utilization-group"><h3>%s</h3><div class="fact-grid">`, htmlstd.EscapeString(label))
+	for _, entry := range entries {
+		factTileHTML(b, entry[0], entry[1])
+	}
+	b.WriteString(`</div></section>`)
+}
+
+func factTileHTML(b *strings.Builder, label, value string) {
+	fmt.Fprintf(
+		b,
+		`<span class="fact-tile"><small>%s</small><strong>%s</strong></span>`,
+		htmlstd.EscapeString(label),
+		htmlstd.EscapeString(defaultString(value, "unknown")),
+	)
+}
+
+func chipPanelHTML(b *strings.Builder, label string, values []string, extra string) {
+	fmt.Fprintf(b, `<section class="mini-chip-group"><h3>%s</h3><div class="chip-list">`, htmlstd.EscapeString(label))
+	if len(values) == 0 {
+		chipHTML(b, "none detected", "muted")
+	} else {
+		for _, value := range values {
+			if value != "" {
+				chipHTML(b, value, "")
+			}
+		}
+	}
+	if extra != "" && !strings.HasPrefix(extra, "0 ") {
+		chipHTML(b, extra, "unknown")
+	}
+	b.WriteString(`</div></section>`)
+}
+
+func sourceGroupsHTML(b *strings.Builder, sources []string) {
+	b.WriteString(`<div class="fingerprint-source-groups">`)
+	grouped := map[string][]string{
+		"CLI":           {},
+		"Config":        {},
+		"Agent surface": {},
+		"Other":         {},
+	}
+	for _, source := range sources {
+		grouped[sourceCategory(source)] = append(grouped[sourceCategory(source)], sourceLabel(source))
+	}
+	order := []string{"CLI", "Config", "Agent surface", "Other"}
+	wrote := false
+	for _, group := range order {
+		values := grouped[group]
+		if len(values) == 0 {
+			continue
+		}
+		wrote = true
+		chipPanelHTML(b, group, values, "")
+	}
+	if !wrote {
+		chipHTML(b, "no public source markers", "muted")
+	}
+	b.WriteString(`</div>`)
+}
+
+func statusChipHTML(b *strings.Builder, text, tone string) {
+	className := "status-chip"
+	if tone != "" {
+		className += " status-chip-" + tone
+	}
+	fmt.Fprintf(b, `<span class="%s">%s</span>`, htmlstd.EscapeString(className), htmlstd.EscapeString(text))
+}
+
+func normalizeBandString(value string) string {
+	switch value {
+	case "severe", "high", "watch", "normal":
+		return value
+	default:
+		return "unknown"
+	}
+}
+
+func utilizationRatioText(exposureKnown bool, ratio int, source string) string {
+	if exposureKnown {
+		return fmt.Sprintf("%d%% utilization", ratio)
+	}
+	return "inferred from " + defaultString(source, "unknown exposure")
+}
+
+func bucketLabel(value string) string {
+	return defaultString(value, "unknown")
+}
+
+func unknownCountLabelWithSuffix(count int, suffix string) string {
+	return fmt.Sprintf("%d %s", count, suffix)
+}
+
+func sourceCategory(source string) string {
+	if strings.HasPrefix(source, "cli_") || source == "command_name" {
+		return "CLI"
+	}
+	if strings.HasPrefix(source, "config_") || source == "package_manifest" || source == "hook_config" {
+		return "Config"
+	}
+	if source == "skill_name" || source == "slash_command" || source == "mcp_namespace" {
+		return "Agent surface"
+	}
+	return "Other"
+}
+
+func sourceLabel(source string) string {
+	labels := map[string]string{
+		"cli_binary":        "binary present",
+		"cli_version_probe": "version probe",
+		"command_name":      "command name",
+		"config_dir":        "config directory",
+		"config_file":       "config file",
+		"package_manifest":  "package manifest",
+		"skill_name":        "skill name",
+		"slash_command":     "slash command",
+		"mcp_namespace":     "MCP namespace",
+		"hook_config":       "hook config",
+	}
+	if label, ok := labels[source]; ok {
+		return label
+	}
+	return strings.ReplaceAll(defaultString(source, "unknown"), "_", " ")
 }
 
 func ecosystemPanelHTML(report analyzer.Report) template.HTML {

@@ -489,58 +489,104 @@ function renderWorkflowFingerprints(report) {
   for (const fp of fps) {
     if (!fp || typeof fp !== "object") continue;
     const row = document.createElement("li");
-    row.className = "fingerprint-row";
+    row.className = "fingerprint-card";
 
-    const title = document.createElement("span");
+    const header = document.createElement("div");
+    header.className = "fingerprint-header";
+    const title = document.createElement("strong");
     title.className = "fingerprint-id";
     title.textContent = typeof fp.id === "string" ? fp.id : "";
-    row.appendChild(title);
+    header.appendChild(title);
 
     const confidence = document.createElement("span");
     const confValue = typeof fp.confidence === "string" ? fp.confidence : "";
-    confidence.className = "fingerprint-confidence";
+    confidence.className = "fingerprint-confidence status-chip";
     if (confValue) confidence.classList.add(`confidence-${confValue}`);
-    confidence.textContent = confValue;
-    row.appendChild(confidence);
-
-    if (Array.isArray(fp.sources) && fp.sources.length > 0) {
-      const sources = document.createElement("ul");
-      sources.className = "fingerprint-sources";
-      for (const source of fp.sources) {
-        const item = document.createElement("li");
-        item.textContent = typeof source === "string" ? source : "";
-        sources.appendChild(item);
-      }
-      row.appendChild(sources);
-    }
-
-    const evidence = document.createElement("span");
-    evidence.className = "fingerprint-evidence";
-    const evCount = typeof fp.evidence_count === "number" ? fp.evidence_count : 0;
-    evidence.textContent = `evidence: ${evCount}`;
-    row.appendChild(evidence);
+    confidence.textContent = confValue ? `${confValue} confidence` : "unknown confidence";
+    header.appendChild(confidence);
 
     if (fp.active === true) {
-      const active = document.createElement("span");
-      active.className = "fingerprint-active";
-      active.textContent = "active";
-      row.appendChild(active);
+      header.appendChild(statusChip("active", "good"));
     }
     if (fp.installed === true) {
-      const installed = document.createElement("span");
-      installed.className = "fingerprint-installed";
-      installed.textContent = "installed";
-      row.appendChild(installed);
+      header.appendChild(statusChip("installed", "good"));
     }
     if (typeof fp.version_bucket === "string" && fp.version_bucket.length > 0) {
-      const version = document.createElement("span");
-      version.className = "fingerprint-version";
-      version.textContent = `version: ${fp.version_bucket}`;
-      row.appendChild(version);
+      header.appendChild(statusChip(`version ${fp.version_bucket}`, ""));
     }
+    row.appendChild(header);
+
+    const body = document.createElement("div");
+    body.className = "fingerprint-body";
+    body.appendChild(factTile("Evidence", String(typeof fp.evidence_count === "number" ? fp.evidence_count : 0)));
+    body.appendChild(sourceGroups(Array.isArray(fp.sources) ? fp.sources : []));
+    row.appendChild(body);
 
     list.appendChild(row);
   }
+}
+
+function sourceGroups(sources) {
+  const panel = document.createElement("div");
+  panel.className = "fingerprint-source-groups";
+  const groups = {
+    "CLI": [],
+    "Config": [],
+    "Agent surface": [],
+    "Other": [],
+  };
+  for (const source of sources) {
+    const id = typeof source === "string" ? source : "";
+    const label = SOURCE_LABEL[id] || humanizeID(id);
+    groups[sourceCategory(id)].push(label);
+  }
+  for (const [label, values] of Object.entries(groups)) {
+    if (values.length === 0) continue;
+    const group = document.createElement("section");
+    group.className = "mini-chip-group";
+    const title = document.createElement("h3");
+    title.textContent = label;
+    const chips = document.createElement("div");
+    chips.className = "chip-list";
+    values.forEach((value) => chips.appendChild(chip(value, "")));
+    group.append(title, chips);
+    panel.appendChild(group);
+  }
+  if (panel.childElementCount === 0) {
+    panel.appendChild(chip("no public source markers", "muted"));
+  }
+  return panel;
+}
+
+function statusChip(text, tone) {
+  const item = document.createElement("span");
+  item.className = `status-chip${tone ? ` status-chip-${tone}` : ""}`;
+  item.textContent = text;
+  return item;
+}
+
+const SOURCE_LABEL = {
+  cli_binary: "binary present",
+  cli_version_probe: "version probe",
+  command_name: "command name",
+  config_dir: "config directory",
+  config_file: "config file",
+  package_manifest: "package manifest",
+  skill_name: "skill name",
+  slash_command: "slash command",
+  mcp_namespace: "MCP namespace",
+  hook_config: "hook config",
+};
+
+function sourceCategory(id) {
+  if (id.startsWith("cli_") || id === "command_name") return "CLI";
+  if (id.startsWith("config_") || id === "package_manifest" || id === "hook_config") return "Config";
+  if (id === "skill_name" || id === "slash_command" || id === "mcp_namespace") return "Agent surface";
+  return "Other";
+}
+
+function humanizeID(value) {
+  return String(value || "unknown").replaceAll("_", " ");
 }
 
 // Token-saving recommendation rendering — kitty-specs/token-saving-recommendation-phase-b-01KS0JZ4.
@@ -932,57 +978,29 @@ function renderToolingUtilization(report) {
 
 function buildMCPRow(report, mcp) {
   const row = document.createElement("div");
-  row.className = "utilization-row";
+  row.className = "utilization-card";
 
-  const header = document.createElement("div");
-  header.className = "surface-header";
-  header.textContent = "MCP";
-  row.appendChild(header);
+  const band = normalizeBand(mcp.warning_band);
+  row.appendChild(utilizationHeader("MCP", band, utilizationRatioText(mcp.exposure_known, mcp.utilization_ratio_pct, mcp.inference_source)));
 
   const body = document.createElement("div");
-  body.className = "surface-body";
+  body.className = "utilization-body";
 
-  // Bucket cells.
-  appendBucket(body, "servers", mcp.server_count_bucket);
-  appendBucket(body, "exposed tools", mcp.exposed_tool_count_bucket);
-  appendBucket(body, "context tokens", mcp.context_token_bucket);
-  appendBucket(body, "context efficiency", mcp.context_efficiency_bucket);
+  body.appendChild(utilizationGroup("Exposure", [
+    ["Servers", bucketText(mcp.server_count_bucket)],
+    ["Tools", bucketText(mcp.exposed_tool_count_bucket)],
+    ["Context", bucketText(mcp.context_token_bucket)],
+    ["Efficiency", bucketText(mcp.context_efficiency_bucket)],
+  ]));
 
-  // Counts (numeric only — never names).
-  appendCount(body, "calls", mcp.call_count);
-  appendCount(body, "known calls", mcp.known_call_count);
-  appendCount(body, "unknown calls", mcp.unknown_call_count);
-  appendCount(body, "unknown servers", mcp.unknown_server_count);
-  appendCount(body, "unique unknown called", mcp.unique_unknown_called_count);
-  appendCount(
-    body,
-    "unique known called",
-    Array.isArray(mcp.unique_known_called_ids) ? mcp.unique_known_called_ids.length : 0,
-  );
-  appendCount(
-    body,
-    "known servers",
-    Array.isArray(mcp.known_server_ids) ? mcp.known_server_ids.length : 0,
-  );
+  body.appendChild(utilizationGroup("Usage", [
+    ["Calls", String(numberOrZero(mcp.call_count))],
+    ["Known", String(numberOrZero(mcp.known_call_count))],
+    ["Unknown", String(numberOrZero(mcp.unknown_call_count))],
+  ]));
 
-  // Band chip.
-  const band = normalizeBand(mcp.warning_band);
-  const chip = document.createElement("span");
-  chip.className = `band-chip band-${band}`;
-  chip.textContent = band;
-  body.appendChild(chip);
-
-  // Ratio cell (FR-007).
-  const ratio = document.createElement("span");
-  ratio.className = "utilization-ratio";
-  if (mcp.exposure_known === true) {
-    const pct = typeof mcp.utilization_ratio_pct === "number" ? mcp.utilization_ratio_pct : 0;
-    ratio.textContent = `${pct}%`;
-  } else {
-    const src = typeof mcp.inference_source === "string" ? mcp.inference_source : "";
-    ratio.textContent = `inferred from: ${src}`;
-  }
-  body.appendChild(ratio);
+  body.appendChild(chipPanel("Known called", mcp.unique_known_called_ids, `${numberOrZero(mcp.unique_unknown_called_count)} unknown called`));
+  body.appendChild(chipPanel("Inventory", mcp.known_server_ids, `${numberOrZero(mcp.unknown_server_count)} unknown servers`));
 
   row.appendChild(body);
 
@@ -1001,54 +1019,28 @@ function buildMCPRow(report, mcp) {
 
 function buildSkillRow(report, skill) {
   const row = document.createElement("div");
-  row.className = "utilization-row";
+  row.className = "utilization-card";
 
-  const header = document.createElement("div");
-  header.className = "surface-header";
-  header.textContent = "Skill";
-  row.appendChild(header);
+  const band = normalizeBand(skill.warning_band);
+  row.appendChild(utilizationHeader("Skills", band, utilizationRatioText(skill.exposure_known, skill.utilization_ratio_pct, skill.inference_source)));
 
   const body = document.createElement("div");
-  body.className = "surface-body";
+  body.className = "utilization-body";
 
-  // Bucket cells (Skill has no exposed_tool_count_bucket).
-  appendBucket(body, "exposed", skill.exposed_count_bucket);
-  appendBucket(body, "context tokens", skill.context_token_bucket);
-  appendBucket(body, "context efficiency", skill.context_efficiency_bucket);
+  body.appendChild(utilizationGroup("Exposure", [
+    ["Skills", bucketText(skill.exposed_count_bucket)],
+    ["Context", bucketText(skill.context_token_bucket)],
+    ["Efficiency", bucketText(skill.context_efficiency_bucket)],
+  ]));
 
-  // Counts.
-  appendCount(body, "executed", skill.executed_count);
-  appendCount(body, "unknown exposed", skill.unknown_exposed_count);
-  appendCount(body, "unknown executed", skill.unknown_executed_count);
-  appendCount(
-    body,
-    "known exposed",
-    Array.isArray(skill.known_exposed_ids) ? skill.known_exposed_ids.length : 0,
-  );
-  appendCount(
-    body,
-    "known executed",
-    Array.isArray(skill.known_executed_ids) ? skill.known_executed_ids.length : 0,
-  );
+  body.appendChild(utilizationGroup("Usage", [
+    ["Executions", String(numberOrZero(skill.executed_count))],
+    ["Known", String(Array.isArray(skill.known_executed_ids) ? skill.known_executed_ids.length : 0)],
+    ["Unknown", String(numberOrZero(skill.unknown_executed_count))],
+  ]));
 
-  // Band chip.
-  const band = normalizeBand(skill.warning_band);
-  const chip = document.createElement("span");
-  chip.className = `band-chip band-${band}`;
-  chip.textContent = band;
-  body.appendChild(chip);
-
-  // Ratio cell (FR-007).
-  const ratio = document.createElement("span");
-  ratio.className = "utilization-ratio";
-  if (skill.exposure_known === true) {
-    const pct = typeof skill.utilization_ratio_pct === "number" ? skill.utilization_ratio_pct : 0;
-    ratio.textContent = `${pct}%`;
-  } else {
-    const src = typeof skill.inference_source === "string" ? skill.inference_source : "";
-    ratio.textContent = `inferred from: ${src}`;
-  }
-  body.appendChild(ratio);
+  body.appendChild(chipPanel("Known executed", skill.known_executed_ids, `${numberOrZero(skill.unknown_executed_count)} unknown executed`));
+  body.appendChild(chipPanel("Known exposed", skill.known_exposed_ids, `${numberOrZero(skill.unknown_exposed_count)} unknown exposed`));
 
   row.appendChild(body);
 
@@ -1063,6 +1055,79 @@ function buildSkillRow(report, skill) {
   }
 
   return row;
+}
+
+function utilizationHeader(label, band, ratioText) {
+  const header = document.createElement("header");
+  header.className = "utilization-header";
+  const title = document.createElement("strong");
+  title.textContent = label;
+  const meta = document.createElement("div");
+  meta.className = "utilization-header-meta";
+  const chip = document.createElement("span");
+  chip.className = `band-chip band-${band}`;
+  chip.textContent = `${band} band`;
+  const ratio = document.createElement("span");
+  ratio.className = "utilization-ratio";
+  ratio.textContent = ratioText;
+  meta.append(chip, ratio);
+  header.append(title, meta);
+  return header;
+}
+
+function utilizationRatioText(exposureKnown, ratioPct, source) {
+  if (exposureKnown === true) {
+    return `${numberOrZero(ratioPct)}% utilization`;
+  }
+  const src = typeof source === "string" && source.length > 0 ? source : "unknown exposure";
+  return `inferred from ${src}`;
+}
+
+function utilizationGroup(label, entries) {
+  const group = document.createElement("section");
+  group.className = "utilization-group";
+  const title = document.createElement("h3");
+  title.textContent = label;
+  const facts = document.createElement("div");
+  facts.className = "fact-grid";
+  entries.forEach(([name, value]) => facts.appendChild(factTile(name, value)));
+  group.append(title, facts);
+  return group;
+}
+
+function factTile(label, value) {
+  const item = document.createElement("span");
+  item.className = "fact-tile";
+  const k = document.createElement("small");
+  k.textContent = label;
+  const v = document.createElement("strong");
+  v.textContent = value || "unknown";
+  item.append(k, v);
+  return item;
+}
+
+function chipPanel(label, values, extra) {
+  const group = document.createElement("section");
+  group.className = "mini-chip-group";
+  const title = document.createElement("h3");
+  title.textContent = label;
+  const list = document.createElement("div");
+  list.className = "chip-list";
+  const safeValues = Array.isArray(values) ? values.filter(Boolean) : [];
+  if (safeValues.length === 0) {
+    list.appendChild(chip("none detected", "muted"));
+  } else {
+    safeValues.forEach((value) => list.appendChild(chip(String(value), "")));
+  }
+  if (extra && !String(extra).startsWith("0 ")) {
+    list.appendChild(chip(extra, "unknown"));
+  }
+  group.append(title, list);
+  return group;
+}
+
+function bucketText(value) {
+  return typeof value === "string" && value.length > 0 ? value : "unknown";
 }
 
 function appendBucket(parent, label, value) {
