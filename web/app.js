@@ -201,7 +201,8 @@ function renderReport(report) {
 function buildFindingItem(finding, report, index, estimatedTokens, maxEstimate) {
   const item = document.createElement("article");
   item.className = `problem-bubble problem-bubble-${bubbleTone(finding, index)}`;
-  item.style.setProperty("--bubble-size", `${bubbleDiameter(estimatedTokens, maxEstimate)}px`);
+  const diameter = bubbleDiameter(estimatedTokens, maxEstimate);
+  item.style.setProperty("--bubble-size", `${diameter}px`);
   item.style.setProperty("--bubble-offset", `${bubbleOffset(index)}px`);
   item.setAttribute("role", "listitem");
   item.setAttribute(
@@ -221,19 +222,24 @@ function buildFindingItem(finding, report, index, estimatedTokens, maxEstimate) 
   item.appendChild(rank);
 
   const title = document.createElement("strong");
-  title.textContent = typeof finding?.title === "string" ? finding.title : "";
+  const titleText = typeof finding?.title === "string" ? finding.title : "";
+  title.textContent = titleText;
+  item.style.setProperty("--problem-title-size", `${bubbleLabelFontSize(titleText, diameter, 21, 10.5)}px`);
   item.appendChild(title);
 
   const meta = document.createElement("span");
   meta.className = "problem-meta";
   const severity = typeof finding?.severity === "string" ? finding.severity : "unknown";
   const impact = typeof finding?.cost_impact === "string" ? finding.cost_impact : "unknown";
-  meta.textContent = `${severity} - ${impact}`;
+  const metaText = `${severity} - ${impact}`;
+  meta.textContent = metaText;
   item.appendChild(meta);
 
   const estimate = document.createElement("span");
   estimate.className = "problem-impact";
-  estimate.textContent = `${formatCompactNumber(estimatedTokens)} representative tokens`;
+  const estimateText = `${formatCompactNumber(estimatedTokens)} representative tokens`;
+  estimate.textContent = estimateText;
+  item.style.setProperty("--problem-detail-size", `${bubbleLabelFontSize(`${metaText} ${estimateText}`, diameter, 12, 9.5)}px`);
   item.appendChild(estimate);
 
   const evidence = document.createElement("p");
@@ -316,6 +322,13 @@ function buildHelpTip(text) {
 function bubbleDiameter(tokens, maxTokens) {
   const ratio = Math.min(1, Math.max(0, numberValue(tokens) / Math.max(1, numberValue(maxTokens))));
   return 170 + Math.round(ratio * 98);
+}
+
+function bubbleLabelFontSize(text, diameter, maxPx, minPx) {
+  const chars = Math.max(1, String(text || "").length);
+  const available = Math.max(90, diameter * 0.72);
+  const estimated = available / (chars * 0.56);
+  return Number(Math.max(minPx, Math.min(maxPx, estimated)).toFixed(1));
 }
 
 function bubbleTone(finding, index) {
