@@ -992,7 +992,7 @@ func TestCreatePaidSessionReturnsLocalFirstPaidCommandByDefault(t *testing.T) {
 			t.Fatalf("public paid session exposed raw upload instruction %q: %#v", forbidden, session)
 		}
 	}
-	for _, want := range []string{"npx --yes agent-analyzer@latest analyze --paid --limit 10", "/api/paid-client-reports", "sanitized aggregate", "does not upload raw logs"} {
+	for _, want := range []string{"npx --yes agent-analyzer@latest analyze --paid --limit 3", "/api/paid-client-reports", "sanitized aggregate", "does not upload raw logs"} {
 		if !strings.Contains(session.Command, want) && !strings.Contains(session.Prompt, want) {
 			t.Fatalf("paid local-first session missing %q: %#v", want, session)
 		}

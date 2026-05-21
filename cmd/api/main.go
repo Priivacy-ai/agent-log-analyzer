@@ -814,7 +814,7 @@ func paidLocalFirstShellCommand(baseURL string) string {
 	endpoint := strings.TrimRight(baseURL, "/") + "/api/paid-client-reports"
 	return strings.Join([]string{
 		`REPORT="${REPORT:-agent-analyzer-paid-aggregate.json}"`,
-		`npx --yes agent-analyzer@latest analyze --paid --limit 10 --out "$REPORT"`,
+		`npx --yes agent-analyzer@latest analyze --paid --limit 3 --out "$REPORT"`,
 		`echo "Review the sanitized aggregate before upload:"`,
 		`jq . "$REPORT" >/dev/null && jq '{version,score,metrics,findings,aggregate_event,security_receipt}' "$REPORT"`,
 		`printf 'Upload only this sanitized aggregate report? [y/N] '`,
@@ -840,7 +840,7 @@ func paidClaudePrompt(command string) string {
 }
 
 func paidLocalFirstClaudePrompt(command string) string {
-	return "Review this shell command for me, but do not run it. It should analyze up to 10 largest-recent logs per supported local agent source, currently Claude Code, Codex, and OpenCode, write a sanitized aggregate report I can inspect, and upload only that sanitized JSON report for plugin generation. Confirm that it does not upload raw logs or tar bundles.\n\n```sh\n" + command + "\n```"
+	return "Review this shell command for me, but do not run it. It should analyze up to 3 largest-recent logs per supported local agent source, currently Claude Code, Codex, and OpenCode, write a sanitized aggregate report I can inspect, and upload only that sanitized JSON report for plugin generation. Confirm that it does not upload raw logs or tar bundles.\n\n```sh\n" + command + "\n```"
 }
 
 func shellQuote(value string) string {
