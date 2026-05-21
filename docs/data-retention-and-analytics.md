@@ -99,7 +99,7 @@ unguessable private report token; it is not the analytics storage format. See
 
 ## Upload Scope
 
-The public scan analyzes up to three largest-recent sessions per auto-discovered supported source selected by the local CLI. The current auto-discovered sources are Claude Code, Codex, and OpenCode. Selection uses bounded local metadata: file/session size and recency. The server receives only the generated sanitized report JSON after the user has had a chance to inspect it.
+The public scan analyzes target-sized recent sessions per auto-discovered supported source selected by the local CLI. The current auto-discovered sources are Claude Code, Codex, and OpenCode. Selection uses bounded local metadata: file/session size and recency, targeting roughly 5-10 MB per source while avoiding very large multi-file reads. The server receives only the generated sanitized report JSON after the user has had a chance to inspect it.
 
 Aggregate analytics from public scans must still use the same allowlist: known public ecosystem IDs, counts, buckets, timing, parser status, and redaction totals. Raw logs, raw paths, unknown private names, emails, and report JSON are not retained as analytics.
 

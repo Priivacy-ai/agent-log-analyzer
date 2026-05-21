@@ -68,7 +68,7 @@ The first AWS deployment scaffold lives in `infra/aws`. It provisions the S3/SQS
 
 Free scan:
 
-- local CLI analyzes up to three largest-recent logs per supported source, currently Claude Code, Codex, and OpenCode
+- local CLI analyzes target-sized recent logs per supported source, currently Claude Code, Codex, and OpenCode
 - user reviews `agent-analyzer-report.json`
 - server receives sanitized report JSON only
 - tokenized report URL
