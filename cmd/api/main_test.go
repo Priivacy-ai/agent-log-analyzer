@@ -762,7 +762,6 @@ func TestEmailUnlockConfirmAndFullScanUploadLifecycle(t *testing.T) {
 }
 
 func TestEmailUnlockSendFailureRendersActionablePage(t *testing.T) {
-	t.Setenv("CLAUDE_ANALYZER_EMAIL_SCREEN_FALLBACK", "")
 	store, err := localstore.New(t.TempDir())
 	if err != nil {
 		t.Fatal(err)
@@ -786,8 +785,7 @@ func TestEmailUnlockSendFailureRendersActionablePage(t *testing.T) {
 	}
 }
 
-func TestEmailUnlockScreenFallbackRendersConfirmationLink(t *testing.T) {
-	t.Setenv("CLAUDE_ANALYZER_EMAIL_SCREEN_FALLBACK", "1")
+func TestEmailUnlockSendFailureDoesNotExposeConfirmationToken(t *testing.T) {
 	store, err := localstore.New(t.TempDir())
 	if err != nil {
 		t.Fatal(err)
@@ -801,31 +799,14 @@ func TestEmailUnlockScreenFallbackRendersConfirmationLink(t *testing.T) {
 
 	createEmailUnlockHandler(store, sender).ServeHTTP(rec, req)
 
-	if rec.Code != http.StatusAccepted {
-		t.Fatalf("expected accepted fallback page, got %d: %s", rec.Code, rec.Body.String())
+	if rec.Code != http.StatusServiceUnavailable {
+		t.Fatalf("expected service unavailable, got %d: %s", rec.Code, rec.Body.String())
 	}
-	if !strings.Contains(rec.Body.String(), "Continue launch test") || !strings.Contains(rec.Body.String(), "/email/confirm/") {
-		t.Fatalf("expected launch-test confirmation link, got %s", rec.Body.String())
+	if strings.Contains(rec.Body.String(), "/email/confirm/") || strings.Contains(rec.Body.String(), "full-scan --token") {
+		t.Fatalf("send failure must not expose confirmation or full-scan tokens: %s", rec.Body.String())
 	}
-	confirmPath := extractQuotedPath(rec.Body.String(), "/email/confirm/")
-	parts := strings.Split(confirmPath, "/")
-	if len(parts) < 5 {
-		t.Fatalf("could not parse confirm path %q", confirmPath)
-	}
-	confirmReq := httptest.NewRequest(http.MethodGet, confirmPath, nil)
-	confirmReq.Host = "example.test"
-	confirmReq.Header.Set("Accept", "text/html")
-	confirmReq.SetPathValue("id", parts[3])
-	confirmReq.SetPathValue("token", parts[4])
-	confirmRec := httptest.NewRecorder()
-
-	confirmEmailUnlockHandler(store, sender).ServeHTTP(confirmRec, confirmReq)
-
-	if confirmRec.Code != http.StatusOK {
-		t.Fatalf("expected confirmation fallback page, got %d: %s", confirmRec.Code, confirmRec.Body.String())
-	}
-	if !strings.Contains(confirmRec.Body.String(), "npx --yes agent-analyzer@latest full-scan --token") {
-		t.Fatalf("expected full-scan command on confirmation page, got %s", confirmRec.Body.String())
+	if !strings.Contains(rec.Body.String(), "Email delivery is not active yet") {
+		t.Fatalf("expected SES delivery explanation, got %s", rec.Body.String())
 	}
 }
 
