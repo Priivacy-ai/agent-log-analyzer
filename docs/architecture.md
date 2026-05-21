@@ -73,12 +73,13 @@ Free scan:
 - server receives sanitized report JSON only
 - tokenized report URL
 
-Paid scan:
+Email-confirmed full scan:
 
-- local CLI analyzes up to 100 recent logs per supported source after Stripe unlock
+- user confirms email and receives a one-time full-scan token
+- local CLI analyzes up to 100 recent logs per supported source after email unlock
 - user reviews a sanitized aggregate report
 - server receives sanitized aggregate report JSON only
-- paid artifact retention is separate from the free report TTL
+- plugin artifact retention is separate from the free report TTL
 
 ## Scale Gates
 

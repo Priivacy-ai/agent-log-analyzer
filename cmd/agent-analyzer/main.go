@@ -41,6 +41,8 @@ func run(args []string) error {
 		return runOneShot(args[1:])
 	case "analyze":
 		return runAnalyze(args[1:])
+	case "full-scan":
+		return runFullScan(args[1:])
 	case "upload":
 		return runUpload(args[1:])
 	case "version", "--version", "-v":
@@ -94,7 +96,7 @@ func runAnalyze(args []string) error {
 		if err != nil {
 			return err
 		}
-		return analyzeDiscovered(candidates, *out, false, true)
+		return analyzeDiscovered(candidates, *out, "", true)
 	}
 	return analyzeSingle(path, *out, true)
 }
@@ -162,6 +164,8 @@ func printReportWrite(out string, report analyzer.Report) {
 	label := "Sanitized report"
 	if report.AggregateEvent.ParserType == "paid_bundle" {
 		label = "Sanitized paid aggregate report"
+	} else if report.AggregateEvent.ParserType == "full_scan_bundle" {
+		label = "Sanitized full-scan aggregate report"
 	}
 	fmt.Printf("%s: %s (%d bytes)\n", label, out, reportFileSize(out))
 }
@@ -339,7 +343,7 @@ func buildSourceReports(results []sourceAnalysisResult) []analyzer.SourceReport 
 	return sourceReports
 }
 
-func analyzeDiscovered(candidates []logCandidate, out string, paid bool, printNextSteps bool) error {
+func analyzeDiscovered(candidates []logCandidate, out string, mode string, printNextSteps bool) error {
 	if len(candidates) == 0 {
 		return errors.New("no supported agent logs found; checked Claude Code, Codex, and OpenCode")
 	}
@@ -376,15 +380,18 @@ func analyzeDiscovered(candidates []logCandidate, out string, paid bool, printNe
 	var report analyzer.Report
 	var err error
 	reports := reportsFromResults(results)
-	if !paid && len(reports) == 1 {
+	if mode == "" && len(reports) == 1 {
 		report = reports[0]
 		report.SecurityReceipt.RawLogTTL = "not uploaded"
 	} else {
 		parserType := "multi_source"
 		jobID := "local-multi"
-		if paid {
+		if mode == "paid" {
 			parserType = "paid_bundle"
 			jobID = "local-paid"
+		} else if mode == "full_scan" {
+			parserType = "full_scan_bundle"
+			jobID = "local-full-scan"
 		}
 		report, err = analyzer.AggregateReportsWithParserType(jobID, reports, totalBytes, parserType)
 		if err != nil {
@@ -401,7 +408,7 @@ func analyzeDiscovered(candidates []logCandidate, out string, paid bool, printNe
 	}
 	progress.Finish("complete")
 
-	if paid {
+	if mode == "paid" || mode == "full_scan" {
 		fmt.Printf("Analyzed locally: %d supported agent logs across %d sources (%s)\n", len(candidates), sourceCount(candidates), sourceSummary(candidates))
 	} else {
 		fmt.Printf("Analyzed locally: %d representative recent supported agent log(s) across %d sources (%s)\n", len(candidates), sourceCount(candidates), sourceSummary(candidates))
@@ -410,10 +417,14 @@ func analyzeDiscovered(candidates []logCandidate, out string, paid bool, printNe
 	fmt.Printf("Secrets redacted before report write: %d\n", totalRedacted)
 	printReportWrite(out, report)
 	if printNextSteps {
-		if paid {
+		if mode == "paid" {
 			fmt.Println()
 			fmt.Printf("Review before upload: jq . %s\n", shellQuote(out))
 			fmt.Printf("Upload sanitized paid aggregate with the command from your paid unlock page.\n")
+		} else if mode == "full_scan" {
+			fmt.Println()
+			fmt.Printf("Review before upload: jq . %s\n", shellQuote(out))
+			fmt.Printf("Upload sanitized full-scan aggregate with the email-confirmed full-scan command.\n")
 		} else {
 			printNextStepsFor(out)
 		}
@@ -440,7 +451,7 @@ func runOneShot(args []string) error {
 		if err != nil {
 			return err
 		}
-		if err := analyzeDiscovered(candidates, *out, false, false); err != nil {
+		if err := analyzeDiscovered(candidates, *out, "", false); err != nil {
 			return err
 		}
 	} else if err := analyzeSingle(path, *out, false); err != nil {
@@ -509,7 +520,63 @@ func runAnalyzePaid(out string, limit int) error {
 	if len(candidates) == 0 {
 		return errors.New("no supported agent logs found; checked Claude Code, Codex, and OpenCode")
 	}
-	return analyzeDiscovered(candidates, out, true, true)
+	return analyzeDiscovered(candidates, out, "paid", true)
+}
+
+func runAnalyzeFullScan(out string, limit int) error {
+	if limit <= 0 {
+		return errors.New("agent-analyzer full-scan: --limit must be greater than zero")
+	}
+	if limit > 100 {
+		return errors.New("agent-analyzer full-scan: --limit cannot exceed 100")
+	}
+	candidates, err := recentSupportedLogsFn(limit)
+	if err != nil {
+		return err
+	}
+	if len(candidates) == 0 {
+		return errors.New("no supported agent logs found; checked Claude Code, Codex, and OpenCode")
+	}
+	return analyzeDiscovered(candidates, out, "full_scan", true)
+}
+
+func runFullScan(args []string) error {
+	fs := flag.NewFlagSet("full-scan", flag.ContinueOnError)
+	out := fs.String("out", "agent-analyzer-full-scan-report.json", "path to write sanitized full-scan report JSON")
+	baseURL := fs.String("base-url", defaultBaseURL, "Agent Analyzer base URL")
+	token := fs.String("token", "", "email-confirmed full-scan entitlement token")
+	limit := fs.Int("limit", 100, "maximum recent logs per supported source to analyze")
+	noOpen := fs.Bool("no-open", false, "do not open the generated report URL in a browser")
+	if err := fs.Parse(args); err != nil {
+		return err
+	}
+	if fs.NArg() > 0 {
+		return fmt.Errorf("agent-analyzer full-scan: unexpected extra argument %q", fs.Arg(0))
+	}
+	if strings.TrimSpace(*token) == "" {
+		return errors.New("agent-analyzer full-scan: --token is required")
+	}
+	if err := runAnalyzeFullScan(*out, *limit); err != nil {
+		return err
+	}
+	fmt.Println()
+	fmt.Println("Uploading sanitized full-scan aggregate.")
+	fmt.Println("- raw agent logs stayed on this machine")
+	fmt.Println("- only the sanitized aggregate JSON will be uploaded")
+	fmt.Printf("- report file: %s\n", *out)
+	result, err := uploadFullScanReport(*out, *baseURL, *token)
+	if err != nil {
+		return err
+	}
+	fmt.Printf("Uploaded sanitized full-scan report only: %s\n", *out)
+	fmt.Printf("Report: %s\n", result.ReportURL)
+	if !result.ExpiresAt.IsZero() {
+		fmt.Printf("Expires: %s\n", result.ExpiresAt.Local().Format(time.RFC1123))
+	}
+	if !*noOpen {
+		_ = openBrowser(result.ReportURL)
+	}
+	return nil
 }
 
 func runUpload(args []string) error {
@@ -540,6 +607,14 @@ type uploadResult struct {
 }
 
 func uploadReport(reportPath, baseURL string) (uploadResult, error) {
+	return uploadReportToEndpoint(reportPath, strings.TrimRight(baseURL, "/")+"/api/client-reports", "")
+}
+
+func uploadFullScanReport(reportPath, baseURL, token string) (uploadResult, error) {
+	return uploadReportToEndpoint(reportPath, strings.TrimRight(baseURL, "/")+"/api/full-scan-client-reports", token)
+}
+
+func uploadReportToEndpoint(reportPath, endpoint, bearer string) (uploadResult, error) {
 	data, err := os.ReadFile(reportPath)
 	if err != nil {
 		return uploadResult{}, err
@@ -552,12 +627,14 @@ func uploadReport(reportPath, baseURL string) (uploadResult, error) {
 		return uploadResult{}, errors.New("refusing to upload report that claims raw transcript was sent to an LLM")
 	}
 
-	endpoint := strings.TrimRight(baseURL, "/") + "/api/client-reports"
 	request, err := http.NewRequest(http.MethodPost, endpoint, bytes.NewReader(data))
 	if err != nil {
 		return uploadResult{}, err
 	}
 	request.Header.Set("Content-Type", "application/json")
+	if bearer != "" {
+		request.Header.Set("Authorization", "Bearer "+bearer)
+	}
 	response, err := http.DefaultClient.Do(request)
 	if err != nil {
 		return uploadResult{}, err
@@ -1052,6 +1129,7 @@ func usage() {
 	fmt.Fprintln(os.Stderr, "  --paid         analyze recent supported logs locally and write a sanitized aggregate report.")
 	fmt.Fprintln(os.Stderr, "  --limit <n>    maximum recent logs per source for --paid, capped at 100 (default: 100).")
 	fmt.Fprintln(os.Stderr, "")
+	fmt.Fprintln(os.Stderr, "  agent-analyzer full-scan --token <token> [--base-url https://analyzer.spec-kitty.ai] [--no-open]")
 	fmt.Fprintln(os.Stderr, "  agent-analyzer upload <sanitized-report.json> [--base-url https://analyzer.spec-kitty.ai]")
 	fmt.Fprintln(os.Stderr, "  agent-analyzer version")
 }

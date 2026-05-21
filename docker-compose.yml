@@ -5,6 +5,7 @@ services:
     environment:
       CLAUDE_ANALYZER_ADDR: ":8080"
       CLAUDE_ANALYZER_DATA_DIR: /data
+      CLAUDE_ANALYZER_EMAIL_SINK_DIR: /data/emails
       CLAUDE_ANALYZER_ENABLE_LOCAL_PAID_SESSIONS: "true"
     ports:
       - "8080:8080"

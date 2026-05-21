@@ -9,6 +9,7 @@ This repo starts with a Docker-local, end-to-end implementation:
 - upload only the sanitized report JSON
 - detect waste patterns and ecosystem fingerprints
 - generate an ephemeral report JSON
+- email-confirm a free full-scan token for plugin generation
 - view the report in a static local web UI
 
 The production target is CDN + local deterministic CLI + report-only upload + short-lived report storage. Local development intentionally avoids cloud dependencies so the complete flow can be tested before any infrastructure is provisioned.
@@ -37,7 +38,9 @@ There is intentionally no browser upload form. Agent logs live in hidden tool-sp
 4. After confirmation, it sends only the sanitized report to `POST /api/client-reports`.
 5. The short-lived report opens at `/r/{job_id}/{report_token}` and expires on the retention schedule.
 
-Legacy raw-log token upload endpoints still exist for internal Docker smoke coverage while the paid scan is moved to the same local-first model. They are not the public onboarding path.
+The full optimization scan is email-confirmed during launch testing: the report page asks for an email, sends a confirmation link, then sends a one-line `npx --yes agent-analyzer@latest full-scan --token ...` command. That command analyzes up to 100 recent logs per supported source locally and uploads only sanitized aggregate JSON for report/plugin generation.
+
+Legacy raw-log token upload endpoints still exist for internal Docker smoke coverage while the full scan is moved to the same local-first model. They are not the public onboarding path.
 
 Paid delivery contract: [docs/remediation/plugin-artifacts.md](docs/remediation/plugin-artifacts.md).
 
@@ -55,13 +58,13 @@ agent-analyzer analyze ~/.claude/projects/some-session.jsonl --out ./report.json
 agent-analyzer analyze --log ~/.claude/projects/some-session.jsonl --out ./report.json
 ```
 
-If neither form is supplied, the CLI auto-discovers one newest log per supported source, skipping files over 2 MiB in the free first pass so the one-line launch command stays responsive. The paid scan uses the same discovery model with up to 100 logs per source.
+If neither form is supplied, the CLI auto-discovers one newest log per supported source, skipping files over 2 MiB in the free first pass so the one-line launch command stays responsive. The email-confirmed full scan uses the same discovery model with up to 100 logs per source.
 
 ```bash
 docker compose up --build
 ```
 
-Open `http://localhost:8080`, click `Generate NPX Command`, and use the generated one-line local analyze/review/upload flow. The smoke scripts still exercise the legacy token path with `testdata/fixtures/sample-claude.jsonl` for backend compatibility.
+Open `http://localhost:8080` and use the displayed one-line local analyze/review/upload flow. The smoke scripts also exercise the email-confirmed full-scan/plugin lifecycle and the legacy token path with `testdata/fixtures/sample-claude.jsonl` for backend compatibility.
 
 Smoke test:
 

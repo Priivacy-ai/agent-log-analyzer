@@ -479,6 +479,52 @@ func TestRunOneShot_AnalyzesAndUploadsSanitizedReport(t *testing.T) {
 	}
 }
 
+func TestRunFullScan_AnalyzesPaidAggregateAndUploadsWithEntitlementToken(t *testing.T) {
+	dir := t.TempDir()
+	first := writeSampleLog(t, dir)
+	second := filepath.Join(dir, "second.jsonl")
+	if err := os.WriteFile(second, []byte(sampleJSONL), 0o600); err != nil {
+		t.Fatalf("write second log: %v", err)
+	}
+	withRecentShim(t, []logCandidate{
+		fileCandidate("claude_code", "Claude Code", first),
+		fileCandidate("codex", "Codex", second),
+	})
+	outPath := filepath.Join(dir, "full-scan.json")
+	var authHeader string
+	var received analyzer.Report
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost || r.URL.Path != "/api/full-scan-client-reports" {
+			t.Fatalf("unexpected request: %s %s", r.Method, r.URL.Path)
+		}
+		authHeader = r.Header.Get("Authorization")
+		if err := json.NewDecoder(r.Body).Decode(&received); err != nil {
+			t.Fatalf("decode uploaded report: %v", err)
+		}
+		_ = json.NewEncoder(w).Encode(uploadResult{
+			ReportURL: serverURL(r) + "/r/job-token/report-token",
+			ExpiresAt: time.Now().Add(15 * time.Minute),
+		})
+	}))
+	defer server.Close()
+
+	err := runFullScan([]string{
+		"--token", "email-token",
+		"--out", outPath,
+		"--base-url", server.URL,
+		"--no-open",
+	})
+	if err != nil {
+		t.Fatalf("runFullScan: %v", err)
+	}
+	if authHeader != "Bearer email-token" {
+		t.Fatalf("expected bearer entitlement token, got %q", authHeader)
+	}
+	if received.AggregateEvent.ParserType != "full_scan_bundle" || received.SecurityReceipt.RawLogTTL != "not uploaded" {
+		t.Fatalf("expected sanitized full-scan aggregate upload, got %#v", received)
+	}
+}
+
 func serverURL(r *http.Request) string {
 	return "http://" + r.Host
 }

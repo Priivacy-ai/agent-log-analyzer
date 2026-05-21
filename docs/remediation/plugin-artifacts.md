@@ -1,6 +1,6 @@
 # Paid Claude Plugin Artifacts
 
-The paid product is a generated Claude Code plugin/remediation artifact, not a longer report.
+The launch product is a generated Claude Code plugin/remediation artifact, not a longer report. Stripe is deferred during launch testing; the temporary unlock path is confirmed email plus a one-time full-scan token.
 
 The plugin should optimize Claude Code's harness, not nag on shell commands. The primary value is turning the analysis into a vetted setup plan: lean CLAUDE.md hierarchy, scoped skills, official code-intelligence plugins, language-server binaries, and trusted MCP-backed integrations.
 
@@ -10,18 +10,18 @@ Free scan:
 
 - analyzes one newest log per supported source
 - shows deterministic problems, evidence, and generic fixes
-- offers the paid unlock
+- offers the email-confirmed full-scan unlock
 
 Paid scan:
 
 - analyzes at most the 100 most recent logs per supported source locally
 - writes a reviewable sanitized aggregate report JSON
-- uploads only the sanitized aggregate report to `POST /api/paid-client-reports`
+- uploads only the sanitized aggregate report to `POST /api/full-scan-client-reports`
 - aggregates deterministic metrics across sessions
 - generates a customized Claude Code plugin archive from the sanitized aggregate report
 - shows copyable install commands and a Claude-native install prompt
 
-The public paid flow must not ask users to tar, gzip, or upload raw Claude
+The public full-scan flow must not ask users to tar, gzip, or upload raw Claude
 Code JSONL logs. Any raw-log paid bundle endpoint is legacy/internal smoke
 coverage only and must require an explicit internal request path.
 
@@ -147,10 +147,11 @@ The current generator tests cover:
 - zip archive creation
 - rejection of unsafe archive paths
 
-API route tests also cover the paid local-first trust boundary:
+API route tests also cover the local-first trust boundary:
 
-- the default paid session command points at local CLI aggregate analysis and
-  `POST /api/paid-client-reports`
+- email confirmation sends a one-line `agent-analyzer full-scan --token ...`
+  command that points at local CLI aggregate analysis and
+  `POST /api/full-scan-client-reports`
 - the default paid session response does not mint a raw upload token or expose
   `/api/paid-uploads/`, tar/gzip commands, or raw bundle copy
 - `POST /api/paid-client-reports` accepts only waiver-gated sanitized aggregate
@@ -163,7 +164,7 @@ API route tests also cover the paid local-first trust boundary:
 
 The first implementation lives in `internal/remediation`.
 
-The package produces an in-memory `Artifact` and can write it as a zip archive. Paid local-first report upload, local waiver-gated paid-session generation, and tokenized plugin zip download are implemented for Docker end-to-end testing. Plugin artifacts are generated on demand from the sanitized paid report and expire with the report token.
+The package produces an in-memory `Artifact` and can write it as a zip archive. Email-confirmed full-scan report upload and tokenized plugin zip download are implemented for Docker end-to-end testing. Plugin artifacts are generated on demand from the sanitized full-scan report and expire with the report token.
 
 The legacy raw paid bundle upload route remains only for internal Docker smoke
 coverage while the CLI paid aggregate command is integrated. It is not the

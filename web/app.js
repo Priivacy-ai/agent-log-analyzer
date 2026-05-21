@@ -9,12 +9,16 @@ const waiverAccepted = document.querySelector("#waiver-accepted");
 const paidStatus = document.querySelector("#paid-status");
 const paidCommand = document.querySelector("#paid-command");
 const copyPaidCommandButton = document.querySelector("#copy-paid-command");
+const emailUnlockJobID = document.querySelector("#email-unlock-job-id");
+const emailUnlockReportToken = document.querySelector("#email-unlock-report-token");
 
 const route = parseReportRoute();
 
 if (route) {
   onboardingEl.hidden = true;
   reportEl.hidden = false;
+  if (emailUnlockJobID) emailUnlockJobID.value = route.jobID;
+  if (emailUnlockReportToken) emailUnlockReportToken.value = route.token;
   pollReport(route.jobID, route.token);
 } else {
   reportEl.hidden = true;
@@ -1031,7 +1035,7 @@ function findingEvidence(evidence) {
 function renderPaidCommandPreview(report) {
   const target = document.querySelector("#paid-command");
   if (!target) return;
-  if (report?.aggregate_event?.parser_type === "paid_bundle" && route) {
+  if ((report?.aggregate_event?.parser_type === "paid_bundle" || report?.aggregate_event?.parser_type === "full_scan_bundle") && route) {
     const pluginURL = `${window.location.origin}/api/public-artifacts/${route.jobID}/${route.token}/plugin.zip`;
     const command = [
       `PLUGIN_URL="${pluginURL}"`,
@@ -1050,7 +1054,7 @@ function renderPaidCommandPreview(report) {
     const upsellCopy = document.querySelectorAll(".upsell p");
     if (upsellCopy[0]) {
       upsellCopy[0].textContent =
-        "Your paid scan is complete. The optimization plugin below is generated from sanitized aggregate findings and vetted tooling recommendations.";
+        "Your full scan is complete. The optimization plugin below is generated from sanitized aggregate findings and vetted tooling recommendations.";
     }
     if (upsellCopy[1]) {
       upsellCopy[1].textContent =
@@ -1058,7 +1062,7 @@ function renderPaidCommandPreview(report) {
     }
     return;
   }
-  target.textContent = "Accept the waiver and unlock to generate the paid local-first scan commands.";
+  target.textContent = "Confirm your email to get the full-scan NPX command.";
 }
 
 function parseReportRoute() {

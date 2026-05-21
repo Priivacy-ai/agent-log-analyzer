@@ -145,7 +145,7 @@
         <section class="plugin-pitch" id="plugin-pitch">
           <div>
             <p class="eyebrow">generated remediation</p>
-            <h2>Install a plugin that helps enforce these fixes <button type="button" class="help-tip" data-tippy-content="Fixes are generated from deterministic finding IDs and bounded evidence, not from raw prompts or an LLM reading your transcript. The paid scan turns those findings into a generated plugin artifact and vetted setup instructions." aria-label="More information">?</button></h2>
+            <h2>Install a plugin that helps enforce these fixes <button type="button" class="help-tip" data-tippy-content="Fixes are generated from deterministic finding IDs and bounded evidence, not from raw prompts or an LLM reading your transcript. The full scan turns those findings into a generated plugin artifact and vetted setup instructions." aria-label="More information">?</button></h2>
             <p>The free report shows what is wasting tokens. The generated optimization plugin is the next step: it gives Claude Code concrete session hygiene, retrieval, context, and tooling guidance based on the waste patterns found here.</p>
             <ul class="plugin-benefits">
               <li>Prompt Claude to compact, split, or restart before context contamination gets expensive.</li>
@@ -153,7 +153,7 @@
               <li>Apply CLAUDE.md trimming, hierarchy, and workflow guidance from your scan.</li>
               <li>Surface MCP, skill, and plugin bloat warnings as setup recommendations.</li>
             </ul>
-            <a class="plugin-cta" href="#unlock-paid">Generate my optimization plugin</a>
+            <a class="plugin-cta" href="#email-unlock">Generate my optimization plugin</a>
           </div>
           <div class="plugin-fixes-card">
             <h3>Based on this scan</h3>
@@ -186,17 +186,22 @@
           <pre id="receipt"></pre>
         </div>
         <div class="upsell">
-          <h2>Install the optimization pack generated from this analysis</h2>
-          <p>Unlock a waiver-gated paid scan across up to 100 recent logs per supported agent source, then install a generated optimization pack with vetted context, retrieval, telemetry, and CLAUDE.md recommendations.</p>
-          <p>The paid scan will use the same local-first model: analyze up to 100 recent Claude Code, Codex, and OpenCode sessions locally, review the sanitized aggregate, then upload only the generated report JSON.</p>
-          <label class="waiver">
-            <input id="waiver-accepted" type="checkbox" />
-            I understand that Agent Analyzer provides deterministic analysis and vetted setup recommendations, but any installation or code change is executed by Claude Code, my package manager, or third-party tools with my approval and at my own risk.
-          </label>
-          <button id="unlock-paid" type="button">Unlock paid scan</button>
-          <pre id="paid-status">paid checkout not started</pre>
+          <h2>Generate the optimization plugin from a full scan</h2>
+          <p>For launch testing this is email-confirmed and free. Confirm your email and we will send a one-line NPX command that authorizes the full local scan across up to 100 recent logs per supported source.</p>
+          <form id="email-unlock" class="email-unlock-form" method="post" action="/api/email-unlocks">
+            <input id="email-unlock-job-id" type="hidden" name="source_report_job_id" value="">
+            <input id="email-unlock-report-token" type="hidden" name="source_report_token" value="">
+            <label>Email for full-scan command
+              <input type="email" name="email" autocomplete="email" required placeholder="you@example.com">
+            </label>
+            <label class="checkbox-row">
+              <input type="checkbox" name="marketing_opt_in" value="1">
+              <span>Also send me occasional updates about agentic coding products.</span>
+            </label>
+            <button type="submit">Email me the full-scan command</button>
+          </form>
+          <pre id="paid-status">full scan is unlocked by confirmed email</pre>
           <pre id="paid-command"></pre>
-          <button id="copy-paid-command" type="button" hidden>Copy Paid Command</button>
         </div>
       </section>
     </main>

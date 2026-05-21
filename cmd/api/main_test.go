@@ -23,6 +23,15 @@ type fakeStore struct {
 	queueDepth int
 }
 
+type captureEmailSender struct {
+	messages []emailMessage
+}
+
+func (sender *captureEmailSender) Send(message emailMessage) error {
+	sender.messages = append(sender.messages, message)
+	return nil
+}
+
 func (f fakeStore) SaveUpload(jobID string, data []byte) (string, error) {
 	return "", errors.New("not implemented")
 }
@@ -102,6 +111,38 @@ func TestGetPublicArtifactRequiresPaidWaiver(t *testing.T) {
 
 	if rec.Code != http.StatusForbidden {
 		t.Fatalf("expected forbidden artifact status, got %d: %s", rec.Code, rec.Body.String())
+	}
+}
+
+func TestGetPublicArtifactReturnsPluginZipForEmailFullScan(t *testing.T) {
+	store := fakeStore{
+		job: app.Job{
+			ID:              "job-1234567890",
+			Status:          app.StatusCompleted,
+			ScanType:        app.ScanTypeFullScan,
+			ReportTokenHash: tokenHash("report-token"),
+		},
+		report: analyzer.Report{
+			JobID:   "job-1234567890",
+			Version: "test",
+			Findings: []analyzer.Finding{
+				{ID: "repeated_file_reads", Severity: "high", CostImpact: "high"},
+			},
+		},
+	}
+	req := httptest.NewRequest(http.MethodGet, "/api/public-artifacts/job-1234567890/report-token/plugin.zip", nil)
+	req.Host = "example.test"
+	req.SetPathValue("id", "job-1234567890")
+	req.SetPathValue("token", "report-token")
+	rec := httptest.NewRecorder()
+
+	getPublicArtifactHandler(store).ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected plugin zip status 200, got %d: %s", rec.Code, rec.Body.String())
+	}
+	if !bytes.HasPrefix(rec.Body.Bytes(), []byte("PK")) {
+		t.Fatalf("expected zip response, got %q", rec.Body.String())
 	}
 }
 
@@ -598,6 +639,134 @@ func TestPaidClientReportUploadRejectsNonAggregateReport(t *testing.T) {
 	if rec.Code != http.StatusBadRequest {
 		t.Fatalf("expected non-aggregate paid report rejection 400, got %d: %s", rec.Code, rec.Body.String())
 	}
+}
+
+func TestEmailUnlockConfirmAndFullScanUploadLifecycle(t *testing.T) {
+	store, err := localstore.New(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	sender := &captureEmailSender{}
+	sourceReport := analyzer.Report{
+		JobID:   "source-job",
+		Version: analyzer.Version,
+		Score:   72,
+		Metrics: analyzer.Metrics{Turns: 12, EstimatedTokens: 2400},
+		SecurityReceipt: analyzer.SecurityReceipt{
+			RawTranscriptSentToLLM: false,
+			OutboundDuringAnalysis: false,
+			RawLogTTL:              "not uploaded",
+		},
+	}
+	sourceJob := app.Job{
+		ID:              "job-source-1234",
+		Status:          app.StatusCompleted,
+		ScanType:        app.ScanTypeSingle,
+		ReportTokenHash: tokenHash("source-token"),
+	}
+	if err := store.CreateCompletedReport(sourceJob, sourceReport); err != nil {
+		t.Fatal(err)
+	}
+
+	form := "email=dev%40example.com&marketing_opt_in=1&source_report_job_id=job-source-1234&source_report_token=source-token"
+	req := httptest.NewRequest(http.MethodPost, "/api/email-unlocks", strings.NewReader(form))
+	req.Host = "example.test"
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Set("Accept", "text/html")
+	rec := httptest.NewRecorder()
+	createEmailUnlockHandler(store, sender).ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected email unlock page status 200, got %d: %s", rec.Code, rec.Body.String())
+	}
+	if len(sender.messages) != 1 || !strings.Contains(sender.messages[0].Body, "/email/confirm/") {
+		t.Fatalf("expected confirmation email, got %#v", sender.messages)
+	}
+	confirmPath := extractPathFromEmail(sender.messages[0].Body, "/email/confirm/")
+	parts := strings.Split(confirmPath, "/")
+	if len(parts) < 5 {
+		t.Fatalf("could not parse confirm path %q", confirmPath)
+	}
+	confirmReq := httptest.NewRequest(http.MethodGet, confirmPath, nil)
+	confirmReq.Host = "example.test"
+	confirmReq.SetPathValue("id", parts[3])
+	confirmReq.SetPathValue("token", parts[4])
+	confirmRec := httptest.NewRecorder()
+	confirmEmailUnlockHandler(store, sender).ServeHTTP(confirmRec, confirmReq)
+
+	if confirmRec.Code != http.StatusOK {
+		t.Fatalf("expected confirm status 200, got %d: %s", confirmRec.Code, confirmRec.Body.String())
+	}
+	if !strings.Contains(confirmRec.Body.String(), "npx --yes agent-analyzer@latest full-scan --token") {
+		t.Fatalf("confirmation page missing full-scan command: %s", confirmRec.Body.String())
+	}
+	if len(sender.messages) != 2 || !strings.Contains(sender.messages[1].Body, "full-scan --token") {
+		t.Fatalf("expected full-scan command email, got %#v", sender.messages)
+	}
+	fullScanToken := extractTokenAfter(sender.messages[1].Body, "--token '")
+	fullScanReport := paidAggregateReport()
+	fullScanReport.AggregateEvent.ParserType = "full_scan_bundle"
+	body, err := json.Marshal(fullScanReport)
+	if err != nil {
+		t.Fatal(err)
+	}
+	uploadReq := httptest.NewRequest(http.MethodPost, "/api/full-scan-client-reports", bytes.NewReader(body))
+	uploadReq.Host = "example.test"
+	uploadReq.Header.Set("Authorization", "Bearer "+fullScanToken)
+	uploadReq.Header.Set("Content-Type", "application/json")
+	uploadRec := httptest.NewRecorder()
+	createFullScanClientReportHandler(store, sender, 15*time.Minute).ServeHTTP(uploadRec, uploadReq)
+
+	if uploadRec.Code != http.StatusCreated {
+		t.Fatalf("expected full-scan upload status 201, got %d: %s", uploadRec.Code, uploadRec.Body.String())
+	}
+	var response analysisSessionResponse
+	if err := json.Unmarshal(uploadRec.Body.Bytes(), &response); err != nil {
+		t.Fatalf("response is not valid session JSON: %v", err)
+	}
+	job, err := store.GetJob(response.JobID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if job.ScanType != app.ScanTypeFullScan || job.Status != app.StatusCompleted {
+		t.Fatalf("expected completed full-scan job, got %#v", job)
+	}
+	if len(sender.messages) != 3 || !strings.Contains(sender.messages[2].Body, "/api/public-artifacts/") {
+		t.Fatalf("expected plugin-ready email, got %#v", sender.messages)
+	}
+	reuseReq := httptest.NewRequest(http.MethodPost, "/api/full-scan-client-reports", bytes.NewReader(body))
+	reuseReq.Header.Set("Authorization", "Bearer "+fullScanToken)
+	reuseReq.Header.Set("Content-Type", "application/json")
+	reuseRec := httptest.NewRecorder()
+	createFullScanClientReportHandler(store, sender, 15*time.Minute).ServeHTTP(reuseRec, reuseReq)
+	if reuseRec.Code != http.StatusConflict {
+		t.Fatalf("expected reused token conflict, got %d: %s", reuseRec.Code, reuseRec.Body.String())
+	}
+}
+
+func extractPathFromEmail(body, marker string) string {
+	index := strings.Index(body, marker)
+	if index < 0 {
+		return ""
+	}
+	end := index
+	for end < len(body) && body[end] != '\n' && body[end] != '\r' && body[end] != ' ' {
+		end++
+	}
+	return body[index:end]
+}
+
+func extractTokenAfter(body, marker string) string {
+	index := strings.Index(body, marker)
+	if index < 0 {
+		return ""
+	}
+	index += len(marker)
+	end := index
+	for end < len(body) && body[end] != '\'' && body[end] != '\n' && body[end] != '\r' {
+		end++
+	}
+	return body[index:end]
 }
 
 func TestPaidBundleUploadRequiresPaidTokenAndLimit(t *testing.T) {

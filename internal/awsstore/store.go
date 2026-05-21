@@ -286,6 +286,62 @@ func (s *Store) CreateCompletedReport(job app.Job, report analyzer.Report) error
 	return s.putJob(job)
 }
 
+func (s *Store) CreateEmailUnlock(unlock app.EmailUnlock) error {
+	now := time.Now().UTC()
+	if unlock.CreatedAt.IsZero() {
+		unlock.CreatedAt = now
+	}
+	if unlock.UpdatedAt.IsZero() {
+		unlock.UpdatedAt = now
+	}
+	if unlock.Status == "" {
+		unlock.Status = app.EmailUnlockPending
+	}
+	return s.putEmailUnlock(unlock)
+}
+
+func (s *Store) GetEmailUnlock(id string) (app.EmailUnlock, error) {
+	output, err := s.dynamodb.GetItem(context.Background(), &dynamodb.GetItemInput{
+		TableName: aws.String(s.jobTable),
+		Key: map[string]dynamodbtypes.AttributeValue{
+			"id": &dynamodbtypes.AttributeValueMemberS{Value: id},
+		},
+	})
+	if err != nil {
+		return app.EmailUnlock{}, err
+	}
+	if len(output.Item) == 0 {
+		return app.EmailUnlock{}, os.ErrNotExist
+	}
+	return emailUnlockFromItem(output.Item)
+}
+
+func (s *Store) GetEmailUnlockByFullScanTokenHash(tokenHash string) (app.EmailUnlock, error) {
+	if tokenHash == "" {
+		return app.EmailUnlock{}, os.ErrNotExist
+	}
+	output, err := s.dynamodb.Scan(context.Background(), &dynamodb.ScanInput{
+		TableName:        aws.String(s.jobTable),
+		FilterExpression: aws.String("full_scan_token_hash = :token"),
+		ExpressionAttributeValues: map[string]dynamodbtypes.AttributeValue{
+			":token": &dynamodbtypes.AttributeValueMemberS{Value: tokenHash},
+		},
+		Limit: aws.Int32(1),
+	})
+	if err != nil {
+		return app.EmailUnlock{}, err
+	}
+	if len(output.Items) == 0 {
+		return app.EmailUnlock{}, os.ErrNotExist
+	}
+	return emailUnlockFromItem(output.Items[0])
+}
+
+func (s *Store) UpdateEmailUnlock(unlock app.EmailUnlock) error {
+	unlock.UpdatedAt = time.Now().UTC()
+	return s.putEmailUnlock(unlock)
+}
+
 func (s *Store) FailJob(job app.Job, jobErr error) error {
 	job.Status = app.StatusFailed
 	job.Error = jobErr.Error()
@@ -444,6 +500,45 @@ func (s *Store) putJob(job app.Job) error {
 	return err
 }
 
+func (s *Store) putEmailUnlock(unlock app.EmailUnlock) error {
+	item := map[string]dynamodbtypes.AttributeValue{
+		"id":               &dynamodbtypes.AttributeValueMemberS{Value: unlock.ID},
+		"record_type":      &dynamodbtypes.AttributeValueMemberS{Value: "email_unlock"},
+		"email":            &dynamodbtypes.AttributeValueMemberS{Value: unlock.Email},
+		"email_hash":       &dynamodbtypes.AttributeValueMemberS{Value: unlock.EmailHash},
+		"marketing_opt_in": &dynamodbtypes.AttributeValueMemberBOOL{Value: unlock.MarketingOptIn},
+		"status":           &dynamodbtypes.AttributeValueMemberS{Value: string(unlock.Status)},
+		"created_at":       &dynamodbtypes.AttributeValueMemberS{Value: unlock.CreatedAt.Format(time.RFC3339Nano)},
+		"updated_at":       &dynamodbtypes.AttributeValueMemberS{Value: unlock.UpdatedAt.Format(time.RFC3339Nano)},
+	}
+	if unlock.SourceReportJobID != "" {
+		item["source_report_job_id"] = &dynamodbtypes.AttributeValueMemberS{Value: unlock.SourceReportJobID}
+	}
+	if unlock.ConfirmationTokenHash != "" {
+		item["confirmation_token_hash"] = &dynamodbtypes.AttributeValueMemberS{Value: unlock.ConfirmationTokenHash}
+	}
+	if unlock.FullScanTokenHash != "" {
+		item["full_scan_token_hash"] = &dynamodbtypes.AttributeValueMemberS{Value: unlock.FullScanTokenHash}
+	}
+	if !unlock.FullScanTokenExpiresAt.IsZero() {
+		item["full_scan_token_expires_at"] = &dynamodbtypes.AttributeValueMemberS{Value: unlock.FullScanTokenExpiresAt.Format(time.RFC3339Nano)}
+	}
+	if unlock.FullScanJobID != "" {
+		item["full_scan_job_id"] = &dynamodbtypes.AttributeValueMemberS{Value: unlock.FullScanJobID}
+	}
+	if !unlock.ConfirmedAt.IsZero() {
+		item["confirmed_at"] = &dynamodbtypes.AttributeValueMemberS{Value: unlock.ConfirmedAt.Format(time.RFC3339Nano)}
+	}
+	if !unlock.LastTransactionalEmailSentAt.IsZero() {
+		item["last_transactional_email_sent_at"] = &dynamodbtypes.AttributeValueMemberS{Value: unlock.LastTransactionalEmailSentAt.Format(time.RFC3339Nano)}
+	}
+	_, err := s.dynamodb.PutItem(context.Background(), &dynamodb.PutItemInput{
+		TableName: aws.String(s.jobTable),
+		Item:      item,
+	})
+	return err
+}
+
 func (s *Store) deleteQueueMessage(job app.Job) error {
 	if job.QueueReceipt == "" {
 		return nil
@@ -499,6 +594,39 @@ func jobFromItem(item map[string]dynamodbtypes.AttributeValue) (app.Job, error) 
 	return job, err
 }
 
+func emailUnlockFromItem(item map[string]dynamodbtypes.AttributeValue) (app.EmailUnlock, error) {
+	unlock := app.EmailUnlock{
+		ID:                    stringAttr(item, "id"),
+		Email:                 stringAttr(item, "email"),
+		EmailHash:             stringAttr(item, "email_hash"),
+		MarketingOptIn:        boolAttr(item, "marketing_opt_in"),
+		SourceReportJobID:     stringAttr(item, "source_report_job_id"),
+		ConfirmationTokenHash: stringAttr(item, "confirmation_token_hash"),
+		FullScanTokenHash:     stringAttr(item, "full_scan_token_hash"),
+		FullScanJobID:         stringAttr(item, "full_scan_job_id"),
+		Status:                app.EmailUnlockStatus(stringAttr(item, "status")),
+	}
+	var err error
+	unlock.CreatedAt, err = parseTimeAttr(item, "created_at")
+	if err != nil {
+		return unlock, err
+	}
+	unlock.UpdatedAt, err = parseTimeAttr(item, "updated_at")
+	if err != nil {
+		return unlock, err
+	}
+	unlock.ConfirmedAt, err = parseTimeAttr(item, "confirmed_at")
+	if err != nil {
+		return unlock, err
+	}
+	unlock.FullScanTokenExpiresAt, err = parseTimeAttr(item, "full_scan_token_expires_at")
+	if err != nil {
+		return unlock, err
+	}
+	unlock.LastTransactionalEmailSentAt, err = parseTimeAttr(item, "last_transactional_email_sent_at")
+	return unlock, err
+}
+
 func stringAttr(item map[string]dynamodbtypes.AttributeValue, key string) string {
 	value, ok := item[key].(*dynamodbtypes.AttributeValueMemberS)
 	if !ok {
@@ -514,6 +642,14 @@ func int64Attr(item map[string]dynamodbtypes.AttributeValue, key string) int64 {
 	}
 	parsed, _ := strconv.ParseInt(value.Value, 10, 64)
 	return parsed
+}
+
+func boolAttr(item map[string]dynamodbtypes.AttributeValue, key string) bool {
+	value, ok := item[key].(*dynamodbtypes.AttributeValueMemberBOOL)
+	if !ok {
+		return false
+	}
+	return value.Value
 }
 
 func parseTimeAttr(item map[string]dynamodbtypes.AttributeValue, key string) (time.Time, error) {

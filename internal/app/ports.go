@@ -33,6 +33,13 @@ type AnalyticsStore interface {
 	AppendAnalyticsEvent(event analytics.Event) error
 }
 
+type EmailUnlockStore interface {
+	CreateEmailUnlock(unlock EmailUnlock) error
+	GetEmailUnlock(id string) (EmailUnlock, error)
+	GetEmailUnlockByFullScanTokenHash(tokenHash string) (EmailUnlock, error)
+	UpdateEmailUnlock(unlock EmailUnlock) error
+}
+
 type APIStore interface {
 	UploadStore
 	JobQueue

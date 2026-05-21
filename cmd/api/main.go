@@ -63,6 +63,7 @@ func main() {
 
 func buildMux(store app.APIStore) http.Handler {
 	mux := http.NewServeMux()
+	emailSender := configuredEmailSender()
 	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
 	})
@@ -70,6 +71,9 @@ func buildMux(store app.APIStore) http.Handler {
 	mux.HandleFunc("POST /api/paid-sessions", createPaidSessionHandler(store, uploadTokenTTL()))
 	mux.HandleFunc("POST /api/client-reports", createClientReportHandler(store, reportTTL()))
 	mux.HandleFunc("POST /api/paid-client-reports", createPaidClientReportHandler(store, reportTTL()))
+	mux.HandleFunc("POST /api/email-unlocks", createEmailUnlockHandler(store, emailSender))
+	mux.HandleFunc("GET /email/confirm/{id}/{token}", confirmEmailUnlockHandler(store, emailSender))
+	mux.HandleFunc("POST /api/full-scan-client-reports", createFullScanClientReportHandler(store, emailSender, reportTTL()))
 	mux.HandleFunc("PUT /api/uploads/{id}", tokenUploadHandler(store))
 	mux.HandleFunc("POST /api/uploads/{id}/finalize", finalizeTokenUploadHandler(store))
 	mux.HandleFunc("PUT /api/paid-uploads/{id}", paidBundleUploadHandler(store))
@@ -560,8 +564,8 @@ func getPublicArtifactHandler(store app.APIStore) http.HandlerFunc {
 			writeError(w, http.StatusConflict, "job is not completed")
 			return
 		}
-		if job.ScanType != app.ScanTypePaidBundle || job.WaiverAcceptedAt.IsZero() {
-			writeError(w, http.StatusForbidden, "plugin artifact requires paid scan waiver")
+		if !jobAllowsPluginArtifact(job) {
+			writeError(w, http.StatusForbidden, "plugin artifact requires a completed full scan")
 			return
 		}
 		report, err := store.GetReport(job.ID)
@@ -586,6 +590,13 @@ func getPublicArtifactHandler(store app.APIStore) http.HandlerFunc {
 		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write(buffer.Bytes())
 	}
+}
+
+func jobAllowsPluginArtifact(job app.Job) bool {
+	if job.ScanType == app.ScanTypeFullScan {
+		return true
+	}
+	return job.ScanType == app.ScanTypePaidBundle && !job.WaiverAcceptedAt.IsZero()
 }
 
 func getJobHandler(store app.APIStore) http.HandlerFunc {
@@ -626,6 +637,15 @@ func sanitizePath(path string) string {
 	}
 	if strings.HasPrefix(path, "/api/public-artifacts/") {
 		return "/api/public-artifacts/:id/:token/plugin.zip"
+	}
+	if strings.HasPrefix(path, "/api/email-unlocks") {
+		return "/api/email-unlocks"
+	}
+	if strings.HasPrefix(path, "/api/full-scan-client-reports") {
+		return "/api/full-scan-client-reports"
+	}
+	if strings.HasPrefix(path, "/email/confirm/") {
+		return "/email/confirm/:id/:token"
 	}
 	if strings.HasPrefix(path, "/api/jobs/") {
 		return "/api/jobs/:id"

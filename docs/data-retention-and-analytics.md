@@ -15,8 +15,13 @@ intermediate parsed transcript:
 
 sanitized report JSON:
   local MVP: stored under /data/reports after explicit upload
-  production: 15 minutes free, 24 hours paid artifact
+  production: 15 minutes free, 24 hours full-scan/plugin artifact
   analytics: never as raw JSON
+
+email unlock records:
+  local MVP: stored under /data/email_unlocks for Docker lifecycle testing
+  production: retained only as needed for confirmation, transactional delivery, consent proof, and abuse prevention
+  analytics: email addresses are never copied into aggregate analytics
 
 job metadata:
   local MVP: job JSON files
@@ -94,12 +99,12 @@ not the analytics storage format. See
 
 ## Upload Scope
 
-Free scan analyzes one newest bounded-size session per auto-discovered supported source selected by the local CLI. The current auto-discovered sources are Claude Code, Codex, and OpenCode. The free first pass skips files over 2 MiB to keep the one-line launch command responsive; paid scans remove that first-pass cap. The server receives only the generated sanitized report JSON after the user has had a chance to inspect it.
+Free scan analyzes one newest bounded-size session per auto-discovered supported source selected by the local CLI. The current auto-discovered sources are Claude Code, Codex, and OpenCode. The free first pass skips files over 2 MiB to keep the one-line launch command responsive; full scans remove that first-pass cap. The server receives only the generated sanitized report JSON after the user has had a chance to inspect it.
 
-Paid scan must use the same local-first model for at most the 100 most recent sessions per supported source. Aggregate analytics from paid scans must still use the same allowlist: known public ecosystem IDs, counts, buckets, timing, parser status, and redaction totals. Raw logs, raw paths, unknown private names, and report JSON are not retained as analytics.
+Email-confirmed full scan must use the same local-first model for at most the 100 most recent sessions per supported source. Aggregate analytics from full scans must still use the same allowlist: known public ecosystem IDs, counts, buckets, timing, parser status, and redaction totals. Raw logs, raw paths, unknown private names, emails, and report JSON are not retained as analytics.
 
-Paid analytics emit one retained event for the paid aggregate report. They do
-not emit one retained event per raw session inside the paid bundle.
+Full-scan analytics emit one retained event for the aggregate report. They do
+not emit one retained event per raw session inside the full local scan.
 
 ## Retained Analytics Storage
 

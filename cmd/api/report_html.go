@@ -20,6 +20,7 @@ type reportPageData struct {
 	Job         app.Job
 	ArtifactURL string
 	StatusText  string
+	ReportToken string
 }
 
 func reportPageHandler(store app.APIStore) http.HandlerFunc {
@@ -51,7 +52,7 @@ func reportPageHandler(store app.APIStore) http.HandlerFunc {
 			return
 		}
 		artifactURL := ""
-		if job.ScanType == app.ScanTypePaidBundle && !job.WaiverAcceptedAt.IsZero() {
+		if jobAllowsPluginArtifact(job) {
 			artifactURL = publicBaseURL(r) + "/api/public-artifacts/" + job.ID + "/" + r.PathValue("token") + "/plugin.zip"
 		}
 		renderReportHTML(w, reportPageData{
@@ -59,6 +60,7 @@ func reportPageHandler(store app.APIStore) http.HandlerFunc {
 			Job:         job,
 			ArtifactURL: artifactURL,
 			StatusText:  "This report is visible for 15 minutes.",
+			ReportToken: r.PathValue("token"),
 		})
 	}
 }
@@ -235,12 +237,24 @@ Redactions:
 {{mapLines .Report.Redactions}}</pre>
         </div>
         <div class="upsell">
-          <h2>Install the optimization pack generated from this analysis</h2>
-          <p>Unlock a waiver-gated paid scan across up to 100 recent logs per supported agent source, then install a generated optimization pack with vetted context, retrieval, telemetry, and CLAUDE.md recommendations.</p>
+          <h2>Generate the optimization plugin from a full scan</h2>
+          <p>Run the deeper local scan across up to 100 recent logs per supported agent source, then install a generated optimization pack with vetted context, retrieval, telemetry, and CLAUDE.md recommendations.</p>
           {{if .ArtifactURL}}
           <p>Optimization plugin artifact: <a href="{{.ArtifactURL}}">{{.ArtifactURL}}</a></p>
           {{else}}
-          <p>The paid scan will use the same local-first model: analyze up to 100 recent Claude Code, Codex, and OpenCode sessions locally, review the sanitized aggregate, then upload only the generated report JSON.</p>
+          <p>For launch testing this is email-confirmed and free. Confirm your email and we will send a one-line NPX command that authorizes the full local scan. Raw transcripts still stay on your machine; only sanitized aggregate JSON is uploaded.</p>
+          <form class="email-unlock-form" method="post" action="/api/email-unlocks">
+            <input type="hidden" name="source_report_job_id" value="{{.Job.ID}}">
+            <input type="hidden" name="source_report_token" value="{{.ReportToken}}">
+            <label>Email for full-scan command
+              <input type="email" name="email" autocomplete="email" required placeholder="you@example.com">
+            </label>
+            <label class="checkbox-row">
+              <input type="checkbox" name="marketing_opt_in" value="1">
+              <span>Also send me occasional updates about agentic coding products.</span>
+            </label>
+            <button type="submit">Email me the full-scan command</button>
+          </form>
           {{end}}
         </div>
         {{else}}

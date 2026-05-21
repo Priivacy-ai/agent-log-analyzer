@@ -68,7 +68,7 @@ Full Docker smoke:
 ./scripts/smoke-local.sh
 ```
 
-This covers the local sanitized-report upload path plus the legacy free one-log token path and local waiver-gated paid bundle path kept for compatibility. It verifies aggregate report fetch, tokenized plugin zip download, and raw-transcript leak checks.
+This covers the local sanitized-report upload path, email capture, confirmation link, emailed full-scan NPX command, one-time full-scan token upload, tokenized plugin zip download, plus the legacy free one-log token path and local waiver-gated paid bundle path kept for compatibility. It verifies aggregate report fetch and raw-transcript leak checks.
 
 Production acceptance target before launch:
 
@@ -89,7 +89,8 @@ API 5xx rate: <0.1%
 - repeated tool output
 - worker timeout
 - worker memory pressure
-- paid-scan tar/gzip bundle with 100 JSONL files
+- full-scan local aggregate with up to 100 JSON/JSONL files per supported source
+- legacy internal paid-scan tar/gzip bundle with 100 JSONL files
 
 ## MCP and Skill Bloat Fixtures (Epic #39)
 

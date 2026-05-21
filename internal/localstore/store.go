@@ -30,12 +30,74 @@ func New(root string) (*Store, error) {
 		filepath.Join(root, "jobs", "failed"),
 		filepath.Join(root, "reports"),
 		filepath.Join(root, "analytics"),
+		filepath.Join(root, "email_unlocks"),
 	} {
 		if err := os.MkdirAll(dir, 0o700); err != nil {
 			return nil, err
 		}
 	}
 	return &Store{root: root}, nil
+}
+
+func (s *Store) CreateEmailUnlock(unlock app.EmailUnlock) error {
+	if !validID(unlock.ID) {
+		return errors.New("invalid email unlock id")
+	}
+	now := time.Now().UTC()
+	if unlock.CreatedAt.IsZero() {
+		unlock.CreatedAt = now
+	}
+	if unlock.UpdatedAt.IsZero() {
+		unlock.UpdatedAt = now
+	}
+	if unlock.Status == "" {
+		unlock.Status = app.EmailUnlockPending
+	}
+	return writeJSON(s.emailUnlockPath(unlock.ID), unlock)
+}
+
+func (s *Store) GetEmailUnlock(id string) (app.EmailUnlock, error) {
+	var unlock app.EmailUnlock
+	if !validID(id) {
+		return unlock, errors.New("invalid email unlock id")
+	}
+	data, err := os.ReadFile(s.emailUnlockPath(id))
+	if err != nil {
+		return unlock, err
+	}
+	return unlock, json.Unmarshal(data, &unlock)
+}
+
+func (s *Store) GetEmailUnlockByFullScanTokenHash(tokenHash string) (app.EmailUnlock, error) {
+	var unlock app.EmailUnlock
+	if tokenHash == "" {
+		return unlock, os.ErrNotExist
+	}
+	entries, err := os.ReadDir(filepath.Join(s.root, "email_unlocks"))
+	if err != nil {
+		return unlock, err
+	}
+	for _, entry := range entries {
+		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".json") {
+			continue
+		}
+		candidate, err := s.GetEmailUnlock(strings.TrimSuffix(entry.Name(), ".json"))
+		if err != nil {
+			continue
+		}
+		if candidate.FullScanTokenHash == tokenHash {
+			return candidate, nil
+		}
+	}
+	return unlock, os.ErrNotExist
+}
+
+func (s *Store) UpdateEmailUnlock(unlock app.EmailUnlock) error {
+	if !validID(unlock.ID) {
+		return errors.New("invalid email unlock id")
+	}
+	unlock.UpdatedAt = time.Now().UTC()
+	return writeJSON(s.emailUnlockPath(unlock.ID), unlock)
 }
 
 func (s *Store) AppendAnalyticsEvent(event analytics.Event) error {
@@ -272,6 +334,10 @@ func (s *Store) sweepDir(dir string, now time.Time, ttl time.Duration, count *in
 
 func (s *Store) jobPath(status, id string) string {
 	return filepath.Join(s.root, "jobs", status, id+".json")
+}
+
+func (s *Store) emailUnlockPath(id string) string {
+	return filepath.Join(s.root, "email_unlocks", id+".json")
 }
 
 func (s *Store) writeJob(status string, job app.Job) error {
