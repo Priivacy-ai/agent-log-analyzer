@@ -14,7 +14,7 @@ Free scan:
 
 Paid scan:
 
-- analyzes at most the 100 most recent logs per supported source locally
+- analyzes at most the 10 largest-recent logs per supported source locally
 - writes a reviewable sanitized aggregate report JSON
 - uploads only the sanitized aggregate report to `POST /api/full-scan-client-reports`
 - aggregates deterministic metrics across sessions

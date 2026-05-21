@@ -9,6 +9,7 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"math"
 	"net/http"
 	"os"
 	"os/exec"
@@ -25,6 +26,9 @@ const defaultBaseURL = "https://analyzer.spec-kitty.ai"
 const freeAutoMaxLogBytes = 2 * 1024 * 1024
 const freeAutoMinLogBytes = 4 * 1024
 const freeAutoCandidatePool = 25
+const fullScanDefaultLogLimit = 10
+const fullScanMaxLogLimit = 10
+const largestRecentHalfLife = 14 * 24 * time.Hour
 
 func main() {
 	if err := run(os.Args[1:]); err != nil {
@@ -67,7 +71,7 @@ func runAnalyze(args []string) error {
 	out := fs.String("out", "agent-analyzer-report.json", "path to write sanitized report JSON")
 	logPath := fs.String("log", "", "explicit supported JSON/JSONL log path")
 	paid := fs.Bool("paid", false, "analyze recent supported agent logs locally and write a sanitized paid aggregate report")
-	limit := fs.Int("limit", 100, "maximum recent logs per supported source to analyze with --paid")
+	limit := fs.Int("limit", fullScanDefaultLogLimit, "maximum largest-recent logs per supported source to analyze with --paid")
 	orderedArgs := reorderAnalyzeArgs(args)
 	if err := fs.Parse(orderedArgs); err != nil {
 		return err
@@ -546,8 +550,8 @@ func runAnalyzePaid(out string, limit int) error {
 	if limit <= 0 {
 		return errors.New("agent-analyzer analyze: --limit must be greater than zero")
 	}
-	if limit > 100 {
-		return errors.New("agent-analyzer analyze: --limit cannot exceed 100")
+	if limit > fullScanMaxLogLimit {
+		return fmt.Errorf("agent-analyzer analyze: --limit cannot exceed %d", fullScanMaxLogLimit)
 	}
 	candidates, err := recentSupportedLogsFn(limit)
 	if err != nil {
@@ -563,8 +567,8 @@ func runAnalyzeFullScan(out string, limit int) error {
 	if limit <= 0 {
 		return errors.New("agent-analyzer full-scan: --limit must be greater than zero")
 	}
-	if limit > 100 {
-		return errors.New("agent-analyzer full-scan: --limit cannot exceed 100")
+	if limit > fullScanMaxLogLimit {
+		return fmt.Errorf("agent-analyzer full-scan: --limit cannot exceed %d", fullScanMaxLogLimit)
 	}
 	candidates, err := recentSupportedLogsFn(limit)
 	if err != nil {
@@ -581,7 +585,7 @@ func runFullScan(args []string) error {
 	out := fs.String("out", "agent-analyzer-full-scan-report.json", "path to write sanitized full-scan report JSON")
 	baseURL := fs.String("base-url", defaultBaseURL, "Agent Analyzer base URL")
 	token := fs.String("token", "", "email-confirmed full-scan entitlement token")
-	limit := fs.Int("limit", 100, "maximum recent logs per supported source to analyze")
+	limit := fs.Int("limit", fullScanDefaultLogLimit, "maximum largest-recent logs per supported source to analyze")
 	noOpen := fs.Bool("no-open", false, "do not open the generated report URL in a browser")
 	if err := fs.Parse(args); err != nil {
 		return err
@@ -837,15 +841,7 @@ func recentFileLogs(sourceID, sourceLabel string, rootParts []string, extensions
 	if len(matches) == 0 {
 		return nil, nil
 	}
-	sort.Slice(matches, func(i, j int) bool {
-		if matches[i].modTime.Equal(matches[j].modTime) {
-			return matches[i].path > matches[j].path
-		}
-		return matches[i].modTime.After(matches[j].modTime)
-	})
-	if limit > 0 && len(matches) > limit {
-		matches = matches[:limit]
-	}
+	matches = selectLargestRecentMatches(matches, limit)
 	candidates := make([]logCandidate, 0, len(matches))
 	for _, match := range matches {
 		candidates = append(candidates, logCandidate{
@@ -863,6 +859,45 @@ type logMatch struct {
 	path    string
 	modTime time.Time
 	size    int64
+}
+
+func selectLargestRecentMatches(matches []logMatch, limit int) []logMatch {
+	if len(matches) == 0 {
+		return nil
+	}
+	newest := matches[0].modTime
+	for _, match := range matches[1:] {
+		if match.modTime.After(newest) {
+			newest = match.modTime
+		}
+	}
+	sort.Slice(matches, func(i, j int) bool {
+		left := largestRecentScore(matches[i], newest)
+		right := largestRecentScore(matches[j], newest)
+		if left == right {
+			if matches[i].modTime.Equal(matches[j].modTime) {
+				if matches[i].size == matches[j].size {
+					return matches[i].path > matches[j].path
+				}
+				return matches[i].size > matches[j].size
+			}
+			return matches[i].modTime.After(matches[j].modTime)
+		}
+		return left > right
+	})
+	if limit > 0 && len(matches) > limit {
+		return matches[:limit]
+	}
+	return matches
+}
+
+func largestRecentScore(match logMatch, newest time.Time) float64 {
+	age := newest.Sub(match.modTime)
+	if age < 0 {
+		age = 0
+	}
+	decay := math.Exp(-float64(age) / float64(largestRecentHalfLife))
+	return float64(match.size) * decay
 }
 
 func recentOpenCodeSessions(limit int, maxBytes int64, minBytes int64) ([]logCandidate, error) {
@@ -899,15 +934,7 @@ func recentOpenCodeSessions(limit int, maxBytes int64, minBytes int64) ([]logCan
 	if len(matches) == 0 {
 		return nil, nil
 	}
-	sort.Slice(matches, func(i, j int) bool {
-		if matches[i].modTime.Equal(matches[j].modTime) {
-			return matches[i].path > matches[j].path
-		}
-		return matches[i].modTime.After(matches[j].modTime)
-	})
-	if limit > 0 && len(matches) > limit {
-		matches = matches[:limit]
-	}
+	matches = selectLargestRecentMatches(matches, limit)
 	candidates := make([]logCandidate, 0, len(matches))
 	for _, match := range matches {
 		sessionPath := match.path
@@ -1162,8 +1189,8 @@ func usage() {
 	fmt.Fprintln(os.Stderr, "                 currently auto-discovers Claude Code, Codex, and OpenCode.")
 	fmt.Fprintln(os.Stderr, "  --log <path>   explicit log path; mutually exclusive with a positional <log-path>.")
 	fmt.Fprintln(os.Stderr, "  --out <path>   output path for the sanitized report JSON (default: ./agent-analyzer-report.json).")
-	fmt.Fprintln(os.Stderr, "  --paid         analyze recent supported logs locally and write a sanitized aggregate report.")
-	fmt.Fprintln(os.Stderr, "  --limit <n>    maximum recent logs per source for --paid, capped at 100 (default: 100).")
+	fmt.Fprintln(os.Stderr, "  --paid         analyze largest-recent supported logs locally and write a sanitized aggregate report.")
+	fmt.Fprintf(os.Stderr, "  --limit <n>    maximum largest-recent logs per source for --paid/full-scan, capped at %d (default: %d).\n", fullScanMaxLogLimit, fullScanDefaultLogLimit)
 	fmt.Fprintln(os.Stderr, "")
 	fmt.Fprintln(os.Stderr, "  agent-analyzer full-scan --token <token> [--base-url https://analyzer.spec-kitty.ai] [--no-open]")
 	fmt.Fprintln(os.Stderr, "  agent-analyzer upload <sanitized-report.json> [--base-url https://analyzer.spec-kitty.ai]")

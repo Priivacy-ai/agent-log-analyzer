@@ -76,7 +76,7 @@ Free scan:
 Email-confirmed full scan:
 
 - user confirms email and receives a one-time full-scan token
-- local CLI analyzes up to 100 recent logs per supported source after email unlock
+- local CLI analyzes up to 10 largest-recent logs per supported source after email unlock
 - user reviews a sanitized aggregate report
 - server receives sanitized aggregate report JSON only
 - plugin artifact access uses the private report token

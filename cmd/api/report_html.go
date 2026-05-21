@@ -250,7 +250,7 @@ var reportHTMLTemplate = template.Must(template.New("report").Funcs(template.Fun
           <div class="upsell-copy">
           <p class="eyebrow">free launch unlock</p>
           <h2>Generate the optimization plugin from a full scan</h2>
-          <p class="upsell-lede">Run the deeper local scan across up to 100 recent logs per supported agent source. We turn the sanitized aggregate into a generated optimization pack for session hygiene, retrieval, telemetry, and CLAUDE.md cleanup.</p>
+          <p class="upsell-lede">Run the deeper local scan across up to 10 largest-recent logs per supported agent source. We turn the sanitized aggregate into a generated optimization pack for session hygiene, retrieval, telemetry, and CLAUDE.md cleanup.</p>
           <ul class="upsell-proof">
             <li>Raw transcripts stay local.</li>
             <li>Email confirmation unlocks the second NPX command.</li>
@@ -593,7 +593,7 @@ func actionForFinding(finding analyzer.Finding) actionCopy {
 			Now:        "Before another broad read, name the exact file or symbol and ask the agent to summarize only what changed since the last read.",
 			Why:        findingEvidence(finding.Evidence),
 			AgentsLine: "Before rereading files, summarize known state and prefer targeted symbol searches or narrow line ranges over whole-file reads.",
-			Plugin:     "The full report finds repeated paths across up to 100 logs; the plugin adds retrieval hygiene prompts.",
+			Plugin:     "The full report finds repeated paths across up to 10 largest-recent logs; the plugin adds retrieval hygiene prompts.",
 		}
 	case "tool_output_bloat":
 		return actionCopy{

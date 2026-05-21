@@ -38,7 +38,7 @@ There is intentionally no browser upload form. Agent logs live in hidden tool-sp
 4. After confirmation, it sends only the sanitized report to `POST /api/client-reports`.
 5. The private report opens at `/r/{job_id}/{report_token}` and remains available for later review.
 
-The full optimization scan is email-confirmed during launch testing: the report page asks for an email, sends a confirmation link, then sends a one-line `npx --yes agent-analyzer@latest full-scan --token ...` command. That command analyzes up to 100 recent logs per supported source locally and uploads only sanitized aggregate JSON for report/plugin generation.
+The full optimization scan is email-confirmed during launch testing: the report page asks for an email, sends a confirmation link, then sends a one-line `npx --yes agent-analyzer@latest full-scan --token ...` command. That command analyzes up to 10 largest-recent logs per supported source locally and uploads only sanitized aggregate JSON for report/plugin generation.
 
 Legacy raw-log token upload endpoints still exist for internal Docker smoke coverage while the full scan is moved to the same local-first model. They are not the public onboarding path.
 
@@ -58,7 +58,7 @@ agent-analyzer analyze ~/.claude/projects/some-session.jsonl --out ./report.json
 agent-analyzer analyze --log ~/.claude/projects/some-session.jsonl --out ./report.json
 ```
 
-If neither form is supplied, the CLI auto-discovers one newest log per supported source, skipping files over 2 MiB in the free first pass so the one-line launch command stays responsive. The email-confirmed full scan uses the same discovery model with up to 100 logs per source.
+If neither form is supplied, the CLI auto-discovers one largest-recent log per supported source, skipping files over 2 MiB in the free first pass so the one-line launch command stays responsive. The email-confirmed full scan uses the same scoring model with up to 10 largest-recent logs per source.
 
 ```bash
 docker compose up --build

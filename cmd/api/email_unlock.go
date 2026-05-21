@@ -362,7 +362,7 @@ func slogEmailDeliveryFailure(stage, unlockID string, err error) {
 func renderConfirmedPage(w http.ResponseWriter, command string, expiresAt time.Time) {
 	escapedCommand := htmlstd.EscapeString(command)
 	renderSimpleHTML(w, "Email confirmed", fmt.Sprintf(
-		`<p>Your email is confirmed. We also emailed this command to you. Run it to analyze up to 100 recent logs per supported agent source and generate your plugin:</p><div class="simple-command-copy"><pre><code>%s</code></pre><button type="button" class="copy-agents-line" data-copy="%s">Copy command</button></div><p>This full-scan token expires at %s.</p>`,
+		`<p>Your email is confirmed. We also emailed this command to you. Run it to analyze up to 10 largest-recent logs per supported agent source and generate your plugin:</p><div class="simple-command-copy"><pre><code>%s</code></pre><button type="button" class="copy-agents-line" data-copy="%s">Copy command</button></div><p>This full-scan token expires at %s.</p>`,
 		escapedCommand,
 		escapedCommand,
 		htmlstd.EscapeString(expiresAt.Local().Format(time.RFC1123)),
@@ -382,7 +382,7 @@ func renderSimpleHTMLStatus(w http.ResponseWriter, status int, title, body strin
 
 func confirmationEmailBody(confirmURL string) string {
 	return "Confirm your email to unlock the full Agent Analyzer scan.\n\n" +
-		"Raw logs still stay on your machine. The next command analyzes up to 100 recent logs per supported source locally and uploads only sanitized aggregate JSON.\n\n" +
+		"Raw logs still stay on your machine. The next command analyzes up to 10 largest-recent logs per supported source locally and uploads only sanitized aggregate JSON.\n\n" +
 		"Confirm here:\n" + confirmURL + "\n"
 }
 

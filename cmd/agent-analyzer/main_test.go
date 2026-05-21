@@ -178,6 +178,52 @@ func TestRecentSupportedLogs_LimitsPerSource(t *testing.T) {
 	}
 }
 
+func TestRecentSupportedLogs_SelectsLargestRecentPerSource(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	t.Setenv("PATH", "")
+	claudeRoot := filepath.Join(home, ".claude", "projects", "repo")
+	if err := os.MkdirAll(claudeRoot, 0o700); err != nil {
+		t.Fatalf("mkdir claude: %v", err)
+	}
+	newestSmall := filepath.Join(claudeRoot, "newest-small.jsonl")
+	recentLarge := filepath.Join(claudeRoot, "recent-large.jsonl")
+	staleHuge := filepath.Join(claudeRoot, "stale-huge.jsonl")
+	for _, path := range []string{newestSmall, recentLarge, staleHuge} {
+		writeMeaningfulLog(t, path)
+	}
+	if err := os.Truncate(newestSmall, 16*1024); err != nil {
+		t.Fatalf("truncate newest: %v", err)
+	}
+	if err := os.Truncate(recentLarge, 128*1024); err != nil {
+		t.Fatalf("truncate recent: %v", err)
+	}
+	if err := os.Truncate(staleHuge, 512*1024); err != nil {
+		t.Fatalf("truncate stale: %v", err)
+	}
+	now := time.Unix(200000, 0)
+	for path, modTime := range map[string]time.Time{
+		newestSmall: now,
+		recentLarge: now.Add(-24 * time.Hour),
+		staleHuge:   now.Add(-90 * 24 * time.Hour),
+	} {
+		if err := os.Chtimes(path, modTime, modTime); err != nil {
+			t.Fatalf("chtimes %s: %v", path, err)
+		}
+	}
+
+	candidates, err := recentSupportedLogs(1)
+	if err != nil {
+		t.Fatalf("recentSupportedLogs: %v", err)
+	}
+	if len(candidates) != 1 {
+		t.Fatalf("expected one Claude candidate, got %#v", candidates)
+	}
+	if got := filepath.Base(candidates[0].Display); got != "recent-large.jsonl" {
+		t.Fatalf("expected largest recent log, got %s", got)
+	}
+}
+
 func TestLatestSupportedLogs_SkipsOversizedFreeAutoLogs(t *testing.T) {
 	home := t.TempDir()
 	t.Setenv("HOME", home)
@@ -398,7 +444,7 @@ func TestAnalyzePaid_WritesSanitizedAggregate(t *testing.T) {
 		fileCandidate("codex", "Codex", second),
 	})
 
-	err := runAnalyze([]string{"--paid", "--limit", "100", "--out", outPath})
+	err := runAnalyze([]string{"--paid", "--limit", "10", "--out", outPath})
 	if err != nil {
 		t.Fatalf("runAnalyze paid: %v", err)
 	}
@@ -433,8 +479,8 @@ func TestAnalyzePaid_RejectsUnsafeArguments(t *testing.T) {
 	if err == nil || !strings.Contains(err.Error(), "--paid cannot be combined") {
 		t.Fatalf("expected paid positional rejection, got %v", err)
 	}
-	err = runAnalyze([]string{"--paid", "--limit", "101", "--out", outPath})
-	if err == nil || !strings.Contains(err.Error(), "--limit cannot exceed 100") {
+	err = runAnalyze([]string{"--paid", "--limit", "11", "--out", outPath})
+	if err == nil || !strings.Contains(err.Error(), "--limit cannot exceed 10") {
 		t.Fatalf("expected paid limit rejection, got %v", err)
 	}
 }
@@ -487,10 +533,16 @@ func TestRunFullScan_AnalyzesPaidAggregateAndUploadsWithEntitlementToken(t *test
 	if err := os.WriteFile(second, []byte(sampleJSONL), 0o600); err != nil {
 		t.Fatalf("write second log: %v", err)
 	}
-	withRecentShim(t, []logCandidate{
-		fileCandidate("claude_code", "Claude Code", first),
-		fileCandidate("codex", "Codex", second),
-	})
+	var discoveredLimit int
+	originalRecent := recentSupportedLogsFn
+	recentSupportedLogsFn = func(limit int) ([]logCandidate, error) {
+		discoveredLimit = limit
+		return []logCandidate{
+			fileCandidate("claude_code", "Claude Code", first),
+			fileCandidate("codex", "Codex", second),
+		}, nil
+	}
+	t.Cleanup(func() { recentSupportedLogsFn = originalRecent })
 	outPath := filepath.Join(dir, "full-scan.json")
 	var authHeader string
 	var received analyzer.Report
@@ -521,6 +573,9 @@ func TestRunFullScan_AnalyzesPaidAggregateAndUploadsWithEntitlementToken(t *test
 	}
 	if authHeader != "Bearer email-token" {
 		t.Fatalf("expected bearer entitlement token, got %q", authHeader)
+	}
+	if discoveredLimit != fullScanDefaultLogLimit {
+		t.Fatalf("expected full-scan default limit %d, got %d", fullScanDefaultLogLimit, discoveredLimit)
 	}
 	if received.AggregateEvent.ParserType != "full_scan_bundle" || received.SecurityReceipt.RawLogTTL != "not uploaded" {
 		t.Fatalf("expected sanitized full-scan aggregate upload, got %#v", received)
