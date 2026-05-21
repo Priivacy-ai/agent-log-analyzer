@@ -1,8 +1,11 @@
 package remediation
 
 import (
+	"bytes"
 	"encoding/json"
 	"net/url"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -183,6 +186,86 @@ func TestGenerateIsDeterministic(t *testing.T) {
 	second := mustJSON(t, Generate(report, options))
 	if first != second {
 		t.Fatalf("expected deterministic artifact\nfirst=%s\nsecond=%s", first, second)
+	}
+}
+
+func TestGoldenRemediationArtifact(t *testing.T) {
+	report := analyzer.Report{
+		Version: "0.1.0",
+		Score:   42,
+		EstimatedWaste: analyzer.WasteRange{
+			Low:  29,
+			High: 41,
+		},
+		AggregateEvent: analyzer.AggregateSafeEvent{
+			ScoreBucket: "40_60",
+			WasteBucket: "40_60",
+		},
+		Findings: []analyzer.Finding{
+			{
+				ID:         "repeated_file_reads",
+				Severity:   "high",
+				CostImpact: "medium-high",
+				Evidence: analyzer.FindingEvidence{
+					Count:    17,
+					TopFiles: []string{"auth.ts", "routes.py"},
+				},
+			},
+			{
+				ID:         "tool_output_bloat",
+				Severity:   "high",
+				CostImpact: "high",
+				Evidence: analyzer.FindingEvidence{
+					TokenShare: 63,
+				},
+			},
+			{
+				ID:         "retry_loop",
+				Severity:   "medium",
+				CostImpact: "medium",
+				Evidence: analyzer.FindingEvidence{
+					Count: 4,
+				},
+			},
+		},
+		Ecosystem: analyzer.Ecosystem{
+			Client:             "claude_code",
+			OperatingSystem:    "macos",
+			Shell:              "zsh",
+			WorkflowFrameworks: []string{"spec_kitty", "bmad"},
+			MCPServersKnown:    []string{"github"},
+			KnownPlugins:       []string{"notion"},
+			KnownSkills:        []string{"qa"},
+			PackageManagers:    []string{"pnpm"},
+			VersionControl:     "git",
+		},
+	}
+	artifact := Generate(report, Options{
+		ArtifactURL: "https://example.test/plugin.zip",
+		GeneratedAt: time.Date(2026, 5, 18, 14, 0, 0, 0, time.UTC),
+	})
+	actual, err := json.MarshalIndent(artifact, "", "  ")
+	if err != nil {
+		t.Fatalf("marshal artifact: %v", err)
+	}
+	actual = append(actual, '\n')
+
+	goldenPath := filepath.Join("..", "..", "testdata", "golden", "remediation-artifact.json")
+	if os.Getenv("UPDATE_GOLDEN") == "1" {
+		if err := os.MkdirAll(filepath.Dir(goldenPath), 0o755); err != nil {
+			t.Fatalf("mkdir golden dir: %v", err)
+		}
+		if err := os.WriteFile(goldenPath, actual, 0o644); err != nil {
+			t.Fatalf("write golden: %v", err)
+		}
+	}
+
+	expected, err := os.ReadFile(goldenPath)
+	if err != nil {
+		t.Fatalf("read golden %s: %v (run UPDATE_GOLDEN=1 go test ./internal/remediation -run TestGoldenRemediationArtifact)", goldenPath, err)
+	}
+	if !bytes.Equal(expected, actual) {
+		t.Fatalf("remediation artifact golden mismatch; run UPDATE_GOLDEN=1 go test ./internal/remediation -run TestGoldenRemediationArtifact")
 	}
 }
 

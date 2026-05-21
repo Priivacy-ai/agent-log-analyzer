@@ -1,0 +1,356 @@
+{
+  "schema_version": "2026-05-18",
+  "generator": "agent-log-analyzer/remediation@0.1.0",
+  "plugin_name": "agent-analyzer-optimization",
+  "plugin_version": "0.1.0+0-1-0",
+  "generated_at": "2026-05-18T14:00:00Z",
+  "source": {
+    "analyzer_version": "0.1.0",
+    "score_bucket": "40_60",
+    "waste_bucket": "40_60",
+    "finding_ids": [
+      "repeated_file_reads",
+      "retry_loop",
+      "tool_output_bloat"
+    ],
+    "known_ecosystem": [
+      "client:claude_code",
+      "framework:bmad",
+      "framework:spec_kitty",
+      "mcp:github",
+      "os:macos",
+      "package_manager:pnpm",
+      "plugin:notion",
+      "shell:zsh",
+      "skill:qa",
+      "vcs:git"
+    ]
+  },
+  "customizations": [
+    {
+      "id": "retrieval-hygiene",
+      "reason": "Repeated reads indicate the session is rereading files instead of preserving file state summaries.",
+      "evidence": {
+        "finding_id": "repeated_file_reads",
+        "severity": "high",
+        "cost_impact": "medium-high",
+        "count": 17
+      },
+      "files": [
+        "skills/retrieval-hygiene/SKILL.md"
+      ]
+    },
+    {
+      "id": "output-budget",
+      "reason": "Tool output consumed a high share of estimated context tokens.",
+      "evidence": {
+        "finding_id": "tool_output_bloat",
+        "severity": "high",
+        "cost_impact": "high",
+        "token_share_pct": 63
+      },
+      "files": [
+        "skills/output-budget/SKILL.md",
+        "skills/tooling-setup/SKILL.md"
+      ]
+    },
+    {
+      "id": "retry-breaker",
+      "reason": "Retry-loop behavior suggests the session needs an explicit stop-and-reframe routine.",
+      "evidence": {
+        "finding_id": "retry_loop",
+        "severity": "medium",
+        "cost_impact": "medium",
+        "count": 4
+      },
+      "files": [
+        "skills/retry-breaker/SKILL.md"
+      ]
+    }
+  ],
+  "vetted_recommendations": [
+    {
+      "id": "awesome-claude-code",
+      "category": "ecosystem_index",
+      "failure_modes": [
+        "broad_file_reads_or_verbose_output"
+      ],
+      "why": "Use as a monitored discovery source for Claude Code skills, hooks, plugins, statuslines, and orchestration tools; do not install from it directly.",
+      "install_command": "Review https://github.com/hesreallyhim/awesome-claude-code before adding any new third-party tool to the allowlist.",
+      "source": "https://github.com/hesreallyhim/awesome-claude-code",
+      "risk_level": "low",
+      "data_movement_risk": "low",
+      "install_surface": "reference",
+      "vetting_notes": "Discovery index; reference only."
+    },
+    {
+      "id": "ccstatusline",
+      "category": "statusline_telemetry",
+      "failure_modes": [
+        "cross_cutting_telemetry"
+      ],
+      "why": "Expose session state in the statusline so users notice cost, git state, and workflow drift without adding messages to context.",
+      "install_command": "Review https://github.com/sirmalloc/ccstatusline and install only if it does not conflict with Context Mode or the user's existing statusline.",
+      "required_binary": "ccstatusline",
+      "binary_install_hint": "Prefer the repository's current release/install instructions over copied commands.",
+      "source": "https://github.com/sirmalloc/ccstatusline",
+      "risk_level": "low",
+      "data_movement_risk": "low",
+      "install_surface": "local_cli_or_local_config",
+      "vetting_notes": "Statusline-based usage visibility; complements ccusage."
+    },
+    {
+      "id": "ccusage",
+      "category": "metrics_telemetry",
+      "failure_modes": [
+        "cross_cutting_telemetry"
+      ],
+      "why": "Parse local Claude Code JSONL logs for independent token, cost, and burn-rate visibility before and after optimization.",
+      "install_command": "npx ccusage@latest",
+      "source": "https://github.com/ryoppippi/ccusage",
+      "risk_level": "low",
+      "data_movement_risk": "low",
+      "install_surface": "local_cli_or_local_config",
+      "vetting_notes": "Independent metrics layer; always-eligible primary when no_usage_visibility fires."
+    },
+    {
+      "id": "claude-code-hooks-mastery",
+      "category": "implementation_reference",
+      "failure_modes": [
+        "repeated_codebase_navigation"
+      ],
+      "why": "Use as a reference for SessionStart, PostToolUse, PreCompact, Stop, and UserPromptSubmit patterns when building workflow discipline.",
+      "install_command": "Review https://github.com/disler/claude-code-hooks-mastery before enabling any new hook behavior.",
+      "source": "https://github.com/disler/claude-code-hooks-mastery",
+      "risk_level": "low",
+      "data_movement_risk": "low",
+      "install_surface": "reference",
+      "vetting_notes": "Reference architecture for hook authors; not a runtime tool."
+    },
+    {
+      "id": "claude-code-usage-monitor",
+      "category": "burn_rate_monitoring",
+      "failure_modes": [
+        "cross_cutting_telemetry"
+      ],
+      "why": "Optional live forecasting for users who care about session limits and burn-rate warnings outside Claude's context.",
+      "install_command": "uv tool install claude-monitor\nclaude-monitor",
+      "required_binary": "claude-monitor",
+      "binary_install_hint": "Alternative: pip install claude-monitor.",
+      "source": "https://github.com/Maciek-roboblog/Claude-Code-Usage-Monitor",
+      "risk_level": "low",
+      "data_movement_risk": "low",
+      "install_surface": "observability",
+      "vetting_notes": "External monitor; does not live inside the plugin runtime."
+    },
+    {
+      "id": "claude-context",
+      "category": "semantic_retrieval_mcp",
+      "failure_modes": [
+        "repeated_codebase_navigation"
+      ],
+      "why": "Add MCP semantic code retrieval for large repositories where brute-force file exploration causes repeated rereads.",
+      "install_command": "claude mcp add claude-context -e OPENAI_API_KEY=\u003copenai-key\u003e -e MILVUS_ADDRESS=\u003czilliz-endpoint\u003e -e MILVUS_TOKEN=\u003czilliz-token\u003e -- npx @zilliz/claude-context-mcp@latest",
+      "source": "https://github.com/zilliztech/claude-context",
+      "risk_level": "high",
+      "data_movement_risk": "high",
+      "install_surface": "mcp_plus_external_vector_store",
+      "conflicts_with": [
+        "grepai",
+        "serena",
+        "codegraph",
+        "semble"
+      ],
+      "vetting_notes": "External vector DB / API key required; high data-movement surface."
+    },
+    {
+      "id": "claude-token-efficient",
+      "category": "claude_md_optimization",
+      "failure_modes": [
+        "broad_file_reads_or_verbose_output"
+      ],
+      "why": "Reduce accumulated assistant verbosity, but only merge the smallest useful rules because persistent CLAUDE.md text adds input tokens.",
+      "install_command": "Ask Claude to review https://github.com/drona23/claude-token-efficient and propose a minimal CLAUDE.md diff; do not overwrite existing CLAUDE.md automatically.",
+      "source": "https://github.com/drona23/claude-token-efficient",
+      "risk_level": "low",
+      "data_movement_risk": "low",
+      "install_surface": "local_cli_or_local_config",
+      "conflicts_with": [
+        "caveman"
+      ],
+      "vetting_notes": "Output-style skill; lowest install/data risk in its class."
+    },
+    {
+      "id": "context-mode",
+      "category": "context_defense",
+      "failure_modes": [
+        "tool_output_flooding"
+      ],
+      "why": "Route large tool outputs through sandboxed processing and summaries instead of flooding Claude's live context.",
+      "install_command": "/plugin marketplace add mksglu/context-mode\n/plugin install context-mode@context-mode\n/reload-plugins\n/context-mode:ctx-doctor",
+      "source": "https://github.com/mksglu/context-mode",
+      "risk_level": "low",
+      "data_movement_risk": "low",
+      "install_surface": "claude_plugin_plus_mcp",
+      "conflicts_with": [
+        "token_optimizer_mcp",
+        "headroom"
+      ],
+      "vetting_notes": "MCP-side context reducer; primary candidate for mcp_tool_output_bloat."
+    },
+    {
+      "id": "github",
+      "category": "mcp_integration",
+      "failure_modes": [
+        "tool_output_flooding"
+      ],
+      "why": "Fetch structured issue and PR context without pasting browser output or long terminal dumps into Claude.",
+      "install_command": "/plugin install github@claude-plugins-official",
+      "source": "https://claude.com/plugins/github",
+      "risk_level": "medium",
+      "data_movement_risk": "medium",
+      "install_surface": "reviewed_third_party_or_official_plugin",
+      "vetting_notes": "Exact source URL is included; confirm current install instructions before running commands."
+    },
+    {
+      "id": "grepai",
+      "category": "local_semantic_retrieval",
+      "failure_modes": [
+        "repeated_codebase_navigation"
+      ],
+      "why": "Use local semantic code search and call graphs to reduce repeated grep/read loops without sending code to a hosted retrieval service.",
+      "install_command": "brew install yoanbernabeu/tap/grepai\ngrepai init\ngrepai watch",
+      "required_binary": "grepai",
+      "binary_install_hint": "Requires an embedding provider such as Ollama; install with curl script only after reviewing the GitHub source.",
+      "source": "https://github.com/yoanbernabeu/grepai",
+      "risk_level": "medium",
+      "data_movement_risk": "medium",
+      "install_surface": "local_binary_plus_optional_embedding_provider",
+      "conflicts_with": [
+        "claude_context",
+        "serena",
+        "codegraph",
+        "semble"
+      ],
+      "vetting_notes": "Local-first; requires embedding provider setup."
+    },
+    {
+      "id": "notion",
+      "category": "mcp_integration",
+      "failure_modes": [
+        "tool_output_flooding"
+      ],
+      "why": "Pull structured project documentation directly instead of repeatedly searching or pasting docs.",
+      "install_command": "/plugin install notion@claude-plugins-official",
+      "source": "https://claude.com/plugins/notion",
+      "risk_level": "medium",
+      "data_movement_risk": "medium",
+      "install_surface": "reviewed_third_party_or_official_plugin",
+      "vetting_notes": "Exact source URL is included; confirm current install instructions before running commands."
+    },
+    {
+      "id": "rtk",
+      "category": "advanced_shell_compression",
+      "failure_modes": [
+        "noisy_terminal_logs"
+      ],
+      "why": "RTK (Rust Token Killer, rtk-ai/rtk) compresses common shell command output before it reaches Claude; useful when terminal output is a dominant waste source.",
+      "install_command": "Review https://github.com/rtk-ai/rtk first. If approved on macOS: brew install rtk\nrtk init -g",
+      "required_binary": "rtk",
+      "binary_install_hint": "This is github.com/rtk-ai/rtk. Do not install the unrelated npm package named rtk.",
+      "source": "https://github.com/rtk-ai/rtk",
+      "risk_level": "high",
+      "data_movement_risk": "high",
+      "install_surface": "local_binary_plus_claude_hook",
+      "conflicts_with": [
+        "leanctx",
+        "headroom"
+      ],
+      "ambiguity_warning": "RTK means github.com/rtk-ai/rtk. Never install the unrelated npm package named rtk.",
+      "vetting_notes": "Rewrites shell command execution. This is github.com/rtk-ai/rtk, not the unrelated npm package named rtk."
+    },
+    {
+      "id": "typescript-lsp",
+      "category": "code_intelligence",
+      "failure_modes": [
+        "repeated_codebase_navigation"
+      ],
+      "why": "Use symbol navigation and diagnostics instead of repeated grep/read loops in JavaScript and TypeScript projects.",
+      "install_command": "/plugin install typescript-lsp@claude-plugins-official",
+      "required_binary": "typescript-language-server",
+      "binary_install_hint": "npm install -g typescript typescript-language-server",
+      "source": "https://claude.com/plugins/typescript-lsp",
+      "risk_level": "medium",
+      "data_movement_risk": "medium",
+      "install_surface": "reviewed_third_party_or_official_plugin",
+      "vetting_notes": "Exact source URL is included; confirm current install instructions before running commands."
+    }
+  ],
+  "required_acknowledgment": "I understand that Agent Analyzer provides deterministic analysis and vetted setup recommendations, but any installation or code change is executed by Claude Code, my package manager, or third-party tools with my approval and at my own risk.",
+  "files": [
+    {
+      "path": ".claude-plugin/plugin.json",
+      "mode": "0644",
+      "content": "{\n  \"$schema\": \"https://json.schemastore.org/claude-code-plugin-manifest.json\",\n  \"author\": {\n    \"name\": \"Agent Analyzer\"\n  },\n  \"description\": \"Deterministic Claude Code codebase-navigation and tooling recommendations generated from an Agent Analyzer report.\",\n  \"keywords\": [\n    \"claude-code\",\n    \"tokens\",\n    \"context\",\n    \"profiler\",\n    \"code-intelligence\",\n    \"mcp\"\n  ],\n  \"name\": \"agent-analyzer-optimization\",\n  \"version\": \"0.1.0+0-1-0\"\n}\n"
+    },
+    {
+      "path": "README.md",
+      "mode": "0644",
+      "content": "# Agent Analyzer Optimization Plugin\n\nGenerated from deterministic Agent Analyzer metrics.\n\n- Efficiency score bucket: 40_60\n- Waste bucket: 40_60\n- Raw transcript included: no\n- Unknown private ecosystem names included: no\n\nUse the included skills and commands to make the codebase easier for Claude Code to navigate: lean CLAUDE.md layers, scoped skills, official code-intelligence plugins, and vetted MCP integrations. This plugin does not nag on Bash commands.\n"
+    },
+    {
+      "path": "WAIVER.md",
+      "mode": "0644",
+      "content": "# Required Acknowledgment\n\nI understand that Agent Analyzer provides deterministic analysis and vetted setup recommendations, but any installation or code change is executed by Claude Code, my package manager, or third-party tools with my approval and at my own risk.\n\nThis remediation pack may ask Claude Code to recommend or install third-party software, including language servers, Claude Code plugins, and MCP-backed integrations. Those tools can execute code or access local/project data according to their own permissions.\n\nBefore installing anything:\n\n1. Review every recommended tool and its source.\n2. Confirm the command matches your operating system and package manager.\n3. Confirm you have backups or version control for any repository Claude may modify.\n4. Approve each installation separately.\n5. Stop if Claude proposes an unvetted source, a destructive command, or a credential change you do not understand.\n\nAgent Analyzer is not responsible for damage, data loss, credential exposure, billing impact, or other consequences caused by Claude Code, recommended tools, package managers, language servers, plugins, MCP servers, or user-approved commands.\n"
+    },
+    {
+      "path": "commands/agent-analyzer-status.md",
+      "mode": "0644",
+      "content": "---\ndescription: Show the Agent Analyzer session hygiene summary generated from the paid scan.\n---\n\n# Agent Analyzer Status\n\nReport the current workflow hygiene posture in one terse line:\n\nCTX discipline: watch | findings: repeated_file_reads, retry_loop, tool_output_bloat | action: compact after pivots, cap shell output, avoid repeated reads.\n"
+    },
+    {
+      "path": "commands/agent-analyzer-tooling.md",
+      "mode": "0644",
+      "content": "---\ndescription: Review the generated token-saving, code-intelligence, and MCP setup recommendations.\n---\n\n# Agent Analyzer Tooling Setup\n\nRead WAIVER.md first. Do not install anything until the user explicitly acknowledges the waiver and approves each command.\n\nRecommended actions:\n\n- awesome-claude-code (ecosystem_index): Use as a monitored discovery source for Claude Code skills, hooks, plugins, statuslines, and orchestration tools; do not install from it directly.\n  Failure modes: `broad_file_reads_or_verbose_output`\n  Risk/surface: install=`low`, data=`low`, surface=`reference`\n  Install: `Review https://github.com/hesreallyhim/awesome-claude-code before adding any new third-party tool to the allowlist.`\n  Source: https://github.com/hesreallyhim/awesome-claude-code\n  Vetting notes: Discovery index; reference only.\n- ccstatusline (statusline_telemetry): Expose session state in the statusline so users notice cost, git state, and workflow drift without adding messages to context.\n  Failure modes: `cross_cutting_telemetry`\n  Risk/surface: install=`low`, data=`low`, surface=`local_cli_or_local_config`\n  Install: `Review https://github.com/sirmalloc/ccstatusline and install only if it does not conflict with Context Mode or the user's existing statusline.`\n  Required binary: `ccstatusline`\n  Binary install hint: `Prefer the repository's current release/install instructions over copied commands.`\n  Source: https://github.com/sirmalloc/ccstatusline\n  Vetting notes: Statusline-based usage visibility; complements ccusage.\n- ccusage (metrics_telemetry): Parse local Claude Code JSONL logs for independent token, cost, and burn-rate visibility before and after optimization.\n  Failure modes: `cross_cutting_telemetry`\n  Risk/surface: install=`low`, data=`low`, surface=`local_cli_or_local_config`\n  Install: `npx ccusage@latest`\n  Source: https://github.com/ryoppippi/ccusage\n  Vetting notes: Independent metrics layer; always-eligible primary when no_usage_visibility fires.\n- claude-code-hooks-mastery (implementation_reference): Use as a reference for SessionStart, PostToolUse, PreCompact, Stop, and UserPromptSubmit patterns when building workflow discipline.\n  Failure modes: `repeated_codebase_navigation`\n  Risk/surface: install=`low`, data=`low`, surface=`reference`\n  Install: `Review https://github.com/disler/claude-code-hooks-mastery before enabling any new hook behavior.`\n  Source: https://github.com/disler/claude-code-hooks-mastery\n  Vetting notes: Reference architecture for hook authors; not a runtime tool.\n- claude-code-usage-monitor (burn_rate_monitoring): Optional live forecasting for users who care about session limits and burn-rate warnings outside Claude's context.\n  Failure modes: `cross_cutting_telemetry`\n  Risk/surface: install=`low`, data=`low`, surface=`observability`\n  Install: `uv tool install claude-monitor\nclaude-monitor`\n  Required binary: `claude-monitor`\n  Binary install hint: `Alternative: pip install claude-monitor.`\n  Source: https://github.com/Maciek-roboblog/Claude-Code-Usage-Monitor\n  Vetting notes: External monitor; does not live inside the plugin runtime.\n- claude-context (semantic_retrieval_mcp): Add MCP semantic code retrieval for large repositories where brute-force file exploration causes repeated rereads.\n  Failure modes: `repeated_codebase_navigation`\n  Risk/surface: install=`high`, data=`high`, surface=`mcp_plus_external_vector_store`\n  Conflicts/overlap: `grepai`, `serena`, `codegraph`, `semble`; choose one tool for this failure mode unless the user explicitly approves both.\n  Install: `claude mcp add claude-context -e OPENAI_API_KEY=\u003copenai-key\u003e -e MILVUS_ADDRESS=\u003czilliz-endpoint\u003e -e MILVUS_TOKEN=\u003czilliz-token\u003e -- npx @zilliz/claude-context-mcp@latest`\n  Source: https://github.com/zilliztech/claude-context\n  Vetting notes: External vector DB / API key required; high data-movement surface.\n- claude-token-efficient (claude_md_optimization): Reduce accumulated assistant verbosity, but only merge the smallest useful rules because persistent CLAUDE.md text adds input tokens.\n  Failure modes: `broad_file_reads_or_verbose_output`\n  Risk/surface: install=`low`, data=`low`, surface=`local_cli_or_local_config`\n  Conflicts/overlap: `caveman`; choose one tool for this failure mode unless the user explicitly approves both.\n  Install: `Ask Claude to review https://github.com/drona23/claude-token-efficient and propose a minimal CLAUDE.md diff; do not overwrite existing CLAUDE.md automatically.`\n  Source: https://github.com/drona23/claude-token-efficient\n  Vetting notes: Output-style skill; lowest install/data risk in its class.\n- context-mode (context_defense): Route large tool outputs through sandboxed processing and summaries instead of flooding Claude's live context.\n  Failure modes: `tool_output_flooding`\n  Risk/surface: install=`low`, data=`low`, surface=`claude_plugin_plus_mcp`\n  Conflicts/overlap: `token_optimizer_mcp`, `headroom`; choose one tool for this failure mode unless the user explicitly approves both.\n  Install: `/plugin marketplace add mksglu/context-mode\n/plugin install context-mode@context-mode\n/reload-plugins\n/context-mode:ctx-doctor`\n  Source: https://github.com/mksglu/context-mode\n  Vetting notes: MCP-side context reducer; primary candidate for mcp_tool_output_bloat.\n- github (mcp_integration): Fetch structured issue and PR context without pasting browser output or long terminal dumps into Claude.\n  Failure modes: `tool_output_flooding`\n  Risk/surface: install=`medium`, data=`medium`, surface=`reviewed_third_party_or_official_plugin`\n  Install: `/plugin install github@claude-plugins-official`\n  Source: https://claude.com/plugins/github\n  Vetting notes: Exact source URL is included; confirm current install instructions before running commands.\n- grepai (local_semantic_retrieval): Use local semantic code search and call graphs to reduce repeated grep/read loops without sending code to a hosted retrieval service.\n  Failure modes: `repeated_codebase_navigation`\n  Risk/surface: install=`medium`, data=`medium`, surface=`local_binary_plus_optional_embedding_provider`\n  Conflicts/overlap: `claude_context`, `serena`, `codegraph`, `semble`; choose one tool for this failure mode unless the user explicitly approves both.\n  Install: `brew install yoanbernabeu/tap/grepai\ngrepai init\ngrepai watch`\n  Required binary: `grepai`\n  Binary install hint: `Requires an embedding provider such as Ollama; install with curl script only after reviewing the GitHub source.`\n  Source: https://github.com/yoanbernabeu/grepai\n  Vetting notes: Local-first; requires embedding provider setup.\n- notion (mcp_integration): Pull structured project documentation directly instead of repeatedly searching or pasting docs.\n  Failure modes: `tool_output_flooding`\n  Risk/surface: install=`medium`, data=`medium`, surface=`reviewed_third_party_or_official_plugin`\n  Install: `/plugin install notion@claude-plugins-official`\n  Source: https://claude.com/plugins/notion\n  Vetting notes: Exact source URL is included; confirm current install instructions before running commands.\n- rtk (advanced_shell_compression): RTK (Rust Token Killer, rtk-ai/rtk) compresses common shell command output before it reaches Claude; useful when terminal output is a dominant waste source.\n  Failure modes: `noisy_terminal_logs`\n  Risk/surface: install=`high`, data=`high`, surface=`local_binary_plus_claude_hook`\n  Conflicts/overlap: `leanctx`, `headroom`; choose one tool for this failure mode unless the user explicitly approves both.\n  Ambiguity warning: RTK means github.com/rtk-ai/rtk. Never install the unrelated npm package named rtk.\n  Install: `Review https://github.com/rtk-ai/rtk first. If approved on macOS: brew install rtk\nrtk init -g`\n  Required binary: `rtk`\n  Binary install hint: `This is github.com/rtk-ai/rtk. Do not install the unrelated npm package named rtk.`\n  Source: https://github.com/rtk-ai/rtk\n  Vetting notes: Rewrites shell command execution. This is github.com/rtk-ai/rtk, not the unrelated npm package named rtk.\n- typescript-lsp (code_intelligence): Use symbol navigation and diagnostics instead of repeated grep/read loops in JavaScript and TypeScript projects.\n  Failure modes: `repeated_codebase_navigation`\n  Risk/surface: install=`medium`, data=`medium`, surface=`reviewed_third_party_or_official_plugin`\n  Install: `/plugin install typescript-lsp@claude-plugins-official`\n  Required binary: `typescript-language-server`\n  Binary install hint: `npm install -g typescript typescript-language-server`\n  Source: https://claude.com/plugins/typescript-lsp\n  Vetting notes: Exact source URL is included; confirm current install instructions before running commands.\n\n\nProcedure:\n\n1. Inspect the repository language stack and confirm each recommendation still applies.\n2. Prefer official Claude Code marketplace plugins and documented language-server binaries.\n3. Ask before installing each binary or plugin.\n4. After installing plugins, run /reload-plugins.\n5. If any tool source differs from the recommendation, stop and ask the user.\n"
+    },
+    {
+      "path": "skills/codebase-navigation/SKILL.md",
+      "mode": "0644",
+      "content": "---\ndescription: Use when Claude needs to understand a large or unfamiliar codebase without wasting context.\n---\n\n# Codebase Navigation\n\nThis skill follows Anthropic's large-codebase guidance: make the codebase navigable before adding more automation.\n\nRules:\n\n1. Keep root CLAUDE.md lean: architecture map, critical commands, and gotchas only.\n2. Prefer subdirectory CLAUDE.md files for local build/test conventions.\n3. Start Claude in the relevant subdirectory when the task has a clear scope.\n4. Build or update a concise codebase map when top-level folders are not self-explanatory.\n5. Prefer LSP/code-intelligence lookups for definitions and references before broad grep/read loops.\n6. Use MCP integrations only for structured external context; do not paste large external pages or logs into the session.\n\nGenerated score bucket: 40_60\nGenerated waste bucket: 40_60\n"
+    },
+    {
+      "path": "skills/output-budget/SKILL.md",
+      "mode": "0644",
+      "content": "---\ndescription: Use when shell, test, grep, build, or tool output may become large.\n---\n\n# Output Budget\n\nBefore running commands likely to print large output:\n\n1. Prefer quiet flags, focused tests, and specific paths.\n2. Pipe noisy commands through tail, head, rg, jq, or sed -n with a clear bound.\n3. Capture full logs to a file only when needed, then inspect focused excerpts.\n4. Never paste unbounded command output into context.\n5. For repeated failing tests, stop after the second similar failure and inspect the invariant.\n"
+    },
+    {
+      "path": "skills/retrieval-hygiene/SKILL.md",
+      "mode": "0644",
+      "content": "---\ndescription: Use when Claude Code is repeatedly reading the same files or running broad searches.\n---\n\n# Retrieval Hygiene\n\nWhen inspecting code:\n\n1. Prefer rg and targeted symbol/file searches before broad reads.\n2. Read the narrowest range that can answer the question.\n3. After reading a file, keep a short file-state summary before deciding to reread it.\n4. If the same file appears again, state what new fact is needed before reading.\n5. Avoid dumping entire files unless the file is small and central to the task.\n"
+    },
+    {
+      "path": "skills/retry-breaker/SKILL.md",
+      "mode": "0644",
+      "content": "---\ndescription: Use after repeated failed commands, failed edits, or repeated attempts that do not change the failure mode.\n---\n\n# Retry Breaker\n\nWhen the same failure repeats:\n\n1. Stop after two similar failures.\n2. State the invariant: what did not change across attempts.\n3. Reduce the scope to the smallest failing command or file.\n4. Re-read only the evidence needed for the next hypothesis.\n5. Ask whether to compact or split the task if the session has drifted.\n"
+    },
+    {
+      "path": "skills/session-hygiene/SKILL.md",
+      "mode": "0644",
+      "content": "---\ndescription: Use when a Claude Code session changes task type, grows context quickly, or needs a compact/clear decision.\n---\n\n# Session Hygiene\n\nThis plugin was generated from deterministic Agent Analyzer metrics.\n\nRules:\n\n1. Keep debugging, architecture, and implementation in separate sessions when the task pivots.\n2. Suggest /compact before a major subsystem pivot or after a long failed debugging branch.\n3. Suggest /clear when the current context is dominated by stale assumptions.\n4. Before rereading files, summarize what is already known and state the missing fact.\n5. Keep advice short and operational.\n\nGenerated score bucket: 40_60\nGenerated waste bucket: 40_60\n"
+    },
+    {
+      "path": "skills/tooling-setup/SKILL.md",
+      "mode": "0644",
+      "content": "---\ndescription: Use when setting up vetted token-saving tools, language servers, Claude Code plugins, or MCP integrations.\n---\n\n# Tooling Setup\n\nInstall only with explicit user approval.\n\n- awesome-claude-code (ecosystem_index): Use as a monitored discovery source for Claude Code skills, hooks, plugins, statuslines, and orchestration tools; do not install from it directly.\n  Failure modes: `broad_file_reads_or_verbose_output`\n  Risk/surface: install=`low`, data=`low`, surface=`reference`\n  Install: `Review https://github.com/hesreallyhim/awesome-claude-code before adding any new third-party tool to the allowlist.`\n  Source: https://github.com/hesreallyhim/awesome-claude-code\n  Vetting notes: Discovery index; reference only.\n- ccstatusline (statusline_telemetry): Expose session state in the statusline so users notice cost, git state, and workflow drift without adding messages to context.\n  Failure modes: `cross_cutting_telemetry`\n  Risk/surface: install=`low`, data=`low`, surface=`local_cli_or_local_config`\n  Install: `Review https://github.com/sirmalloc/ccstatusline and install only if it does not conflict with Context Mode or the user's existing statusline.`\n  Required binary: `ccstatusline`\n  Binary install hint: `Prefer the repository's current release/install instructions over copied commands.`\n  Source: https://github.com/sirmalloc/ccstatusline\n  Vetting notes: Statusline-based usage visibility; complements ccusage.\n- ccusage (metrics_telemetry): Parse local Claude Code JSONL logs for independent token, cost, and burn-rate visibility before and after optimization.\n  Failure modes: `cross_cutting_telemetry`\n  Risk/surface: install=`low`, data=`low`, surface=`local_cli_or_local_config`\n  Install: `npx ccusage@latest`\n  Source: https://github.com/ryoppippi/ccusage\n  Vetting notes: Independent metrics layer; always-eligible primary when no_usage_visibility fires.\n- claude-code-hooks-mastery (implementation_reference): Use as a reference for SessionStart, PostToolUse, PreCompact, Stop, and UserPromptSubmit patterns when building workflow discipline.\n  Failure modes: `repeated_codebase_navigation`\n  Risk/surface: install=`low`, data=`low`, surface=`reference`\n  Install: `Review https://github.com/disler/claude-code-hooks-mastery before enabling any new hook behavior.`\n  Source: https://github.com/disler/claude-code-hooks-mastery\n  Vetting notes: Reference architecture for hook authors; not a runtime tool.\n- claude-code-usage-monitor (burn_rate_monitoring): Optional live forecasting for users who care about session limits and burn-rate warnings outside Claude's context.\n  Failure modes: `cross_cutting_telemetry`\n  Risk/surface: install=`low`, data=`low`, surface=`observability`\n  Install: `uv tool install claude-monitor\nclaude-monitor`\n  Required binary: `claude-monitor`\n  Binary install hint: `Alternative: pip install claude-monitor.`\n  Source: https://github.com/Maciek-roboblog/Claude-Code-Usage-Monitor\n  Vetting notes: External monitor; does not live inside the plugin runtime.\n- claude-context (semantic_retrieval_mcp): Add MCP semantic code retrieval for large repositories where brute-force file exploration causes repeated rereads.\n  Failure modes: `repeated_codebase_navigation`\n  Risk/surface: install=`high`, data=`high`, surface=`mcp_plus_external_vector_store`\n  Conflicts/overlap: `grepai`, `serena`, `codegraph`, `semble`; choose one tool for this failure mode unless the user explicitly approves both.\n  Install: `claude mcp add claude-context -e OPENAI_API_KEY=\u003copenai-key\u003e -e MILVUS_ADDRESS=\u003czilliz-endpoint\u003e -e MILVUS_TOKEN=\u003czilliz-token\u003e -- npx @zilliz/claude-context-mcp@latest`\n  Source: https://github.com/zilliztech/claude-context\n  Vetting notes: External vector DB / API key required; high data-movement surface.\n- claude-token-efficient (claude_md_optimization): Reduce accumulated assistant verbosity, but only merge the smallest useful rules because persistent CLAUDE.md text adds input tokens.\n  Failure modes: `broad_file_reads_or_verbose_output`\n  Risk/surface: install=`low`, data=`low`, surface=`local_cli_or_local_config`\n  Conflicts/overlap: `caveman`; choose one tool for this failure mode unless the user explicitly approves both.\n  Install: `Ask Claude to review https://github.com/drona23/claude-token-efficient and propose a minimal CLAUDE.md diff; do not overwrite existing CLAUDE.md automatically.`\n  Source: https://github.com/drona23/claude-token-efficient\n  Vetting notes: Output-style skill; lowest install/data risk in its class.\n- context-mode (context_defense): Route large tool outputs through sandboxed processing and summaries instead of flooding Claude's live context.\n  Failure modes: `tool_output_flooding`\n  Risk/surface: install=`low`, data=`low`, surface=`claude_plugin_plus_mcp`\n  Conflicts/overlap: `token_optimizer_mcp`, `headroom`; choose one tool for this failure mode unless the user explicitly approves both.\n  Install: `/plugin marketplace add mksglu/context-mode\n/plugin install context-mode@context-mode\n/reload-plugins\n/context-mode:ctx-doctor`\n  Source: https://github.com/mksglu/context-mode\n  Vetting notes: MCP-side context reducer; primary candidate for mcp_tool_output_bloat.\n- github (mcp_integration): Fetch structured issue and PR context without pasting browser output or long terminal dumps into Claude.\n  Failure modes: `tool_output_flooding`\n  Risk/surface: install=`medium`, data=`medium`, surface=`reviewed_third_party_or_official_plugin`\n  Install: `/plugin install github@claude-plugins-official`\n  Source: https://claude.com/plugins/github\n  Vetting notes: Exact source URL is included; confirm current install instructions before running commands.\n- grepai (local_semantic_retrieval): Use local semantic code search and call graphs to reduce repeated grep/read loops without sending code to a hosted retrieval service.\n  Failure modes: `repeated_codebase_navigation`\n  Risk/surface: install=`medium`, data=`medium`, surface=`local_binary_plus_optional_embedding_provider`\n  Conflicts/overlap: `claude_context`, `serena`, `codegraph`, `semble`; choose one tool for this failure mode unless the user explicitly approves both.\n  Install: `brew install yoanbernabeu/tap/grepai\ngrepai init\ngrepai watch`\n  Required binary: `grepai`\n  Binary install hint: `Requires an embedding provider such as Ollama; install with curl script only after reviewing the GitHub source.`\n  Source: https://github.com/yoanbernabeu/grepai\n  Vetting notes: Local-first; requires embedding provider setup.\n- notion (mcp_integration): Pull structured project documentation directly instead of repeatedly searching or pasting docs.\n  Failure modes: `tool_output_flooding`\n  Risk/surface: install=`medium`, data=`medium`, surface=`reviewed_third_party_or_official_plugin`\n  Install: `/plugin install notion@claude-plugins-official`\n  Source: https://claude.com/plugins/notion\n  Vetting notes: Exact source URL is included; confirm current install instructions before running commands.\n- rtk (advanced_shell_compression): RTK (Rust Token Killer, rtk-ai/rtk) compresses common shell command output before it reaches Claude; useful when terminal output is a dominant waste source.\n  Failure modes: `noisy_terminal_logs`\n  Risk/surface: install=`high`, data=`high`, surface=`local_binary_plus_claude_hook`\n  Conflicts/overlap: `leanctx`, `headroom`; choose one tool for this failure mode unless the user explicitly approves both.\n  Ambiguity warning: RTK means github.com/rtk-ai/rtk. Never install the unrelated npm package named rtk.\n  Install: `Review https://github.com/rtk-ai/rtk first. If approved on macOS: brew install rtk\nrtk init -g`\n  Required binary: `rtk`\n  Binary install hint: `This is github.com/rtk-ai/rtk. Do not install the unrelated npm package named rtk.`\n  Source: https://github.com/rtk-ai/rtk\n  Vetting notes: Rewrites shell command execution. This is github.com/rtk-ai/rtk, not the unrelated npm package named rtk.\n- typescript-lsp (code_intelligence): Use symbol navigation and diagnostics instead of repeated grep/read loops in JavaScript and TypeScript projects.\n  Failure modes: `repeated_codebase_navigation`\n  Risk/surface: install=`medium`, data=`medium`, surface=`reviewed_third_party_or_official_plugin`\n  Install: `/plugin install typescript-lsp@claude-plugins-official`\n  Required binary: `typescript-language-server`\n  Binary install hint: `npm install -g typescript typescript-language-server`\n  Source: https://claude.com/plugins/typescript-lsp\n  Vetting notes: Exact source URL is included; confirm current install instructions before running commands.\n\n\nInstallation discipline:\n\n1. Read WAIVER.md to the user in summary form and get explicit acceptance before proceeding.\n2. Verify the current OS, package manager, and existing binaries.\n3. Install language-server binaries before the matching code-intelligence plugin.\n4. Use official Claude Code marketplace plugins where listed.\n5. Run /reload-plugins after plugin installation.\n6. If a recommended binary is already installed, do not reinstall it.\n7. If a repository has custom tooling, prefer its checked-in setup docs over generic install commands.\n"
+    }
+  ],
+  "install": {
+    "command": "PLUGIN_URL=\"https://example.test/plugin.zip\"\nPLUGIN_ZIP=\"$(mktemp -t agent-analyzer-plugin.XXXXXX.zip)\"\ncurl -fsS \"$PLUGIN_URL\" -o \"$PLUGIN_ZIP\"\nclaude --plugin-dir \"$PLUGIN_ZIP\"",
+    "claude_prompt": "Install the generated Agent Analyzer optimization plugin for this session. Run the command below, explain what it installs, and ask for approval before executing it. Do not print plugin archive contents.\n\n```sh\nPLUGIN_URL=\"https://example.test/plugin.zip\"\nPLUGIN_ZIP=\"$(mktemp -t agent-analyzer-plugin.XXXXXX.zip)\"\ncurl -fsS \"$PLUGIN_URL\" -o \"$PLUGIN_ZIP\"\nclaude --plugin-dir \"$PLUGIN_ZIP\"\n```",
+    "uninstall_command": "No persistent install is performed by the default command. Close the Claude Code session to unload agent-analyzer-optimization.",
+    "notes": [
+      "The default command uses Claude Code's --plugin-dir support with a short-lived zip artifact.",
+      "Marketplace installation can be added later once the plugin store is live."
+    ]
+  }
+}
