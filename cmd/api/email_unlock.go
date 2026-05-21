@@ -87,16 +87,12 @@ func createEmailUnlockHandler(store app.APIStore, sender emailSender) http.Handl
 				return
 			}
 			slogEmailDeliveryFailure("confirmation", unlock.ID, err)
-			if emailScreenFallbackEnabled() && wantsHTML(r) {
-				renderEmailFallbackPage(w, confirmURL)
-				return
-			}
 			writeEmailDeliveryErrorOrHTML(w, r, err)
 			return
 		}
 		if wantsHTML(r) {
 			renderSimpleHTML(w, "Check your email", fmt.Sprintf(
-				"<p>We sent a confirmation link to <strong>%s</strong>.</p><p>After confirmation, you will get the one-line NPX command for the full local scan and plugin generation.</p>",
+				"<p>We sent a confirmation link to <strong>%s</strong>.</p><p>Open your email client, look for <strong>Confirm your Agent Analyzer full scan</strong>, and click the link in that email. The browser page cannot confirm ownership by itself.</p><p>After confirmation, we will email the one-line NPX command for the full local scan and plugin generation.</p>",
 				htmlstd.EscapeString(normalized),
 			))
 			return
@@ -156,10 +152,6 @@ func confirmEmailUnlockHandler(store app.APIStore, sender emailSender) http.Hand
 					return
 				}
 				slogEmailDeliveryFailure("full_scan_command", unlock.ID, err)
-				if emailScreenFallbackEnabled() {
-					renderConfirmedPage(w, command, unlock.FullScanTokenExpiresAt)
-					return
-				}
 				writeEmailDeliveryErrorOrHTML(w, r, err)
 				return
 			}
@@ -367,21 +359,9 @@ func slogEmailDeliveryFailure(stage, unlockID string, err error) {
 	slog.Warn("transactional email send failed", "stage", stage, "unlock_id", unlockID, "provider", provider, "detail", detail)
 }
 
-func emailScreenFallbackEnabled() bool {
-	return strings.EqualFold(os.Getenv("CLAUDE_ANALYZER_EMAIL_SCREEN_FALLBACK"), "1") ||
-		strings.EqualFold(os.Getenv("CLAUDE_ANALYZER_EMAIL_SCREEN_FALLBACK"), "true")
-}
-
-func renderEmailFallbackPage(w http.ResponseWriter, confirmURL string) {
-	renderSimpleHTMLStatus(w, http.StatusAccepted, "Continue launch test", fmt.Sprintf(
-		`<p>Transactional email is not available in this environment yet. For internal launch testing, continue with the confirmation link below.</p><p>This bypass is controlled by <code>CLAUDE_ANALYZER_EMAIL_SCREEN_FALLBACK</code> and must stay disabled for public launch.</p><p><a class="button-link" href="%s">Confirm email and get the full-scan command</a></p>`,
-		htmlstd.EscapeString(confirmURL),
-	))
-}
-
 func renderConfirmedPage(w http.ResponseWriter, command string, expiresAt time.Time) {
 	renderSimpleHTML(w, "Email confirmed", fmt.Sprintf(
-		`<p>Your email is confirmed. Run this command to analyze up to 100 recent logs per supported agent source and generate your plugin:</p><pre><code>%s</code></pre><p>This full-scan token expires at %s.</p>`,
+		`<p>Your email is confirmed. We also emailed this command to you. Run it to analyze up to 100 recent logs per supported agent source and generate your plugin:</p><pre><code>%s</code></pre><p>This full-scan token expires at %s.</p>`,
 		htmlstd.EscapeString(command),
 		htmlstd.EscapeString(expiresAt.Local().Format(time.RFC1123)),
 	))
