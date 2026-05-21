@@ -847,17 +847,26 @@ pre {
 
 .timeline-savings-callout {
   position: absolute;
-  z-index: 2;
-  top: 12px;
+  z-index: 4;
+  top: 10px;
   right: 16px;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
+  max-width: calc(100% - 32px);
+  padding: 6px 9px;
+  border: 1px solid rgba(126, 231, 135, 0.36);
+  border-radius: 999px;
+  background: rgba(8, 11, 16, 0.94);
   color: var(--green);
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
   font-size: 12px;
   font-weight: 800;
+  line-height: 1;
   text-shadow: 0 0 12px rgba(126, 231, 135, 0.65);
+  box-shadow:
+    0 0 22px rgba(126, 231, 135, 0.18),
+    0 8px 20px rgba(0, 0, 0, 0.42);
   pointer-events: none;
 }
 
@@ -866,6 +875,7 @@ pre {
   display: inline-block;
   width: 44px;
   height: 2px;
+  flex: 0 0 auto;
   background: var(--green);
   box-shadow: 0 0 14px rgba(126, 231, 135, 0.8);
 }
@@ -878,8 +888,15 @@ pre {
   border-bottom: 6px solid transparent;
   border-left: 9px solid var(--green);
   filter: drop-shadow(0 0 8px rgba(126, 231, 135, 0.8));
+  flex: 0 0 auto;
   order: -1;
   margin-right: -8px;
+}
+
+.timeline-savings-callout span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .timeline-bar {
