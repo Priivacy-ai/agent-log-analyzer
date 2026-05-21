@@ -266,7 +266,7 @@ function actionForFinding(finding) {
         now: "Before another broad read, name the exact file or symbol and ask the agent to summarize only what changed since the last read.",
         why: findingEvidence(finding?.evidence),
         agentsLine: "Before rereading files, summarize known state and prefer targeted symbol searches or narrow line ranges over whole-file reads.",
-        plugin: "The full report finds repeated paths across up to 100 logs; the plugin adds retrieval hygiene prompts.",
+        plugin: "The full report finds repeated paths across up to 10 largest-recent logs; the plugin adds retrieval hygiene prompts.",
       };
     case "tool_output_bloat":
       return {
