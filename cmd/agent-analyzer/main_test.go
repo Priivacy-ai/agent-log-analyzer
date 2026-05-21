@@ -185,7 +185,7 @@ func TestRecentSupportedLogs_LimitsPerSource(t *testing.T) {
 	}
 }
 
-func TestRecentSupportedLogs_SelectsLargestRecentPerSource(t *testing.T) {
+func TestRecentSupportedLogs_SelectsBestRecentLogWhenLimitIsOne(t *testing.T) {
 	home := t.TempDir()
 	t.Setenv("HOME", home)
 	t.Setenv("PATH", "")
@@ -227,11 +227,11 @@ func TestRecentSupportedLogs_SelectsLargestRecentPerSource(t *testing.T) {
 		t.Fatalf("expected one Claude candidate, got %#v", candidates)
 	}
 	if got := filepath.Base(candidates[0].Display); got != "recent-large.jsonl" {
-		t.Fatalf("expected largest recent log, got %s", got)
+		t.Fatalf("expected best recent log, got %s", got)
 	}
 }
 
-func TestDefaultSupportedLogs_UsesThreeLargestRecentPerSource(t *testing.T) {
+func TestDefaultSupportedLogs_UsesSmallFilesToApproachTargetSize(t *testing.T) {
 	home := t.TempDir()
 	t.Setenv("HOME", home)
 	t.Setenv("PATH", "")
@@ -243,7 +243,7 @@ func TestDefaultSupportedLogs_UsesThreeLargestRecentPerSource(t *testing.T) {
 	for index := 0; index < 5; index++ {
 		path := filepath.Join(codexRoot, fmt.Sprintf("log-%d.jsonl", index))
 		writeMeaningfulLog(t, path)
-		if err := os.Truncate(path, int64((index+1)*16*1024)); err != nil {
+		if err := os.Truncate(path, 512*1024); err != nil {
 			t.Fatalf("truncate log %d: %v", index, err)
 		}
 		mtime := time.Unix(int64(100+index), 0)
@@ -258,13 +258,83 @@ func TestDefaultSupportedLogs_UsesThreeLargestRecentPerSource(t *testing.T) {
 		t.Fatalf("defaultSupportedLogs: %v", err)
 	}
 	if len(candidates) != defaultAutoLogLimit {
-		t.Fatalf("expected default scan limit %d, got %#v", defaultAutoLogLimit, candidates)
+		t.Fatalf("expected five small logs when target size cannot be reached, got %#v", candidates)
 	}
 	for index, candidate := range candidates {
 		want := filepath.Base(paths[4-index])
 		if got := filepath.Base(candidate.Display); got != want {
 			t.Fatalf("candidate %d = %s, want %s; candidates=%#v", index, got, want, candidates)
 		}
+	}
+}
+
+func TestDefaultSupportedLogs_UsesOneHugeFileWhenOnlyHugeFilesExist(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	t.Setenv("PATH", "")
+	root := filepath.Join(home, ".claude", "projects", "repo")
+	if err := os.MkdirAll(root, 0o700); err != nil {
+		t.Fatalf("mkdir claude: %v", err)
+	}
+	olderHuge := filepath.Join(root, "older-huge.jsonl")
+	newerHuge := filepath.Join(root, "newer-huge.jsonl")
+	for _, path := range []string{olderHuge, newerHuge} {
+		writeMeaningfulLog(t, path)
+		if err := os.Truncate(path, 50*1024*1024); err != nil {
+			t.Fatalf("truncate huge: %v", err)
+		}
+	}
+	for path, modTime := range map[string]time.Time{
+		olderHuge: time.Unix(100, 0),
+		newerHuge: time.Unix(200, 0),
+	} {
+		if err := os.Chtimes(path, modTime, modTime); err != nil {
+			t.Fatalf("chtimes %s: %v", path, err)
+		}
+	}
+
+	candidates, err := defaultSupportedLogs()
+	if err != nil {
+		t.Fatalf("defaultSupportedLogs: %v", err)
+	}
+	if len(candidates) != 1 || filepath.Base(candidates[0].Display) != "newer-huge.jsonl" {
+		t.Fatalf("expected only the best huge file, got %#v", candidates)
+	}
+}
+
+func TestDefaultSupportedLogs_DoesNotOvershootTargetWithHugeSecondFile(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	t.Setenv("PATH", "")
+	root := filepath.Join(home, ".claude", "projects", "repo")
+	if err := os.MkdirAll(root, 0o700); err != nil {
+		t.Fatalf("mkdir claude: %v", err)
+	}
+	nearTarget := filepath.Join(root, "near-target.jsonl")
+	huge := filepath.Join(root, "huge.jsonl")
+	writeMeaningfulLog(t, nearTarget)
+	writeMeaningfulLog(t, huge)
+	if err := os.Truncate(nearTarget, targetAutoLogMinBytes-128*1024); err != nil {
+		t.Fatalf("truncate near target: %v", err)
+	}
+	if err := os.Truncate(huge, 50*1024*1024); err != nil {
+		t.Fatalf("truncate huge: %v", err)
+	}
+	for path, modTime := range map[string]time.Time{
+		nearTarget: time.Unix(200, 0),
+		huge:       time.Unix(100, 0),
+	} {
+		if err := os.Chtimes(path, modTime, modTime); err != nil {
+			t.Fatalf("chtimes %s: %v", path, err)
+		}
+	}
+
+	candidates, err := defaultSupportedLogs()
+	if err != nil {
+		t.Fatalf("defaultSupportedLogs: %v", err)
+	}
+	if len(candidates) != 1 || filepath.Base(candidates[0].Display) != "near-target.jsonl" {
+		t.Fatalf("expected near-target undershoot instead of a huge overshoot, got %#v", candidates)
 	}
 }
 
@@ -493,8 +563,8 @@ func TestAnalyzePaid_RejectsUnsafeArguments(t *testing.T) {
 	if err == nil || !strings.Contains(err.Error(), "--paid cannot be combined") {
 		t.Fatalf("expected paid positional rejection, got %v", err)
 	}
-	err = runAnalyze([]string{"--paid", "--limit", "4", "--out", outPath})
-	if err == nil || !strings.Contains(err.Error(), "--limit cannot exceed 3") {
+	err = runAnalyze([]string{"--paid", "--limit", "6", "--out", outPath})
+	if err == nil || !strings.Contains(err.Error(), "--limit cannot exceed 5") {
 		t.Fatalf("expected paid limit rejection, got %v", err)
 	}
 }

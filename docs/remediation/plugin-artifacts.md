@@ -8,7 +8,7 @@ The plugin should optimize Claude Code's harness, not nag on shell commands. The
 
 Public scan:
 
-- analyzes up to three largest-recent logs per supported source
+- analyzes target-sized recent logs per supported source
 - shows deterministic problems, evidence, and generic fixes
 - offers a free extended Markdown report download from the same sanitized report
 

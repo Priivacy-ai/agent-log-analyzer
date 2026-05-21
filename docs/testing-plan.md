@@ -89,7 +89,7 @@ API 5xx rate: <0.1%
 - repeated tool output
 - worker timeout
 - worker memory pressure
-- public local aggregate with up to three largest-recent JSON/JSONL files per supported source
+- public local aggregate with target-sized recent JSON/JSONL files per supported source
 - legacy internal paid-scan tar/gzip bundle with 100 JSONL files
 
 ## MCP and Skill Bloat Fixtures (Epic #39)
