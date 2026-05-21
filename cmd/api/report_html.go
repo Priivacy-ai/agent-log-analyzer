@@ -410,10 +410,12 @@ func findingsBubbleChartHTML(report analyzer.Report) template.HTML {
 		detail := fmt.Sprintf("%s. %s", findingEvidence(finding.Evidence), finding.Recommendation)
 		fmt.Fprintf(
 			&b,
-			`<article class="problem-bubble problem-bubble-%s" role="listitem" style="--bubble-size:%dpx; --bubble-offset:%dpx" aria-label="%s">`,
+			`<article class="problem-bubble problem-bubble-%s" role="listitem" style="--bubble-size:%dpx; --bubble-offset:%dpx; --problem-title-size:%.1fpx; --problem-detail-size:%.1fpx" aria-label="%s">`,
 			htmlstd.EscapeString(tone),
 			diameter,
 			bubbleOffset(index),
+			bubbleLabelFontSize(finding.Title, diameter, 21, 10.5),
+			bubbleLabelFontSize(finding.Severity+" - "+finding.CostImpact+" "+compactNumber(estimates[index])+" representative tokens", diameter, 12, 9.5),
 			htmlstd.EscapeString(fmt.Sprintf("%s. %s. %s representative tokens. %s", finding.Title, finding.Severity, compactNumber(estimates[index]), detail)),
 		)
 		fmt.Fprintf(&b, `<span class="problem-rank">%d</span>`, index+1)
@@ -517,6 +519,25 @@ func bubbleDiameter(tokens, maxTokens int) int {
 		ratio = 1
 	}
 	return 170 + int(ratio*98)
+}
+
+func bubbleLabelFontSize(text string, diameter int, maxPx, minPx float64) float64 {
+	chars := len([]rune(text))
+	if chars < 1 {
+		chars = 1
+	}
+	available := float64(diameter) * 0.72
+	if available < 90 {
+		available = 90
+	}
+	estimated := available / (float64(chars) * 0.56)
+	if estimated < minPx {
+		return minPx
+	}
+	if estimated > maxPx {
+		return maxPx
+	}
+	return estimated
 }
 
 func bubbleTone(finding analyzer.Finding, index int) string {

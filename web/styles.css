@@ -656,9 +656,11 @@ pre {
 .problem-bubble strong {
   max-width: 100%;
   color: var(--text);
-  font-size: clamp(14px, 1.4vw, 21px);
+  font-size: var(--problem-title-size, clamp(14px, 1.4vw, 21px));
   line-height: 1.08;
-  overflow-wrap: anywhere;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .problem-meta,
@@ -666,8 +668,11 @@ pre {
   max-width: 100%;
   color: var(--text);
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
-  font-size: 12px;
+  font-size: var(--problem-detail-size, 12px);
   line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .problem-impact {
