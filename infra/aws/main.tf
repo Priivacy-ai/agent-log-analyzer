@@ -20,6 +20,10 @@ locals {
     Environment = var.environment
     ManagedBy   = "terraform"
   }
+  interface_endpoint_services = var.postmark_server_token_secret_arn == "" ? ["ecr.api", "ecr.dkr", "email", "logs", "sqs"] : ["ecr.api", "ecr.dkr", "email", "logs", "secretsmanager", "sqs"]
+  postmark_secrets = var.postmark_server_token_secret_arn == "" ? [] : [
+    { name = "POSTMARK_SERVER_TOKEN", valueFrom = var.postmark_server_token_secret_arn }
+  ]
 }
 
 resource "aws_ecr_repository" "app" {
@@ -178,7 +182,7 @@ resource "aws_vpc_endpoint" "dynamodb" {
 }
 
 resource "aws_vpc_endpoint" "interface" {
-  for_each = toset(["ecr.api", "ecr.dkr", "email", "logs", "sqs"])
+  for_each = toset(local.interface_endpoint_services)
 
   vpc_id              = aws_vpc.main.id
   service_name        = "com.amazonaws.${var.aws_region}.${each.key}"
@@ -420,6 +424,21 @@ resource "aws_iam_role_policy_attachment" "execution" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
 }
 
+resource "aws_iam_role_policy" "execution_secrets" {
+  count = var.postmark_server_token_secret_arn == "" ? 0 : 1
+  name  = "${local.name}-execution-secrets"
+  role  = aws_iam_role.execution.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect   = "Allow"
+      Action   = ["secretsmanager:GetSecretValue"]
+      Resource = var.postmark_server_token_secret_arn
+    }]
+  })
+}
+
 resource "aws_iam_role" "task" {
   name = "${local.name}-task"
 
@@ -574,6 +593,7 @@ locals {
     { name = "CLAUDE_ANALYZER_JOB_QUEUE_URL", value = aws_sqs_queue.jobs.url },
     { name = "CLAUDE_ANALYZER_EMAIL_PROVIDER", value = var.email_provider },
     { name = "CLAUDE_ANALYZER_EMAIL_FROM", value = var.email_from },
+    { name = "CLAUDE_ANALYZER_POSTMARK_MESSAGE_STREAM", value = var.postmark_message_stream },
     { name = "CLAUDE_ANALYZER_EMAIL_SCREEN_FALLBACK", value = tostring(var.email_screen_fallback_enabled) }
   ]
 }
@@ -598,6 +618,7 @@ resource "aws_ecs_task_definition" "api" {
       { name = "CLAUDE_ANALYZER_MAX_QUEUE_DEPTH", value = tostring(var.max_queue_depth) },
       { name = "CLAUDE_ANALYZER_SES_CONFIGURATION_SET", value = aws_sesv2_configuration_set.transactional.configuration_set_name }
     ])
+    secrets = local.postmark_secrets
     logConfiguration = {
       logDriver = "awslogs"
       options = {

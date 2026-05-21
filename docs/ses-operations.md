@@ -1,6 +1,6 @@
-# SES Transactional Email Operations
+# Transactional Email Operations
 
-Agent Analyzer uses SES only for transactional email in the email-confirmed full-scan flow.
+Agent Analyzer uses transactional email only in the email-confirmed full-scan flow. SES remains supported for the testing phase and AWS-native production path. Postmark is also supported as an optional transactional provider once the Postmark account review is complete.
 
 ## What We Send
 
@@ -19,7 +19,9 @@ We do not send raw logs, raw report JSON, or transcript excerpts by email.
 
 ## Monitoring Controls
 
-Production uses an SES configuration set for transactional sends. SES publishes send, delivery, bounce, complaint, reject, rendering-failure, and delivery-delay events to SNS, then SQS. The `claude-analyzer-email-events` worker consumes those messages and stores bounded delivery telemetry.
+SES production uses an SES configuration set for transactional sends. SES publishes send, delivery, bounce, complaint, reject, rendering-failure, and delivery-delay events to SNS, then SQS. The `claude-analyzer-email-events` worker consumes those messages and stores bounded delivery telemetry.
+
+Postmark production sends through the configured transactional message stream, normally `outbound`. The app sends plain-text transactional messages with open tracking disabled and link tracking set to `None`.
 
 Stored event data is limited to:
 
@@ -33,12 +35,34 @@ Message bodies and raw email addresses are not stored in delivery-event records.
 
 ## Suppression
 
-Two suppression layers are enabled:
+SES has two suppression layers enabled:
 
 - SES account-level suppression for `BOUNCE` and `COMPLAINT`.
 - App-level suppression before send for `bounce`, `complaint`, and `reject` records.
 
 If the app-level guard finds a suppressed recipient hash, it blocks the send before calling SES and returns a conflict to the unlock flow.
+
+Postmark also suppresses hard bounces and spam complaints at the provider level. App-level suppression remains active for any provider-backed send once events are recorded.
+
+## Provider Selection
+
+Runtime provider selection is controlled by environment variables:
+
+```sh
+CLAUDE_ANALYZER_EMAIL_PROVIDER=ses
+CLAUDE_ANALYZER_EMAIL_FROM=robert@spec-kitty.ai
+```
+
+or:
+
+```sh
+CLAUDE_ANALYZER_EMAIL_PROVIDER=postmark
+CLAUDE_ANALYZER_EMAIL_FROM=robert@spec-kitty.ai
+CLAUDE_ANALYZER_POSTMARK_MESSAGE_STREAM=outbound
+POSTMARK_SERVER_TOKEN=<from AWS Secrets Manager in production>
+```
+
+Do not store `POSTMARK_SERVER_TOKEN` in Terraform files, `.env`, documentation, or logs. In AWS, inject it into the API ECS task from Secrets Manager.
 
 ## Alarms
 
