@@ -239,7 +239,7 @@ var reportHTMLTemplate = template.Must(template.New("report").Funcs(template.Fun
             {{ecosystemPanel .Report}}
           </div>
           <div class="evidence-card receipt-card">
-            <h2>Security Receipt {{helpTip "What happened to my raw logs? The public flow analyzes locally and uploads sanitized report JSON. This receipt records the report's own privacy flags and redaction counts; it is not a third-party audit."}}</h2>
+            <h2>Security Receipt {{helpTip "What happened to my raw logs? The public flow analyzes and redacts locally, then uploads sanitized report JSON. This receipt records the report's own privacy flags and local redaction counts; it is not a third-party audit."}}</h2>
             {{receiptPanel .Report}}
           </div>
         </section>
@@ -748,6 +748,7 @@ func receiptPanelHTML(report analyzer.Report) template.HTML {
 	receipt := report.SecurityReceipt
 	var b strings.Builder
 	b.WriteString(`<div id="receipt" class="receipt-panel">`)
+	b.WriteString(`<p class="receipt-boundary"><strong>Local redaction boundary:</strong> secrets are removed on your computer before upload. The hosted service receives sanitized report JSON with category counts and placeholders, not the original redacted values.</p>`)
 	b.WriteString(`<div class="receipt-status-grid">`)
 	receiptTileHTML(&b, "Model tokens for report", "0", "good")
 	receiptTileHTML(&b, "Raw transcript to LLM", boolText(receipt.RawTranscriptSentToLLM), receiptTone(!receipt.RawTranscriptSentToLLM))
@@ -762,7 +763,7 @@ func receiptPanelHTML(report analyzer.Report) template.HTML {
 	if receipt.SecretsRedacted > 0 {
 		redactionTone = "warn"
 	}
-	receiptTileHTML(&b, "Secrets redacted", fmt.Sprintf("%d", receipt.SecretsRedacted), redactionTone)
+		receiptTileHTML(&b, "Secrets redacted locally", fmt.Sprintf("%d", receipt.SecretsRedacted), redactionTone)
 	b.WriteString(`</div>`)
 	redactionGroupHTML(&b, report.Redactions)
 	b.WriteString(`</div>`)
@@ -817,7 +818,7 @@ func receiptTileHTML(b *strings.Builder, label, value, tone string) {
 }
 
 func redactionGroupHTML(b *strings.Builder, redactions map[string]int) {
-	b.WriteString(`<section class="chip-group redaction-group"><h3>Redactions</h3><div class="chip-list">`)
+	b.WriteString(`<section class="chip-group redaction-group"><h3>Local redaction categories</h3><p>Only these category counts are included in the uploaded report.</p><div class="chip-list">`)
 	keys := make([]string, 0, len(redactions))
 	for key, value := range redactions {
 		if value > 0 {

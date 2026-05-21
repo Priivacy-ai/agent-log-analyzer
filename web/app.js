@@ -1325,13 +1325,25 @@ function renderReceipt(receipt, redactions) {
     target.appendChild(emptyPanel("No security receipt available."));
     return;
   }
+  const boundary = document.createElement("p");
+  boundary.className = "receipt-boundary";
+  const strong = document.createElement("strong");
+  strong.textContent = "Local redaction boundary:";
+  boundary.append(
+    strong,
+    document.createTextNode(
+      " secrets are removed on your computer before upload. The hosted service receives sanitized report JSON with category counts and placeholders, not the original redacted values."
+    )
+  );
+  target.appendChild(boundary);
+
   const statusGrid = document.createElement("div");
   statusGrid.className = "receipt-status-grid";
   statusGrid.appendChild(statusTile("Model tokens for report", "0", "good"));
   statusGrid.appendChild(statusTile("Raw transcript to LLM", receipt.raw_transcript_sent_to_llm === true ? "yes" : "no", receipt.raw_transcript_sent_to_llm === true ? "bad" : "good"));
   statusGrid.appendChild(statusTile("Outbound during analysis", receipt.outbound_during_analysis === true ? "yes" : "no", receipt.outbound_during_analysis === true ? "bad" : "good"));
   statusGrid.appendChild(statusTile("Raw log TTL", receipt.raw_log_ttl || "unknown", receipt.raw_log_ttl === "not uploaded" ? "good" : "warn"));
-  statusGrid.appendChild(statusTile("Secrets redacted", String(numberOrZero(receipt.secrets_redacted)), numberOrZero(receipt.secrets_redacted) > 0 ? "warn" : "good"));
+  statusGrid.appendChild(statusTile("Secrets redacted locally", String(numberOrZero(receipt.secrets_redacted)), numberOrZero(receipt.secrets_redacted) > 0 ? "warn" : "good"));
   target.appendChild(statusGrid);
   target.appendChild(redactionGroup(redactions || receipt.redactions));
 }
@@ -1391,7 +1403,9 @@ function redactionGroup(redactions) {
   const group = document.createElement("section");
   group.className = "chip-group redaction-group";
   const title = document.createElement("h3");
-  title.textContent = "Redactions";
+  title.textContent = "Local redaction categories";
+  const note = document.createElement("p");
+  note.textContent = "Only these category counts are included in the uploaded report.";
   const list = document.createElement("div");
   list.className = "chip-list";
   const entries = Object.entries(redactions || {}).filter(([, value]) => Number(value) > 0);
@@ -1400,7 +1414,7 @@ function redactionGroup(redactions) {
   } else {
     entries.forEach(([key, value]) => list.appendChild(chip(`${key}: ${value}`, "unknown")));
   }
-  group.append(title, list);
+  group.append(title, note, list);
   return group;
 }
 

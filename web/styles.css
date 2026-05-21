@@ -1273,6 +1273,20 @@ pre {
   gap: 14px;
 }
 
+.receipt-boundary {
+  margin: 0;
+  padding: 12px 13px;
+  border: 1px solid rgba(126, 231, 135, 0.22);
+  border-radius: 7px;
+  background: rgba(126, 231, 135, 0.055);
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+.receipt-boundary strong {
+  color: var(--green);
+}
+
 .ecosystem-summary {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -1417,6 +1431,13 @@ pre {
 
 .redaction-group {
   background: rgba(8, 11, 16, 0.44);
+}
+
+.redaction-group p {
+  margin: -3px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.35;
 }
 
 .empty-evidence {
