@@ -51,6 +51,7 @@ Transactional email:
 
 - SES remains supported and is the default Terraform provider (`email_provider=ses`) for the testing phase.
 - Postmark is optional and can be enabled after account review by setting `email_provider=postmark`, `email_from=robert@spec-kitty.ai`, and `postmark_server_token_secret_arn`.
+- Postmark uses an external HTTPS API, so production ECS tasks need NAT egress from their private subnets. The Terraform stack provisions one NAT gateway per public subnet for availability; AWS VPC endpoints still carry AWS-service traffic where supported.
 - Store the Postmark server token in AWS Secrets Manager, not Terraform variables:
 
 ```sh
