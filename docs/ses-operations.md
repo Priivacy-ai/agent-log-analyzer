@@ -1,19 +1,18 @@
 # Transactional Email Operations
 
-Agent Analyzer uses transactional email only in the email-confirmed full-scan flow. SES remains supported for the testing phase and AWS-native production path. Postmark is also supported as an optional transactional provider once the Postmark account review is complete.
+Agent Analyzer no longer requires email for the public scan path. SES remains supported for legacy testing and future transactional receipts/support workflows. Postmark is also supported as an optional transactional provider once the Postmark account review is complete.
 
 ## What We Send
 
-- Confirmation link after a user submits their email address.
-- One-time full-scan NPX command after the user confirms ownership of that address.
-- Plugin retrieval instructions after the local full scan uploads sanitized report JSON.
+- Future receipts, support messages, and paid plugin delivery notifications.
+- Legacy test-only confirmation/full-scan messages while the old endpoint remains available for compatibility coverage.
 
 We do not send raw logs, raw report JSON, or transcript excerpts by email.
 
 ## Recipient List Rules
 
-- Recipients enter their own email address in the unlock form.
-- The confirmation email is double opt-in for the full scan command.
+- Recipients enter their own email address in a future checkout/support flow.
+- Any marketing or product-update email must use explicit consent.
 - Marketing consent is stored separately from transactional eligibility.
 - Bounces, complaints, and rejects suppress future transactional sends to that recipient hash.
 

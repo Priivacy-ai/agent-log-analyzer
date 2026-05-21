@@ -1,29 +1,27 @@
 # Paid Claude Plugin Artifacts
 
-The launch product is a generated Claude Code plugin/remediation artifact, not a longer report. Stripe is deferred during launch testing; the temporary unlock path is confirmed email plus a one-time full-scan token.
+The launch product is one local scan, a free extended report, and an optional generated Claude Code plugin/remediation artifact. Stripe checkout is still the intended paid gate for the plugin, but the scan itself is no longer split into free and full phases.
 
 The plugin should optimize Claude Code's harness, not nag on shell commands. The primary value is turning the analysis into a vetted setup plan: lean CLAUDE.md hierarchy, scoped skills, official code-intelligence plugins, language-server binaries, and trusted MCP-backed integrations.
 
 ## Contract
 
-Free scan:
+Public scan:
 
-- analyzes one newest log per supported source
+- analyzes up to three largest-recent logs per supported source
 - shows deterministic problems, evidence, and generic fixes
-- offers the email-confirmed full-scan unlock
+- offers a free extended Markdown report download from the same sanitized report
 
-Paid scan:
+Plugin purchase:
 
-- analyzes at most the 10 largest-recent logs per supported source locally
-- writes a reviewable sanitized aggregate report JSON
-- uploads only the sanitized aggregate report to `POST /api/full-scan-client-reports`
-- aggregates deterministic metrics across sessions
-- generates a customized Claude Code plugin archive from the sanitized aggregate report
+- reuses the same sanitized report from the public scan
+- generates a customized Claude Code plugin archive from that report
 - shows copyable install commands and a Claude-native install prompt
 
-The public full-scan flow must not ask users to tar, gzip, or upload raw Claude
-Code JSONL logs. Any raw-log paid bundle endpoint is legacy/internal smoke
-coverage only and must require an explicit internal request path.
+The public flow must not ask users to tar, gzip, upload raw Claude Code JSONL
+logs, or run a second scan. Any raw-log paid bundle or email/full-scan endpoint
+is legacy/internal smoke coverage only and must require an explicit internal
+request path.
 
 ## Plugin Shape
 
@@ -149,9 +147,8 @@ The current generator tests cover:
 
 API route tests also cover the local-first trust boundary:
 
-- email confirmation sends a one-line `agent-analyzer full-scan --token ...`
-  command that points at local CLI aggregate analysis and
-  `POST /api/full-scan-client-reports`
+- the public one-scan report can download an extended Markdown report and
+  tokenized plugin zip from the same private report token
 - the default paid session response does not mint a raw upload token or expose
   `/api/paid-uploads/`, tar/gzip commands, or raw bundle copy
 - `POST /api/paid-client-reports` accepts only waiver-gated sanitized aggregate
@@ -164,7 +161,7 @@ API route tests also cover the local-first trust boundary:
 
 The first implementation lives in `internal/remediation`.
 
-The package produces an in-memory `Artifact` and can write it as a zip archive. Email-confirmed full-scan report upload and tokenized plugin zip download are implemented for Docker end-to-end testing. Plugin artifacts are generated on demand from the sanitized full-scan report and expire with the report token.
+The package produces an in-memory `Artifact` and can write it as a zip archive. Tokenized plugin zip download is implemented for Docker end-to-end testing. Plugin artifacts are generated on demand from the sanitized report and are scoped by the private report token.
 
 The legacy raw paid bundle upload route remains only for internal Docker smoke
 coverage while the CLI paid aggregate command is integrated. It is not the

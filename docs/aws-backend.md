@@ -36,10 +36,10 @@ The sweeper also supports AWS mode, so production retention can be enforced by a
 ## Required AWS Resources
 
 - S3 quarantine upload bucket with 15 minute lifecycle deletion.
-- S3 sanitized report bucket with 15 minute free-report deletion and short full-scan/plugin artifact deletion.
+- S3 sanitized report bucket for durable private-link reports and token-scoped plugin artifacts.
 - SQS standard queue for analysis jobs.
 - DynamoDB jobs table keyed by `id`; email unlock records are stored in the same table under `record_type=email_unlock` until a dedicated subscriber table is needed.
-- SES verified sender identity for transactional confirmation, full-scan command, and plugin-ready emails.
+- SES/Postmark transactional email support for future receipts and support workflows; email is no longer required for the public scan path.
 - ECS/Fargate worker task role with read access to upload bucket, write access to report bucket, SQS consume/delete, and DynamoDB job update.
 - API role with write access to upload bucket, SQS send, DynamoDB job write/read, and report read.
 

@@ -9,16 +9,13 @@ const waiverAccepted = document.querySelector("#waiver-accepted");
 const paidStatus = document.querySelector("#paid-status");
 const paidCommand = document.querySelector("#paid-command");
 const copyPaidCommandButton = document.querySelector("#copy-paid-command");
-const emailUnlockJobID = document.querySelector("#email-unlock-job-id");
-const emailUnlockReportToken = document.querySelector("#email-unlock-report-token");
 
 const route = parseReportRoute();
 
 if (route) {
   onboardingEl.hidden = true;
   reportEl.hidden = false;
-  if (emailUnlockJobID) emailUnlockJobID.value = route.jobID;
-  if (emailUnlockReportToken) emailUnlockReportToken.value = route.token;
+  updateReportDownloadLinks(route);
   pollReport(route.jobID, route.token);
 } else {
   reportEl.hidden = true;
@@ -182,7 +179,7 @@ function renderReport(report) {
   renderRecommendation(report);
   renderEnvironmentSignals(report);
   renderReceipt(report.security_receipt, report.redactions);
-  renderPaidCommandPreview(report);
+  renderPluginDownloadPreview(report);
 }
 
 function renderActionPlan(report) {
@@ -204,7 +201,7 @@ function renderActionPlan(report) {
   item.className = "action-item";
   item.innerHTML = [
     "<strong>No urgent manual fix detected.</strong>",
-    "<span>Still run the full scan if you want plugin guidance across more sessions, tools, and projects.</span>",
+    "<span>Download the extended report or use the custom plugin if you want these rules packaged for future sessions.</span>",
   ].join("");
   fixes.appendChild(item);
 }
@@ -266,7 +263,7 @@ function actionForFinding(finding) {
         now: "Before another broad read, name the exact file or symbol and ask the agent to summarize only what changed since the last read.",
         why: findingEvidence(finding?.evidence),
         agentsLine: "Before rereading files, summarize known state and prefer targeted symbol searches or narrow line ranges over whole-file reads.",
-        plugin: "The full report finds repeated paths across up to 10 largest-recent logs; the plugin adds retrieval hygiene prompts.",
+        plugin: "The plugin packages repeated-path patterns from this scan into retrieval hygiene prompts.",
       };
     case "tool_output_bloat":
       return {
@@ -283,7 +280,7 @@ function actionForFinding(finding) {
         now: "After two similar failures, stop editing. Restate the invariant, inspect the diff/test output, then restart with a smaller scope.",
         why: findingEvidence(finding?.evidence),
         agentsLine: "After two failed attempts on the same issue, stop, inspect the invariant and latest error, then restart with a smaller scope.",
-        plugin: "The full scan surfaces recurring retry signatures and turns them into session hygiene rules.",
+        plugin: "The plugin turns recurring retry signatures into session hygiene rules.",
       };
     case "context_growth_spikes":
     case "cache_invalidation_spike":
@@ -301,7 +298,7 @@ function actionForFinding(finding) {
         now: "Move project-specific MCPs out of global config and lazy-load heavy servers only when the task needs them.",
         why: findingEvidence(finding?.evidence),
         agentsLine: "Keep only frequently used MCP servers enabled by default; lazy-load project-specific or heavy MCPs when the task requires them.",
-        plugin: "The full report converts MCP bloat into a concrete setup checklist.",
+        plugin: "The plugin converts MCP bloat into a concrete setup checklist.",
       };
     case "skill_bloat_high":
     case "skill_bloat_severe":
@@ -320,7 +317,7 @@ function actionForFinding(finding) {
           : "Use a narrower workflow before continuing.",
         why: findingEvidence(finding?.evidence),
         agentsLine: "Keep agent sessions scoped, evidence-backed, and explicit about when context should be compacted or split.",
-        plugin: "The full scan turns this from one-session advice into a generated remediation pack.",
+        plugin: "The plugin turns this report into a generated remediation pack.",
       };
   }
 }
@@ -1133,9 +1130,9 @@ function recommendationAction(rec) {
   const toolID = typeof rec.primary_tool_id === "string" ? rec.primary_tool_id : "";
   const risk = typeof rec.risk_level === "string" ? rec.risk_level : "";
   if (toolID.length === 0) return "Do not install anything yet.";
-  if (risk === "high") return "Review the source and wait for the full-scan plugin before installing.";
+  if (risk === "high") return "Review the source and prefer plugin-generated setup instructions.";
   if (risk === "medium") return "Review the source first; prefer plugin-generated setup instructions.";
-  return "Review the source, or let the plugin configure the right path after the full scan.";
+  return "Review the source, or let the plugin configure the right path from this report.";
 }
 
 function recommendationPluginPitch(rec) {
@@ -1661,37 +1658,21 @@ function findingEvidence(evidence) {
   return parts.join(" | ") || "Deterministic evidence recorded.";
 }
 
-function renderPaidCommandPreview(report) {
-  const target = document.querySelector("#paid-command");
-  if (!target) return;
-  if ((report?.aggregate_event?.parser_type === "paid_bundle" || report?.aggregate_event?.parser_type === "full_scan_bundle") && route) {
-    const pluginURL = `${window.location.origin}/api/public-artifacts/${route.jobID}/${route.token}/plugin.zip`;
-    const command = [
-      `PLUGIN_URL="${pluginURL}"`,
-      'PLUGIN_ZIP="$(mktemp -t agent-analyzer-plugin.XXXXXX.zip)"',
-      'curl -fsS "$PLUGIN_URL" -o "$PLUGIN_ZIP"',
-      'claude --plugin-dir "$PLUGIN_ZIP"',
-    ].join("\n");
-    target.textContent =
-      "Install the generated Agent Analyzer optimization plugin for this session. Run the command below, explain what it installs, summarize the waiver, and ask for approval before executing it. Do not print plugin archive contents.\n\n```sh\n" +
-      command +
-      "\n```";
-    if (paidStatus) paidStatus.textContent = "optimization plugin ready; artifact URL uses this private report token";
-    if (copyPaidCommandButton) copyPaidCommandButton.hidden = false;
-    if (unlockPaidButton) unlockPaidButton.hidden = true;
-    if (waiverAccepted) waiverAccepted.closest("label").hidden = true;
-    const upsellCopy = document.querySelectorAll(".upsell p");
-    if (upsellCopy[0]) {
-      upsellCopy[0].textContent =
-        "Your full scan is complete. The optimization plugin below is generated from sanitized aggregate findings and vetted tooling recommendations.";
-    }
-    if (upsellCopy[1]) {
-      upsellCopy[1].textContent =
-        "Review the install command with Claude Code. Claude should summarize the waiver and ask before running it.";
-    }
-    return;
+function renderPluginDownloadPreview() {
+  if (!route) return;
+  updateReportDownloadLinks(route);
+}
+
+function updateReportDownloadLinks(activeRoute) {
+  const extended = document.querySelector("#extended-report-link");
+  const plugin = document.querySelector("#plugin-download-link");
+  if (!activeRoute) return;
+  if (extended) {
+    extended.href = `${window.location.origin}/api/public-reports/${activeRoute.jobID}/${activeRoute.token}/extended.md`;
   }
-  target.textContent = "Confirm your email to get the full-scan NPX command.";
+  if (plugin) {
+    plugin.href = `${window.location.origin}/api/public-artifacts/${activeRoute.jobID}/${activeRoute.token}/plugin.zip`;
+  }
 }
 
 function parseReportRoute() {

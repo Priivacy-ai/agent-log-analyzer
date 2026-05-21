@@ -275,8 +275,8 @@
           <p id="token-volume" class="command-note"></p>
           <p class="capacity-note">Cutting this waste helps the same coding plan produce more useful implementation work before you run out of tokens.</p>
           <div class="report-cta-row" aria-label="Report actions">
-            <a class="report-primary-cta" href="#email-unlock">Get the optimization plugin</a>
-            <a class="report-secondary-cta" href="#plugin-pitch">See what it fixes</a>
+            <a class="report-primary-cta" href="#download-report-section">Download extended report</a>
+            <a class="report-secondary-cta" href="#plugin-purchase">Get custom plugin</a>
           </div>
         </div>
         <div class="problem-section">
@@ -299,15 +299,15 @@
         <section class="plugin-pitch" id="plugin-pitch">
           <div>
             <p class="eyebrow">generated remediation</p>
-            <h2>Copy the quick fixes now. Generate the plugin next. <button type="button" class="help-tip" data-tippy-content="Fixes are generated from deterministic finding IDs and bounded evidence, not from raw prompts or an LLM reading your transcript. The full scan turns those findings into a generated plugin artifact and vetted setup instructions." aria-label="More information">?</button></h2>
-            <p>Add the relevant AGENTS.md lines now. The full scan turns recurring patterns into a generated plugin with session hygiene, retrieval guidance, and setup recommendations.</p>
+            <h2>Copy the quick fixes now. Use the plugin to make them stick. <button type="button" class="help-tip" data-tippy-content="Fixes are generated from deterministic finding IDs and bounded evidence, not from raw prompts or an LLM reading your transcript. The plugin packages those findings into Claude-facing operating guidance and vetted setup instructions." aria-label="More information">?</button></h2>
+            <p>Add the relevant AGENTS.md lines now. The custom plugin packages the same report into operating guidance so future sessions spend more of your plan writing software and less on rereads, retries, dead context, and noisy tools.</p>
             <ul class="plugin-benefits">
               <li>Session hygiene nudges.</li>
               <li>Retrieval recommendations.</li>
               <li>CLAUDE.md cleanup.</li>
               <li>MCP and skill bloat warnings.</li>
             </ul>
-            <a class="plugin-cta" href="#email-unlock">Generate my optimization plugin</a>
+            <a class="plugin-cta" href="#plugin-purchase">Get my optimization plugin</a>
           </div>
           <div class="plugin-fixes-card">
             <h3>Copy-ready AGENTS.md lines</h3>
@@ -317,9 +317,9 @@
         </section>
         <section id="recommendation-section" class="intel-section" hidden>
           <h2>Recommended tools to address waste <button type="button" class="help-tip" data-tippy-content="Recommendation ranking comes from allowlisted tool metadata and deterministic signals such as tool-output bloat, retrieval friction, usage visibility, and MCP/skill utilization. Unknown private names are not echoed." aria-label="More information">?</button></h2>
-          <p class="section-note">These are not random installs. They are vetted options matched to this report's waste signals. If you do not want to evaluate tooling manually, generate the plugin and let it turn the full scan into setup instructions.</p>
+          <p class="section-note">These are not random installs. They are vetted options matched to this report's waste signals. If you do not want to evaluate tooling manually, use the custom plugin to turn the report into setup instructions.</p>
           <div class="recommendation-cta-row">
-            <a class="plugin-cta" href="#email-unlock">Generate plugin from full scan</a>
+            <a class="plugin-cta" href="#plugin-purchase">Get custom plugin</a>
             <a class="recommendation-allowlist-link" href="/allowed-tools.html">Review vetted allowlist</a>
           </div>
           <div id="recommendation-primary"></div>
@@ -337,33 +337,21 @@
             <div id="receipt" class="receipt-panel"></div>
           </div>
         </section>
-        <div class="upsell" id="email-unlock-section">
+        <div class="upsell" id="download-report-section">
           <div class="upsell-copy">
-            <p class="eyebrow">free launch unlock</p>
-            <h2>Generate the optimization plugin from a full scan</h2>
-            <p class="upsell-lede">Run the deeper local scan across up to 10 largest-recent logs per supported agent source. We turn the sanitized aggregate into a generated optimization pack for session hygiene, retrieval, telemetry, and CLAUDE.md cleanup.</p>
+            <p class="eyebrow">one scan, no second round</p>
+            <h2>Download the extended report for free</h2>
+            <p class="upsell-lede">This report already used up to three largest-recent logs per supported agent source. The extended download gives you the same sanitized findings in a portable Markdown file for review, sharing, or saving with your project notes.</p>
             <ul class="upsell-proof">
               <li>Raw transcripts stay local.</li>
-              <li>Email confirmation unlocks the second NPX command.</li>
-              <li>The plugin and full report use the same private report token.</li>
+              <li>No email ritual and no second scan.</li>
+              <li>Same private report token, same sanitized data boundary.</li>
             </ul>
           </div>
-          <div class="upsell-action">
-            <form id="email-unlock" class="email-unlock-form" method="post" action="/api/email-unlocks">
-              <input id="email-unlock-job-id" type="hidden" name="source_report_job_id" value="">
-              <input id="email-unlock-report-token" type="hidden" name="source_report_token" value="">
-              <label>Email for full-scan command
-                <input type="email" name="email" autocomplete="email" required placeholder="you@example.com">
-              </label>
-              <p class="command-note">We use your email to confirm ownership, send the full-scan command, and send plugin retrieval instructions. Product updates are sent only if you opt in.</p>
-              <label class="checkbox-row">
-                <input type="checkbox" name="marketing_opt_in" value="1">
-                <span>Also send me occasional updates about agentic coding products.</span>
-              </label>
-              <button type="submit">Email me the full-scan command</button>
-            </form>
-            <pre id="paid-status">full scan is unlocked by confirmed email</pre>
-            <pre id="paid-command"></pre>
+          <div class="upsell-action" id="plugin-purchase">
+            <p><a id="extended-report-link" class="plugin-cta" href="#">Download extended report</a></p>
+            <p class="command-note">Custom optimization plugin: $10 / €10 target price. Checkout enforcement is not active in this test build; this link generates the plugin from this report.</p>
+            <p><a id="plugin-download-link" class="plugin-cta" href="#">Download custom plugin</a></p>
           </div>
         </div>
       </section>

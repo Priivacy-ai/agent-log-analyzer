@@ -36,54 +36,12 @@ fi
 CLIENT_REPORT_API=$(printf '%s' "$CLIENT_REPORT_URL" | sed 's#^http://127.0.0.1:8080/r/#/api/public-reports/#')
 CLIENT_REPORT_BODY=$(curl -fsS "http://127.0.0.1:8080$CLIENT_REPORT_API")
 echo "$CLIENT_REPORT_BODY" | grep -q '"raw_log_ttl":"not uploaded"'
-
-CLIENT_REPORT_JOB_ID=$(printf '%s' "$CLIENT_REPORT_URL" | sed -n 's#^.*/r/\([^/]*\)/.*#\1#p')
-CLIENT_REPORT_TOKEN=$(printf '%s' "$CLIENT_REPORT_URL" | sed -n 's#^.*/r/[^/]*/\([^/?]*\).*#\1#p')
-curl -fsS \
-  -X POST \
-  -H "Content-Type: application/x-www-form-urlencoded" \
-  -H "Accept: text/html" \
-  --data "email=smoke%40example.com&marketing_opt_in=1&source_report_job_id=${CLIENT_REPORT_JOB_ID}&source_report_token=${CLIENT_REPORT_TOKEN}" \
-  "http://127.0.0.1:8080/api/email-unlocks" >/dev/null
-
-CONFIRM_EMAIL=$(docker compose exec -T api sh -c 'cat "$(ls -1 /data/emails/*.eml | sort | tail -1)"')
-CONFIRM_PATH=$(printf '%s\n' "$CONFIRM_EMAIL" | sed -n 's#^http://127.0.0.1:8080\(/email/confirm/.*\)#\1#p' | tail -1)
-if [ -z "$CONFIRM_PATH" ]; then
-  echo "failed to find confirmation link in local email sink"
-  exit 1
-fi
-CONFIRM_PAGE=$(curl -fsS "http://127.0.0.1:8080$CONFIRM_PATH")
-echo "$CONFIRM_PAGE" | grep -q 'npx --yes agent-analyzer@latest full-scan --token'
-COMMAND_EMAIL=$(docker compose exec -T api sh -c 'cat "$(ls -1 /data/emails/*.eml | sort | tail -1)"')
-FULL_SCAN_TOKEN=$(printf '%s\n' "$COMMAND_EMAIL" | sed -n "s/.*full-scan --token '\\([^']*\\)'.*/\\1/p" | tail -1)
-if [ -z "$FULL_SCAN_TOKEN" ]; then
-  echo "failed to find full-scan token in local email sink"
-  exit 1
-fi
-FULL_SCAN_HOME="$(mktemp -d)"
-mkdir -p "$FULL_SCAN_HOME/.claude/projects/smoke" "$FULL_SCAN_HOME/.codex/sessions/2026/05/21"
-for _ in $(seq 1 80); do cat "$FIXTURE"; done > "$FULL_SCAN_HOME/.claude/projects/smoke/session-1.jsonl"
-for _ in $(seq 1 80); do cat "$FIXTURE"; done > "$FULL_SCAN_HOME/.codex/sessions/2026/05/21/rollout-smoke.jsonl"
-FULL_SCAN_REPORT="$(mktemp -t agent-analyzer-full-scan.XXXXXX.json)"
-HOME="$FULL_SCAN_HOME" go run ./cmd/agent-analyzer full-scan \
-  --token "$FULL_SCAN_TOKEN" \
-  --base-url http://127.0.0.1:8080 \
-  --out "$FULL_SCAN_REPORT" \
-  --limit 1 \
-  --no-open >/tmp/agent-analyzer-full-scan.out
-FULL_SCAN_REPORT_URL=$(sed -n 's/^Report: //p' /tmp/agent-analyzer-full-scan.out)
-if [ -z "$FULL_SCAN_REPORT_URL" ]; then
-  echo "failed to upload email-unlocked full scan"
-  cat /tmp/agent-analyzer-full-scan.out
-  exit 1
-fi
-FULL_SCAN_REPORT_API=$(printf '%s' "$FULL_SCAN_REPORT_URL" | sed 's#^http://127.0.0.1:8080/r/#/api/public-reports/#')
-FULL_SCAN_BODY=$(curl -fsS "http://127.0.0.1:8080$FULL_SCAN_REPORT_API")
-echo "$FULL_SCAN_BODY" | grep -q '"parser_type":"full_scan_bundle"'
-FULL_SCAN_ARTIFACT_API=$(echo "$FULL_SCAN_REPORT_URL" | sed 's#^http://127.0.0.1:8080/r/#/api/public-artifacts/#')/plugin.zip
-curl -fsS "http://127.0.0.1:8080$FULL_SCAN_ARTIFACT_API" -o "$FULL_SCAN_HOME/plugin.zip"
-if [ "$(dd if="$FULL_SCAN_HOME/plugin.zip" bs=2 count=1 2>/dev/null)" != "PK" ]; then
-  echo "Expected full-scan plugin artifact to be a zip file" >&2
+CLIENT_EXTENDED_API="${CLIENT_REPORT_API}/extended.md"
+curl -fsS "http://127.0.0.1:8080$CLIENT_EXTENDED_API" | grep -q 'Agent Analyzer Extended Report'
+CLIENT_ARTIFACT_API=$(echo "$CLIENT_REPORT_URL" | sed 's#^http://127.0.0.1:8080/r/#/api/public-artifacts/#')/plugin.zip
+curl -fsS "http://127.0.0.1:8080$CLIENT_ARTIFACT_API" -o /tmp/agent-analyzer-plugin.zip
+if [ "$(dd if=/tmp/agent-analyzer-plugin.zip bs=2 count=1 2>/dev/null)" != "PK" ]; then
+  echo "Expected single-scan plugin artifact to be a zip file" >&2
   exit 1
 fi
 

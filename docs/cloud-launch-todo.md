@@ -208,7 +208,7 @@ Acceptance:
 
 The public upload UX is local CLI analysis plus sanitized-report upload. Raw agent logs stay on the user's machine. There is no browser file upload form, no public multipart upload endpoint, and no direct browser-to-S3 upload surface.
 
-- [x] Add local CLI command to analyze one newest log per supported source.
+- [x] Add local CLI command to analyze up to three largest-recent logs per supported source.
 - [x] Write reviewable sanitized report JSON before upload.
 - [x] Add API endpoint to accept sanitized client reports only.
 - [x] Serve reports only through tokenized `/r/{job_id}/{report_token}` URLs.

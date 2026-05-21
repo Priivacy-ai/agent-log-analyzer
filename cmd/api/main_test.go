@@ -89,6 +89,7 @@ func TestSanitizePathRedactsDynamicIDs(t *testing.T) {
 		"/api/paid-uploads/job-1234567890",
 		"/api/paid-uploads/job-1234567890/finalize",
 		"/api/public-reports/job-1234567890/token-secret",
+		"/api/public-reports/job-1234567890/token-secret/extended.md",
 		"/api/public-artifacts/job-1234567890/token-secret/plugin.zip",
 		"/api/jobs/job-1234567890",
 		"/r/job-1234567890/token-secret",
@@ -100,7 +101,7 @@ func TestSanitizePathRedactsDynamicIDs(t *testing.T) {
 	}
 }
 
-func TestGetPublicArtifactRequiresPaidWaiver(t *testing.T) {
+func TestGetPublicArtifactReturnsPluginZipForSingleScan(t *testing.T) {
 	store := fakeStore{
 		job: app.Job{
 			ID:              "job-1234567890",
@@ -117,8 +118,50 @@ func TestGetPublicArtifactRequiresPaidWaiver(t *testing.T) {
 
 	getPublicArtifactHandler(store).ServeHTTP(rec, req)
 
-	if rec.Code != http.StatusForbidden {
-		t.Fatalf("expected forbidden artifact status, got %d: %s", rec.Code, rec.Body.String())
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected plugin zip status, got %d: %s", rec.Code, rec.Body.String())
+	}
+	if !bytes.HasPrefix(rec.Body.Bytes(), []byte("PK")) {
+		t.Fatalf("expected zip response, got %q", rec.Body.String())
+	}
+}
+
+func TestGetExtendedReportDownloadsMarkdown(t *testing.T) {
+	store := fakeStore{
+		job: app.Job{
+			ID:              "job-1234567890",
+			Status:          app.StatusCompleted,
+			ScanType:        app.ScanTypeSingle,
+			ReportTokenHash: tokenHash("report-token"),
+		},
+		report: analyzer.Report{
+			JobID:          "job-1234567890",
+			Version:        "test",
+			Score:          64,
+			EstimatedWaste: analyzer.WasteRange{Low: 12, High: 20},
+			Metrics:        analyzer.Metrics{Turns: 10, SessionCount: 3, EstimatedTokens: 12000, ToolOutputTokens: 4000},
+			SecurityReceipt: analyzer.SecurityReceipt{
+				RawLogTTL: "not uploaded",
+			},
+		},
+	}
+	req := httptest.NewRequest(http.MethodGet, "/api/public-reports/job-1234567890/report-token/extended.md", nil)
+	req.SetPathValue("id", "job-1234567890")
+	req.SetPathValue("token", "report-token")
+	rec := httptest.NewRecorder()
+
+	getExtendedReportHandler(store).ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected extended report status 200, got %d: %s", rec.Code, rec.Body.String())
+	}
+	if contentType := rec.Header().Get("Content-Type"); !strings.Contains(contentType, "text/markdown") {
+		t.Fatalf("expected markdown content type, got %q", contentType)
+	}
+	for _, want := range []string{"# Agent Analyzer Extended Report", "Raw transcripts were not uploaded", "0", "64 / 100"} {
+		if !strings.Contains(rec.Body.String(), want) {
+			t.Fatalf("extended report missing %q:\n%s", want, rec.Body.String())
+		}
 	}
 }
 
@@ -285,7 +328,9 @@ func TestReportPageServerRendersCompletedReport(t *testing.T) {
 		"42",
 		"Large shell/tool output overhead",
 		"Cap noisy command output",
-		"Generate my optimization plugin",
+		"Get my optimization plugin",
+		"Download extended report",
+		"$10 / €10",
 		"0 model tokens used to generate this report.",
 		"Model tokens for report",
 		"Copy line",

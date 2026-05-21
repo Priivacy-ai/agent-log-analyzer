@@ -68,18 +68,11 @@ The first AWS deployment scaffold lives in `infra/aws`. It provisions the S3/SQS
 
 Free scan:
 
-- local CLI analyzes one newest log per supported source, currently Claude Code, Codex, and OpenCode
+- local CLI analyzes up to three largest-recent logs per supported source, currently Claude Code, Codex, and OpenCode
 - user reviews `agent-analyzer-report.json`
 - server receives sanitized report JSON only
 - tokenized report URL
-
-Email-confirmed full scan:
-
-- user confirms email and receives a one-time full-scan token
-- local CLI analyzes up to 10 largest-recent logs per supported source after email unlock
-- user reviews a sanitized aggregate report
-- server receives sanitized aggregate report JSON only
-- plugin artifact access uses the private report token
+- free extended Markdown download and plugin artifact access use the private report token
 
 ## Scale Gates
 

@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -46,13 +47,13 @@ func writeLogContent(t *testing.T, path string, content string) {
 	}
 }
 
-func withLatestShim(t *testing.T, path string) {
+func withDefaultDiscoveryShim(t *testing.T, path string) {
 	t.Helper()
-	original := latestSupportedLogsFn
-	latestSupportedLogsFn = func() ([]logCandidate, error) {
+	original := defaultSupportedLogsFn
+	defaultSupportedLogsFn = func() ([]logCandidate, error) {
 		return []logCandidate{fileCandidate("claude_code", "Claude Code", path)}, nil
 	}
-	t.Cleanup(func() { latestSupportedLogsFn = original })
+	t.Cleanup(func() { defaultSupportedLogsFn = original })
 }
 
 func withRecentShim(t *testing.T, candidates []logCandidate) {
@@ -75,11 +76,11 @@ func fileCandidate(sourceID, sourceLabel, path string) logCandidate {
 	}
 }
 
-func TestAnalyze_NoArgs_UsesLatest(t *testing.T) {
+func TestAnalyze_NoArgs_UsesDefaultDiscovery(t *testing.T) {
 	dir := t.TempDir()
 	logPath := writeSampleLog(t, dir)
 	outPath := filepath.Join(dir, "report.json")
-	withLatestShim(t, logPath)
+	withDefaultDiscoveryShim(t, logPath)
 
 	err := runAnalyze([]string{"--out", outPath})
 	if err != nil {
@@ -90,26 +91,32 @@ func TestAnalyze_NoArgs_UsesLatest(t *testing.T) {
 	}
 }
 
-func TestAnalyze_NoArgs_UsesOnePerSupportedSource(t *testing.T) {
+func TestAnalyze_NoArgs_UsesMultiplePerSupportedSource(t *testing.T) {
 	dir := t.TempDir()
 	claude := writeSampleLog(t, dir)
+	claude2 := filepath.Join(dir, "claude-2.jsonl")
 	codex := filepath.Join(dir, "codex.jsonl")
+	codex2 := filepath.Join(dir, "codex-2.jsonl")
 	opencode := filepath.Join(dir, "opencode.json")
-	for _, path := range []string{codex, opencode} {
+	opencode2 := filepath.Join(dir, "opencode-2.json")
+	for _, path := range []string{claude2, codex, codex2, opencode, opencode2} {
 		if err := os.WriteFile(path, []byte(sampleJSONL), 0o600); err != nil {
 			t.Fatalf("write source log: %v", err)
 		}
 	}
 	outPath := filepath.Join(dir, "report.json")
-	original := latestSupportedLogsFn
-	latestSupportedLogsFn = func() ([]logCandidate, error) {
+	original := defaultSupportedLogsFn
+	defaultSupportedLogsFn = func() ([]logCandidate, error) {
 		return []logCandidate{
 			fileCandidate("claude_code", "Claude Code", claude),
+			fileCandidate("claude_code", "Claude Code", claude2),
 			fileCandidate("codex", "Codex", codex),
+			fileCandidate("codex", "Codex", codex2),
 			fileCandidate("opencode", "OpenCode", opencode),
+			fileCandidate("opencode", "OpenCode", opencode2),
 		}, nil
 	}
-	t.Cleanup(func() { latestSupportedLogsFn = original })
+	t.Cleanup(func() { defaultSupportedLogsFn = original })
 
 	err := runAnalyze([]string{"--out", outPath})
 	if err != nil {
@@ -126,8 +133,8 @@ func TestAnalyze_NoArgs_UsesOnePerSupportedSource(t *testing.T) {
 	if report.AggregateEvent.ParserType != "multi_source" {
 		t.Fatalf("expected multi_source parser type, got %#v", report.AggregateEvent)
 	}
-	if report.Metrics.SessionCount != 3 {
-		t.Fatalf("expected one session per source, got %#v", report.Metrics)
+	if report.Metrics.SessionCount != 6 {
+		t.Fatalf("expected multiple sessions per source, got %#v", report.Metrics)
 	}
 	if len(report.SourceReports) != 3 {
 		t.Fatalf("expected source reports for three sources, got %#v", report.SourceReports)
@@ -224,7 +231,7 @@ func TestRecentSupportedLogs_SelectsLargestRecentPerSource(t *testing.T) {
 	}
 }
 
-func TestLatestSupportedLogs_SkipsOversizedFreeAutoLogs(t *testing.T) {
+func TestDefaultSupportedLogs_UsesThreeLargestRecentPerSource(t *testing.T) {
 	home := t.TempDir()
 	t.Setenv("HOME", home)
 	t.Setenv("PATH", "")
@@ -232,32 +239,36 @@ func TestLatestSupportedLogs_SkipsOversizedFreeAutoLogs(t *testing.T) {
 	if err := os.MkdirAll(codexRoot, 0o700); err != nil {
 		t.Fatalf("mkdir codex: %v", err)
 	}
-	small := filepath.Join(codexRoot, "small.jsonl")
-	huge := filepath.Join(codexRoot, "huge.jsonl")
-	writeMeaningfulLog(t, small)
-	writeMeaningfulLog(t, huge)
-	if err := os.Truncate(huge, freeAutoMaxLogBytes+1); err != nil {
-		t.Fatalf("truncate huge log: %v", err)
-	}
-	oldTime := time.Unix(100, 0)
-	newTime := time.Unix(200, 0)
-	if err := os.Chtimes(small, oldTime, oldTime); err != nil {
-		t.Fatalf("chtimes small: %v", err)
-	}
-	if err := os.Chtimes(huge, newTime, newTime); err != nil {
-		t.Fatalf("chtimes huge: %v", err)
+	var paths []string
+	for index := 0; index < 5; index++ {
+		path := filepath.Join(codexRoot, fmt.Sprintf("log-%d.jsonl", index))
+		writeMeaningfulLog(t, path)
+		if err := os.Truncate(path, int64((index+1)*16*1024)); err != nil {
+			t.Fatalf("truncate log %d: %v", index, err)
+		}
+		mtime := time.Unix(int64(100+index), 0)
+		if err := os.Chtimes(path, mtime, mtime); err != nil {
+			t.Fatalf("chtimes log %d: %v", index, err)
+		}
+		paths = append(paths, path)
 	}
 
-	candidates, err := latestSupportedLogs()
+	candidates, err := defaultSupportedLogs()
 	if err != nil {
-		t.Fatalf("latestSupportedLogs: %v", err)
+		t.Fatalf("defaultSupportedLogs: %v", err)
 	}
-	if len(candidates) != 1 || filepath.Base(candidates[0].Display) != "small.jsonl" {
-		t.Fatalf("expected oversized newest log to be skipped for free auto scan, got %#v", candidates)
+	if len(candidates) != defaultAutoLogLimit {
+		t.Fatalf("expected default scan limit %d, got %#v", defaultAutoLogLimit, candidates)
+	}
+	for index, candidate := range candidates {
+		want := filepath.Base(paths[4-index])
+		if got := filepath.Base(candidate.Display); got != want {
+			t.Fatalf("candidate %d = %s, want %s; candidates=%#v", index, got, want, candidates)
+		}
 	}
 }
 
-func TestLatestSupportedLogs_PrefersLargestRecentMeaningfulLog(t *testing.T) {
+func TestDefaultSupportedLogs_PrefersLargestRecentMeaningfulLogs(t *testing.T) {
 	home := t.TempDir()
 	t.Setenv("HOME", home)
 	t.Setenv("PATH", "")
@@ -287,12 +298,15 @@ func TestLatestSupportedLogs_PrefersLargestRecentMeaningfulLog(t *testing.T) {
 		}
 	}
 
-	candidates, err := latestSupportedLogs()
+	candidates, err := defaultSupportedLogs()
 	if err != nil {
-		t.Fatalf("latestSupportedLogs: %v", err)
+		t.Fatalf("defaultSupportedLogs: %v", err)
 	}
-	if len(candidates) != 1 || filepath.Base(candidates[0].Display) != "larger.jsonl" {
-		t.Fatalf("expected largest meaningful recent Claude log, got %#v", candidates)
+	if len(candidates) != 2 {
+		t.Fatalf("expected two meaningful Claude logs, got %#v", candidates)
+	}
+	if filepath.Base(candidates[0].Display) != "larger.jsonl" || filepath.Base(candidates[1].Display) != "smaller.jsonl" {
+		t.Fatalf("expected largest meaningful recent Claude logs, got %#v", candidates)
 	}
 }
 
@@ -341,7 +355,7 @@ func TestAnalyze_PositionalOnly_UsesPositional(t *testing.T) {
 	// Shim latest to a non-existent path to prove we did NOT fall through to
 	// it; if the positional resolution were skipped, runAnalyze would try
 	// to read the shim path and fail.
-	withLatestShim(t, filepath.Join(dir, "does-not-exist.jsonl"))
+	withDefaultDiscoveryShim(t, filepath.Join(dir, "does-not-exist.jsonl"))
 
 	err := runAnalyze([]string{"--out", outPath, logPath})
 	if err != nil {
@@ -356,7 +370,7 @@ func TestAnalyze_PositionalBeforeOutFlag_UsesPositionalAndOut(t *testing.T) {
 	dir := t.TempDir()
 	logPath := writeSampleLog(t, dir)
 	outPath := filepath.Join(dir, "report.json")
-	withLatestShim(t, filepath.Join(dir, "does-not-exist.jsonl"))
+	withDefaultDiscoveryShim(t, filepath.Join(dir, "does-not-exist.jsonl"))
 
 	err := runAnalyze([]string{logPath, "--out", outPath})
 	if err != nil {
@@ -371,7 +385,7 @@ func TestAnalyze_LogFlagOnly_UsesLogFlag(t *testing.T) {
 	dir := t.TempDir()
 	logPath := writeSampleLog(t, dir)
 	outPath := filepath.Join(dir, "report.json")
-	withLatestShim(t, filepath.Join(dir, "does-not-exist.jsonl"))
+	withDefaultDiscoveryShim(t, filepath.Join(dir, "does-not-exist.jsonl"))
 
 	err := runAnalyze([]string{"--log", logPath, "--out", outPath})
 	if err != nil {
@@ -444,7 +458,7 @@ func TestAnalyzePaid_WritesSanitizedAggregate(t *testing.T) {
 		fileCandidate("codex", "Codex", second),
 	})
 
-	err := runAnalyze([]string{"--paid", "--limit", "10", "--out", outPath})
+	err := runAnalyze([]string{"--paid", "--limit", "3", "--out", outPath})
 	if err != nil {
 		t.Fatalf("runAnalyze paid: %v", err)
 	}
@@ -479,8 +493,8 @@ func TestAnalyzePaid_RejectsUnsafeArguments(t *testing.T) {
 	if err == nil || !strings.Contains(err.Error(), "--paid cannot be combined") {
 		t.Fatalf("expected paid positional rejection, got %v", err)
 	}
-	err = runAnalyze([]string{"--paid", "--limit", "11", "--out", outPath})
-	if err == nil || !strings.Contains(err.Error(), "--limit cannot exceed 10") {
+	err = runAnalyze([]string{"--paid", "--limit", "4", "--out", outPath})
+	if err == nil || !strings.Contains(err.Error(), "--limit cannot exceed 3") {
 		t.Fatalf("expected paid limit rejection, got %v", err)
 	}
 }
@@ -574,8 +588,8 @@ func TestRunFullScan_AnalyzesPaidAggregateAndUploadsWithEntitlementToken(t *test
 	if authHeader != "Bearer email-token" {
 		t.Fatalf("expected bearer entitlement token, got %q", authHeader)
 	}
-	if discoveredLimit != fullScanDefaultLogLimit {
-		t.Fatalf("expected full-scan default limit %d, got %d", fullScanDefaultLogLimit, discoveredLimit)
+	if discoveredLimit != defaultAutoLogLimit {
+		t.Fatalf("expected full-scan default limit %d, got %d", defaultAutoLogLimit, discoveredLimit)
 	}
 	if received.AggregateEvent.ParserType != "full_scan_bundle" || received.SecurityReceipt.RawLogTTL != "not uploaded" {
 		t.Fatalf("expected sanitized full-scan aggregate upload, got %#v", received)

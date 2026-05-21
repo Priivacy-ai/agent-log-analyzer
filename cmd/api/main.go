@@ -79,6 +79,7 @@ func buildMux(store app.APIStore) http.Handler {
 	mux.HandleFunc("PUT /api/paid-uploads/{id}", paidBundleUploadHandler(store))
 	mux.HandleFunc("POST /api/paid-uploads/{id}/finalize", finalizeTokenUploadHandler(store))
 	mux.HandleFunc("GET /api/public-reports/{id}/{token}", getPublicReportHandler(store))
+	mux.HandleFunc("GET /api/public-reports/{id}/{token}/extended.md", getExtendedReportHandler(store))
 	mux.HandleFunc("GET /api/public-artifacts/{id}/{token}/plugin.zip", getPublicArtifactHandler(store))
 	mux.HandleFunc("GET /r/{id}/{token}", reportPageHandler(store))
 	mux.HandleFunc("GET /api/jobs/{id}", getJobHandler(store))
@@ -565,7 +566,7 @@ func getPublicArtifactHandler(store app.APIStore) http.HandlerFunc {
 			return
 		}
 		if !jobAllowsPluginArtifact(job) {
-			writeError(w, http.StatusForbidden, "plugin artifact requires a completed full scan")
+			writeError(w, http.StatusForbidden, "plugin artifact requires a completed report")
 			return
 		}
 		report, err := store.GetReport(job.ID)
@@ -593,6 +594,9 @@ func getPublicArtifactHandler(store app.APIStore) http.HandlerFunc {
 }
 
 func jobAllowsPluginArtifact(job app.Job) bool {
+	if job.ScanType == app.ScanTypeSingle && job.Status == app.StatusCompleted {
+		return true
+	}
 	if job.ScanType == app.ScanTypeFullScan {
 		return true
 	}

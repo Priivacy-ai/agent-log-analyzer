@@ -16,11 +16,12 @@ import (
 )
 
 type reportPageData struct {
-	Report      analyzer.Report
-	Job         app.Job
-	ArtifactURL string
-	StatusText  string
-	ReportToken string
+	Report            analyzer.Report
+	Job               app.Job
+	ArtifactURL       string
+	ExtendedReportURL string
+	StatusText        string
+	ReportToken       string
 }
 
 func reportPageHandler(store app.APIStore) http.HandlerFunc {
@@ -55,12 +56,14 @@ func reportPageHandler(store app.APIStore) http.HandlerFunc {
 		if jobAllowsPluginArtifact(job) {
 			artifactURL = publicBaseURL(r) + "/api/public-artifacts/" + job.ID + "/" + r.PathValue("token") + "/plugin.zip"
 		}
+		extendedURL := publicBaseURL(r) + "/api/public-reports/" + job.ID + "/" + r.PathValue("token") + "/extended.md"
 		renderReportHTML(w, reportPageData{
-			Report:      report,
-			Job:         job,
-			ArtifactURL: artifactURL,
-			StatusText:  "This private report link does not expire.",
-			ReportToken: r.PathValue("token"),
+			Report:            report,
+			Job:               job,
+			ArtifactURL:       artifactURL,
+			ExtendedReportURL: extendedURL,
+			StatusText:        "This private report link does not expire.",
+			ReportToken:       r.PathValue("token"),
 		})
 	}
 }
@@ -148,8 +151,8 @@ var reportHTMLTemplate = template.Must(template.New("report").Funcs(template.Fun
           <p class="command-note">Analyzed token volume: {{formatTokens .Report.Metrics.EstimatedTokens}} estimated input/output tokens; {{formatTokens .Report.Metrics.ToolOutputTokens}} estimated from tool output. {{helpTip "What is counted here? Accuracy depends on the source log. When native usage fields exist, we use them. Otherwise we estimate roughly one token per four characters. Tool-output volume is derived from tool-result payload size and similar estimates. This is directional, not invoice-grade accounting."}}</p>
           <p class="capacity-note">Cutting this waste helps the same coding plan produce more useful implementation work before you run out of tokens.</p>
           <div class="report-cta-row" aria-label="Report actions">
-            <a class="report-primary-cta" href="#email-unlock">Get the optimization plugin</a>
-            <a class="report-secondary-cta" href="#email-unlock-section">Skip to full scan</a>
+            <a class="report-primary-cta" href="#download-report-section">Download extended report</a>
+            <a class="report-secondary-cta" href="#plugin-purchase">Get custom plugin</a>
           </div>
         </div>
         <div class="problem-section">
@@ -209,15 +212,15 @@ var reportHTMLTemplate = template.Must(template.New("report").Funcs(template.Fun
         <section class="plugin-pitch" id="plugin-pitch">
           <div>
             <p class="eyebrow">generated remediation</p>
-            <h2>Copy the quick fixes now. Generate the plugin next. {{helpTip "Where do these fixes come from? Fixes are generated from deterministic finding IDs and bounded evidence, not from raw prompts or an LLM reading your transcript. The full scan turns those findings into a generated plugin artifact and vetted setup instructions."}}</h2>
-            <p>Add the relevant AGENTS.md lines now. The full scan turns recurring patterns into a generated plugin so future sessions spend more of your plan writing software and less on rereads, retries, dead context, and noisy tools.</p>
+            <h2>Copy the quick fixes now. Use the plugin to make them stick. {{helpTip "Where do these fixes come from? Fixes are generated from deterministic finding IDs and bounded evidence, not from raw prompts or an LLM reading your transcript. The plugin packages those findings into Claude-facing operating guidance and vetted setup instructions."}}</h2>
+            <p>Add the relevant AGENTS.md lines now. The custom plugin packages the same report into operating guidance so future sessions spend more of your plan writing software and less on rereads, retries, dead context, and noisy tools.</p>
             <ul class="plugin-benefits">
               <li>Session hygiene nudges.</li>
               <li>Retrieval recommendations.</li>
               <li>CLAUDE.md cleanup.</li>
               <li>MCP and skill bloat warnings.</li>
             </ul>
-            <a class="plugin-cta" href="#email-unlock">Generate my optimization plugin</a>
+            <a class="plugin-cta" href="#plugin-purchase">Get my optimization plugin</a>
           </div>
           <div class="plugin-fixes-card">
             <h3>Copy-ready AGENTS.md lines</h3>
@@ -228,9 +231,9 @@ var reportHTMLTemplate = template.Must(template.New("report").Funcs(template.Fun
         {{if .Report.Recommendation}}
         <section id="recommendation-section" class="intel-section">
           <h2>Recommended tools to address waste {{helpTip "Why this recommendation? Ranking comes from public allowlisted tool metadata and deterministic signals such as tool-output bloat, retrieval friction, usage visibility, and MCP/skill utilization. Unknown private names are not echoed."}}</h2>
-          <p class="section-note">These are not random installs. They are vetted options matched to this report's waste signals. If you do not want to evaluate tooling manually, generate the plugin and let it turn the full scan into setup instructions.</p>
+          <p class="section-note">These are not random installs. They are vetted options matched to this report's waste signals. If you do not want to evaluate tooling manually, use the custom plugin to turn the report into setup instructions.</p>
           <div class="recommendation-cta-row">
-            <a class="plugin-cta" href="#email-unlock">Generate plugin from full scan</a>
+            <a class="plugin-cta" href="#plugin-purchase">Get custom plugin</a>
             <a class="recommendation-allowlist-link" href="/allowed-tools.html">Review vetted allowlist</a>
           </div>
           {{with .Report.Recommendation.Primary}}{{template "recommendation" .}}{{end}}
@@ -250,34 +253,24 @@ var reportHTMLTemplate = template.Must(template.New("report").Funcs(template.Fun
             {{receiptPanel .Report}}
           </div>
         </section>
-        <div class="upsell" id="email-unlock-section">
+        <div class="upsell" id="download-report-section">
           <div class="upsell-copy">
-          <p class="eyebrow">free launch unlock</p>
-          <h2>Generate the optimization plugin from a full scan</h2>
-          <p class="upsell-lede">Run the deeper local scan across up to 10 largest-recent logs per supported agent source. We turn the sanitized aggregate into a generated optimization pack for session hygiene, retrieval, telemetry, and CLAUDE.md cleanup.</p>
+          <p class="eyebrow">one scan, no second round</p>
+          <h2>Download the extended report for free</h2>
+          <p class="upsell-lede">This report already used up to three largest-recent logs per supported agent source. The extended download gives you the same sanitized findings in a portable Markdown file for review, sharing, or saving with your project notes.</p>
           <ul class="upsell-proof">
             <li>Raw transcripts stay local.</li>
-            <li>Email confirmation unlocks the second NPX command.</li>
-            <li>The plugin and full report use the same private report token.</li>
+            <li>No email ritual and no second scan.</li>
+            <li>Same private report token, same sanitized data boundary.</li>
           </ul>
           </div>
-          <div class="upsell-action">
+          <div class="upsell-action" id="plugin-purchase">
+          <p><a class="plugin-cta" href="{{.ExtendedReportURL}}">Download extended report</a></p>
           {{if .ArtifactURL}}
-          <p>Optimization plugin artifact: <a href="{{.ArtifactURL}}">{{.ArtifactURL}}</a></p>
+          <p class="command-note">Custom optimization plugin: $10 / €10 target price. Checkout enforcement is not active in this test build; this link generates the plugin from this report.</p>
+          <p><a class="plugin-cta" href="{{.ArtifactURL}}">Download custom plugin</a></p>
           {{else}}
-          <p>For launch testing this is email-confirmed and free. We use your email to confirm you own the address, send the one-line full-scan NPX command, and send plugin retrieval instructions. Raw transcripts still stay on your machine; only sanitized aggregate JSON is uploaded. Product updates are sent only if you opt in below.</p>
-          <form id="email-unlock" class="email-unlock-form" method="post" action="/api/email-unlocks">
-            <input type="hidden" name="source_report_job_id" value="{{.Job.ID}}">
-            <input type="hidden" name="source_report_token" value="{{.ReportToken}}">
-            <label>Email for full-scan command
-              <input type="email" name="email" autocomplete="email" required placeholder="you@example.com">
-            </label>
-            <label class="checkbox-row">
-              <input type="checkbox" name="marketing_opt_in" value="1">
-              <span>Also send me occasional updates about agentic coding products.</span>
-            </label>
-            <button type="submit">Email me the full-scan command</button>
-          </form>
+          <p class="command-note">Custom optimization plugin: $10 / €10. Payment checkout is the remaining step before public sales.</p>
           {{end}}
           </div>
         </div>
@@ -397,11 +390,11 @@ func recommendationAction(rec analyzer.TokenSavingRecommendation) string {
 	}
 	switch rec.RiskLevel {
 	case analyzer.RiskHigh:
-		return "Review the source and wait for the full-scan plugin before installing."
+		return "Review the source and prefer plugin-generated setup instructions."
 	case analyzer.RiskMedium:
 		return "Review the source first; prefer plugin-generated setup instructions."
 	default:
-		return "Review the source, or let the plugin configure the right path after the full scan."
+		return "Review the source, or let the plugin configure the right path from this report."
 	}
 }
 
@@ -562,7 +555,7 @@ func actionPlanHTML(report analyzer.Report) template.HTML {
 			actionItemHTML(&b, actionCopy{
 				Title:  "Apply the detected fix",
 				Now:    fix,
-				Plugin: "The full scan turns recurring fixes into a generated plugin instead of a one-off note.",
+				Plugin: "The plugin turns recurring fixes into operating guidance instead of a one-off note.",
 			})
 		}
 		b.WriteString(`</ul>`)
@@ -571,7 +564,7 @@ func actionPlanHTML(report analyzer.Report) template.HTML {
 	actionItemHTML(&b, actionCopy{
 		Title:  "No urgent manual fix detected",
 		Now:    "Keep sessions scoped and avoid pasting unnecessary tool output.",
-		Plugin: "Still run the full scan if you want plugin guidance across more sessions, tools, and projects.",
+		Plugin: "Download the extended report or use the plugin if you want these rules packaged for future sessions.",
 	})
 	b.WriteString(`</ul>`)
 	return template.HTML(b.String())
@@ -597,7 +590,7 @@ func actionForFinding(finding analyzer.Finding) actionCopy {
 			Now:        "Before another broad read, name the exact file or symbol and ask the agent to summarize only what changed since the last read.",
 			Why:        findingEvidence(finding.Evidence),
 			AgentsLine: "Before rereading files, summarize known state and prefer targeted symbol searches or narrow line ranges over whole-file reads.",
-			Plugin:     "The full report finds repeated paths across up to 10 largest-recent logs; the plugin adds retrieval hygiene prompts.",
+			Plugin:     "The plugin packages repeated-path patterns from this scan into retrieval hygiene prompts.",
 		}
 	case "tool_output_bloat":
 		return actionCopy{
@@ -613,7 +606,7 @@ func actionForFinding(finding analyzer.Finding) actionCopy {
 			Now:        "After two similar failures, stop editing. Restate the invariant, inspect the diff/test output, then restart with a smaller scope.",
 			Why:        findingEvidence(finding.Evidence),
 			AgentsLine: "After two failed attempts on the same issue, stop, inspect the invariant and latest error, then restart with a smaller scope.",
-			Plugin:     "The full scan surfaces recurring retry signatures and turns them into session hygiene rules.",
+			Plugin:     "The plugin turns recurring retry signatures into session hygiene rules.",
 		}
 	case "context_growth_spikes", "cache_invalidation_spike":
 		return actionCopy{
@@ -629,7 +622,7 @@ func actionForFinding(finding analyzer.Finding) actionCopy {
 			Now:        "Move project-specific MCPs out of global config and lazy-load heavy servers only when the task needs them.",
 			Why:        findingEvidence(finding.Evidence),
 			AgentsLine: "Keep only frequently used MCP servers enabled by default; lazy-load project-specific or heavy MCPs when the task requires them.",
-			Plugin:     "The full report converts MCP bloat into a concrete setup checklist.",
+			Plugin:     "The plugin converts MCP bloat into a concrete setup checklist.",
 		}
 	case "skill_bloat_high", "skill_bloat_severe":
 		return actionCopy{
@@ -653,7 +646,7 @@ func actionForFinding(finding analyzer.Finding) actionCopy {
 			Now:        now,
 			Why:        findingEvidence(finding.Evidence),
 			AgentsLine: "Keep agent sessions scoped, evidence-backed, and explicit about when context should be compacted or split.",
-			Plugin:     "The full scan turns this from one-session advice into a generated remediation pack.",
+			Plugin:     "The plugin turns this report into a generated remediation pack.",
 		}
 	}
 }
