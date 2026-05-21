@@ -197,19 +197,19 @@ var reportHTMLTemplate = template.Must(template.New("report").Funcs(template.Fun
         <section class="plugin-pitch" id="plugin-pitch">
           <div>
             <p class="eyebrow">generated remediation</p>
-            <h2>Do the quick fixes now. Let the plugin enforce them next. {{helpTip "Where do these fixes come from? Fixes are generated from deterministic finding IDs and bounded evidence, not from raw prompts or an LLM reading your transcript. The full scan turns those findings into a generated plugin artifact and vetted setup instructions."}}</h2>
-            <p>These are the manual moves that will reduce waste immediately. If you want this to become an operating habit instead of another checklist, run the full scan and get the generated plugin: it turns these patterns into Claude-facing instructions, context hygiene rules, retrieval guidance, and setup recommendations.</p>
+            <h2>Copy the quick fixes now. Generate the plugin next. {{helpTip "Where do these fixes come from? Fixes are generated from deterministic finding IDs and bounded evidence, not from raw prompts or an LLM reading your transcript. The full scan turns those findings into a generated plugin artifact and vetted setup instructions."}}</h2>
+            <p>Add the relevant AGENTS.md lines now. The full scan turns recurring patterns into a generated plugin with session hygiene, retrieval guidance, and setup recommendations.</p>
             <ul class="plugin-benefits">
-              <li>Session hygiene nudges before context contamination gets expensive.</li>
-              <li>Retrieval and code-intelligence recommendations tuned to your actual reread patterns.</li>
-              <li>CLAUDE.md trimming, hierarchy, and workflow guidance generated from the full scan.</li>
-              <li>MCP, skill, and plugin bloat warnings converted into setup recommendations.</li>
+              <li>Session hygiene nudges.</li>
+              <li>Retrieval recommendations.</li>
+              <li>CLAUDE.md cleanup.</li>
+              <li>MCP and skill bloat warnings.</li>
             </ul>
             <a class="plugin-cta" href="#email-unlock">Generate my optimization plugin</a>
           </div>
           <div class="plugin-fixes-card">
-            <h3>Do these now</h3>
-            <p class="command-note">Copy the AGENTS.md line into the relevant repo. The hosted report cannot safely append to local files; the generated plugin can package these rules locally after the full scan.</p>
+            <h3>Copy-ready AGENTS.md lines</h3>
+            <p class="command-note">Use only the lines that match how you work.</p>
             {{actionPlan .Report}}
           </div>
         </section>
@@ -420,13 +420,12 @@ func actionPlanHTML(report analyzer.Report) template.HTML {
 func actionItemHTML(b *strings.Builder, action actionCopy) {
 	fmt.Fprintf(
 		b,
-		`<li class="action-item"><strong>%s</strong><span><b>Do now:</b> %s</span><span><b>Why:</b> %s</span><code>%s</code><button type="button" class="copy-agents-line" data-copy="%s">Copy AGENTS.md line</button><em>%s</em></li>`,
+		`<li class="action-item"><div class="action-main"><strong>%s</strong><span>%s</span><small>%s</small></div><code>%s</code><button type="button" class="copy-agents-line" data-copy="%s">Copy line</button></li>`,
 		htmlstd.EscapeString(action.Title),
 		htmlstd.EscapeString(action.Now),
 		htmlstd.EscapeString(defaultString(action.Why, "deterministic evidence recorded")),
 		htmlstd.EscapeString(defaultString(action.AgentsLine, "Keep agent sessions scoped and avoid unnecessary context.")),
 		htmlstd.EscapeString(defaultString(action.AgentsLine, "Keep agent sessions scoped and avoid unnecessary context.")),
-		htmlstd.EscapeString(action.Plugin),
 	)
 }
 

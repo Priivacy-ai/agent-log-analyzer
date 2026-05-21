@@ -213,44 +213,48 @@ function buildActionItem(finding) {
   const action = actionForFinding(finding);
   const item = document.createElement("li");
   item.className = "action-item";
+  const main = document.createElement("div");
+  main.className = "action-main";
   const title = document.createElement("strong");
   title.textContent = action.title;
   const now = document.createElement("span");
-  now.innerHTML = `<b>Do now:</b> ${escapeHTML(action.now)}`;
+  now.textContent = action.now;
   const why = document.createElement("span");
-  why.innerHTML = `<b>Why:</b> ${escapeHTML(action.why || findingEvidence(finding?.evidence))}`;
+  why.textContent = action.why || findingEvidence(finding?.evidence);
+  why.className = "action-evidence";
+  main.append(title, now, why);
   const agentsLine = document.createElement("code");
   agentsLine.textContent = action.agentsLine;
   const copy = document.createElement("button");
   copy.type = "button";
   copy.className = "copy-agents-line";
   copy.dataset.copy = action.agentsLine;
-  copy.textContent = "Copy AGENTS.md line";
-  const plugin = document.createElement("em");
-  plugin.textContent = action.plugin;
-  item.append(title, now, why, agentsLine, copy, plugin);
+  copy.textContent = "Copy line";
+  item.append(main, agentsLine, copy);
   return item;
 }
 
 function buildFallbackActionItem(fix) {
   const item = document.createElement("li");
   item.className = "action-item";
+  const main = document.createElement("div");
+  main.className = "action-main";
   const title = document.createElement("strong");
   title.textContent = "Apply the detected fix";
   const now = document.createElement("span");
-  now.innerHTML = `<b>Do now:</b> ${escapeHTML(String(fix || "Use a narrower workflow before continuing."))}`;
+  now.textContent = String(fix || "Use a narrower workflow before continuing.");
   const why = document.createElement("span");
-  why.innerHTML = "<b>Why:</b> deterministic evidence recorded";
+  why.textContent = "deterministic evidence recorded";
+  why.className = "action-evidence";
+  main.append(title, now, why);
   const agentsLine = document.createElement("code");
   agentsLine.textContent = "Keep agent sessions scoped and avoid unnecessary context.";
   const copy = document.createElement("button");
   copy.type = "button";
   copy.className = "copy-agents-line";
   copy.dataset.copy = agentsLine.textContent;
-  copy.textContent = "Copy AGENTS.md line";
-  const plugin = document.createElement("em");
-  plugin.textContent = "The full scan turns recurring fixes into a generated plugin instead of a one-off note.";
-  item.append(title, now, why, agentsLine, copy, plugin);
+  copy.textContent = "Copy line";
+  item.append(main, agentsLine, copy);
   return item;
 }
 
