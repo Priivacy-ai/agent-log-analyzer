@@ -90,6 +90,7 @@ var reportHTMLTemplate = template.Must(template.New("report").Funcs(template.Fun
 	"boolText":              boolText,
 	"bucketValue":           bucketValue,
 	"ecosystemPanel":        ecosystemPanelHTML,
+	"environmentSignals":    environmentSignalsHTML,
 	"findingEvidence":       findingEvidence,
 	"findingsBubbleChart":   findingsBubbleChartHTML,
 	"formatInt":             formatInt,
@@ -106,8 +107,6 @@ var reportHTMLTemplate = template.Must(template.New("report").Funcs(template.Fun
 	"savingsRange":          savingsRange,
 	"sourceLogLabel":        sourceLogLabel,
 	"timelineChart":         timelineChartHTML,
-	"toolingUtilization":    toolingUtilizationHTML,
-	"workflowFingerprints":  workflowFingerprintsHTML,
 }).Parse(`<!doctype html>
 <html lang="en">
   <head>
@@ -216,7 +215,7 @@ var reportHTMLTemplate = template.Must(template.New("report").Funcs(template.Fun
         </section>
         {{if .Report.Recommendation}}
         <section id="recommendation-section" class="intel-section">
-          <h2>Next-best recommendation {{helpTip "Why this recommendation? Ranking comes from public allowlisted tool metadata and deterministic signals such as tool-output bloat, retrieval friction, usage visibility, and MCP/skill utilization. Unknown private names are not echoed."}}</h2>
+          <h2>Recommended tools to address waste {{helpTip "Why this recommendation? Ranking comes from public allowlisted tool metadata and deterministic signals such as tool-output bloat, retrieval friction, usage visibility, and MCP/skill utilization. Unknown private names are not echoed."}}</h2>
           <p class="section-note">Recommendations come from a public vetted allowlist. <a href="/allowed-tools.html">Review the allowlist and source URLs.</a></p>
           {{with .Report.Recommendation.Primary}}{{template "recommendation" .}}{{end}}
           {{with .Report.Recommendation.Secondary}}{{template "recommendation" .}}{{end}}
@@ -225,21 +224,13 @@ var reportHTMLTemplate = template.Must(template.New("report").Funcs(template.Fun
           {{end}}
         </section>
         {{end}}
-        <section id="workflow-fingerprints" class="intel-section">
-          <h2>Workflow Fingerprints {{helpTip "Fingerprints are bounded detections for known public tools. Evidence comes from verified signatures such as command names, config markers, MCP namespaces, package manifests, and optional CLI presence/version buckets. Private names are counted, not shown."}}</h2>
-          {{workflowFingerprints .Report.Ecosystem.WorkflowFingerprints}}
-        </section>
-        <section id="tooling-utilization" class="intel-section">
-          <h2>MCP &amp; Skill Utilization {{helpTip "Utilization compares bounded exposed MCP/skill context against observed calls/executions. The warning band is a heuristic for context bloat risk, not a claim that a specific private tool is bad."}}</h2>
-          {{toolingUtilization .Report.Ecosystem.ToolingUtilization}}
-        </section>
         <section class="evidence-grid">
-          <div class="evidence-card ecosystem-card">
-            <h2>Ecosystem {{helpTip "Ecosystem fields are bounded categories and allowlisted public names. Unknown/private MCPs, skills, plugins, and tools are counted without exposing their raw names."}}</h2>
-            {{ecosystemPanel .Report}}
+          <div class="evidence-card environment-card">
+            <h2>Environment signals {{helpTip "This condenses bounded ecosystem fingerprints, MCP utilization, and skill utilization into the few signals that affect token waste. Unknown/private names are counted without exposing raw names."}}</h2>
+            {{environmentSignals .Report}}
           </div>
           <div class="evidence-card receipt-card">
-            <h2>Security Receipt {{helpTip "What happened to my raw logs? The public flow analyzes locally and uploads sanitized report JSON. This receipt records the report's own privacy flags and redaction counts; it is not a third-party audit."}}</h2>
+            <h2>Security Receipt {{helpTip "What happened to my raw logs? The public flow analyzes and redacts locally, then uploads sanitized report JSON. This receipt records the report's own privacy flags and local redaction counts; it is not a third-party audit."}}</h2>
             {{receiptPanel .Report}}
           </div>
         </section>
@@ -550,6 +541,157 @@ func toolingUtilizationHTML(util analyzer.ToolingUtilization) template.HTML {
 	return template.HTML(b.String())
 }
 
+func environmentSignalsHTML(report analyzer.Report) template.HTML {
+	e := report.Ecosystem
+	rows := [][3]string{
+		{
+			"Runtime",
+			joinNonEmpty([]string{e.Client, e.OperatingSystem, e.Shell, e.VersionControl}, "unknown"),
+			"Basic host and client context for interpreting the scan.",
+		},
+		{
+			"Coding agents",
+			summarizeStrings(e.CodingAgents, 4),
+			"Which agent surfaces appeared in the local scan.",
+		},
+		{
+			"Workflow tools",
+			summarizeFingerprints(e.WorkflowFingerprints),
+			"Spec-driven or workflow tooling detected from bounded public fingerprints.",
+		},
+		{
+			"MCP surface",
+			summarizeMCP(e.ToolingUtilization.MCP),
+			"High exposure with low use is a context-bloat signal.",
+		},
+		{
+			"Skill surface",
+			summarizeSkills(e.ToolingUtilization.Skill),
+			"Loaded skills should earn their context by being used.",
+		},
+		{
+			"Tooling inventory",
+			summarizeInventory(e),
+			"Package managers and plugins influence remediation recommendations.",
+		},
+	}
+	var b strings.Builder
+	b.WriteString(`<div id="environment-signals" class="environment-panel"><table class="environment-table"><thead><tr><th>Signal</th><th>Summary</th><th>Why it matters</th></tr></thead><tbody>`)
+	for _, row := range rows {
+		fmt.Fprintf(
+			&b,
+			`<tr><th scope="row">%s</th><td>%s</td><td>%s</td></tr>`,
+			htmlstd.EscapeString(row[0]),
+			htmlstd.EscapeString(row[1]),
+			htmlstd.EscapeString(row[2]),
+		)
+	}
+	b.WriteString(`</tbody></table></div>`)
+	return template.HTML(b.String())
+}
+
+func joinNonEmpty(values []string, fallback string) string {
+	out := make([]string, 0, len(values))
+	for _, value := range values {
+		if value != "" {
+			out = append(out, value)
+		}
+	}
+	if len(out) == 0 {
+		return fallback
+	}
+	return strings.Join(out, " / ")
+}
+
+func summarizeStrings(values []string, limit int) string {
+	clean := make([]string, 0, len(values))
+	for _, value := range values {
+		if value != "" {
+			clean = append(clean, value)
+		}
+	}
+	if len(clean) == 0 {
+		return "none detected"
+	}
+	if len(clean) <= limit {
+		return strings.Join(clean, ", ")
+	}
+	return strings.Join(clean[:limit], ", ") + fmt.Sprintf(" +%d more", len(clean)-limit)
+}
+
+func summarizeFingerprints(fingerprints []analyzer.EcosystemFingerprint) string {
+	clean := make([]analyzer.EcosystemFingerprint, 0, len(fingerprints))
+	for _, fp := range fingerprints {
+		if fp.ID != "" {
+			clean = append(clean, fp)
+		}
+	}
+	if len(clean) == 0 {
+		return "none detected"
+	}
+	sort.SliceStable(clean, func(i, j int) bool {
+		return clean[i].EvidenceCount > clean[j].EvidenceCount
+	})
+	shown := make([]string, 0, min(len(clean), 4))
+	for _, fp := range clean[:min(len(clean), 4)] {
+		flags := []string{}
+		if fp.Active {
+			flags = append(flags, "active")
+		}
+		if fp.Installed {
+			flags = append(flags, "installed")
+		}
+		if len(flags) > 0 {
+			shown = append(shown, fmt.Sprintf("%s (%s)", fp.ID, strings.Join(flags, ", ")))
+			continue
+		}
+		shown = append(shown, fmt.Sprintf("%s (%s)", fp.ID, defaultString(fp.Confidence, "unknown")))
+	}
+	if len(clean) > len(shown) {
+		return strings.Join(shown, ", ") + fmt.Sprintf(" +%d more", len(clean)-len(shown))
+	}
+	return strings.Join(shown, ", ")
+}
+
+func summarizeMCP(mcp analyzer.MCPUtilization) string {
+	band := normalizeBandString(mcp.WarningBand)
+	ratio := utilizationRatioText(mcp.ExposureKnown, mcp.UtilizationRatioPct, mcp.InferenceSource)
+	called := summarizeStrings(mcp.UniqueKnownCalledIDs, 3)
+	unknown := ""
+	if mcp.UniqueUnknownCalledCount > 0 {
+		unknown = fmt.Sprintf(" +%d unknown", mcp.UniqueUnknownCalledCount)
+	}
+	return fmt.Sprintf("%s band; %s; %s calls; called %s%s", band, ratio, formatTokens(mcp.CallCount), called, unknown)
+}
+
+func summarizeSkills(skill analyzer.SkillUtilization) string {
+	band := normalizeBandString(skill.WarningBand)
+	ratio := utilizationRatioText(skill.ExposureKnown, skill.UtilizationRatioPct, skill.InferenceSource)
+	executed := summarizeStrings(skill.KnownExecutedIDs, 3)
+	unknown := ""
+	if skill.UnknownExecutedCount > 0 {
+		unknown = fmt.Sprintf(" +%d unknown", skill.UnknownExecutedCount)
+	}
+	return fmt.Sprintf("%s band; %s; %s executions; used %s%s", band, ratio, formatTokens(skill.ExecutedCount), executed, unknown)
+}
+
+func summarizeInventory(e analyzer.Ecosystem) string {
+	parts := []string{}
+	if plugins := summarizeStrings(e.KnownPlugins, 2); plugins != "none detected" {
+		parts = append(parts, "plugins: "+plugins)
+	}
+	if packages := summarizeStrings(e.PackageManagers, 4); packages != "none detected" {
+		parts = append(parts, "packages: "+packages)
+	}
+	if frameworks := summarizeStrings(e.WorkflowFrameworks, 3); frameworks != "none detected" {
+		parts = append(parts, "frameworks: "+frameworks)
+	}
+	if len(parts) == 0 {
+		return "no notable inventory"
+	}
+	return strings.Join(parts, "; ")
+}
+
 func mcpUtilizationHTML(b *strings.Builder, mcp analyzer.MCPUtilization) {
 	b.WriteString(`<div class="utilization-card" aria-label="MCP: utilization summary">`)
 	utilizationHeaderHTML(b, "MCP", normalizeBandString(mcp.WarningBand), utilizationRatioText(mcp.ExposureKnown, mcp.UtilizationRatioPct, mcp.InferenceSource))
@@ -748,6 +890,7 @@ func receiptPanelHTML(report analyzer.Report) template.HTML {
 	receipt := report.SecurityReceipt
 	var b strings.Builder
 	b.WriteString(`<div id="receipt" class="receipt-panel">`)
+	b.WriteString(`<p class="receipt-boundary"><strong>Local redaction boundary:</strong> secrets are removed on your computer before upload. The hosted service receives sanitized report JSON with category counts and placeholders, not the original redacted values.</p>`)
 	b.WriteString(`<div class="receipt-status-grid">`)
 	receiptTileHTML(&b, "Model tokens for report", "0", "good")
 	receiptTileHTML(&b, "Raw transcript to LLM", boolText(receipt.RawTranscriptSentToLLM), receiptTone(!receipt.RawTranscriptSentToLLM))
@@ -762,7 +905,7 @@ func receiptPanelHTML(report analyzer.Report) template.HTML {
 	if receipt.SecretsRedacted > 0 {
 		redactionTone = "warn"
 	}
-	receiptTileHTML(&b, "Secrets redacted", fmt.Sprintf("%d", receipt.SecretsRedacted), redactionTone)
+	receiptTileHTML(&b, "Secrets redacted locally", fmt.Sprintf("%d", receipt.SecretsRedacted), redactionTone)
 	b.WriteString(`</div>`)
 	redactionGroupHTML(&b, report.Redactions)
 	b.WriteString(`</div>`)
@@ -817,7 +960,7 @@ func receiptTileHTML(b *strings.Builder, label, value, tone string) {
 }
 
 func redactionGroupHTML(b *strings.Builder, redactions map[string]int) {
-	b.WriteString(`<section class="chip-group redaction-group"><h3>Redactions</h3><div class="chip-list">`)
+	b.WriteString(`<section class="chip-group redaction-group"><h3>Local redaction categories</h3><p>Only these category counts are included in the uploaded report.</p><div class="chip-list">`)
 	keys := make([]string, 0, len(redactions))
 	for key, value := range redactions {
 		if value > 0 {

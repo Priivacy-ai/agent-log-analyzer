@@ -32,7 +32,7 @@
           <li>No account required</li>
           <li>Raw logs stay local in the public flow <button type="button" class="help-tip" data-tippy-content="The NPX command analyzes Claude Code, Codex, and OpenCode logs on your machine first. The upload step sends the generated sanitized report JSON, not raw transcript files." aria-label="More information">?</button></li>
           <li>Reports are not used for training <button type="button" class="help-tip" data-tippy-content="The service stores short-lived reports for rendering and bounded aggregate analytics. It does not feed uploaded reports into model training." aria-label="More information">?</button></li>
-          <li>Secrets redacted before upload <button type="button" class="help-tip" data-tippy-content="The CLI runs deterministic redaction before writing the report JSON. Redaction is best-effort and category-counted; users should still review the JSON before upload." aria-label="More information">?</button></li>
+          <li>Secrets redacted locally before upload <button type="button" class="help-tip" data-tippy-content="The CLI runs deterministic redaction on your computer before writing the report JSON. The hosted service receives category counts and placeholders, not the original redacted values. Redaction is best-effort; users should still review the JSON before upload." aria-label="More information">?</button></li>
         </ul>
         <p class="disclaimer">The public flow runs analysis on your machine and uploads only the sanitized JSON report you review.</p>
         <p class="trust-links"><a href="/security/">Security</a> <a href="/privacy/">Privacy</a></p>
@@ -170,30 +170,20 @@
           </div>
         </section>
         <section id="recommendation-section" class="intel-section" hidden>
-          <h2>Next-best recommendation <button type="button" class="help-tip" data-tippy-content="Recommendation ranking comes from allowlisted tool metadata and deterministic signals such as tool-output bloat, retrieval friction, usage visibility, and MCP/skill utilization. Unknown private names are not echoed." aria-label="More information">?</button></h2>
+          <h2>Recommended tools to address waste <button type="button" class="help-tip" data-tippy-content="Recommendation ranking comes from allowlisted tool metadata and deterministic signals such as tool-output bloat, retrieval friction, usage visibility, and MCP/skill utilization. Unknown private names are not echoed." aria-label="More information">?</button></h2>
           <p class="section-note">Recommendations come from a public vetted allowlist. <a href="/allowed-tools.html">Review the allowlist and source URLs.</a></p>
           <div id="recommendation-primary"></div>
           <div id="recommendation-secondary"></div>
           <p id="recommendation-empty" hidden>No high-priority recommendation detected from current signals.</p>
         </section>
 
-        <section id="workflow-fingerprints" class="intel-section" hidden>
-          <h2>Workflow Fingerprints <button type="button" class="help-tip" data-tippy-content="Fingerprints are bounded detections for known public tools. Evidence comes from verified signatures such as command names, config markers, MCP namespaces, package manifests, and optional CLI presence/version buckets. Private names are counted, not shown." aria-label="More information">?</button></h2>
-          <ol id="workflow-fingerprints-list"></ol>
-        </section>
-
-        <section id="tooling-utilization" class="intel-section" hidden>
-          <h2>MCP &amp; Skill Utilization <button type="button" class="help-tip" data-tippy-content="Utilization compares bounded exposed MCP/skill context against observed calls/executions. The warning band is a heuristic for context bloat risk, not a claim that a specific private tool is bad." aria-label="More information">?</button></h2>
-          <div id="tooling-utilization-rows"></div>
-        </section>
-
         <section class="evidence-grid">
-          <div class="evidence-card ecosystem-card">
-            <h2>Ecosystem <button type="button" class="help-tip" data-tippy-content="Ecosystem fields are bounded categories and allowlisted public names. Unknown/private MCPs, skills, plugins, and tools are counted without exposing their raw names." aria-label="More information">?</button></h2>
-            <div id="ecosystem" class="ecosystem-panel"></div>
+          <div class="evidence-card environment-card">
+            <h2>Environment signals <button type="button" class="help-tip" data-tippy-content="This condenses bounded ecosystem fingerprints, MCP utilization, and skill utilization into the few signals that affect token waste. Unknown/private names are counted without exposing raw names." aria-label="More information">?</button></h2>
+            <div id="environment-signals" class="environment-panel"></div>
           </div>
           <div class="evidence-card receipt-card">
-            <h2>Security Receipt <button type="button" class="help-tip" data-tippy-content="The public flow analyzes locally and uploads sanitized report JSON. This receipt records the report's own privacy flags and redaction counts; it is not a third-party audit." aria-label="More information">?</button></h2>
+            <h2>Security Receipt <button type="button" class="help-tip" data-tippy-content="The public flow analyzes and redacts locally, then uploads sanitized report JSON. This receipt records the report's own privacy flags and local redaction counts; it is not a third-party audit." aria-label="More information">?</button></h2>
             <div id="receipt" class="receipt-panel"></div>
           </div>
         </section>
