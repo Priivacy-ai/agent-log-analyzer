@@ -142,6 +142,7 @@ var reportHTMLTemplate = template.Must(template.New("report").Funcs(template.Fun
           <h2>Estimated Waste {{helpTip "How is waste estimated? Avoidable spend is a heuristic range derived from the efficiency score and detected waste patterns. It is intended to rank severity and prompt investigation, not to reproduce provider billing."}}</h2>
           <p id="waste">{{.Report.EstimatedWaste.Low}}-{{.Report.EstimatedWaste.High}}% avoidable token spend</p>
           <p class="command-note">Analyzed token volume: {{formatTokens .Report.Metrics.EstimatedTokens}} estimated input/output tokens; {{formatTokens .Report.Metrics.ToolOutputTokens}} estimated from tool output. {{helpTip "What is counted here? Accuracy depends on the source log. When native usage fields exist, we use them. Otherwise we estimate roughly one token per four characters. Tool-output volume is derived from tool-result payload size and similar estimates. This is directional, not invoice-grade accounting."}}</p>
+          <p class="capacity-note">Cutting this waste helps the same coding plan produce more useful implementation work before you run out of tokens.</p>
           <div class="report-cta-row" aria-label="Report actions">
             <a class="report-primary-cta" href="#email-unlock">Get the optimization plugin</a>
             <a class="report-secondary-cta" href="#email-unlock-section">Skip to full scan</a>
@@ -205,7 +206,7 @@ var reportHTMLTemplate = template.Must(template.New("report").Funcs(template.Fun
           <div>
             <p class="eyebrow">generated remediation</p>
             <h2>Copy the quick fixes now. Generate the plugin next. {{helpTip "Where do these fixes come from? Fixes are generated from deterministic finding IDs and bounded evidence, not from raw prompts or an LLM reading your transcript. The full scan turns those findings into a generated plugin artifact and vetted setup instructions."}}</h2>
-            <p>Add the relevant AGENTS.md lines now. The full scan turns recurring patterns into a generated plugin with session hygiene, retrieval guidance, and setup recommendations.</p>
+            <p>Add the relevant AGENTS.md lines now. The full scan turns recurring patterns into a generated plugin so future sessions spend more of your plan writing software and less on rereads, retries, dead context, and noisy tools.</p>
             <ul class="plugin-benefits">
               <li>Session hygiene nudges.</li>
               <li>Retrieval recommendations.</li>
