@@ -165,6 +165,70 @@ func TestToolRecommendationsUsePreciseSources(t *testing.T) {
 	}
 }
 
+func TestToolRecommendationsRespectEngineSelectionAndSkipNotes(t *testing.T) {
+	report := analyzer.Report{
+		Findings: []analyzer.Finding{
+			{ID: "repeated_file_reads"},
+		},
+		Recommendation: &analyzer.RecommendationSet{
+			Primary: &analyzer.TokenSavingRecommendation{
+				PrimaryToolID: "claude_context",
+				FailureModes:  []analyzer.DefocusFailureMode{analyzer.FailureRepeatedNavigation},
+				Reason:        analyzer.ReasonAbsent,
+				SkippedToolIDs: []analyzer.ToolID{
+					"grepai",
+				},
+			},
+		},
+	}
+
+	recommendations := toolingRecommendations(report)
+	if recommendationByID(recommendations, "claude-context") == nil {
+		t.Fatalf("expected claude-context to be selected")
+	}
+	if recommendationByID(recommendations, "grepai") != nil {
+		t.Fatalf("expected grepai to be suppressed by engine selection")
+	}
+	primary := recommendationByID(recommendations, "claude-context")
+	if primary == nil || primary.SelectionReason == "" {
+		t.Fatalf("expected selection reason on selected recommendation: %#v", primary)
+	}
+	md := recommendationMarkdown(report, recommendations)
+	if !strings.Contains(md, "`grepai` skipped as an alternative") {
+		t.Fatalf("expected markdown to explain skipped tool: %s", md)
+	}
+}
+
+func TestToolRecommendationsDeferNewMCPPluginsOnLowUtilization(t *testing.T) {
+	report := analyzer.Report{
+		Ecosystem: analyzer.Ecosystem{
+			VersionControl: "git",
+			KnownPlugins:   []string{"notion"},
+			ToolingUtilization: analyzer.ToolingUtilization{
+				MCP: analyzer.MCPUtilization{
+					UtilizationRatioPct: 10,
+					WarningBand:         "watch",
+				},
+				Skill: analyzer.SkillUtilization{
+					UtilizationRatioPct: 15,
+					WarningBand:         "watch",
+				},
+			},
+		},
+	}
+
+	recommendations := toolingRecommendations(report)
+	for _, rec := range recommendations {
+		if isPluginOrMCPRecommendation(rec) {
+			t.Fatalf("expected plugin/mcp recommendation to be deferred on low utilization: %#v", rec)
+		}
+	}
+	md := recommendationMarkdown(report, recommendations)
+	if !strings.Contains(md, "No new MCP/plugin additions while utilization is low") {
+		t.Fatalf("expected low-utilization defer note in markdown: %s", md)
+	}
+}
+
 func TestGenerateIsDeterministic(t *testing.T) {
 	report := analyzer.Report{
 		Version: "0.1.0",
@@ -241,7 +305,7 @@ func TestGenerateDoesNotLeakPrivateNamesOrSecrets(t *testing.T) {
 // distinct allowlisted IDs in ToolingUtilization.MCP.KnownServerIDs and
 // WorkflowFingerprints. Aggregate them, generate the artifact from the merged
 // report, and assert the artifact's KnownEcosystem (and the same data surfaced
-// through the artifact's JSON) reflects the union of both inputs — not just
+// through the artifact's JSON) reflects the union of both inputs â€” not just
 // one of them.
 func TestGenerate_MergedAggregate_FlowsToArtifact(t *testing.T) {
 	// Report A: github MCP server, spec_kitty framework fingerprint, call
@@ -276,7 +340,7 @@ func TestGenerate_MergedAggregate_FlowsToArtifact(t *testing.T) {
 		},
 	}
 	// Report B: linear MCP server, openspec framework fingerprint,
-	// call count 7. No overlap on the unique IDs with A — so the merged
+	// call count 7. No overlap on the unique IDs with A â€” so the merged
 	// artifact must include BOTH or the test fails (proving the artifact
 	// reads from the merged result, not from a single input).
 	reportB := analyzer.Report{
