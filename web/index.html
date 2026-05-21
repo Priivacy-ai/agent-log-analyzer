@@ -181,14 +181,16 @@
           <div id="tooling-utilization-rows"></div>
         </section>
 
-        <div>
-          <h2>Ecosystem <button type="button" class="help-tip" data-tippy-content="Ecosystem fields are bounded categories and allowlisted public names. Unknown/private MCPs, skills, plugins, and tools are counted without exposing their raw names." aria-label="More information">?</button></h2>
-          <pre id="ecosystem"></pre>
-        </div>
-        <div>
-          <h2>Security Receipt <button type="button" class="help-tip" data-tippy-content="The public flow analyzes locally and uploads sanitized report JSON. This receipt records the report's own privacy flags and redaction counts; it is not a third-party audit." aria-label="More information">?</button></h2>
-          <pre id="receipt"></pre>
-        </div>
+        <section class="evidence-grid">
+          <div class="evidence-card ecosystem-card">
+            <h2>Ecosystem <button type="button" class="help-tip" data-tippy-content="Ecosystem fields are bounded categories and allowlisted public names. Unknown/private MCPs, skills, plugins, and tools are counted without exposing their raw names." aria-label="More information">?</button></h2>
+            <div id="ecosystem" class="ecosystem-panel"></div>
+          </div>
+          <div class="evidence-card receipt-card">
+            <h2>Security Receipt <button type="button" class="help-tip" data-tippy-content="The public flow analyzes locally and uploads sanitized report JSON. This receipt records the report's own privacy flags and redaction counts; it is not a third-party audit." aria-label="More information">?</button></h2>
+            <div id="receipt" class="receipt-panel"></div>
+          </div>
+        </section>
         <div class="upsell" id="email-unlock-section">
           <div class="upsell-copy">
             <p class="eyebrow">free launch unlock</p>

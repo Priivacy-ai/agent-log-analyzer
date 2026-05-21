@@ -88,6 +88,7 @@ var reportHTMLTemplate = template.Must(template.New("report").Funcs(template.Fun
 	"add":                   func(a, b int) int { return a + b },
 	"boolText":              boolText,
 	"bucketValue":           bucketValue,
+	"ecosystemPanel":        ecosystemPanelHTML,
 	"findingEvidence":       findingEvidence,
 	"findingsBubbleChart":   findingsBubbleChartHTML,
 	"helpTip":               helpTip,
@@ -97,6 +98,7 @@ var reportHTMLTemplate = template.Must(template.New("report").Funcs(template.Fun
 	"recommendationName":    recommendationName,
 	"recommendationSignals": recommendationSignals,
 	"recommendationURL":     recommendationURL,
+	"receiptPanel":          receiptPanelHTML,
 	"savingsRange":          savingsRange,
 	"sourceLogLabel":        sourceLogLabel,
 	"timelineChart":         timelineChartHTML,
@@ -215,31 +217,16 @@ var reportHTMLTemplate = template.Must(template.New("report").Funcs(template.Fun
             <p><strong>Skills:</strong> {{.Report.Ecosystem.ToolingUtilization.Skill.WarningBand}} band; {{.Report.Ecosystem.ToolingUtilization.Skill.UtilizationRatioPct}}% utilization; exposed {{.Report.Ecosystem.ToolingUtilization.Skill.ExposedCountBucket}}; context {{.Report.Ecosystem.ToolingUtilization.Skill.ContextTokenBucket}}; executions {{.Report.Ecosystem.ToolingUtilization.Skill.ExecutedCount}}; known executed: {{join .Report.Ecosystem.ToolingUtilization.Skill.KnownExecutedIDs}}; unknown executed count: {{.Report.Ecosystem.ToolingUtilization.Skill.UnknownExecutedCount}}</p>
           </div>
         </section>
-        <div>
-          <h2>Ecosystem {{helpTip "Ecosystem fields are bounded categories and allowlisted public names. Unknown/private MCPs, skills, plugins, and tools are counted without exposing their raw names."}}</h2>
-          <pre id="ecosystem">Client: {{.Report.Ecosystem.Client}}
-Coding agents: {{join .Report.Ecosystem.CodingAgents}}
-OS: {{.Report.Ecosystem.OperatingSystem}}
-Shell: {{.Report.Ecosystem.Shell}}
-Workflow frameworks: {{join .Report.Ecosystem.WorkflowFrameworks}}
-MCPs: {{join .Report.Ecosystem.MCPServersKnown}}
-Unknown MCP count: {{.Report.Ecosystem.UnknownMCPServerCount}}
-Skills: {{join .Report.Ecosystem.KnownSkills}}
-Unknown skill count: {{.Report.Ecosystem.UnknownSkillCount}}
-Plugins: {{join .Report.Ecosystem.KnownPlugins}}
-Unknown plugin count: {{.Report.Ecosystem.UnknownPluginCount}}
-Package managers: {{join .Report.Ecosystem.PackageManagers}}
-Version control: {{.Report.Ecosystem.VersionControl}}</pre>
-        </div>
-        <div>
-          <h2>Security Receipt {{helpTip "The public flow analyzes locally and uploads sanitized report JSON. This receipt records the report's own privacy flags and redaction counts; it is not a third-party audit."}}</h2>
-          <pre id="receipt">Raw transcript sent to LLM: {{boolText .Report.SecurityReceipt.RawTranscriptSentToLLM}}
-Outbound during analysis: {{boolText .Report.SecurityReceipt.OutboundDuringAnalysis}}
-Secrets redacted: {{.Report.SecurityReceipt.SecretsRedacted}}
-Raw log TTL: {{.Report.SecurityReceipt.RawLogTTL}}
-Redactions:
-{{mapLines .Report.Redactions}}</pre>
-        </div>
+        <section class="evidence-grid">
+          <div class="evidence-card ecosystem-card">
+            <h2>Ecosystem {{helpTip "Ecosystem fields are bounded categories and allowlisted public names. Unknown/private MCPs, skills, plugins, and tools are counted without exposing their raw names."}}</h2>
+            {{ecosystemPanel .Report}}
+          </div>
+          <div class="evidence-card receipt-card">
+            <h2>Security Receipt {{helpTip "The public flow analyzes locally and uploads sanitized report JSON. This receipt records the report's own privacy flags and redaction counts; it is not a third-party audit."}}</h2>
+            {{receiptPanel .Report}}
+          </div>
+        </section>
         <div class="upsell" id="email-unlock-section">
           <div class="upsell-copy">
           <p class="eyebrow">free launch unlock</p>
@@ -374,6 +361,135 @@ func boolText(v bool) string {
 		return "yes"
 	}
 	return "no"
+}
+
+func ecosystemPanelHTML(report analyzer.Report) template.HTML {
+	e := report.Ecosystem
+	var b strings.Builder
+	b.WriteString(`<div id="ecosystem" class="ecosystem-panel">`)
+	b.WriteString(`<div class="ecosystem-summary">`)
+	metricPillHTML(&b, "Client", defaultString(e.Client, "unknown"))
+	metricPillHTML(&b, "OS", defaultString(e.OperatingSystem, "unknown"))
+	metricPillHTML(&b, "Shell", defaultString(e.Shell, "unknown"))
+	metricPillHTML(&b, "Version control", defaultString(e.VersionControl, "unknown"))
+	b.WriteString(`</div>`)
+	b.WriteString(`<div class="evidence-groups">`)
+	chipGroupHTML(&b, "Coding agents", e.CodingAgents, "")
+	chipGroupHTML(&b, "Workflow frameworks", e.WorkflowFrameworks, "")
+	chipGroupHTML(&b, "MCPs", e.MCPServersKnown, unknownCountLabel(e.UnknownMCPServerCount))
+	chipGroupHTML(&b, "Skills", e.KnownSkills, unknownCountLabel(e.UnknownSkillCount))
+	chipGroupHTML(&b, "Plugins", e.KnownPlugins, unknownCountLabel(e.UnknownPluginCount))
+	chipGroupHTML(&b, "Package managers", e.PackageManagers, "")
+	b.WriteString(`</div></div>`)
+	return template.HTML(b.String())
+}
+
+func receiptPanelHTML(report analyzer.Report) template.HTML {
+	receipt := report.SecurityReceipt
+	var b strings.Builder
+	b.WriteString(`<div id="receipt" class="receipt-panel">`)
+	b.WriteString(`<div class="receipt-status-grid">`)
+	receiptTileHTML(&b, "Raw transcript to LLM", boolText(receipt.RawTranscriptSentToLLM), receiptTone(!receipt.RawTranscriptSentToLLM))
+	receiptTileHTML(&b, "Outbound during analysis", boolText(receipt.OutboundDuringAnalysis), receiptTone(!receipt.OutboundDuringAnalysis))
+	rawTTL := defaultString(receipt.RawLogTTL, "unknown")
+	ttlTone := "warn"
+	if rawTTL == "not uploaded" {
+		ttlTone = "good"
+	}
+	receiptTileHTML(&b, "Raw log TTL", rawTTL, ttlTone)
+	redactionTone := "good"
+	if receipt.SecretsRedacted > 0 {
+		redactionTone = "warn"
+	}
+	receiptTileHTML(&b, "Secrets redacted", fmt.Sprintf("%d", receipt.SecretsRedacted), redactionTone)
+	b.WriteString(`</div>`)
+	redactionGroupHTML(&b, report.Redactions)
+	b.WriteString(`</div>`)
+	return template.HTML(b.String())
+}
+
+func metricPillHTML(b *strings.Builder, label, value string) {
+	fmt.Fprintf(
+		b,
+		`<span class="metric-pill"><small>%s</small><strong>%s</strong></span>`,
+		htmlstd.EscapeString(label),
+		htmlstd.EscapeString(value),
+	)
+}
+
+func chipGroupHTML(b *strings.Builder, label string, values []string, extra string) {
+	fmt.Fprintf(b, `<section class="chip-group"><h3>%s</h3><div class="chip-list">`, htmlstd.EscapeString(label))
+	if len(values) == 0 {
+		chipHTML(b, "none detected", "muted")
+	} else {
+		for _, value := range values {
+			if value == "" {
+				continue
+			}
+			chipHTML(b, value, "")
+		}
+	}
+	if extra != "" && !strings.HasPrefix(extra, "0 ") {
+		chipHTML(b, extra, "unknown")
+	}
+	b.WriteString(`</div></section>`)
+}
+
+func chipHTML(b *strings.Builder, text, tone string) {
+	className := "info-chip"
+	if tone != "" {
+		className += " info-chip-" + tone
+	}
+	fmt.Fprintf(b, `<span class="%s">%s</span>`, htmlstd.EscapeString(className), htmlstd.EscapeString(text))
+}
+
+func receiptTileHTML(b *strings.Builder, label, value, tone string) {
+	fmt.Fprintf(
+		b,
+		`<div class="receipt-tile receipt-tile-%s" aria-label="%s: %s"><small>%s</small><strong>%s</strong></div>`,
+		htmlstd.EscapeString(tone),
+		htmlstd.EscapeString(label),
+		htmlstd.EscapeString(value),
+		htmlstd.EscapeString(label),
+		htmlstd.EscapeString(value),
+	)
+}
+
+func redactionGroupHTML(b *strings.Builder, redactions map[string]int) {
+	b.WriteString(`<section class="chip-group redaction-group"><h3>Redactions</h3><div class="chip-list">`)
+	keys := make([]string, 0, len(redactions))
+	for key, value := range redactions {
+		if value > 0 {
+			keys = append(keys, key)
+		}
+	}
+	sort.Strings(keys)
+	if len(keys) == 0 {
+		chipHTML(b, "none detected", "muted")
+	} else {
+		for _, key := range keys {
+			chipHTML(b, fmt.Sprintf("%s: %d", key, redactions[key]), "unknown")
+		}
+	}
+	b.WriteString(`</div></section>`)
+}
+
+func receiptTone(ok bool) string {
+	if ok {
+		return "good"
+	}
+	return "bad"
+}
+
+func unknownCountLabel(count int) string {
+	return fmt.Sprintf("%d unknown", count)
+}
+
+func defaultString(value, fallback string) string {
+	if value == "" {
+		return fallback
+	}
+	return value
 }
 
 func bucketValue(value string) string {

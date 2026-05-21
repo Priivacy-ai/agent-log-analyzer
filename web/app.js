@@ -193,8 +193,8 @@ function renderReport(report) {
   renderRecommendation(report);
   renderWorkflowFingerprints(report);
   renderToolingUtilization(report);
-  document.querySelector("#ecosystem").textContent = summarizeEcosystem(report.ecosystem);
-  document.querySelector("#receipt").textContent = summarizeReceipt(report.security_receipt);
+  renderEcosystem(report.ecosystem);
+  renderReceipt(report.security_receipt, report.redactions);
   renderPaidCommandPreview(report);
 }
 
@@ -1081,25 +1081,130 @@ function appendCount(parent, label, value) {
   parent.appendChild(span);
 }
 
-function summarizeEcosystem(ecosystem) {
-  if (!ecosystem) return "No ecosystem signals detected.";
-  const parts = [
-    `Client: ${ecosystem.client || "unknown"}`,
-    `OS: ${ecosystem.operating_system || "unknown"}`,
-    `Frameworks: ${(ecosystem.workflow_frameworks || []).join(", ") || "none detected"}`,
-    `MCPs: ${(ecosystem.mcp_servers_known || []).join(", ") || "none detected"}`,
-  ];
-  return parts.join("\n");
+function renderEcosystem(ecosystem) {
+  const target = document.querySelector("#ecosystem");
+  if (!target) return;
+  target.textContent = "";
+  if (!ecosystem) {
+    target.appendChild(emptyPanel("No ecosystem signals detected."));
+    return;
+  }
+  const summary = document.createElement("div");
+  summary.className = "ecosystem-summary";
+  [
+    ["Client", ecosystem.client || "unknown"],
+    ["OS", ecosystem.operating_system || "unknown"],
+    ["Shell", ecosystem.shell || "unknown"],
+    ["Version control", ecosystem.version_control || "unknown"],
+  ].forEach(([label, value]) => summary.appendChild(metricPill(label, value)));
+  target.appendChild(summary);
+
+  const groups = document.createElement("div");
+  groups.className = "evidence-groups";
+  groups.appendChild(chipGroup("Coding agents", ecosystem.coding_agents));
+  groups.appendChild(chipGroup("Workflow frameworks", ecosystem.workflow_frameworks));
+  groups.appendChild(chipGroup("MCPs", ecosystem.mcp_servers_known, `${numberOrZero(ecosystem.unknown_mcp_server_count)} unknown`));
+  groups.appendChild(chipGroup("Skills", ecosystem.known_skills, `${numberOrZero(ecosystem.unknown_skill_count)} unknown`));
+  groups.appendChild(chipGroup("Plugins", ecosystem.known_plugins, `${numberOrZero(ecosystem.unknown_plugin_count)} unknown`));
+  groups.appendChild(chipGroup("Package managers", ecosystem.package_managers));
+  target.appendChild(groups);
 }
 
-function summarizeReceipt(receipt) {
-  if (!receipt) return "No security receipt available.";
-  return [
-    `Raw transcript sent to LLM: ${receipt.raw_transcript_sent_to_llm}`,
-    `Outbound during analysis: ${receipt.outbound_during_analysis}`,
-    `Secrets redacted: ${receipt.secrets_redacted}`,
-    `Raw log TTL: ${receipt.raw_log_ttl}`,
-  ].join("\n");
+function renderReceipt(receipt, redactions) {
+  const target = document.querySelector("#receipt");
+  if (!target) return;
+  target.textContent = "";
+  if (!receipt) {
+    target.appendChild(emptyPanel("No security receipt available."));
+    return;
+  }
+  const statusGrid = document.createElement("div");
+  statusGrid.className = "receipt-status-grid";
+  statusGrid.appendChild(statusTile("Raw transcript to LLM", receipt.raw_transcript_sent_to_llm === true ? "yes" : "no", receipt.raw_transcript_sent_to_llm === true ? "bad" : "good"));
+  statusGrid.appendChild(statusTile("Outbound during analysis", receipt.outbound_during_analysis === true ? "yes" : "no", receipt.outbound_during_analysis === true ? "bad" : "good"));
+  statusGrid.appendChild(statusTile("Raw log TTL", receipt.raw_log_ttl || "unknown", receipt.raw_log_ttl === "not uploaded" ? "good" : "warn"));
+  statusGrid.appendChild(statusTile("Secrets redacted", String(numberOrZero(receipt.secrets_redacted)), numberOrZero(receipt.secrets_redacted) > 0 ? "warn" : "good"));
+  target.appendChild(statusGrid);
+  target.appendChild(redactionGroup(redactions || receipt.redactions));
+}
+
+function metricPill(label, value) {
+  const item = document.createElement("span");
+  item.className = "metric-pill";
+  const k = document.createElement("small");
+  k.textContent = label;
+  const v = document.createElement("strong");
+  v.textContent = value || "unknown";
+  item.append(k, v);
+  return item;
+}
+
+function chipGroup(label, values, extra) {
+  const group = document.createElement("section");
+  group.className = "chip-group";
+  const title = document.createElement("h3");
+  title.textContent = label;
+  group.appendChild(title);
+  const list = document.createElement("div");
+  list.className = "chip-list";
+  const safeValues = Array.isArray(values) ? values.filter(Boolean) : [];
+  if (safeValues.length === 0) {
+    list.appendChild(chip("none detected", "muted"));
+  } else {
+    safeValues.forEach((value) => list.appendChild(chip(String(value), "")));
+  }
+  if (extra && !String(extra).startsWith("0 ")) {
+    list.appendChild(chip(extra, "unknown"));
+  }
+  group.appendChild(list);
+  return group;
+}
+
+function chip(text, tone) {
+  const item = document.createElement("span");
+  item.className = `info-chip${tone ? ` info-chip-${tone}` : ""}`;
+  item.textContent = text;
+  return item;
+}
+
+function statusTile(label, value, tone) {
+  const item = document.createElement("div");
+  item.className = `receipt-tile receipt-tile-${tone}`;
+  item.setAttribute("aria-label", `${label}: ${value}`);
+  const k = document.createElement("small");
+  k.textContent = label;
+  const v = document.createElement("strong");
+  v.textContent = value;
+  item.append(k, v);
+  return item;
+}
+
+function redactionGroup(redactions) {
+  const group = document.createElement("section");
+  group.className = "chip-group redaction-group";
+  const title = document.createElement("h3");
+  title.textContent = "Redactions";
+  const list = document.createElement("div");
+  list.className = "chip-list";
+  const entries = Object.entries(redactions || {}).filter(([, value]) => Number(value) > 0);
+  if (entries.length === 0) {
+    list.appendChild(chip("none detected", "muted"));
+  } else {
+    entries.forEach(([key, value]) => list.appendChild(chip(`${key}: ${value}`, "unknown")));
+  }
+  group.append(title, list);
+  return group;
+}
+
+function emptyPanel(text) {
+  const p = document.createElement("p");
+  p.className = "empty-evidence";
+  p.textContent = text;
+  return p;
+}
+
+function numberOrZero(value) {
+  return typeof value === "number" && Number.isFinite(value) ? value : 0;
 }
 
 function findingEvidence(evidence) {

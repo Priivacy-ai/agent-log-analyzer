@@ -521,12 +521,6 @@ pre {
   line-height: 1.45;
 }
 
-#ecosystem,
-#receipt {
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-}
-
 .report {
   margin-top: 24px;
   display: grid;
@@ -1051,6 +1045,194 @@ pre {
   color: var(--muted);
 }
 
+.evidence-grid {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: minmax(0, 1.12fr) minmax(320px, 0.88fr);
+  gap: 18px;
+  align-items: stretch;
+}
+
+.evidence-card {
+  min-width: 0;
+  display: grid;
+  align-content: start;
+  gap: 14px;
+  padding: 18px;
+  border: 1px solid rgba(121, 192, 255, 0.22);
+  border-radius: 8px;
+  background:
+    linear-gradient(135deg, rgba(121, 192, 255, 0.07), transparent 44%),
+    #0a0f14;
+}
+
+.receipt-card {
+  background:
+    linear-gradient(135deg, rgba(126, 231, 135, 0.08), transparent 44%),
+    #0a0f14;
+}
+
+.evidence-card h2 {
+  margin-bottom: 0;
+}
+
+.ecosystem-panel,
+.receipt-panel {
+  display: grid;
+  gap: 14px;
+}
+
+.ecosystem-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.metric-pill {
+  min-width: 0;
+  display: grid;
+  gap: 5px;
+  padding: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 7px;
+  background: rgba(8, 11, 16, 0.68);
+}
+
+.metric-pill small,
+.chip-group h3,
+.receipt-tile small {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.metric-pill strong {
+  min-width: 0;
+  color: var(--text);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.evidence-groups {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.chip-group {
+  min-width: 0;
+  display: grid;
+  gap: 9px;
+  align-content: start;
+  padding: 11px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 7px;
+  background: rgba(8, 11, 16, 0.58);
+}
+
+.chip-group h3 {
+  margin: 0;
+}
+
+.chip-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.info-chip {
+  max-width: 100%;
+  display: inline-flex;
+  align-items: center;
+  min-height: 26px;
+  padding: 4px 8px;
+  border: 1px solid rgba(121, 192, 255, 0.28);
+  border-radius: 999px;
+  background: rgba(121, 192, 255, 0.08);
+  color: #b9ddff;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-size: 12px;
+  line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.info-chip-muted {
+  border-color: rgba(139, 148, 158, 0.22);
+  background: rgba(139, 148, 158, 0.08);
+  color: var(--muted);
+}
+
+.info-chip-unknown {
+  border-color: rgba(255, 166, 87, 0.34);
+  background: rgba(255, 166, 87, 0.1);
+  color: #ffd0a0;
+}
+
+.receipt-status-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.receipt-tile {
+  min-width: 0;
+  display: grid;
+  gap: 7px;
+  padding: 13px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 7px;
+  background: rgba(8, 11, 16, 0.66);
+}
+
+.receipt-tile strong {
+  color: var(--text);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-size: 18px;
+  line-height: 1;
+}
+
+.receipt-tile-good {
+  border-color: rgba(126, 231, 135, 0.26);
+  box-shadow: inset 3px 0 0 rgba(126, 231, 135, 0.55);
+}
+
+.receipt-tile-good strong {
+  color: var(--green);
+}
+
+.receipt-tile-warn {
+  border-color: rgba(255, 166, 87, 0.3);
+  box-shadow: inset 3px 0 0 rgba(255, 166, 87, 0.62);
+}
+
+.receipt-tile-warn strong {
+  color: var(--orange);
+}
+
+.receipt-tile-bad {
+  border-color: rgba(248, 81, 73, 0.36);
+  box-shadow: inset 3px 0 0 rgba(248, 81, 73, 0.65);
+}
+
+.receipt-tile-bad strong {
+  color: #ff8f87;
+}
+
+.redaction-group {
+  background: rgba(8, 11, 16, 0.44);
+}
+
+.empty-evidence {
+  margin: 0;
+  color: var(--muted);
+}
+
 .source-reports {
   grid-column: 1 / -1;
   display: grid;
@@ -1257,6 +1439,19 @@ pre {
   }
 
   .plugin-pitch {
+    grid-template-columns: 1fr;
+  }
+
+  .evidence-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ecosystem-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .evidence-groups,
+  .receipt-status-grid {
     grid-template-columns: 1fr;
   }
 
