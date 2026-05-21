@@ -3,16 +3,157 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Agent Analyzer</title>
+    <title>Agent Analyzer | Deterministic Profiler for Agentic Coding Logs</title>
+    <meta name="description" content="Agent Analyzer is a local-first deterministic profiler for Claude Code, Codex, and OpenCode logs. Find token waste, retry loops, repeated reads, context bloat, and optimization opportunities without uploading raw transcripts." />
+    <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1" />
+    <meta name="author" content="Priivacy.ai" />
+    <meta name="application-name" content="Agent Analyzer" />
+    <meta name="theme-color" content="#0d1117" />
+    <meta name="keywords" content="Claude Code token profiler, Codex log analyzer, OpenCode log analyzer, agentic coding profiler, AI coding workflow profiler, context bloat, retry loops, token waste, local-first log analysis" />
+    <link rel="canonical" href="https://analyzer.spec-kitty.ai/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Agent Analyzer" />
+    <meta property="og:title" content="Agent Analyzer | Deterministic Profiler for Agentic Coding Logs" />
+    <meta property="og:description" content="Analyze Claude Code, Codex, and OpenCode logs locally. Upload only sanitized report JSON and get a deterministic token-waste profiler report." />
+    <meta property="og:url" content="https://analyzer.spec-kitty.ai/" />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="Agent Analyzer | Deterministic Profiler for Agentic Coding Logs" />
+    <meta name="twitter:description" content="Local-first deterministic profiler for Claude Code, Codex, and OpenCode token waste." />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="/vendor/tippy/tippy.css" />
     <link rel="stylesheet" href="/styles.css" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "Organization",
+            "@id": "https://analyzer.spec-kitty.ai/#organization",
+            "name": "Priivacy.ai",
+            "url": "https://analyzer.spec-kitty.ai/",
+            "sameAs": [
+              "https://github.com/Priivacy-ai/agent-log-analyzer",
+              "https://www.npmjs.com/package/agent-analyzer"
+            ]
+          },
+          {
+            "@type": "WebSite",
+            "@id": "https://analyzer.spec-kitty.ai/#website",
+            "name": "Agent Analyzer",
+            "url": "https://analyzer.spec-kitty.ai/",
+            "publisher": {
+              "@id": "https://analyzer.spec-kitty.ai/#organization"
+            }
+          },
+          {
+            "@type": "SoftwareApplication",
+            "@id": "https://analyzer.spec-kitty.ai/#software",
+            "name": "Agent Analyzer",
+            "applicationCategory": "DeveloperApplication",
+            "operatingSystem": "macOS, Linux, Windows",
+            "url": "https://analyzer.spec-kitty.ai/",
+            "downloadUrl": "https://www.npmjs.com/package/agent-analyzer",
+            "codeRepository": "https://github.com/Priivacy-ai/agent-log-analyzer",
+            "isAccessibleForFree": true,
+            "description": "Local-first deterministic profiler for Claude Code, Codex, and OpenCode logs that detects token waste, repeated reads, retry loops, context bloat, and tool-output overhead.",
+            "featureList": [
+              "Local Claude Code, Codex, and OpenCode log parsing",
+              "Sanitized report JSON upload",
+              "Deterministic token-waste findings",
+              "Context bloat and retry-loop detection",
+              "Generated optimization plugin flow"
+            ],
+            "offers": {
+              "@type": "Offer",
+              "price": "0",
+              "priceCurrency": "USD",
+              "availability": "https://schema.org/InStock"
+            },
+            "publisher": {
+              "@id": "https://analyzer.spec-kitty.ai/#organization"
+            }
+          },
+          {
+            "@type": "HowTo",
+            "@id": "https://analyzer.spec-kitty.ai/#howto",
+            "name": "Analyze agentic coding logs with Agent Analyzer",
+            "totalTime": "PT5M",
+            "tool": [
+              {
+                "@type": "HowToTool",
+                "name": "npx"
+              },
+              {
+                "@type": "HowToTool",
+                "name": "agent-analyzer"
+              }
+            ],
+            "step": [
+              {
+                "@type": "HowToStep",
+                "position": 1,
+                "name": "Run the local analyzer",
+                "text": "Run npx --yes agent-analyzer@latest run on your machine."
+              },
+              {
+                "@type": "HowToStep",
+                "position": 2,
+                "name": "Review sanitized JSON",
+                "text": "Agent Analyzer parses local logs, redacts secrets locally, and writes a reviewable sanitized report JSON."
+              },
+              {
+                "@type": "HowToStep",
+                "position": 3,
+                "name": "Upload sanitized report",
+                "text": "Approve the upload boundary so only the sanitized report JSON is sent to the hosted report page."
+              },
+              {
+                "@type": "HowToStep",
+                "position": 4,
+                "name": "Read deterministic findings",
+                "text": "Use the report to inspect token waste, repeated reads, retry loops, context growth, and recommended remediation."
+              }
+            ]
+          },
+          {
+            "@type": "FAQPage",
+            "@id": "https://analyzer.spec-kitty.ai/#faq",
+            "mainEntity": [
+              {
+                "@type": "Question",
+                "name": "Are raw Claude Code, Codex, or OpenCode logs uploaded?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "No. The public flow analyzes logs locally and uploads only the generated sanitized report JSON after user approval."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "Does Agent Analyzer use model tokens to generate the report?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "No. The report is generated from deterministic local parsing and server-side rendering, not from an LLM reading raw logs."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "What agent logs are supported?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Agent Analyzer currently auto-discovers Claude Code, Codex, and OpenCode logs."
+                }
+              }
+            ]
+          }
+        ]
+      }
+    </script>
   </head>
   <body>
-    <main class="shell">
-      <section class="hero" id="onboarding">
+    <main class="shell" itemscope itemtype="https://schema.org/SoftwareApplication" itemid="https://analyzer.spec-kitty.ai/#software">
+      <section class="hero" id="onboarding" aria-labelledby="page-title">
         <p class="eyebrow">deterministic profiler</p>
-        <h1>
+        <h1 id="page-title" itemprop="name">
           Find out what's wasting your
           <span class="tool-rotator" aria-hidden="true">
             <span>Claude Code</span>
@@ -22,14 +163,16 @@
           <span class="sr-only">Claude Code, Codex, or OpenCode</span>
           tokens.
         </h1>
-        <p class="subhead">Analyze one session locally. Upload only the sanitized report.</p>
+        <p class="subhead" itemprop="description">Analyze one session locally. Upload only the sanitized report.</p>
         <p class="capacity-note">Every wasted reread, retry, and bloated context window burns the same plan capacity you need for actual coding. Recover it so your agentic coding plan ships more software before you hit token limits.</p>
-        <ul class="proof">
+        <h2 class="sr-only">What Agent Analyzer detects</h2>
+        <ul class="proof" aria-label="Agent Analyzer detection capabilities">
           <li>Detect context bloat</li>
           <li>Find retry loops and wasted reads</li>
           <li>Get an installable optimization pack</li>
         </ul>
-        <ul class="trust">
+        <h2 class="sr-only">Privacy and trust guarantees</h2>
+        <ul class="trust" aria-label="Privacy and trust guarantees">
           <li>No account required</li>
           <li>Raw logs stay local in the public flow <button type="button" class="help-tip" data-tippy-content="The NPX command analyzes Claude Code, Codex, and OpenCode logs on your machine first. The upload step sends the generated sanitized report JSON, not raw transcript files." aria-label="More information">?</button></li>
           <li>Reports are not used for training <button type="button" class="help-tip" data-tippy-content="The service stores sanitized reports for rendering and bounded aggregate analytics. It does not feed uploaded reports into model training." aria-label="More information">?</button></li>
@@ -51,7 +194,8 @@
           <p class="command-note">Runs on your machine first, asks before upload, and sends only the sanitized report JSON. <button type="button" class="help-tip" data-tippy-content="This command uses the published npm package. It discovers supported local agent logs, parses and redacts locally, writes a report file, asks for confirmation, then uploads only that report JSON." aria-label="More information">?</button></p>
         </section>
 
-        <section class="trust-stack" aria-label="Install trust details">
+        <section class="trust-stack" aria-labelledby="install-trust-heading">
+          <h2 id="install-trust-heading" class="sr-only">Install trust details</h2>
           <div class="trust-flow">
             <h2>What this command does</h2>
             <ol class="flow-steps">
