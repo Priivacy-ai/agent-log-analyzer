@@ -124,6 +124,10 @@
           <h2>Estimated Waste <button type="button" class="help-tip" data-tippy-content="Avoidable spend is a heuristic range derived from the efficiency score and detected waste patterns. It is intended to rank severity and prompt investigation, not to reproduce provider billing." aria-label="More information">?</button></h2>
           <p id="waste"></p>
           <p id="token-volume" class="command-note"></p>
+          <div class="report-cta-row" aria-label="Report actions">
+            <a class="report-primary-cta" href="#email-unlock">Get the optimization plugin</a>
+            <a class="report-secondary-cta" href="#plugin-pitch">See what it fixes</a>
+          </div>
         </div>
         <div class="problem-section">
           <h2>Top Problems <button type="button" class="help-tip" data-tippy-content="Bubble size is representative impact, not a precise measurement. Tool-output and cache issues use token fields when available; rereads, retries, and context spikes use bounded count-scaled estimates." aria-label="More information">?</button></h2>
@@ -185,23 +189,33 @@
           <h2>Security Receipt <button type="button" class="help-tip" data-tippy-content="The public flow analyzes locally and uploads sanitized report JSON. This receipt records the report's own privacy flags and redaction counts; it is not a third-party audit." aria-label="More information">?</button></h2>
           <pre id="receipt"></pre>
         </div>
-        <div class="upsell">
-          <h2>Generate the optimization plugin from a full scan</h2>
-          <p>For launch testing this is email-confirmed and free. Confirm your email and we will send a one-line NPX command that authorizes the full local scan across up to 100 recent logs per supported source.</p>
-          <form id="email-unlock" class="email-unlock-form" method="post" action="/api/email-unlocks">
-            <input id="email-unlock-job-id" type="hidden" name="source_report_job_id" value="">
-            <input id="email-unlock-report-token" type="hidden" name="source_report_token" value="">
-            <label>Email for full-scan command
-              <input type="email" name="email" autocomplete="email" required placeholder="you@example.com">
-            </label>
-            <label class="checkbox-row">
-              <input type="checkbox" name="marketing_opt_in" value="1">
-              <span>Also send me occasional updates about agentic coding products.</span>
-            </label>
-            <button type="submit">Email me the full-scan command</button>
-          </form>
-          <pre id="paid-status">full scan is unlocked by confirmed email</pre>
-          <pre id="paid-command"></pre>
+        <div class="upsell" id="email-unlock-section">
+          <div class="upsell-copy">
+            <p class="eyebrow">free launch unlock</p>
+            <h2>Generate the optimization plugin from a full scan</h2>
+            <p class="upsell-lede">Run the deeper local scan across up to 100 recent logs per supported agent source. We turn the sanitized aggregate into a generated optimization pack for session hygiene, retrieval, telemetry, and CLAUDE.md cleanup.</p>
+            <ul class="upsell-proof">
+              <li>Raw transcripts stay local.</li>
+              <li>Email confirmation unlocks the second NPX command.</li>
+              <li>The plugin and full report use the same 15-minute report boundary.</li>
+            </ul>
+          </div>
+          <div class="upsell-action">
+            <form id="email-unlock" class="email-unlock-form" method="post" action="/api/email-unlocks">
+              <input id="email-unlock-job-id" type="hidden" name="source_report_job_id" value="">
+              <input id="email-unlock-report-token" type="hidden" name="source_report_token" value="">
+              <label>Email for full-scan command
+                <input type="email" name="email" autocomplete="email" required placeholder="you@example.com">
+              </label>
+              <label class="checkbox-row">
+                <input type="checkbox" name="marketing_opt_in" value="1">
+                <span>Also send me occasional updates about agentic coding products.</span>
+              </label>
+              <button type="submit">Email me the full-scan command</button>
+            </form>
+            <pre id="paid-status">full scan is unlocked by confirmed email</pre>
+            <pre id="paid-command"></pre>
+          </div>
         </div>
       </section>
     </main>

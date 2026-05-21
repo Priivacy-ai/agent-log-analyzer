@@ -124,6 +124,10 @@ var reportHTMLTemplate = template.Must(template.New("report").Funcs(template.Fun
           <h2>Estimated Waste {{helpTip "Avoidable spend is a heuristic range derived from the efficiency score and detected waste patterns. It is intended to rank severity and prompt investigation, not to reproduce provider billing."}}</h2>
           <p id="waste">{{.Report.EstimatedWaste.Low}}-{{.Report.EstimatedWaste.High}}% avoidable token spend</p>
           <p class="command-note">Analyzed token volume: {{.Report.Metrics.EstimatedTokens}} estimated input/output tokens; {{.Report.Metrics.ToolOutputTokens}} estimated from tool output. {{helpTip "Accuracy depends on the source log. When native usage fields exist, we use them. Otherwise we estimate roughly one token per four characters. Tool-output volume is derived from tool-result payload size and similar estimates. This is directional, not invoice-grade accounting."}}</p>
+          <div class="report-cta-row" aria-label="Report actions">
+            <a class="report-primary-cta" href="#email-unlock">Get the optimization plugin</a>
+            <a class="report-secondary-cta" href="#email-unlock-section">Skip to full scan</a>
+          </div>
         </div>
         <div class="problem-section">
           <h2>Top Problems {{helpTip "Bubble size is representative impact, not a precise measurement. Tool-output and cache issues use token fields when available; rereads, retries, and context spikes use bounded count-scaled estimates so the graph shows relative severity without exposing raw content."}}</h2>
@@ -236,14 +240,23 @@ Raw log TTL: {{.Report.SecurityReceipt.RawLogTTL}}
 Redactions:
 {{mapLines .Report.Redactions}}</pre>
         </div>
-        <div class="upsell">
+        <div class="upsell" id="email-unlock-section">
+          <div class="upsell-copy">
+          <p class="eyebrow">free launch unlock</p>
           <h2>Generate the optimization plugin from a full scan</h2>
-          <p>Run the deeper local scan across up to 100 recent logs per supported agent source, then install a generated optimization pack with vetted context, retrieval, telemetry, and CLAUDE.md recommendations.</p>
+          <p class="upsell-lede">Run the deeper local scan across up to 100 recent logs per supported agent source. We turn the sanitized aggregate into a generated optimization pack for session hygiene, retrieval, telemetry, and CLAUDE.md cleanup.</p>
+          <ul class="upsell-proof">
+            <li>Raw transcripts stay local.</li>
+            <li>Email confirmation unlocks the second NPX command.</li>
+            <li>The plugin and full report use the same 15-minute report boundary.</li>
+          </ul>
+          </div>
+          <div class="upsell-action">
           {{if .ArtifactURL}}
           <p>Optimization plugin artifact: <a href="{{.ArtifactURL}}">{{.ArtifactURL}}</a></p>
           {{else}}
           <p>For launch testing this is email-confirmed and free. Confirm your email and we will send a one-line NPX command that authorizes the full local scan. Raw transcripts still stay on your machine; only sanitized aggregate JSON is uploaded.</p>
-          <form class="email-unlock-form" method="post" action="/api/email-unlocks">
+          <form id="email-unlock" class="email-unlock-form" method="post" action="/api/email-unlocks">
             <input type="hidden" name="source_report_job_id" value="{{.Job.ID}}">
             <input type="hidden" name="source_report_token" value="{{.ReportToken}}">
             <label>Email for full-scan command
@@ -256,6 +269,7 @@ Redactions:
             <button type="submit">Email me the full-scan command</button>
           </form>
           {{end}}
+          </div>
         </div>
         {{else}}
         <div class="score">

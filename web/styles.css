@@ -985,6 +985,48 @@ pre {
   background: rgba(126, 231, 135, 0.1);
 }
 
+.report-cta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.report-primary-cta,
+.report-secondary-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  padding: 10px 14px;
+  border-radius: 6px;
+  text-decoration: none;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.report-primary-cta {
+  border: 1px solid var(--green);
+  background: rgba(126, 231, 135, 0.12);
+  color: var(--green);
+  box-shadow: 0 0 28px rgba(126, 231, 135, 0.1);
+}
+
+.report-secondary-cta {
+  border: 1px solid rgba(121, 192, 255, 0.38);
+  color: #9bcfff;
+  background: rgba(121, 192, 255, 0.06);
+}
+
+.report-primary-cta:hover,
+.report-primary-cta:focus,
+.report-secondary-cta:hover,
+.report-secondary-cta:focus {
+  transform: translateY(-1px);
+  filter: brightness(1.08);
+}
+
 .plugin-fixes-card {
   display: grid;
   align-content: start;
@@ -1080,22 +1122,79 @@ pre {
 
 .upsell {
   grid-column: 1 / -1;
-  border-top: 1px solid var(--line);
-  padding-top: 20px;
+  display: grid;
+  grid-template-columns: minmax(0, 0.95fr) minmax(340px, 0.85fr);
+  gap: 22px;
+  align-items: start;
+  padding: clamp(22px, 4vw, 34px);
+  border: 1px solid rgba(126, 231, 135, 0.42);
+  border-radius: 10px;
+  background:
+    radial-gradient(circle at 82% 16%, rgba(126, 231, 135, 0.2), transparent 28%),
+    linear-gradient(135deg, rgba(126, 231, 135, 0.13), rgba(121, 192, 255, 0.07) 48%, rgba(255, 169, 90, 0.08)),
+    #0a0f14;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.03),
+    0 0 40px rgba(126, 231, 135, 0.1);
+  scroll-margin-top: 24px;
+}
+
+.upsell h2 {
+  max-width: 760px;
+  margin-bottom: 12px;
+  font-size: clamp(28px, 4vw, 48px);
+  line-height: 1;
 }
 
 .upsell p {
-  max-width: 720px;
+  max-width: 760px;
   color: var(--muted);
 }
 
+.upsell-lede {
+  font-size: clamp(17px, 2vw, 21px);
+  line-height: 1.35;
+}
+
+.upsell-proof {
+  display: grid;
+  gap: 10px;
+  margin: 20px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.upsell-proof li {
+  position: relative;
+  padding-left: 22px;
+  color: var(--text);
+  line-height: 1.35;
+}
+
+.upsell-proof li::before {
+  content: "";
+  position: absolute;
+  top: 0.56em;
+  left: 0;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--green);
+  box-shadow: 0 0 12px rgba(126, 231, 135, 0.65);
+}
+
+.upsell-action {
+  min-width: 0;
+}
+
 .email-unlock-form {
-  max-width: 720px;
-  margin-top: 18px;
-  padding: 18px;
-  border: 1px solid var(--line);
+  max-width: 100%;
+  margin-top: 0;
+  padding: 20px;
+  border: 1px solid rgba(126, 231, 135, 0.28);
   border-radius: 8px;
-  background: var(--panel-2);
+  background: rgba(8, 11, 16, 0.82);
+  box-shadow: 0 16px 38px rgba(0, 0, 0, 0.24);
 }
 
 .email-unlock-form label {
@@ -1112,6 +1211,8 @@ pre {
 
 .email-unlock-form button {
   margin-top: 4px;
+  min-height: 48px;
+  font-size: 14px;
 }
 
 .waiver {
@@ -1156,6 +1257,10 @@ pre {
   }
 
   .plugin-pitch {
+    grid-template-columns: 1fr;
+  }
+
+  .upsell {
     grid-template-columns: 1fr;
   }
 
