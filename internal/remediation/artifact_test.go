@@ -305,7 +305,7 @@ func TestGenerateDoesNotLeakPrivateNamesOrSecrets(t *testing.T) {
 // distinct allowlisted IDs in ToolingUtilization.MCP.KnownServerIDs and
 // WorkflowFingerprints. Aggregate them, generate the artifact from the merged
 // report, and assert the artifact's KnownEcosystem (and the same data surfaced
-// through the artifact's JSON) reflects the union of both inputs â€” not just
+// through the artifact's JSON) reflects the union of both inputs — not just
 // one of them.
 func TestGenerate_MergedAggregate_FlowsToArtifact(t *testing.T) {
 	// Report A: github MCP server, spec_kitty framework fingerprint, call
@@ -340,7 +340,7 @@ func TestGenerate_MergedAggregate_FlowsToArtifact(t *testing.T) {
 		},
 	}
 	// Report B: linear MCP server, openspec framework fingerprint,
-	// call count 7. No overlap on the unique IDs with A â€” so the merged
+	// call count 7. No overlap on the unique IDs with A — so the merged
 	// artifact must include BOTH or the test fails (proving the artifact
 	// reads from the merged result, not from a single input).
 	reportB := analyzer.Report{
