@@ -799,6 +799,26 @@ func TestEmailUnlockScreenFallbackRendersConfirmationLink(t *testing.T) {
 	if !strings.Contains(rec.Body.String(), "Continue launch test") || !strings.Contains(rec.Body.String(), "/email/confirm/") {
 		t.Fatalf("expected launch-test confirmation link, got %s", rec.Body.String())
 	}
+	confirmPath := extractQuotedPath(rec.Body.String(), "/email/confirm/")
+	parts := strings.Split(confirmPath, "/")
+	if len(parts) < 5 {
+		t.Fatalf("could not parse confirm path %q", confirmPath)
+	}
+	confirmReq := httptest.NewRequest(http.MethodGet, confirmPath, nil)
+	confirmReq.Host = "example.test"
+	confirmReq.Header.Set("Accept", "text/html")
+	confirmReq.SetPathValue("id", parts[3])
+	confirmReq.SetPathValue("token", parts[4])
+	confirmRec := httptest.NewRecorder()
+
+	confirmEmailUnlockHandler(store, sender).ServeHTTP(confirmRec, confirmReq)
+
+	if confirmRec.Code != http.StatusOK {
+		t.Fatalf("expected confirmation fallback page, got %d: %s", confirmRec.Code, confirmRec.Body.String())
+	}
+	if !strings.Contains(confirmRec.Body.String(), "npx --yes agent-analyzer@latest full-scan --token") {
+		t.Fatalf("expected full-scan command on confirmation page, got %s", confirmRec.Body.String())
+	}
 }
 
 func extractPathFromEmail(body, marker string) string {
@@ -808,6 +828,18 @@ func extractPathFromEmail(body, marker string) string {
 	}
 	end := index
 	for end < len(body) && body[end] != '\n' && body[end] != '\r' && body[end] != ' ' {
+		end++
+	}
+	return body[index:end]
+}
+
+func extractQuotedPath(body, marker string) string {
+	index := strings.Index(body, marker)
+	if index < 0 {
+		return ""
+	}
+	end := index
+	for end < len(body) && body[end] != '"' && body[end] != '\'' && body[end] != '<' {
 		end++
 	}
 	return body[index:end]

@@ -155,7 +155,12 @@ func confirmEmailUnlockHandler(store app.APIStore, sender emailSender) http.Hand
 					writeError(w, http.StatusConflict, "email address is suppressed for transactional delivery")
 					return
 				}
-				writeError(w, http.StatusInternalServerError, "could not send full-scan command email")
+				slogEmailDeliveryFailure("full_scan_command", unlock.ID, err)
+				if emailScreenFallbackEnabled() {
+					renderConfirmedPage(w, command, unlock.FullScanTokenExpiresAt)
+					return
+				}
+				writeEmailDeliveryErrorOrHTML(w, r, err)
 				return
 			}
 			renderConfirmedPage(w, command, unlock.FullScanTokenExpiresAt)
