@@ -58,6 +58,25 @@ func TestAnalyzeForSource_CodexTokenDeltasAndPatchStats(t *testing.T) {
 	assertReportDoesNotContain(t, report, "go test ./...")
 }
 
+func TestAnalyzeForSource_PatchSignalsCanBeDisabled(t *testing.T) {
+	t.Setenv("CLAUDE_ANALYZER_DISABLE_PATCH_SIGNALS", "1")
+	input := strings.Join([]string{
+		`{"type":"event_msg","msg":{"type":"token_count","last_token_usage":{"input_tokens":9000,"cached_input_tokens":3000,"output_tokens":700}}}`,
+		`{"type":"event_msg","msg":{"type":"patch_apply_end","additions":12,"deletions":4}}`,
+	}, "\n")
+
+	report, err := AnalyzeForSource("codex-test-disable-patch", "codex", []byte(input))
+	if err != nil {
+		t.Fatalf("AnalyzeForSource: %v", err)
+	}
+	if report.AnalysisSignals.PatchLinesAdded != 0 || report.AnalysisSignals.PatchLinesRemoved != 0 {
+		t.Fatalf("expected patch stats to be disabled, got %#v", report.AnalysisSignals)
+	}
+	if report.AnalysisSignals.InputTokens != 9000 || report.AnalysisSignals.CacheReadTokens != 3000 || report.AnalysisSignals.OutputTokens != 700 {
+		t.Fatalf("expected token signals to remain enabled, got %#v", report.AnalysisSignals)
+	}
+}
+
 func TestAnalyzeForSource_OpenCodeToolPartSignals(t *testing.T) {
 	input := strings.Join([]string{
 		`{"id":"msg-1","sessionID":"ses-1","role":"assistant","modelID":"qwen/qwen3-coder"}`,

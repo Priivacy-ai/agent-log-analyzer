@@ -7,6 +7,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"os"
 	"sort"
 	"strings"
 )
@@ -211,6 +212,7 @@ func signalsFromEvents(events []normalizedEvent, sessionCount int) AnalysisSigna
 	if sessionCount <= 0 {
 		sessionCount = 1
 	}
+	collectPatchSignals := patchSignalCollectionEnabled()
 	var previous *normalizedEvent
 	var currentRetryDepth int
 	for i := range events {
@@ -220,8 +222,10 @@ func signalsFromEvents(events []normalizedEvent, sessionCount int) AnalysisSigna
 		signals.InputTokens += event.TokensIn
 		signals.OutputTokens += event.TokensOut
 		signals.ToolOutputBytes += event.ToolOutputBytes
-		signals.PatchLinesAdded += event.PatchLinesAdded
-		signals.PatchLinesRemoved += event.PatchLinesRemoved
+		if collectPatchSignals {
+			signals.PatchLinesAdded += event.PatchLinesAdded
+			signals.PatchLinesRemoved += event.PatchLinesRemoved
+		}
 		switch event.Kind {
 		case "tool_call":
 			signals.ToolCallCount++
@@ -255,6 +259,11 @@ func signalsFromEvents(events []normalizedEvent, sessionCount int) AnalysisSigna
 		signals.SampleWarnings = []string{}
 	}
 	return signals
+}
+
+func patchSignalCollectionEnabled() bool {
+	disable := strings.TrimSpace(strings.ToLower(os.Getenv("CLAUDE_ANALYZER_DISABLE_PATCH_SIGNALS")))
+	return disable != "1" && disable != "true" && disable != "yes"
 }
 
 func appendSignalFindings(findings []Finding, signals AnalysisSignals) []Finding {
