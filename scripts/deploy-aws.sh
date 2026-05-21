@@ -46,7 +46,7 @@ fi
 docker push "$image"
 
 remote_manifest="$(docker manifest inspect --verbose "$image")"
-remote_platform="$(printf '%s' "$remote_manifest" | python3 -c 'import json,sys; data=json.load(sys.stdin); p=(data.get("Descriptor") or {}).get("platform") or {}; print(f"{p.get(\"os\", \"\")}/{p.get(\"architecture\", \"\")}")')"
+remote_platform="$(printf '%s' "$remote_manifest" | python3 -c 'import json,sys; data=json.load(sys.stdin); p=(data.get("Descriptor") or {}).get("platform") or {}; print("%s/%s" % (p.get("os", ""), p.get("architecture", "")))')"
 if [ "$remote_platform" != "$PLATFORM" ]; then
   echo "refusing ECS update: remote image platform is $remote_platform, expected $PLATFORM" >&2
   exit 66
