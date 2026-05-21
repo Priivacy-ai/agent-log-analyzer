@@ -43,7 +43,7 @@ const (
 // artifactPrefixToCategory maps the public-artifact prefix space used in
 // SourceSummary.KnownEcosystem to the analyzer's signature-registry
 // category keys (see analyzer.KnownEcosystemIDs). Keeping a single source
-// of truth â€” the embedded signature registries â€” prevents drift between
+// of truth — the embedded signature registries — prevents drift between
 // the analyzer's allowlist and the paid-artifact allowlist.
 var artifactPrefixToCategory = map[string]string{
 	"agent":           "coding_agent",
@@ -860,7 +860,7 @@ func safeKnownEcosystem(ecosystem analyzer.Ecosystem) []string {
 	// IDs through the same allowlisted-prefix space so the paid artifact
 	// reflects values from `AggregateReports`. Every token here passes the
 	// same publicEcosystemIDs / safeValueRE gate as the existing fields, so
-	// the privacy stance (NFR-002) is preserved structurally â€” unknown names
+	// the privacy stance (NFR-002) is preserved structurally — unknown names
 	// are caught by safePublicID and silently dropped.
 	add("mcp", ecosystem.ToolingUtilization.MCP.KnownServerIDs)
 	add("mcp", ecosystem.ToolingUtilization.MCP.UniqueKnownCalledIDs)
@@ -869,8 +869,8 @@ func safeKnownEcosystem(ecosystem analyzer.Ecosystem) []string {
 	for _, fp := range ecosystem.WorkflowFingerprints {
 		// Fingerprint IDs come from the SDD detector registry
 		// (internal/analyzer/sdd/), a separate closed allowlist from the
-		// frameworks-signature registry. Gate against the SDD registry â€”
-		// not the framework one â€” and emit under the existing "framework:"
+		// frameworks-signature registry. Gate against the SDD registry —
+		// not the framework one — and emit under the existing "framework:"
 		// prefix to preserve the public artifact schema.
 		if safeIdentifier(fp.ID) && analyzer.ValidEcosystemID("workflow_fingerprint", fp.ID) {
 			addID("framework:" + fp.ID)
