@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Agent Analyzer Allowed Tool Recommendations</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="shell doc-page">
+      <h1>Allowed Tool Recommendations</h1>
+      <section class="panel">
+        <p class="command-note">
+          Agent Analyzer recommends only public, URL-backed tools from this allowlist. Private MCP names, private skills,
+          raw paths, prompts, and transcript text are not used as recommendation labels.
+        </p>
+      </section>
+      <section class="panel">
+        <h2>Free Report Candidates</h2>
+        <ul class="proof">
+          <li><a href="https://github.com/ryoppippi/ccusage">ccusage</a> - Claude Code usage accounting and burn-rate visibility.</li>
+          <li><a href="https://github.com/sirmalloc/ccstatusline">ccstatusline</a> - statusline telemetry for context/cost awareness.</li>
+          <li><a href="https://github.com/mksglu/context-mode">Context Mode</a> - context compression, telemetry, and output hygiene.</li>
+          <li><a href="https://github.com/disler/claude-code-hooks-mastery">Claude Code Hooks Mastery</a> - vetted hook patterns for session hygiene.</li>
+          <li><a href="https://github.com/zilliztech/claude-context">claude-context</a> - MCP semantic retrieval for large repositories.</li>
+          <li><a href="https://github.com/drona23/claude-token-efficient">claude-token-efficient</a> - response terseness guidance for smaller future context.</li>
+        </ul>
+      </section>
+      <section class="panel">
+        <h2>Review-Only / Research Candidates</h2>
+        <p class="command-note">
+          These may appear in internal analysis or paid-pack research, but should not be presented as a one-click install
+          unless the registry marks them allowed and the source URL matches the recommendation.
+        </p>
+        <ul class="proof">
+          <li><a href="https://github.com/hesreallyhim/awesome-claude-code">awesome-claude-code</a> - ecosystem index for monitoring new tools.</li>
+          <li><a href="https://github.com/Maciek-roboblog/Claude-Code-Usage-Monitor">Claude Code Usage Monitor</a> - burn-rate monitoring and forecasting.</li>
+          <li><a href="https://github.com/LyndonWangWork/Claude-Code-Usage-Tracker">Claude Code Usage Tracker</a> - lightweight usage telemetry.</li>
+        </ul>
+      </section>
+      <section class="panel">
+        <h2>Explicit Exclusions</h2>
+        <p class="command-note">
+          We do not currently recommend npm packages or GitHub repos whose public identity does not match the claimed
+          token-saving behavior. For example, the public npm package named <code>rtk</code> is not a shell-output reducer,
+          so it must not be recommended as one.
+        </p>
+      </section>
+    </main>
+  </body>
+</html>

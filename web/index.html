@@ -116,12 +116,16 @@
 
       <section class="report" id="report" hidden>
         <p class="expiry" id="report-status">This report is visible for 15 minutes.</p>
+        <div class="zero-token-banner">
+          <strong>0 model tokens used to generate this report.</strong>
+          <span>Agent Analyzer uses deterministic local parsing and server-side rendering, not an LLM reading your logs.</span>
+        </div>
         <div class="score">
           <span id="score">--</span>
-          <small>efficiency score <button type="button" class="help-tip" data-tippy-content="Heuristic score from deterministic findings: repeated reads, retry depth, context-growth events, tool-output share, and normalized signal findings. It is a profiler score, not a model-quality grade." aria-label="More information">?</button></small>
+          <small>efficiency score <button type="button" class="help-tip" data-tippy-content="What does this score mean? It is a heuristic score from deterministic findings: repeated reads, retry depth, context-growth events, tool-output share, and normalized signal findings. It is a profiler score, not a model-quality grade." aria-label="More information">?</button></small>
         </div>
         <div>
-          <h2>Estimated Waste <button type="button" class="help-tip" data-tippy-content="Avoidable spend is a heuristic range derived from the efficiency score and detected waste patterns. It is intended to rank severity and prompt investigation, not to reproduce provider billing." aria-label="More information">?</button></h2>
+          <h2>Estimated Waste <button type="button" class="help-tip" data-tippy-content="How is waste estimated? Avoidable spend is a heuristic range derived from the efficiency score and detected waste patterns. It is intended to rank severity and prompt investigation, not to reproduce provider billing." aria-label="More information">?</button></h2>
           <p id="waste"></p>
           <p id="token-volume" class="command-note"></p>
           <div class="report-cta-row" aria-label="Report actions">
@@ -135,7 +139,7 @@
         </div>
         <div id="timeline-section">
           <h2>Session Timeline <button type="button" class="help-tip" data-tippy-content="Timeline points are sampled from parsed log rows, usually every ten rows plus the final row. Token height is estimated context/token volume at that point, not exact provider billing." aria-label="More information">?</button></h2>
-          <p id="timeline-caption" class="timeline-caption">Estimated context/token volume by parsed turn. Highlighted area shows potential savings.</p>
+          <p id="timeline-caption" class="timeline-caption">Estimated context/token volume by parsed turn. Green overlay = estimated tokens you can save.</p>
           <div id="timeline-legend" class="timeline-legend" aria-hidden="true"></div>
           <div class="timeline-frame">
             <div class="timeline-y-axis" aria-hidden="true">
@@ -161,11 +165,13 @@
           </div>
           <div class="plugin-fixes-card">
             <h3>Do these now</h3>
+            <p class="command-note">Copy the AGENTS.md line into the relevant repo. The hosted report cannot safely append to local files; the generated plugin can package these rules locally after the full scan.</p>
             <ul id="fixes"></ul>
           </div>
         </section>
         <section id="recommendation-section" class="intel-section" hidden>
           <h2>Next-best recommendation <button type="button" class="help-tip" data-tippy-content="Recommendation ranking comes from allowlisted tool metadata and deterministic signals such as tool-output bloat, retrieval friction, usage visibility, and MCP/skill utilization. Unknown private names are not echoed." aria-label="More information">?</button></h2>
+          <p class="section-note">Recommendations come from a public vetted allowlist. <a href="/allowed-tools.html">Review the allowlist and source URLs.</a></p>
           <div id="recommendation-primary"></div>
           <div id="recommendation-secondary"></div>
           <p id="recommendation-empty" hidden>No high-priority recommendation detected from current signals.</p>
@@ -199,7 +205,7 @@
             <ul class="upsell-proof">
               <li>Raw transcripts stay local.</li>
               <li>Email confirmation unlocks the second NPX command.</li>
-              <li>The plugin and full report use the same 15-minute report boundary.</li>
+              <li>The plugin and full report use the same short-lived report boundary.</li>
             </ul>
           </div>
           <div class="upsell-action">
@@ -209,6 +215,7 @@
               <label>Email for full-scan command
                 <input type="email" name="email" autocomplete="email" required placeholder="you@example.com">
               </label>
+              <p class="command-note">We use your email to confirm ownership, send the full-scan command, and send plugin retrieval instructions. Product updates are sent only if you opt in.</p>
               <label class="checkbox-row">
                 <input type="checkbox" name="marketing_opt_in" value="1">
                 <span>Also send me occasional updates about agentic coding products.</span>
@@ -224,6 +231,7 @@
     <script src="/vendor/tippy/popper.min.js"></script>
     <script src="/vendor/tippy/tippy-bundle.umd.min.js"></script>
     <script src="/tooltips.js"></script>
+    <script src="/report-actions.js"></script>
     <script src="/app.js"></script>
   </body>
 </html>

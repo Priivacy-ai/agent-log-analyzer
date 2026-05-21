@@ -2,6 +2,8 @@ package main
 
 import (
 	"bytes"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"flag"
@@ -302,6 +304,7 @@ func buildSourceReports(results []sourceAnalysisResult) []analyzer.SourceReport 
 		sourceLabel string
 		reports     []analyzer.Report
 		bytes       int
+		logRefs     []analyzer.AnalyzedLogRef
 	}
 	order := []string{}
 	groups := map[string]*group{}
@@ -316,6 +319,7 @@ func buildSourceReports(results []sourceAnalysisResult) []analyzer.SourceReport 
 		}
 		groups[key].reports = append(groups[key].reports, result.Report)
 		groups[key].bytes += result.Bytes
+		groups[key].logRefs = append(groups[key].logRefs, safeAnalyzedLogRef(result.Candidate, len(groups[key].logRefs)+1, result.Bytes))
 	}
 	sourceReports := make([]analyzer.SourceReport, 0, len(order))
 	for _, key := range order {
@@ -331,6 +335,7 @@ func buildSourceReports(results []sourceAnalysisResult) []analyzer.SourceReport 
 			SourceID:        group.sourceID,
 			SourceLabel:     group.sourceLabel,
 			LogCount:        len(group.reports),
+			LogRefs:         group.logRefs,
 			Score:           report.Score,
 			EstimatedWaste:  report.EstimatedWaste,
 			Metrics:         report.Metrics,
@@ -341,6 +346,36 @@ func buildSourceReports(results []sourceAnalysisResult) []analyzer.SourceReport 
 		})
 	}
 	return sourceReports
+}
+
+func safeAnalyzedLogRef(candidate logCandidate, ordinal int, bytesRead int) analyzer.AnalyzedLogRef {
+	sum := sha256.Sum256([]byte(candidate.SourceID + "\x00" + candidate.Display))
+	prefix := candidate.SourceID
+	if prefix == "" {
+		prefix = "log"
+	}
+	return analyzer.AnalyzedLogRef{
+		Label:      fmt.Sprintf("%s log %d", candidate.SourceLabel, ordinal),
+		LocalRef:   fmt.Sprintf("%s-%s", prefix, hex.EncodeToString(sum[:])[:10]),
+		SizeBucket: byteSizeBucket(bytesRead),
+	}
+}
+
+func byteSizeBucket(bytesRead int) string {
+	switch {
+	case bytesRead <= 0:
+		return "unknown"
+	case bytesRead < 10*1024:
+		return "<10 KB"
+	case bytesRead < 100*1024:
+		return "10-100 KB"
+	case bytesRead < 1024*1024:
+		return "100 KB-1 MB"
+	case bytesRead < 5*1024*1024:
+		return "1-5 MB"
+	default:
+		return ">5 MB"
+	}
 }
 
 func analyzeDiscovered(candidates []logCandidate, out string, mode string, printNextSteps bool) error {
@@ -415,6 +450,7 @@ func analyzeDiscovered(candidates []logCandidate, out string, mode string, print
 	}
 	fmt.Printf("Raw bytes read locally: %d\n", totalBytes)
 	fmt.Printf("Secrets redacted before report write: %d\n", totalRedacted)
+	fmt.Println("Model tokens spent generating this report: 0")
 	printReportWrite(out, report)
 	if printNextSteps {
 		if mode == "paid" {

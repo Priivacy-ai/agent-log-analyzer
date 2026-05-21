@@ -218,10 +218,19 @@ function buildActionItem(finding) {
   const title = document.createElement("strong");
   title.textContent = action.title;
   const now = document.createElement("span");
-  now.textContent = action.now;
+  now.innerHTML = `<b>Do now:</b> ${escapeHTML(action.now)}`;
+  const why = document.createElement("span");
+  why.innerHTML = `<b>Why:</b> ${escapeHTML(action.why || findingEvidence(finding?.evidence))}`;
+  const agentsLine = document.createElement("code");
+  agentsLine.textContent = action.agentsLine;
+  const copy = document.createElement("button");
+  copy.type = "button";
+  copy.className = "copy-agents-line";
+  copy.dataset.copy = action.agentsLine;
+  copy.textContent = "Copy AGENTS.md line";
   const plugin = document.createElement("em");
   plugin.textContent = action.plugin;
-  item.append(title, now, plugin);
+  item.append(title, now, why, agentsLine, copy, plugin);
   return item;
 }
 
@@ -231,10 +240,19 @@ function buildFallbackActionItem(fix) {
   const title = document.createElement("strong");
   title.textContent = "Apply the detected fix";
   const now = document.createElement("span");
-  now.textContent = String(fix || "Use a narrower workflow before continuing.");
+  now.innerHTML = `<b>Do now:</b> ${escapeHTML(String(fix || "Use a narrower workflow before continuing."))}`;
+  const why = document.createElement("span");
+  why.innerHTML = "<b>Why:</b> deterministic evidence recorded";
+  const agentsLine = document.createElement("code");
+  agentsLine.textContent = "Keep agent sessions scoped and avoid unnecessary context.";
+  const copy = document.createElement("button");
+  copy.type = "button";
+  copy.className = "copy-agents-line";
+  copy.dataset.copy = agentsLine.textContent;
+  copy.textContent = "Copy AGENTS.md line";
   const plugin = document.createElement("em");
   plugin.textContent = "The full scan turns recurring fixes into a generated plugin instead of a one-off note.";
-  item.append(title, now, plugin);
+  item.append(title, now, why, agentsLine, copy, plugin);
   return item;
 }
 
@@ -243,13 +261,17 @@ function actionForFinding(finding) {
     case "repeated_file_reads":
       return {
         title: "Stop rereading files blindly",
-        now: "Before another broad read, name the exact file or symbol and ask Claude to summarize only what changed since the last read.",
+        now: "Before another broad read, name the exact file or symbol and ask the agent to summarize only what changed since the last read.",
+        why: findingEvidence(finding?.evidence),
+        agentsLine: "Before rereading files, summarize known state and prefer targeted symbol searches or narrow line ranges over whole-file reads.",
         plugin: "The full report finds repeated paths across up to 100 logs; the plugin adds retrieval hygiene prompts.",
       };
     case "tool_output_bloat":
       return {
         title: "Cap noisy command output",
         now: "Use rg filters, head/tail, --json summaries, or redirect logs to a file. Paste only the failing excerpt back into context.",
+        why: findingEvidence(finding?.evidence),
+        agentsLine: "Cap shell command output by default; use focused filters and paste only the relevant failing excerpt back into context.",
         plugin: "The plugin can recommend shell-output reducers and context-safe command habits for your setup.",
       };
     case "retry_loop":
@@ -257,6 +279,8 @@ function actionForFinding(finding) {
       return {
         title: "Break retry loops after two misses",
         now: "After two similar failures, stop editing. Restate the invariant, inspect the diff/test output, then restart with a smaller scope.",
+        why: findingEvidence(finding?.evidence),
+        agentsLine: "After two failed attempts on the same issue, stop, inspect the invariant and latest error, then restart with a smaller scope.",
         plugin: "The full scan surfaces recurring retry signatures and turns them into session hygiene rules.",
       };
     case "context_growth_spikes":
@@ -264,6 +288,8 @@ function actionForFinding(finding) {
       return {
         title: "Treat context spikes as boundaries",
         now: "Use /compact or start a fresh session after large tool output, model/config changes, or a pivot from debugging to architecture.",
+        why: findingEvidence(finding?.evidence),
+        agentsLine: "Treat major tool-output, model/config changes, and task pivots as context boundaries; compact or split the session before continuing.",
         plugin: "The plugin adds compact/split/restart nudges at the points your history shows degradation.",
       };
     case "mcp_bloat_high":
@@ -271,6 +297,8 @@ function actionForFinding(finding) {
       return {
         title: "Disable unused MCPs by default",
         now: "Move project-specific MCPs out of global config and lazy-load heavy servers only when the task needs them.",
+        why: findingEvidence(finding?.evidence),
+        agentsLine: "Keep only frequently used MCP servers enabled by default; lazy-load project-specific or heavy MCPs when the task requires them.",
         plugin: "The full report converts MCP bloat into a concrete setup checklist.",
       };
     case "skill_bloat_high":
@@ -278,6 +306,8 @@ function actionForFinding(finding) {
       return {
         title: "Trim always-on skills",
         now: "Keep only high-use skills active by default. Move rarely used skills behind explicit invocation.",
+        why: findingEvidence(finding?.evidence),
+        agentsLine: "Keep only high-signal skills in default context; invoke rare or project-specific skills explicitly when needed.",
         plugin: "The plugin can recommend a smaller skill surface from observed usage ratios.",
       };
     default:
@@ -286,9 +316,21 @@ function actionForFinding(finding) {
         now: typeof finding?.recommendation === "string" && finding.recommendation.length > 0
           ? finding.recommendation
           : "Use a narrower workflow before continuing.",
+        why: findingEvidence(finding?.evidence),
+        agentsLine: "Keep agent sessions scoped, evidence-backed, and explicit about when context should be compacted or split.",
         plugin: "The full scan turns this from one-session advice into a generated remediation pack.",
       };
   }
+}
+
+function escapeHTML(value) {
+  return String(value || "").replace(/[&<>"']/g, (char) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;",
+  })[char]);
 }
 
 function buildFindingItem(finding, report, index, estimatedTokens, maxEstimate) {
@@ -393,11 +435,11 @@ function renderTokenVolume(report) {
   const metrics = report?.metrics || {};
   tokenVolume.replaceChildren();
   tokenVolume.append(
-    `Analyzed token volume: ${formatNumber(numberValue(metrics.estimated_tokens))} estimated input/output tokens; ` +
-      `${formatNumber(numberValue(metrics.tool_output_tokens))} estimated from tool output. `,
+    `Analyzed token volume: ${formatCompactNumber(numberValue(metrics.estimated_tokens))} estimated input/output tokens; ` +
+      `${formatCompactNumber(numberValue(metrics.tool_output_tokens))} estimated from tool output. `,
   );
   tokenVolume.appendChild(buildHelpTip(
-    "Accuracy depends on the source log. When native usage fields exist, we use them. Otherwise we estimate roughly one token per four characters. Tool-output volume is derived from tool-result payload size and similar estimates. This is directional, not invoice-grade accounting.",
+    "What is counted here? Accuracy depends on the source log. When native usage fields exist, we use them. Otherwise we estimate roughly one token per four characters. Tool-output volume is derived from tool-result payload size and similar estimates. This is directional, not invoice-grade accounting.",
   ));
   window.AgentAnalyzerTooltips?.init(tokenVolume);
 }
@@ -470,6 +512,13 @@ function renderTimeline(points, estimatedWaste) {
   );
   if (yMax) yMax.textContent = `${formatCompactNumber(maxTokens)} tokens`;
   renderTimelineLegend(legend, wasteRange);
+  const callout = document.createElement("div");
+  callout.className = "timeline-savings-callout";
+  callout.setAttribute("aria-hidden", "true");
+  const calloutText = document.createElement("span");
+  calloutText.textContent = "This is what you can save";
+  callout.appendChild(calloutText);
+  chart.appendChild(callout);
   for (const point of visiblePoints) {
     const bar = document.createElement("span");
     const estimatedTokens = numberValue(point.estimated_tokens);
@@ -521,7 +570,7 @@ function renderTimelineLegend(legend, wasteRange) {
   const observedSwatch = document.createElement("span");
   observedSwatch.className = "timeline-legend-swatch timeline-legend-observed";
   observed.appendChild(observedSwatch);
-  observed.append("estimated volume");
+  observed.append("estimated volume consumed");
   legend.appendChild(observed);
 
   const avoidable = document.createElement("span");
@@ -529,7 +578,7 @@ function renderTimelineLegend(legend, wasteRange) {
   const avoidableSwatch = document.createElement("span");
   avoidableSwatch.className = "timeline-legend-swatch timeline-legend-savings";
   avoidable.appendChild(avoidableSwatch);
-  avoidable.append(`${wasteRange.low}-${wasteRange.high}% potential savings`);
+  avoidable.append(`green overlay = ${wasteRange.low}-${wasteRange.high}% you may save`);
   legend.appendChild(avoidable);
 }
 
@@ -1278,6 +1327,7 @@ function renderReceipt(receipt, redactions) {
   }
   const statusGrid = document.createElement("div");
   statusGrid.className = "receipt-status-grid";
+  statusGrid.appendChild(statusTile("Model tokens for report", "0", "good"));
   statusGrid.appendChild(statusTile("Raw transcript to LLM", receipt.raw_transcript_sent_to_llm === true ? "yes" : "no", receipt.raw_transcript_sent_to_llm === true ? "bad" : "good"));
   statusGrid.appendChild(statusTile("Outbound during analysis", receipt.outbound_during_analysis === true ? "yes" : "no", receipt.outbound_during_analysis === true ? "bad" : "good"));
   statusGrid.appendChild(statusTile("Raw log TTL", receipt.raw_log_ttl || "unknown", receipt.raw_log_ttl === "not uploaded" ? "good" : "warn"));

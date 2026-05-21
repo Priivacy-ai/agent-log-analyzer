@@ -156,16 +156,23 @@ type TimelinePoint struct {
 }
 
 type SourceReport struct {
-	SourceID        string          `json:"source_id"`
-	SourceLabel     string          `json:"source_label"`
-	LogCount        int             `json:"log_count"`
-	Score           int             `json:"score"`
-	EstimatedWaste  WasteRange      `json:"estimated_waste_pct"`
-	Metrics         Metrics         `json:"metrics"`
-	Findings        []Finding       `json:"findings"`
-	Timeline        []TimelinePoint `json:"timeline"`
-	AnalysisSignals AnalysisSignals `json:"analysis_signals"`
-	ImmediateFixes  []string        `json:"immediate_fixes"`
+	SourceID        string           `json:"source_id"`
+	SourceLabel     string           `json:"source_label"`
+	LogCount        int              `json:"log_count"`
+	LogRefs         []AnalyzedLogRef `json:"log_refs,omitempty"`
+	Score           int              `json:"score"`
+	EstimatedWaste  WasteRange       `json:"estimated_waste_pct"`
+	Metrics         Metrics          `json:"metrics"`
+	Findings        []Finding        `json:"findings"`
+	Timeline        []TimelinePoint  `json:"timeline"`
+	AnalysisSignals AnalysisSignals  `json:"analysis_signals"`
+	ImmediateFixes  []string         `json:"immediate_fixes"`
+}
+
+type AnalyzedLogRef struct {
+	Label      string `json:"label"`
+	LocalRef   string `json:"local_ref"`
+	SizeBucket string `json:"size_bucket,omitempty"`
 }
 
 type AggregateSafeEvent struct {
