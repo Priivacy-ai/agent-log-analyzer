@@ -360,9 +360,11 @@ func slogEmailDeliveryFailure(stage, unlockID string, err error) {
 }
 
 func renderConfirmedPage(w http.ResponseWriter, command string, expiresAt time.Time) {
+	escapedCommand := htmlstd.EscapeString(command)
 	renderSimpleHTML(w, "Email confirmed", fmt.Sprintf(
-		`<p>Your email is confirmed. We also emailed this command to you. Run it to analyze up to 100 recent logs per supported agent source and generate your plugin:</p><pre><code>%s</code></pre><p>This full-scan token expires at %s.</p>`,
-		htmlstd.EscapeString(command),
+		`<p>Your email is confirmed. We also emailed this command to you. Run it to analyze up to 100 recent logs per supported agent source and generate your plugin:</p><div class="simple-command-copy"><pre><code>%s</code></pre><button type="button" class="copy-agents-line" data-copy="%s">Copy command</button></div><p>This full-scan token expires at %s.</p>`,
+		escapedCommand,
+		escapedCommand,
 		htmlstd.EscapeString(expiresAt.Local().Format(time.RFC1123)),
 	))
 }
@@ -375,7 +377,7 @@ func renderSimpleHTMLStatus(w http.ResponseWriter, status int, title, body strin
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.Header().Set("Cache-Control", "no-store")
 	w.WriteHeader(status)
-	_, _ = fmt.Fprintf(w, `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>%s</title><link rel="stylesheet" href="/styles.css"></head><body><main class="shell"><section class="simple-page"><h1>%s</h1>%s</section></main></body></html>`, htmlstd.EscapeString(title), htmlstd.EscapeString(title), body)
+	_, _ = fmt.Fprintf(w, `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>%s</title><link rel="stylesheet" href="/styles.css"></head><body><main class="shell"><section class="simple-page"><h1>%s</h1>%s</section></main><script src="/report-actions.js"></script></body></html>`, htmlstd.EscapeString(title), htmlstd.EscapeString(title), body)
 }
 
 func confirmationEmailBody(confirmURL string) string {
