@@ -7,6 +7,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"math"
 	"sort"
 	"strings"
 )
@@ -250,6 +251,8 @@ func signalsFromEvents(events []normalizedEvent, sessionCount int) AnalysisSigna
 		miss := max(0, signals.InputTokens-signals.CacheReadTokens)
 		signals.CacheMissRatioPct = min(100, int(float64(miss)/float64(signals.InputTokens)*100))
 	}
+	signals.PatchLinesTouched = signals.PatchLinesAdded + signals.PatchLinesRemoved
+	signals.PatchYieldPer1KTokens = patchYieldPer1KTokens(signals.PatchLinesTouched, totalTokenVolume(signals))
 	signals.SampleConfidence, signals.SampleWarnings = sampleConfidence(sessionCount, signals)
 	if signals.SampleWarnings == nil {
 		signals.SampleWarnings = []string{}
@@ -691,11 +694,24 @@ func mergeSignals(left, right AnalysisSignals) AnalysisSignals {
 		miss := max(0, merged.InputTokens-merged.CacheReadTokens)
 		merged.CacheMissRatioPct = min(100, int(float64(miss)/float64(merged.InputTokens)*100))
 	}
+	merged.PatchLinesTouched = merged.PatchLinesAdded + merged.PatchLinesRemoved
+	merged.PatchYieldPer1KTokens = patchYieldPer1KTokens(merged.PatchLinesTouched, totalTokenVolume(merged))
 	merged.SampleConfidence = minConfidence(left.SampleConfidence, right.SampleConfidence)
 	if merged.SampleConfidence == "" {
 		merged.SampleConfidence = "unknown"
 	}
 	return merged
+}
+
+func totalTokenVolume(signals AnalysisSignals) int {
+	return signals.InputTokens + signals.OutputTokens + signals.CacheReadTokens + signals.CacheCreationTokens
+}
+
+func patchYieldPer1KTokens(patchLinesTouched, totalTokens int) int {
+	if patchLinesTouched <= 0 || totalTokens <= 0 {
+		return 0
+	}
+	return int(math.Round(float64(patchLinesTouched) * 1000.0 / float64(totalTokens)))
 }
 
 func minConfidence(left, right string) string {

@@ -55,6 +55,12 @@ func TestAnalyzeForSource_CodexTokenDeltasAndPatchStats(t *testing.T) {
 	if report.AnalysisSignals.PatchLinesAdded != 12 || report.AnalysisSignals.PatchLinesRemoved != 4 {
 		t.Fatalf("expected patch stats, got %#v", report.AnalysisSignals)
 	}
+	if report.AnalysisSignals.PatchLinesTouched != 16 {
+		t.Fatalf("expected touched patch line count, got %#v", report.AnalysisSignals)
+	}
+	if report.AnalysisSignals.PatchYieldPer1KTokens != 1 {
+		t.Fatalf("expected patch yield per 1k tokens, got %#v", report.AnalysisSignals)
+	}
 	assertReportDoesNotContain(t, report, "go test ./...")
 }
 
@@ -98,6 +104,9 @@ func TestAggregateReports_MergesAnalysisSignals(t *testing.T) {
 	}
 	if merged.AnalysisSignals.SampleConfidence != "low" {
 		t.Fatalf("expected low sample confidence for two sessions, got %#v", merged.AnalysisSignals)
+	}
+	if merged.AnalysisSignals.PatchLinesTouched != 0 || merged.AnalysisSignals.PatchYieldPer1KTokens != 0 {
+		t.Fatalf("expected zero patch yield signals for token-only merge, got %#v", merged.AnalysisSignals)
 	}
 }
 

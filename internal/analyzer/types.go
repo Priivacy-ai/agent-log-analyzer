@@ -48,6 +48,8 @@ type AnalysisSignals struct {
 	ToolOutputBytes         int      `json:"tool_output_bytes"`
 	PatchLinesAdded         int      `json:"patch_lines_added"`
 	PatchLinesRemoved       int      `json:"patch_lines_removed"`
+	PatchLinesTouched       int      `json:"patch_lines_touched"`
+	PatchYieldPer1KTokens   int      `json:"patch_yield_per_1k_tokens"`
 	SampleConfidence        string   `json:"sample_confidence"`
 	SampleWarnings          []string `json:"sample_warnings"`
 }
