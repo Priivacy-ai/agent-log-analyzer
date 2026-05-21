@@ -938,16 +938,14 @@ pre {
   margin-bottom: 18px;
 }
 
-.plugin-benefits li,
-#fixes li {
+.plugin-benefits li {
   position: relative;
   padding-left: 20px;
   color: var(--text);
   line-height: 1.35;
 }
 
-.plugin-benefits li::before,
-#fixes li::before {
+.plugin-benefits li::before {
   content: "";
   position: absolute;
   top: 0.62em;
@@ -1025,24 +1023,61 @@ pre {
   display: grid;
   align-content: start;
   gap: 12px;
-  padding: 16px;
+  padding: 18px;
   border: 1px solid rgba(121, 192, 255, 0.22);
   border-radius: 8px;
-  background: rgba(8, 11, 16, 0.72);
+  background:
+    linear-gradient(135deg, rgba(121, 192, 255, 0.08), transparent 46%),
+    rgba(8, 11, 16, 0.76);
 }
 
 .plugin-fixes-card h3 {
   margin: 0;
   color: var(--text);
+  font-size: 18px;
 }
 
 #fixes {
   display: grid;
-  gap: 10px;
+  gap: 12px;
 }
 
-#fixes li {
-  color: var(--muted);
+.action-item {
+  position: relative;
+  display: grid;
+  gap: 7px;
+  padding: 13px 13px 13px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-left: 3px solid rgba(126, 231, 135, 0.68);
+  border-radius: 8px;
+  background: rgba(8, 11, 16, 0.64);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.02);
+}
+
+.action-item strong {
+  color: var(--text);
+  font-size: 15px;
+  line-height: 1.2;
+}
+
+.action-item span {
+  color: #c4ccd6;
+  font-size: 14px;
+  line-height: 1.38;
+}
+
+.action-item em {
+  color: #9bcfff;
+  font-size: 13px;
+  font-style: normal;
+  line-height: 1.35;
+}
+
+.action-item em::before {
+  content: "Full scan + plugin: ";
+  color: var(--green);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-size: 12px;
 }
 
 .evidence-grid {

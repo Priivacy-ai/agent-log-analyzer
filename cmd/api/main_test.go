@@ -274,7 +274,8 @@ func TestReportPageServerRendersCompletedReport(t *testing.T) {
 	for _, want := range []string{
 		"42",
 		"Large shell/tool output overhead",
-		"Use narrower shell commands.",
+		"Cap noisy command output",
+		"The plugin can recommend shell-output reducers",
 		"RTK (Rust Token Killer, rtk-ai/rtk)",
 		"https://github.com/rtk-ai/rtk",
 		"Raw log TTL: not uploaded",

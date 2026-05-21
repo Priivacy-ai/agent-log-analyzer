@@ -86,6 +86,7 @@ func renderReportHTML(w http.ResponseWriter, data reportPageData) {
 
 var reportHTMLTemplate = template.Must(template.New("report").Funcs(template.FuncMap{
 	"add":                   func(a, b int) int { return a + b },
+	"actionPlan":            actionPlanHTML,
 	"boolText":              boolText,
 	"bucketValue":           bucketValue,
 	"ecosystemPanel":        ecosystemPanelHTML,
@@ -186,12 +187,24 @@ var reportHTMLTemplate = template.Must(template.New("report").Funcs(template.Fun
           {{end}}
         </section>
         {{end}}
-        <div>
-          <h2>Suggested Immediate Fixes {{helpTip "Fixes are generated from deterministic finding IDs and bounded evidence, not from raw prompts or an LLM reading your transcript."}}</h2>
-          <ul id="fixes">
-            {{range .Report.ImmediateFixes}}<li>{{.}}</li>{{else}}<li>No immediate fixes were generated.</li>{{end}}
-          </ul>
-        </div>
+        <section class="plugin-pitch" id="plugin-pitch">
+          <div>
+            <p class="eyebrow">generated remediation</p>
+            <h2>Do the quick fixes now. Let the plugin enforce them next. {{helpTip "Fixes are generated from deterministic finding IDs and bounded evidence, not from raw prompts or an LLM reading your transcript. The full scan turns those findings into a generated plugin artifact and vetted setup instructions."}}</h2>
+            <p>These are the manual moves that will reduce waste immediately. If you want this to become an operating habit instead of another checklist, run the full scan and get the generated plugin: it turns these patterns into Claude-facing instructions, context hygiene rules, retrieval guidance, and setup recommendations.</p>
+            <ul class="plugin-benefits">
+              <li>Session hygiene nudges before context contamination gets expensive.</li>
+              <li>Retrieval and code-intelligence recommendations tuned to your actual reread patterns.</li>
+              <li>CLAUDE.md trimming, hierarchy, and workflow guidance generated from the full scan.</li>
+              <li>MCP, skill, and plugin bloat warnings converted into setup recommendations.</li>
+            </ul>
+            <a class="plugin-cta" href="#email-unlock">Generate my optimization plugin</a>
+          </div>
+          <div class="plugin-fixes-card">
+            <h3>Do these now</h3>
+            {{actionPlan .Report}}
+          </div>
+        </section>
         {{if .Report.Recommendation}}
         <section id="recommendation-section" class="intel-section">
           <h2>Next-best recommendation {{helpTip "Recommendation ranking comes from allowlisted tool metadata and deterministic signals such as tool-output bloat, retrieval friction, usage visibility, and MCP/skill utilization. Unknown private names are not echoed."}}</h2>
@@ -354,6 +367,115 @@ func boolText(v bool) string {
 		return "yes"
 	}
 	return "no"
+}
+
+type actionCopy struct {
+	Title  string
+	Now    string
+	Plugin string
+}
+
+func actionPlanHTML(report analyzer.Report) template.HTML {
+	var b strings.Builder
+	b.WriteString(`<ul id="fixes" class="action-list">`)
+	if len(report.Findings) > 0 {
+		limit := len(report.Findings)
+		if limit > 4 {
+			limit = 4
+		}
+		for _, finding := range report.Findings[:limit] {
+			actionItemHTML(&b, actionForFinding(finding))
+		}
+		b.WriteString(`</ul>`)
+		return template.HTML(b.String())
+	}
+	if len(report.ImmediateFixes) > 0 {
+		limit := len(report.ImmediateFixes)
+		if limit > 4 {
+			limit = 4
+		}
+		for _, fix := range report.ImmediateFixes[:limit] {
+			actionItemHTML(&b, actionCopy{
+				Title:  "Apply the detected fix",
+				Now:    fix,
+				Plugin: "The full scan turns recurring fixes into a generated plugin instead of a one-off note.",
+			})
+		}
+		b.WriteString(`</ul>`)
+		return template.HTML(b.String())
+	}
+	actionItemHTML(&b, actionCopy{
+		Title:  "No urgent manual fix detected",
+		Now:    "Keep sessions scoped and avoid pasting unnecessary tool output.",
+		Plugin: "Still run the full scan if you want plugin guidance across more sessions, tools, and projects.",
+	})
+	b.WriteString(`</ul>`)
+	return template.HTML(b.String())
+}
+
+func actionItemHTML(b *strings.Builder, action actionCopy) {
+	fmt.Fprintf(
+		b,
+		`<li class="action-item"><strong>%s</strong><span>%s</span><em>%s</em></li>`,
+		htmlstd.EscapeString(action.Title),
+		htmlstd.EscapeString(action.Now),
+		htmlstd.EscapeString(action.Plugin),
+	)
+}
+
+func actionForFinding(finding analyzer.Finding) actionCopy {
+	switch finding.ID {
+	case "repeated_file_reads":
+		return actionCopy{
+			Title:  "Stop rereading files blindly",
+			Now:    "Before another broad read, name the exact file or symbol and ask Claude to summarize only what changed since the last read.",
+			Plugin: "The full report finds repeated paths across up to 100 logs; the plugin adds retrieval hygiene prompts.",
+		}
+	case "tool_output_bloat":
+		return actionCopy{
+			Title:  "Cap noisy command output",
+			Now:    "Use rg filters, head/tail, --json summaries, or redirect logs to a file. Paste only the failing excerpt back into context.",
+			Plugin: "The plugin can recommend shell-output reducers and context-safe command habits for your setup.",
+		}
+	case "retry_loop", "args_hashed_retry_loop":
+		return actionCopy{
+			Title:  "Break retry loops after two misses",
+			Now:    "After two similar failures, stop editing. Restate the invariant, inspect the diff/test output, then restart with a smaller scope.",
+			Plugin: "The full scan surfaces recurring retry signatures and turns them into session hygiene rules.",
+		}
+	case "context_growth_spikes", "cache_invalidation_spike":
+		return actionCopy{
+			Title:  "Treat context spikes as boundaries",
+			Now:    "Use /compact or start a fresh session after large tool output, model/config changes, or a pivot from debugging to architecture.",
+			Plugin: "The plugin adds compact/split/restart nudges at the points your history shows degradation.",
+		}
+	case "mcp_bloat_high", "mcp_bloat_severe":
+		return actionCopy{
+			Title:  "Disable unused MCPs by default",
+			Now:    "Move project-specific MCPs out of global config and lazy-load heavy servers only when the task needs them.",
+			Plugin: "The full report converts MCP bloat into a concrete setup checklist.",
+		}
+	case "skill_bloat_high", "skill_bloat_severe":
+		return actionCopy{
+			Title:  "Trim always-on skills",
+			Now:    "Keep only high-use skills active by default. Move rarely used skills behind explicit invocation.",
+			Plugin: "The plugin can recommend a smaller skill surface from observed usage ratios.",
+		}
+	default:
+		title := finding.Title
+		if title == "" {
+			title = "Apply the detected fix"
+		}
+		now := finding.Recommendation
+		if now == "" {
+			now = "Use a narrower workflow before continuing."
+		}
+		return actionCopy{
+			Title:  title,
+			Now:    now,
+			Plugin: "The full scan turns this from one-session advice into a generated remediation pack.",
+		}
+	}
 }
 
 func workflowFingerprintsHTML(fingerprints []analyzer.EcosystemFingerprint) template.HTML {
