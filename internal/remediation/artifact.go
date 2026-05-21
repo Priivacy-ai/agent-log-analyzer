@@ -749,19 +749,29 @@ func installInstructions(pluginName, artifactURL string) Install {
 	if artifactURL == "" {
 		artifactURL = "<private-plugin-zip-url>"
 	}
+	pluginID := pluginName
+	if pluginID == "" {
+		pluginID = "agent-analyzer-optimization"
+	}
 	command := strings.Join([]string{
 		`PLUGIN_URL="` + artifactURL + `"`,
+		`PLUGIN_ID="` + pluginID + `"`,
 		`PLUGIN_ZIP="$(mktemp -t agent-analyzer-plugin.XXXXXX.zip)"`,
+		`PLUGIN_DIR="${HOME}/.claude/plugins/${PLUGIN_ID}"`,
 		`curl -fsS "$PLUGIN_URL" -o "$PLUGIN_ZIP"`,
-		`claude --plugin-dir "$PLUGIN_ZIP"`,
+		`mkdir -p "$PLUGIN_DIR"`,
+		`unzip -oq "$PLUGIN_ZIP" -d "$PLUGIN_DIR"`,
+		`echo "Rollback: rm -rf \"$PLUGIN_DIR\" && rm -f \"$PLUGIN_ZIP\""`,
+		`claude --plugin-dir "$PLUGIN_DIR"`,
 	}, "\n")
-	prompt := "Install the generated Agent Analyzer optimization plugin for this session. Run the command below, explain what it installs, and ask for approval before executing it. Do not print plugin archive contents.\n\n```sh\n" + command + "\n```"
+	prompt := "Install the generated Agent Analyzer optimization plugin for this session. Run the command below, explain what it installs, mention the rollback command, and ask for approval before executing it. Do not print plugin archive contents.\n\n```sh\n" + command + "\n```"
 	return Install{
 		Command:          command,
 		ClaudePrompt:     prompt,
-		UninstallCommand: "No persistent install is performed by the default command. Close the Claude Code session to unload " + pluginName + ".",
+		UninstallCommand: `rm -rf "${HOME}/.claude/plugins/` + pluginID + `"`,
 		Notes: []string{
-			"The default command uses Claude Code's --plugin-dir support with a private-link zip artifact.",
+			"The default command expands the private plugin zip into a dedicated Claude plugin directory.",
+			"The command prints an explicit rollback cleanup command before launching Claude.",
 			"Marketplace installation can be added later once the plugin store is live.",
 		},
 	}

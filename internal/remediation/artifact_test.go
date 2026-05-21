@@ -95,6 +95,18 @@ func TestGenerateCreatesClaudePluginArtifact(t *testing.T) {
 	if !strings.Contains(artifact.Install.Command, "claude --plugin-dir") {
 		t.Fatalf("expected plugin-dir install command, got %s", artifact.Install.Command)
 	}
+	for _, want := range []string{
+		`PLUGIN_DIR="${HOME}/.claude/plugins/`,
+		`unzip -oq "$PLUGIN_ZIP" -d "$PLUGIN_DIR"`,
+		`Rollback: rm -rf \"$PLUGIN_DIR\" && rm -f \"$PLUGIN_ZIP\"`,
+	} {
+		if !strings.Contains(artifact.Install.Command, want) {
+			t.Fatalf("expected install command to include %q, got %s", want, artifact.Install.Command)
+		}
+	}
+	if !strings.Contains(artifact.Install.UninstallCommand, `rm -rf "${HOME}/.claude/plugins/`) {
+		t.Fatalf("expected uninstall command with plugin dir cleanup, got %q", artifact.Install.UninstallCommand)
+	}
 	if !containsCustomization(artifact, "retrieval-hygiene") || !containsCustomization(artifact, "output-budget") || !containsCustomization(artifact, "retry-breaker") {
 		t.Fatalf("missing expected customizations: %#v", artifact.Customizations)
 	}
