@@ -62,7 +62,7 @@ Local backend:
 
 - retained events append to `/data/analytics/events.jsonl`
 - file contains `analytics.Event` JSONL only
-- raw reports remain under the report TTL path and are not reused as analytics
+- raw reports remain under the private report path and are not reused as analytics
 
 AWS backend:
 

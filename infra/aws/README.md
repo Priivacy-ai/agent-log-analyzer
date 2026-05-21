@@ -10,7 +10,7 @@ What it creates:
 - Private S3 buckets for raw uploads and sanitized reports, with encryption, public-access blocks, and one-day lifecycle backstops.
 - SQS queue and DynamoDB job table.
 - ECS Fargate API and worker services.
-- Scheduled Fargate sweeper every five minutes to enforce the 15-minute upload/report TTL.
+- Scheduled Fargate sweeper every five minutes to enforce the raw upload TTL. Report links are durable private links and are not swept.
 
 Prepare:
 

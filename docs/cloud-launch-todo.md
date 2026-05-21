@@ -152,7 +152,7 @@ Acceptance:
   - [x] Report contains no raw secret.
   - [x] Report contains `raw_transcript_sent_to_llm=false`.
   - [ ] Raw upload object is deleted by the sweeper after TTL.
-  - [ ] Report object is deleted by the sweeper after TTL.
+  - [ ] Report object remains available as a private-link artifact.
   - [ ] Logs contain request metadata only, not raw upload/report contents.
 
 Acceptance:
@@ -327,13 +327,13 @@ Acceptance:
 Acceptance:
 
 - [ ] A hostile upload cannot exfiltrate data.
-- [ ] A leaked report URL expires.
+- [ ] A leaked report URL is unguessable and requires the private report token.
 - [ ] A parser failure does not leak raw logs to logs, metrics, or reports.
 
 ## 11. Payment And Paid Pack Delivery
 
 - [ ] Create Stripe account/products.
-- [ ] Define paid artifact TTL separately from free report TTL.
+- [ ] Define paid artifact access through the private report token.
 - [ ] Implement Checkout flow.
 - [ ] Generate optimization pack artifact after successful payment.
 - [x] Define deterministic Claude plugin artifact contract.
@@ -344,8 +344,8 @@ Acceptance:
 - [ ] Complete public-tool vetting sprint for language servers, MCPs, Claude plugins, and skills. (#32)
 - [ ] Add analyzer signals for language stack detection beyond package-manager inference.
 - [ ] Wire paid scan aggregate metrics into plugin generation.
-- [ ] Render short-lived install page with plugin commands.
-- [ ] Store paid artifact in separate prefix/bucket with short TTL.
+- [ ] Render private-link install page with plugin commands.
+- [ ] Store paid artifact behind the private report token.
 - [ ] Add receipt/support email.
 - [ ] Add refund/support process.
 
@@ -353,7 +353,7 @@ Acceptance:
 
 - [ ] Free analysis works without account.
 - [ ] Paid pack delivery does not require persistent user accounts.
-- [ ] Paid artifact storage is still TTL-bound.
+- [ ] Paid artifact access requires the private report token.
 
 ## 12. Launch Readiness Drill
 

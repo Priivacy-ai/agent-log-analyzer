@@ -747,7 +747,7 @@ func pluginVersion(report analyzer.Report) string {
 
 func installInstructions(pluginName, artifactURL string) Install {
 	if artifactURL == "" {
-		artifactURL = "<short-lived-plugin-zip-url>"
+		artifactURL = "<private-plugin-zip-url>"
 	}
 	command := strings.Join([]string{
 		`PLUGIN_URL="` + artifactURL + `"`,
@@ -761,7 +761,7 @@ func installInstructions(pluginName, artifactURL string) Install {
 		ClaudePrompt:     prompt,
 		UninstallCommand: "No persistent install is performed by the default command. Close the Claude Code session to unload " + pluginName + ".",
 		Notes: []string{
-			"The default command uses Claude Code's --plugin-dir support with a short-lived zip artifact.",
+			"The default command uses Claude Code's --plugin-dir support with a private-link zip artifact.",
 			"Marketplace installation can be added later once the plugin store is live.",
 		},
 	}

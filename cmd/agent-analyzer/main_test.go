@@ -454,9 +454,10 @@ func TestRunOneShot_AnalyzesAndUploadsSanitizedReport(t *testing.T) {
 		if received.SecurityReceipt.RawLogTTL != "not uploaded" || received.SecurityReceipt.RawTranscriptSentToLLM {
 			t.Fatalf("uploaded report violated local-first receipt: %#v", received.SecurityReceipt)
 		}
+		expiresAt := time.Now().Add(15 * time.Minute)
 		_ = json.NewEncoder(w).Encode(uploadResult{
 			ReportURL: serverURL(r) + "/r/job-token/report-token",
-			ExpiresAt: time.Now().Add(15 * time.Minute),
+			ExpiresAt: &expiresAt,
 		})
 	}))
 	defer server.Close()
@@ -501,9 +502,10 @@ func TestRunFullScan_AnalyzesPaidAggregateAndUploadsWithEntitlementToken(t *test
 		if err := json.NewDecoder(r.Body).Decode(&received); err != nil {
 			t.Fatalf("decode uploaded report: %v", err)
 		}
+		expiresAt := time.Now().Add(15 * time.Minute)
 		_ = json.NewEncoder(w).Encode(uploadResult{
 			ReportURL: serverURL(r) + "/r/job-token/report-token",
-			ExpiresAt: time.Now().Add(15 * time.Minute),
+			ExpiresAt: &expiresAt,
 		})
 	}))
 	defer server.Close()

@@ -521,7 +521,7 @@ func TestClientReportUploadStoresSanitizedReportOnly(t *testing.T) {
 	req.Host = "example.test"
 	rec := httptest.NewRecorder()
 
-	createClientReportHandler(store, 15*time.Minute).ServeHTTP(rec, req)
+	createClientReportHandler(store, 0).ServeHTTP(rec, req)
 
 	if rec.Code != http.StatusCreated {
 		t.Fatalf("expected client report status 201, got %d: %s", rec.Code, rec.Body.String())
@@ -532,6 +532,9 @@ func TestClientReportUploadStoresSanitizedReportOnly(t *testing.T) {
 	}
 	if session.Token != "" || session.UploadPath != "" || !strings.Contains(session.ReportURL, "/r/") {
 		t.Fatalf("expected report-only response, got %#v", session)
+	}
+	if session.ExpiresAt != nil || strings.Contains(rec.Body.String(), "expires_at") {
+		t.Fatalf("expected permanent report response without expires_at, got %#v body=%s", session, rec.Body.String())
 	}
 	stored, err := store.GetReport(session.JobID)
 	if err != nil {

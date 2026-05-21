@@ -59,7 +59,7 @@ func reportPageHandler(store app.APIStore) http.HandlerFunc {
 			Report:      report,
 			Job:         job,
 			ArtifactURL: artifactURL,
-			StatusText:  "This report is visible for 15 minutes.",
+			StatusText:  "This private report link does not expire.",
 			ReportToken: r.PathValue("token"),
 		})
 	}
@@ -68,7 +68,7 @@ func reportPageHandler(store app.APIStore) http.HandlerFunc {
 func renderReportStatusPage(w http.ResponseWriter, job app.Job) {
 	renderReportHTML(w, reportPageData{
 		Job:        job,
-		StatusText: fmt.Sprintf("This report is visible for 15 minutes after completion. Current status: %s.", job.Status),
+		StatusText: fmt.Sprintf("This private report link will remain available after completion. Current status: %s.", job.Status),
 	})
 }
 
@@ -128,7 +128,7 @@ var reportHTMLTemplate = template.Must(template.New("report").Funcs(template.Fun
   <body>
     <main class="shell">
       <section class="report" id="report">
-        <p class="expiry" id="report-status">{{.StatusText}} {{helpTip "Why only 15 minutes? The hosted report is short-lived because even sanitized workflow metadata can be sensitive. Raw logs are not uploaded; rerun the local command to regenerate a fresh report link."}}</p>
+        <p class="expiry" id="report-status">{{.StatusText}} {{helpTip "Why is the report permanent? The hosted report contains sanitized metrics and bounded evidence, not raw transcripts. Treat the URL as a private link because anyone with the token can view it."}}</p>
         {{if eq .Job.Status "completed"}}
         <div class="zero-token-banner">
           <strong>0 model tokens used to generate this report.</strong>
@@ -254,7 +254,7 @@ var reportHTMLTemplate = template.Must(template.New("report").Funcs(template.Fun
           <ul class="upsell-proof">
             <li>Raw transcripts stay local.</li>
             <li>Email confirmation unlocks the second NPX command.</li>
-            <li>The plugin and full report use the same short-lived report boundary.</li>
+            <li>The plugin and full report use the same private report token.</li>
           </ul>
           </div>
           <div class="upsell-action">

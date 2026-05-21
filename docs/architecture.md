@@ -16,8 +16,8 @@ local CLI
 API Gateway / tiny Go control plane
   |
   +--> sanitized report intake
-  +--> short-lived job/report metadata
-  +--> short-lived report storage
+  +--> durable private-link job/report metadata
+  +--> durable private-link report storage
 ```
 
 The launch architecture keeps raw agent logs on the user's machine. The public upload UX is local CLI analysis plus sanitized-report upload; there is no browser file upload form, no public multipart upload endpoint, and no public raw-log upload prompt.
@@ -37,7 +37,7 @@ api container
   +--> /data/reports
 ```
 
-This is deliberately simpler than production but preserves the important product boundary: the raw log is analyzed locally, the server receives only a sanitized report artifact, and reports are short-lived.
+This is deliberately simpler than production but preserves the important product boundary: the raw log is analyzed locally, the server receives only a sanitized report artifact, and reports are available through private unguessable links.
 
 ## Production Mapping
 
@@ -45,7 +45,7 @@ This is deliberately simpler than production but preserves the important product
 | --- | --- |
 | `/data/uploads` | S3 quarantine bucket with 15 minute lifecycle |
 | `/data/jobs/pending` | SQS |
-| `/data/reports` | S3 report bucket with TTL |
+| `/data/reports` | S3 report bucket |
 | API container | CDN + API Gateway + Go/Lambda control plane |
 | Worker container | ECS Fargate worker in private subnet |
 
@@ -79,7 +79,7 @@ Email-confirmed full scan:
 - local CLI analyzes up to 100 recent logs per supported source after email unlock
 - user reviews a sanitized aggregate report
 - server receives sanitized aggregate report JSON only
-- plugin artifact retention is separate from the free report TTL
+- plugin artifact access uses the private report token
 
 ## Scale Gates
 

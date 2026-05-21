@@ -15,7 +15,7 @@ intermediate parsed transcript:
 
 sanitized report JSON:
   local MVP: stored under /data/reports after explicit upload
-  production: 15 minutes free, 24 hours full-scan/plugin artifact
+  production: retained as a durable private-link report artifact
   analytics: never as raw JSON
 
 email unlock records:
@@ -25,7 +25,7 @@ email unlock records:
 
 job metadata:
   local MVP: job JSON files
-  production: short-lived metadata with TTL
+  production: retained with report metadata for durable private links
   analytics: status/timing/error category only
 
 aggregate analytics:
@@ -93,8 +93,8 @@ Unknown private names are counted, not stored:
 Exact unknown names require explicit opt-in.
 
 The retained event is intentionally narrower than `Report` and
-`AggregateSafeEvent`. Report JSON remains a short-lived product artifact; it is
-not the analytics storage format. See
+`AggregateSafeEvent`. Report JSON is a durable product artifact behind an
+unguessable private report token; it is not the analytics storage format. See
 [`aggregate-analytics-threat-model.md`](aggregate-analytics-threat-model.md).
 
 ## Upload Scope

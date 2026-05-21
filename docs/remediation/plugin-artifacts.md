@@ -37,7 +37,7 @@ Claude Code plugins use a root directory with:
 The generator follows that structure so the paid artifact can be loaded as a Claude Code plugin archive. The default command uses Claude Code's session-scoped plugin loading:
 
 ```sh
-PLUGIN_URL="<short-lived-plugin-zip-url>"
+PLUGIN_URL="<private-plugin-zip-url>"
 PLUGIN_ZIP="$(mktemp -t agent-analyzer-plugin.XXXXXX.zip)"
 curl -fsS "$PLUGIN_URL" -o "$PLUGIN_ZIP"
 claude --plugin-dir "$PLUGIN_ZIP"

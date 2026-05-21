@@ -119,7 +119,7 @@ async function pollPaidJob(jobID, reportPath) {
 }
 
 async function pollReport(jobID, token) {
-  setReportStatus("This report is visible for 15 minutes. Waiting for analysis.");
+  setReportStatus("This private report link will remain available. Waiting for analysis.");
   for (;;) {
     const jobResponse = await fetch(`/api/jobs/${jobID}`);
     if (jobResponse.ok) {
@@ -129,7 +129,7 @@ async function pollReport(jobID, token) {
         return;
       }
       if (job.status !== "completed") {
-        setReportStatus(`This report is visible for 15 minutes. Status: ${job.status}.`);
+        setReportStatus(`This private report link will remain available. Status: ${job.status}.`);
         await sleep(1000);
         continue;
       }
@@ -149,7 +149,7 @@ async function pollReport(jobID, token) {
 }
 
 function renderReport(report) {
-  document.querySelector("#report-status").textContent = "This report is visible for 15 minutes.";
+  document.querySelector("#report-status").textContent = "This private report link does not expire.";
   document.querySelector("#score").textContent = report.score;
   document.querySelector("#waste").textContent =
     `${report.estimated_waste_pct.low}-${report.estimated_waste_pct.high}% avoidable token spend`;
@@ -1676,7 +1676,7 @@ function renderPaidCommandPreview(report) {
       "Install the generated Agent Analyzer optimization plugin for this session. Run the command below, explain what it installs, summarize the waiver, and ask for approval before executing it. Do not print plugin archive contents.\n\n```sh\n" +
       command +
       "\n```";
-    if (paidStatus) paidStatus.textContent = "optimization plugin ready; artifact URL expires with this report";
+    if (paidStatus) paidStatus.textContent = "optimization plugin ready; artifact URL uses this private report token";
     if (copyPaidCommandButton) copyPaidCommandButton.hidden = false;
     if (unlockPaidButton) unlockPaidButton.hidden = true;
     if (waiverAccepted) waiverAccepted.closest("label").hidden = true;

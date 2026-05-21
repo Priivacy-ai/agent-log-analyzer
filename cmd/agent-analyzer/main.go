@@ -508,7 +508,7 @@ func runOneShot(args []string) error {
 	}
 	fmt.Printf("Uploaded sanitized report only: %s\n", *out)
 	fmt.Printf("Report: %s\n", result.ReportURL)
-	if !result.ExpiresAt.IsZero() {
+	if result.ExpiresAt != nil && !result.ExpiresAt.IsZero() {
 		fmt.Printf("Expires: %s\n", result.ExpiresAt.Local().Format(time.RFC1123))
 	}
 	if !*noOpen {
@@ -606,7 +606,7 @@ func runFullScan(args []string) error {
 	}
 	fmt.Printf("Uploaded sanitized full-scan report only: %s\n", *out)
 	fmt.Printf("Report: %s\n", result.ReportURL)
-	if !result.ExpiresAt.IsZero() {
+	if result.ExpiresAt != nil && !result.ExpiresAt.IsZero() {
 		fmt.Printf("Expires: %s\n", result.ExpiresAt.Local().Format(time.RFC1123))
 	}
 	if !*noOpen {
@@ -631,15 +631,15 @@ func runUpload(args []string) error {
 	}
 	fmt.Printf("Uploaded sanitized report only: %s\n", reportPath)
 	fmt.Printf("Report: %s\n", result.ReportURL)
-	if !result.ExpiresAt.IsZero() {
+	if result.ExpiresAt != nil && !result.ExpiresAt.IsZero() {
 		fmt.Printf("Expires: %s\n", result.ExpiresAt.Local().Format(time.RFC1123))
 	}
 	return nil
 }
 
 type uploadResult struct {
-	ReportURL string    `json:"report_url"`
-	ExpiresAt time.Time `json:"expires_at"`
+	ReportURL string     `json:"report_url"`
+	ExpiresAt *time.Time `json:"expires_at,omitempty"`
 }
 
 func uploadReport(reportPath, baseURL string) (uploadResult, error) {

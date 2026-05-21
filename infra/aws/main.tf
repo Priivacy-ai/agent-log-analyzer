@@ -276,23 +276,6 @@ resource "aws_s3_bucket_lifecycle_configuration" "uploads" {
   }
 }
 
-resource "aws_s3_bucket_lifecycle_configuration" "reports" {
-  bucket = aws_s3_bucket.reports.id
-
-  rule {
-    id     = "backstop-expire-reports"
-    status = "Enabled"
-
-    filter {
-      prefix = "reports/"
-    }
-
-    expiration {
-      days = 1
-    }
-  }
-}
-
 resource "aws_sqs_queue" "jobs" {
   name                       = "${local.name}-jobs"
   visibility_timeout_seconds = 180
@@ -697,7 +680,7 @@ resource "aws_ecs_task_definition" "sweeper" {
     essential = true
     environment = concat(local.env, [
       { name = "CLAUDE_ANALYZER_UPLOAD_TTL", value = "15m" },
-      { name = "CLAUDE_ANALYZER_REPORT_TTL", value = "15m" }
+      { name = "CLAUDE_ANALYZER_REPORT_TTL", value = "0" }
     ])
     logConfiguration = {
       logDriver = "awslogs"

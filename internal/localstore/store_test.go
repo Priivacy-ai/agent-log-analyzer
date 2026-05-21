@@ -10,7 +10,7 @@ import (
 	"github.com/priivacy-ai/agent-log-analyzer/internal/analytics"
 )
 
-func TestSweepExpiredDeletesOldUploadsAndReports(t *testing.T) {
+func TestSweepExpiredDeletesOldUploadsButKeepsReportsWhenReportTTLDisabled(t *testing.T) {
 	store, err := New(t.TempDir())
 	if err != nil {
 		t.Fatalf("New failed: %v", err)
@@ -35,17 +35,43 @@ func TestSweepExpiredDeletesOldUploadsAndReports(t *testing.T) {
 		t.Fatalf("Chtimes report failed: %v", err)
 	}
 
-	result, err := store.SweepExpired(time.Now(), 15*time.Minute, 15*time.Minute)
+	result, err := store.SweepExpired(time.Now(), 15*time.Minute, 0)
 	if err != nil {
 		t.Fatalf("SweepExpired failed: %v", err)
 	}
-	if result.UploadsDeleted != 1 || result.ReportsDeleted != 1 {
+	if result.UploadsDeleted != 1 || result.ReportsDeleted != 0 {
 		t.Fatalf("unexpected sweep result: %#v", result)
 	}
 	if _, err := os.Stat(uploadPath); !os.IsNotExist(err) {
 		t.Fatalf("expected upload deleted, stat err: %v", err)
 	}
-	if _, err := os.Stat(store.root + "/reports/job-12345678.json"); !os.IsNotExist(err) {
+	if _, err := os.Stat(store.root + "/reports/job-12345678.json"); err != nil {
+		t.Fatalf("expected report retained, stat err: %v", err)
+	}
+}
+
+func TestSweepExpiredDeletesReportsWhenReportTTLConfigured(t *testing.T) {
+	store, err := New(t.TempDir())
+	if err != nil {
+		t.Fatalf("New failed: %v", err)
+	}
+	reportPath := store.root + "/reports/job-12345678.json"
+	if err := writeJSON(reportPath, map[string]string{"report": "ok"}); err != nil {
+		t.Fatalf("write report failed: %v", err)
+	}
+	old := time.Now().Add(-30 * time.Minute)
+	if err := os.Chtimes(reportPath, old, old); err != nil {
+		t.Fatalf("Chtimes report failed: %v", err)
+	}
+
+	result, err := store.SweepExpired(time.Now(), 15*time.Minute, 15*time.Minute)
+	if err != nil {
+		t.Fatalf("SweepExpired failed: %v", err)
+	}
+	if result.ReportsDeleted != 1 {
+		t.Fatalf("unexpected sweep result: %#v", result)
+	}
+	if _, err := os.Stat(reportPath); !os.IsNotExist(err) {
 		t.Fatalf("expected report deleted, stat err: %v", err)
 	}
 }

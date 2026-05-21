@@ -32,7 +32,7 @@
         <ul class="trust">
           <li>No account required</li>
           <li>Raw logs stay local in the public flow <button type="button" class="help-tip" data-tippy-content="The NPX command analyzes Claude Code, Codex, and OpenCode logs on your machine first. The upload step sends the generated sanitized report JSON, not raw transcript files." aria-label="More information">?</button></li>
-          <li>Reports are not used for training <button type="button" class="help-tip" data-tippy-content="The service stores short-lived reports for rendering and bounded aggregate analytics. It does not feed uploaded reports into model training." aria-label="More information">?</button></li>
+          <li>Reports are not used for training <button type="button" class="help-tip" data-tippy-content="The service stores sanitized reports for rendering and bounded aggregate analytics. It does not feed uploaded reports into model training." aria-label="More information">?</button></li>
           <li>Secrets redacted locally before upload <button type="button" class="help-tip" data-tippy-content="The CLI runs deterministic redaction on your computer before writing the report JSON. The hosted service receives category counts and placeholders, not the original redacted values. Redaction is best-effort; users should still review the JSON before upload." aria-label="More information">?</button></li>
         </ul>
         <p class="disclaimer">The public flow runs analysis on your machine and uploads only the sanitized JSON report you review.</p>
@@ -65,11 +65,11 @@
 
           <div class="data-path">
             <h2>Data path</h2>
-            <div class="path-rail" aria-label="Raw logs to local analyzer to sanitized report to short-lived hosted report">
+            <div class="path-rail" aria-label="Raw logs to local analyzer to sanitized report to private hosted report">
               <span>Claude / Codex / OpenCode logs</span>
               <span>local analyzer</span>
               <span>sanitized JSON</span>
-              <span>15-minute report</span>
+              <span>private report link</span>
             </div>
             <p>Raw transcripts are not uploaded in the public flow. The hosted page receives the generated report artifact, not your original session files.</p>
           </div>
@@ -116,7 +116,7 @@
       </section>
 
       <section class="report" id="report" hidden>
-        <p class="expiry" id="report-status">This report is visible for 15 minutes.</p>
+        <p class="expiry" id="report-status">This private report link does not expire.</p>
         <div class="zero-token-banner">
           <strong>0 model tokens used to generate this report.</strong>
           <span>Agent Analyzer uses deterministic local parsing and server-side rendering, not an LLM reading your logs.</span>
@@ -201,7 +201,7 @@
             <ul class="upsell-proof">
               <li>Raw transcripts stay local.</li>
               <li>Email confirmation unlocks the second NPX command.</li>
-              <li>The plugin and full report use the same short-lived report boundary.</li>
+              <li>The plugin and full report use the same private report token.</li>
             </ul>
           </div>
           <div class="upsell-action">

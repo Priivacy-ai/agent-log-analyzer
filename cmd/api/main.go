@@ -28,16 +28,16 @@ const maxPaidUploadBytes = 250 * 1024 * 1024
 const maxClientReportBytes = 1024 * 1024
 
 type analysisSessionResponse struct {
-	JobID        string    `json:"job_id"`
-	Token        string    `json:"token"`
-	UploadPath   string    `json:"upload_path"`
-	FinalizePath string    `json:"finalize_path"`
-	ReportPath   string    `json:"report_path"`
-	ReportURL    string    `json:"report_url"`
-	ExpiresAt    time.Time `json:"expires_at"`
-	MaxBytes     int64     `json:"max_bytes"`
-	Command      string    `json:"command"`
-	Prompt       string    `json:"prompt"`
+	JobID        string     `json:"job_id"`
+	Token        string     `json:"token"`
+	UploadPath   string     `json:"upload_path"`
+	FinalizePath string     `json:"finalize_path"`
+	ReportPath   string     `json:"report_path"`
+	ReportURL    string     `json:"report_url"`
+	ExpiresAt    *time.Time `json:"expires_at,omitempty"`
+	MaxBytes     int64      `json:"max_bytes"`
+	Command      string     `json:"command"`
+	Prompt       string     `json:"prompt"`
 }
 
 type paidSessionRequest struct {
@@ -134,7 +134,7 @@ func createClientReportHandler(store app.APIStore, expiresIn time.Duration) http
 			JobID:      jobID,
 			ReportPath: reportPath,
 			ReportURL:  publicBaseURL(r) + reportPath,
-			ExpiresAt:  now.Add(expiresIn),
+			ExpiresAt:  reportExpiresAt(now, expiresIn),
 			MaxBytes:   maxClientReportBytes,
 		})
 	}
@@ -201,7 +201,7 @@ func createPaidClientReportHandler(store app.APIStore, expiresIn time.Duration) 
 			JobID:      jobID,
 			ReportPath: reportPath,
 			ReportURL:  publicBaseURL(r) + reportPath,
-			ExpiresAt:  now.Add(expiresIn),
+			ExpiresAt:  reportExpiresAt(now, expiresIn),
 			MaxBytes:   maxClientReportBytes,
 		})
 	}
@@ -309,7 +309,7 @@ func createPaidSessionHandler(store app.APIStore, expiresIn time.Duration) http.
 			FinalizePath: finalizePath,
 			ReportPath:   reportPath,
 			ReportURL:    baseURL + reportPath,
-			ExpiresAt:    job.UploadTokenExpiresAt,
+			ExpiresAt:    timePtr(job.UploadTokenExpiresAt),
 			MaxBytes:     maxPaidUploadBytes,
 		}
 		response.Command = paidShellCommand(baseURL, response)
@@ -385,7 +385,7 @@ func createAnalysisSessionHandler(store app.APIStore, maxDepth int, expiresIn ti
 			FinalizePath: finalizePath,
 			ReportPath:   reportPath,
 			ReportURL:    baseURL + reportPath,
-			ExpiresAt:    job.UploadTokenExpiresAt,
+			ExpiresAt:    timePtr(job.UploadTokenExpiresAt),
 			MaxBytes:     maxUploadBytes,
 		}
 		response.Command = shellCommand(baseURL, response, reportToken)
@@ -861,13 +861,27 @@ func uploadTokenTTL() time.Duration {
 }
 
 func reportTTL() time.Duration {
-	raw := getenv("CLAUDE_ANALYZER_REPORT_TTL", "15m")
+	raw := getenv("CLAUDE_ANALYZER_REPORT_TTL", "0")
 	duration, err := time.ParseDuration(raw)
-	if err != nil || duration <= 0 {
+	if err != nil {
 		slog.Warn("invalid report ttl", "error_category", "configuration")
-		return 15 * time.Minute
+		return 0
 	}
 	return duration
+}
+
+func reportExpiresAt(now time.Time, ttl time.Duration) *time.Time {
+	if ttl <= 0 {
+		return nil
+	}
+	return timePtr(now.Add(ttl))
+}
+
+func timePtr(t time.Time) *time.Time {
+	if t.IsZero() {
+		return nil
+	}
+	return &t
 }
 
 func maxQueueDepth() int {

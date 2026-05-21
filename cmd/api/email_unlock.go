@@ -261,7 +261,7 @@ func createFullScanClientReportHandler(store app.APIStore, sender emailSender, e
 			JobID:      jobID,
 			ReportPath: reportPath,
 			ReportURL:  reportURL,
-			ExpiresAt:  now.Add(expiresIn),
+			ExpiresAt:  reportExpiresAt(now, expiresIn),
 			MaxBytes:   maxClientReportBytes,
 		})
 	}
@@ -390,7 +390,7 @@ func fullScanCommandEmailBody(command string, expiresAt time.Time) string {
 }
 
 func pluginReadyEmailBody(reportURL, artifactURL string) string {
-	return "Your full Agent Analyzer report and generated optimization plugin are ready.\n\nReport:\n" + reportURL + "\n\nPlugin zip:\n" + artifactURL + "\n\nBoth use the short-lived report token from this run.\n"
+	return "Your full Agent Analyzer report and generated optimization plugin are ready.\n\nReport:\n" + reportURL + "\n\nPlugin zip:\n" + artifactURL + "\n\nBoth use the private report token from this run.\n"
 }
 
 func fullScanNPXCommand(baseURL, token string) string {
