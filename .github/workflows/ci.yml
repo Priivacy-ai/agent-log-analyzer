@@ -41,8 +41,10 @@ jobs:
         run: |
           terraform -chdir=infra/aws init -backend=false
           terraform -chdir=infra/aws validate
+      - name: aws deploy script syntax
+        run: bash -n scripts/deploy-aws.sh
       - name: docker build
-        run: docker build .
+        run: docker buildx build --platform linux/amd64 .
       - name: docker compose smoke
         run: ./scripts/smoke-local.sh
       - name: docker compose load smoke

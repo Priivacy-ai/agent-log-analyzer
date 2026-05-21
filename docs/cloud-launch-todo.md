@@ -108,10 +108,15 @@ Acceptance:
 - [x] Build and push:
 
   ```sh
-  ECR_REPO="$(terraform -chdir=infra/aws output -raw ecr_repository_url)"
-  docker build -t "$ECR_REPO:latest" .
-  docker push "$ECR_REPO:latest"
+  AWS_PROFILE=claude-analyzer-prod AWS_REGION=us-east-1 ./scripts/deploy-aws.sh
   ```
+
+- [x] Guard image platform before ECS deploy:
+  - production Fargate expects `linux/amd64`;
+  - `scripts/deploy-aws.sh` refuses any other `PLATFORM`;
+  - the script verifies the local Docker image reports `linux/amd64`;
+  - the script verifies the pushed ECR manifest reports `linux/amd64`;
+  - ECS services are updated only after both checks pass.
 
 - [x] Force ECS services to pull the image:
 

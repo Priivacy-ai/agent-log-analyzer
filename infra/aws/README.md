@@ -24,12 +24,15 @@ terraform plan
 Image flow:
 
 ```sh
-aws ecr get-login-password --region us-east-1 \
-  | docker login --username AWS --password-stdin "$(terraform output -raw ecr_repository_url | cut -d/ -f1)"
-
-docker build -t "$(terraform output -raw ecr_repository_url):latest" ../..
-docker push "$(terraform output -raw ecr_repository_url):latest"
+AWS_PROFILE=claude-analyzer-prod AWS_REGION=us-east-1 ./scripts/deploy-aws.sh
 ```
+
+Do not use a plain `docker build` for production deploys. Production Fargate
+tasks run `linux/amd64`; `scripts/deploy-aws.sh` builds with
+`--platform linux/amd64`, verifies the local image architecture, verifies the
+pushed ECR manifest, and only then forces the ECS services to redeploy. This
+prevents Apple Silicon `linux/arm64` images from reaching Fargate and failing
+with `exec format error`.
 
 Production notes:
 
