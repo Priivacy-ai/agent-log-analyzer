@@ -862,6 +862,16 @@ const INSTALL_SURFACE_LABEL = {
   session_workflow_and_config_audit: "Session workflow audit",
 };
 
+const TOOL_PURPOSE = {
+  ccusage: "ccusage reads Claude Code usage data so you can see token burn, cache behavior, and cost trends instead of guessing.",
+  ccstatusline: "ccstatusline puts lightweight usage and session telemetry in your statusline so drift is visible while you work.",
+  context_mode: "Context Mode compresses or externalizes noisy tool output before it pollutes future turns.",
+  claude_context: "claude-context adds semantic retrieval so the agent can ask for targeted code context instead of repeatedly rereading files.",
+  claude_token_efficient: "claude-token-efficient reduces assistant verbosity so future context grows more slowly.",
+  claude_code_hooks_mastery: "Claude Code Hooks Mastery is a reference set for deterministic hooks that can enforce session hygiene.",
+  rtk: "RTK is a high-risk shell-output reducer candidate. Only consider the linked rtk-ai/rtk project, not unrelated packages with the same name.",
+};
+
 function savingsBucket(report) {
   const high = report?.estimated_waste_pct?.high ?? 0;
   if (high < 10) return "low";
@@ -943,26 +953,42 @@ function buildRecommendationCard(rec, savingsBucketValue) {
   // PrimaryToolID; render those as actions instead of blank tool cards.
   const toolID = typeof rec.primary_tool_id === "string" ? rec.primary_tool_id : "";
   const toolName = typeof rec.primary_tool_name === "string" ? rec.primary_tool_name : "";
+  const header = document.createElement("div");
+  header.className = "recommendation-header";
+  const headerText = document.createElement("div");
+  const kicker = document.createElement("span");
+  kicker.className = "recommendation-kicker";
+  kicker.textContent = recommendationProblem(rec);
   const toolEl = document.createElement("div");
   toolEl.className = "recommendation-tool";
   toolEl.textContent = toolID.length > 0
     ? (toolName.length > 0 ? toolName : labelFrom(TOOL_LABEL, toolID, "Unknown tool"))
     : advisoryRecommendationLabel(rec);
-  card.appendChild(toolEl);
+  headerText.append(kicker, toolEl);
+  const verdict = document.createElement("span");
+  verdict.className = "recommendation-verdict";
+  verdict.textContent = recommendationVerdict(rec);
+  header.append(headerText, verdict);
+  card.appendChild(header);
+
+  const purpose = document.createElement("p");
+  purpose.className = "recommendation-purpose";
+  purpose.textContent = recommendationPurpose(rec);
+  card.appendChild(purpose);
+
+  const nextStep = document.createElement("div");
+  nextStep.className = "recommendation-next-step";
+  const nextStrong = document.createElement("strong");
+  nextStrong.textContent = recommendationAction(rec);
+  const nextSpan = document.createElement("span");
+  nextSpan.textContent = recommendationPluginPitch(rec);
+  nextStep.append(nextStrong, nextSpan);
+  card.appendChild(nextStep);
 
   const reportSourceURL = typeof rec.primary_tool_url === "string" ? rec.primary_tool_url : "";
   const sourceURL = reportSourceURL.startsWith("https://")
     ? reportSourceURL
     : (toolID.length > 0 && Object.hasOwn(TOOL_URL, toolID) ? TOOL_URL[toolID] : "");
-  if (sourceURL.length > 0) {
-    const source = document.createElement("a");
-    source.className = "recommendation-source";
-    source.href = sourceURL;
-    source.rel = "noopener noreferrer";
-    source.target = "_blank";
-    source.textContent = sourceURL;
-    card.appendChild(source);
-  }
 
   // Optional savings-bucket badge (Primary only).
   if (typeof savingsBucketValue === "string" && savingsBucketValue.length > 0) {
@@ -990,14 +1016,18 @@ function buildRecommendationCard(rec, savingsBucketValue) {
   const risk = typeof rec.risk_level === "string" ? rec.risk_level : "";
   const riskEl = document.createElement("span");
   riskEl.className = "recommendation-risk";
-  riskEl.textContent = labelFrom(RISK_LABEL, risk, "Unknown risk");
+  riskEl.textContent = `${labelFrom(RISK_LABEL, risk, "Unknown risk")} install risk`;
   meta.appendChild(riskEl);
 
-  const policy = typeof rec.install_policy === "string" ? rec.install_policy : "";
-  const policyEl = document.createElement("span");
-  policyEl.className = "recommendation-policy";
-  policyEl.textContent = labelFrom(POLICY_LABEL, policy, "Unknown policy");
-  meta.appendChild(policyEl);
+  if (sourceURL.length > 0) {
+    const source = document.createElement("a");
+    source.className = "recommendation-source";
+    source.href = sourceURL;
+    source.rel = "noopener noreferrer";
+    source.target = "_blank";
+    source.textContent = "Source";
+    meta.appendChild(source);
+  }
 
   card.appendChild(meta);
 
@@ -1063,6 +1093,65 @@ function buildRecommendationCard(rec, savingsBucketValue) {
   }
 
   return card;
+}
+
+function recommendationProblem(rec) {
+  const signals = Array.isArray(rec.signal_ids) ? rec.signal_ids : [];
+  if (signals.includes("no_usage_visibility")) return "You lack usage visibility";
+  if (signals.some((signal) => ["repeated_file_reads", "broad_repo_exploration", "unchanged_file_rereads"].includes(signal))) {
+    return "Your agent is rereading too much";
+  }
+  if (signals.some((signal) => ["tool_output_bloat", "shell_output_bloat", "mcp_tool_output_bloat"].includes(signal))) {
+    return "Tool output is flooding context";
+  }
+  if (signals.includes("mcp_skill_bloat")) return "Your tool surface may be too wide";
+  if (signals.some((signal) => ["retry_loop", "context_growth_spikes"].includes(signal))) return "Session hygiene is degrading";
+  if (signals.includes("output_verbosity")) return "Assistant output is accumulating";
+  return "Tooling gap detected";
+}
+
+function recommendationPurpose(rec) {
+  const toolID = typeof rec.primary_tool_id === "string" ? rec.primary_tool_id : "";
+  if (Object.hasOwn(TOOL_PURPOSE, toolID)) return TOOL_PURPOSE[toolID];
+  const signals = Array.isArray(rec.signal_ids) ? rec.signal_ids : [];
+  if (signals.includes("mcp_skill_bloat")) {
+    return "This is not a request to install another tool. First prune or lazy-load MCPs and skills that are exposed but rarely used.";
+  }
+  if (signals.some((signal) => ["retry_loop", "context_growth_spikes"].includes(signal))) {
+    return "This is a workflow recommendation: add rules that make the agent stop, compact, or split the session before degradation compounds.";
+  }
+  if (signals.some((signal) => ["repeated_file_reads", "broad_repo_exploration", "unchanged_file_rereads"].includes(signal))) {
+    return "Retrieval tooling can reduce repeated file reads by giving the agent a narrower way to locate relevant code.";
+  }
+  if (signals.includes("no_usage_visibility")) {
+    return "Usage visibility tools make token burn and cache behavior visible so you can tell whether changes are working.";
+  }
+  return "This recommendation is matched from a vetted allowlist against deterministic waste signals in the report.";
+}
+
+function recommendationAction(rec) {
+  const toolID = typeof rec.primary_tool_id === "string" ? rec.primary_tool_id : "";
+  const risk = typeof rec.risk_level === "string" ? rec.risk_level : "";
+  if (toolID.length === 0) return "Do not install anything yet.";
+  if (risk === "high") return "Review the source and wait for the full-scan plugin before installing.";
+  if (risk === "medium") return "Review the source first; prefer plugin-generated setup instructions.";
+  return "Review the source, or let the plugin configure the right path after the full scan.";
+}
+
+function recommendationPluginPitch(rec) {
+  const toolID = typeof rec.primary_tool_id === "string" ? rec.primary_tool_id : "";
+  if (toolID.length === 0) {
+    return "The plugin can convert this into concrete config cleanup rules from your full history.";
+  }
+  return "The plugin packages vetted recommendations and avoids one-off manual setup guesses.";
+}
+
+function recommendationVerdict(rec) {
+  const toolID = typeof rec.primary_tool_id === "string" ? rec.primary_tool_id : "";
+  const risk = typeof rec.risk_level === "string" ? rec.risk_level : "";
+  if (toolID.length === 0) return "Prune first";
+  if (risk === "high") return "Careful review";
+  return "Candidate";
 }
 
 function advisoryRecommendationLabel(rec) {

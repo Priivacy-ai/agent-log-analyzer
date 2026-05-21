@@ -2053,26 +2053,113 @@ pre {
 /* Token-saving recommendation panel — kitty-specs/token-saving-recommendation-phase-b-01KS0JZ4 */
 #recommendation-section {
   display: grid;
-  gap: 0.75rem;
+  gap: 14px;
 }
+
+.recommendation-cta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.recommendation-allowlist-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 42px;
+  padding: 10px 13px;
+  border: 1px solid rgba(121, 192, 255, 0.28);
+  border-radius: 6px;
+  color: #9bcfff;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
 .recommendation-card {
   display: grid;
-  gap: 0.5rem;
-  padding: 0.75rem 1rem;
-  border: 1px solid var(--line);
-  border-radius: 6px;
-  background: var(--panel-2);
+  gap: 12px;
+  padding: clamp(16px, 2vw, 22px);
+  border: 1px solid rgba(121, 192, 255, 0.22);
+  border-left: 4px solid rgba(126, 231, 135, 0.68);
+  border-radius: 8px;
+  background:
+    linear-gradient(135deg, rgba(126, 231, 135, 0.06), transparent 36%),
+    rgba(8, 11, 16, 0.72);
 }
+
+.recommendation-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: start;
+}
+
+.recommendation-kicker {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--green);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0;
+}
+
 .recommendation-tool {
   font-weight: 600;
-  font-size: 1.05em;
+  font-size: clamp(20px, 2vw, 28px);
+  line-height: 1.05;
 }
+
+.recommendation-verdict {
+  flex: 0 0 auto;
+  padding: 5px 9px;
+  border: 1px solid rgba(126, 231, 135, 0.28);
+  border-radius: 999px;
+  background: rgba(126, 231, 135, 0.08);
+  color: var(--green);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.recommendation-purpose {
+  max-width: 980px;
+  margin: 0;
+  color: var(--text);
+  font-size: 16px;
+  line-height: 1.45;
+}
+
+.recommendation-next-step {
+  display: grid;
+  gap: 5px;
+  padding: 12px 14px;
+  border: 1px solid rgba(126, 231, 135, 0.16);
+  border-radius: 8px;
+  background: rgba(126, 231, 135, 0.035);
+}
+
+.recommendation-next-step strong {
+  color: var(--text);
+  font-size: 15px;
+}
+
+.recommendation-next-step span {
+  color: #9bcfff;
+  font-size: 14px;
+  line-height: 1.35;
+}
+
 .recommendation-source {
   justify-self: start;
-  color: var(--green);
-  font-size: 0.82em;
+  color: #9bcfff;
+  font-size: 0.85em;
   overflow-wrap: anywhere;
 }
+
 .recommendation-savings-bucket {
   justify-self: start;
   font-size: 0.8em;
@@ -2084,7 +2171,7 @@ pre {
 .recommendation-meta {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.4rem 0.8rem;
+  gap: 7px;
   align-items: center;
   font-size: 0.9em;
   color: var(--muted);
@@ -2093,9 +2180,9 @@ pre {
 .recommendation-confidence,
 .recommendation-risk,
 .recommendation-policy {
-  font-size: 0.85em;
-  padding: 0.05em 0.4em;
-  border-radius: 3px;
+  font-size: 12px;
+  padding: 3px 8px;
+  border-radius: 999px;
   background: rgba(180, 180, 180, 0.12);
 }
 .recommendation-fit {

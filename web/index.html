@@ -171,7 +171,11 @@
         </section>
         <section id="recommendation-section" class="intel-section" hidden>
           <h2>Recommended tools to address waste <button type="button" class="help-tip" data-tippy-content="Recommendation ranking comes from allowlisted tool metadata and deterministic signals such as tool-output bloat, retrieval friction, usage visibility, and MCP/skill utilization. Unknown private names are not echoed." aria-label="More information">?</button></h2>
-          <p class="section-note">Recommendations come from a public vetted allowlist. <a href="/allowed-tools.html">Review the allowlist and source URLs.</a></p>
+          <p class="section-note">These are not random installs. They are vetted options matched to this report's waste signals. If you do not want to evaluate tooling manually, generate the plugin and let it turn the full scan into setup instructions.</p>
+          <div class="recommendation-cta-row">
+            <a class="plugin-cta" href="#email-unlock">Generate plugin from full scan</a>
+            <a class="recommendation-allowlist-link" href="/allowed-tools.html">Review vetted allowlist</a>
+          </div>
           <div id="recommendation-primary"></div>
           <div id="recommendation-secondary"></div>
           <p id="recommendation-empty" hidden>No high-priority recommendation detected from current signals.</p>

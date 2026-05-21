@@ -85,28 +85,35 @@ func renderReportHTML(w http.ResponseWriter, data reportPageData) {
 }
 
 var reportHTMLTemplate = template.Must(template.New("report").Funcs(template.FuncMap{
-	"add":                   func(a, b int) int { return a + b },
-	"actionPlan":            actionPlanHTML,
-	"boolText":              boolText,
-	"bucketValue":           bucketValue,
-	"ecosystemPanel":        ecosystemPanelHTML,
-	"environmentSignals":    environmentSignalsHTML,
-	"findingEvidence":       findingEvidence,
-	"findingsBubbleChart":   findingsBubbleChartHTML,
-	"formatInt":             formatInt,
-	"formatTokens":          formatTokens,
-	"helpTip":               helpTip,
-	"join":                  joinStrings,
-	"logRefs":               logRefsHTML,
-	"mapLines":              mapLines,
-	"recommendationLabel":   recommendationLabel,
-	"recommendationName":    recommendationName,
-	"recommendationSignals": recommendationSignals,
-	"recommendationURL":     recommendationURL,
-	"receiptPanel":          receiptPanelHTML,
-	"savingsRange":          savingsRange,
-	"sourceLogLabel":        sourceLogLabel,
-	"timelineChart":         timelineChartHTML,
+	"add":                       func(a, b int) int { return a + b },
+	"actionPlan":                actionPlanHTML,
+	"boolText":                  boolText,
+	"bucketValue":               bucketValue,
+	"ecosystemPanel":            ecosystemPanelHTML,
+	"environmentSignals":        environmentSignalsHTML,
+	"findingEvidence":           findingEvidence,
+	"findingsBubbleChart":       findingsBubbleChartHTML,
+	"formatInt":                 formatInt,
+	"formatTokens":              formatTokens,
+	"helpTip":                   helpTip,
+	"join":                      joinStrings,
+	"logRefs":                   logRefsHTML,
+	"mapLines":                  mapLines,
+	"recommendationAction":      recommendationAction,
+	"recommendationLabel":       recommendationLabel,
+	"recommendationName":        recommendationName,
+	"recommendationPluginPitch": recommendationPluginPitch,
+	"recommendationProblem":     recommendationProblem,
+	"recommendationPurpose":     recommendationPurpose,
+	"recommendationReason":      recommendationReason,
+	"recommendationSignalLabel": recommendationSignalLabel,
+	"recommendationSignals":     recommendationSignals,
+	"recommendationURL":         recommendationURL,
+	"recommendationVerdict":     recommendationVerdict,
+	"receiptPanel":              receiptPanelHTML,
+	"savingsRange":              savingsRange,
+	"sourceLogLabel":            sourceLogLabel,
+	"timelineChart":             timelineChartHTML,
 }).Parse(`<!doctype html>
 <html lang="en">
   <head>
@@ -216,7 +223,11 @@ var reportHTMLTemplate = template.Must(template.New("report").Funcs(template.Fun
         {{if .Report.Recommendation}}
         <section id="recommendation-section" class="intel-section">
           <h2>Recommended tools to address waste {{helpTip "Why this recommendation? Ranking comes from public allowlisted tool metadata and deterministic signals such as tool-output bloat, retrieval friction, usage visibility, and MCP/skill utilization. Unknown private names are not echoed."}}</h2>
-          <p class="section-note">Recommendations come from a public vetted allowlist. <a href="/allowed-tools.html">Review the allowlist and source URLs.</a></p>
+          <p class="section-note">These are not random installs. They are vetted options matched to this report's waste signals. If you do not want to evaluate tooling manually, generate the plugin and let it turn the full scan into setup instructions.</p>
+          <div class="recommendation-cta-row">
+            <a class="plugin-cta" href="#email-unlock">Generate plugin from full scan</a>
+            <a class="recommendation-allowlist-link" href="/allowed-tools.html">Review vetted allowlist</a>
+          </div>
           {{with .Report.Recommendation.Primary}}{{template "recommendation" .}}{{end}}
           {{with .Report.Recommendation.Secondary}}{{template "recommendation" .}}{{end}}
           {{if and (not .Report.Recommendation.Primary) (not .Report.Recommendation.Secondary)}}
@@ -282,17 +293,26 @@ var reportHTMLTemplate = template.Must(template.New("report").Funcs(template.Fun
 </html>
 {{define "recommendation"}}
 <div class="recommendation-card">
-  <div class="recommendation-tool">{{recommendationName .}}</div>
-  {{with recommendationURL .}}<a class="recommendation-source" href="{{.}}" rel="noopener noreferrer">{{.}}</a>{{end}}
-  <div class="recommendation-meta">
-    <span class="recommendation-reason">{{.Reason}}</span>
-    <span class="recommendation-confidence">{{.Confidence}}</span>
-    <span class="recommendation-risk">{{.RiskLevel}} risk</span>
-    <span class="recommendation-policy">{{.InstallPolicy}}</span>
+  <div class="recommendation-header">
+    <div>
+      <span class="recommendation-kicker">{{recommendationProblem .}}</span>
+      <div class="recommendation-tool">{{recommendationName .}}</div>
+    </div>
+    <span class="recommendation-verdict">{{recommendationVerdict .}}</span>
   </div>
-  <p>{{recommendationLabel .}}</p>
+  <p class="recommendation-purpose">{{recommendationPurpose .}}</p>
+  <div class="recommendation-next-step">
+    <strong>{{recommendationAction .}}</strong>
+    <span>{{recommendationPluginPitch .}}</span>
+  </div>
+  <div class="recommendation-meta">
+    <span class="recommendation-reason">{{recommendationReason .}}</span>
+    <span class="recommendation-confidence">{{.Confidence}} confidence</span>
+    <span class="recommendation-risk">{{.RiskLevel}} install risk</span>
+    {{with recommendationURL .}}<a class="recommendation-source" href="{{.}}" rel="noopener noreferrer">Source</a>{{end}}
+  </div>
   <ul class="recommendation-signals">
-    {{range .SignalIDs}}<li class="recommendation-signal">{{.}}</li>{{end}}
+    {{range .SignalIDs}}<li class="recommendation-signal">{{recommendationSignalLabel .}}</li>{{end}}
   </ul>
 </div>
 {{end}}`))
@@ -312,6 +332,141 @@ func recommendationURL(rec analyzer.TokenSavingRecommendation) string {
 		return rec.PrimaryToolURL
 	}
 	return ""
+}
+
+func recommendationProblem(rec analyzer.TokenSavingRecommendation) string {
+	for _, signal := range rec.SignalIDs {
+		switch signal {
+		case analyzer.SignalNoUsageVisibility:
+			return "You lack usage visibility"
+		case analyzer.SignalRepeatedFileReads, analyzer.SignalBroadRepoExploration, analyzer.SignalUnchangedFileRereads:
+			return "Your agent is rereading too much"
+		case analyzer.SignalToolOutputBloat, analyzer.SignalShellOutputBloat, analyzer.SignalMCPToolOutputBloat:
+			return "Tool output is flooding context"
+		case analyzer.SignalMCPSkillBloat:
+			return "Your tool surface may be too wide"
+		case analyzer.SignalRetryLoop, analyzer.SignalContextGrowthSpikes:
+			return "Session hygiene is degrading"
+		case analyzer.SignalOutputVerbosity:
+			return "Assistant output is accumulating"
+		}
+	}
+	return "Tooling gap detected"
+}
+
+func recommendationPurpose(rec analyzer.TokenSavingRecommendation) string {
+	switch rec.PrimaryToolID {
+	case "ccusage":
+		return "ccusage reads Claude Code usage data so you can see token burn, cache behavior, and cost trends instead of guessing."
+	case "ccstatusline":
+		return "ccstatusline puts lightweight usage and session telemetry in your statusline so drift is visible while you work."
+	case "context_mode":
+		return "Context Mode compresses or externalizes noisy tool output before it pollutes future turns."
+	case "claude_context":
+		return "claude-context adds semantic retrieval so the agent can ask for targeted code context instead of repeatedly rereading files."
+	case "claude_token_efficient":
+		return "claude-token-efficient reduces assistant verbosity so future context grows more slowly."
+	case "claude_code_hooks_mastery":
+		return "Claude Code Hooks Mastery is a reference set for deterministic hooks that can enforce session hygiene."
+	case "rtk":
+		return "RTK is a high-risk shell-output reducer candidate. Only consider the linked rtk-ai/rtk project, not unrelated packages with the same name."
+	}
+	for _, signal := range rec.SignalIDs {
+		switch signal {
+		case analyzer.SignalMCPSkillBloat:
+			return "This is not a request to install another tool. First prune or lazy-load MCPs and skills that are exposed but rarely used."
+		case analyzer.SignalRetryLoop, analyzer.SignalContextGrowthSpikes:
+			return "This is a workflow recommendation: add rules that make the agent stop, compact, or split the session before degradation compounds."
+		case analyzer.SignalRepeatedFileReads, analyzer.SignalBroadRepoExploration, analyzer.SignalUnchangedFileRereads:
+			return "Retrieval tooling can reduce repeated file reads by giving the agent a narrower way to locate relevant code."
+		case analyzer.SignalNoUsageVisibility:
+			return "Usage visibility tools make token burn and cache behavior visible so you can tell whether changes are working."
+		}
+	}
+	return "This recommendation is matched from a vetted allowlist against deterministic waste signals in the report."
+}
+
+func recommendationAction(rec analyzer.TokenSavingRecommendation) string {
+	if rec.PrimaryToolID == "" {
+		return "Do not install anything yet."
+	}
+	switch rec.RiskLevel {
+	case analyzer.RiskHigh:
+		return "Review the source and wait for the full-scan plugin before installing."
+	case analyzer.RiskMedium:
+		return "Review the source first; prefer plugin-generated setup instructions."
+	default:
+		return "Review the source, or let the plugin configure the right path after the full scan."
+	}
+}
+
+func recommendationPluginPitch(rec analyzer.TokenSavingRecommendation) string {
+	if rec.PrimaryToolID == "" {
+		return "The plugin can convert this into concrete config cleanup rules from your full history."
+	}
+	return "The plugin packages vetted recommendations and avoids one-off manual setup guesses."
+}
+
+func recommendationVerdict(rec analyzer.TokenSavingRecommendation) string {
+	if rec.PrimaryToolID == "" {
+		return "Prune first"
+	}
+	if rec.RiskLevel == analyzer.RiskHigh {
+		return "Careful review"
+	}
+	return "Candidate"
+}
+
+func recommendationReason(rec analyzer.TokenSavingRecommendation) string {
+	switch rec.Reason {
+	case analyzer.ReasonAbsent:
+		return "Not detected yet"
+	case analyzer.ReasonInstalledInactive:
+		return "Installed but inactive"
+	case analyzer.ReasonConfiguredInactive:
+		return "Configured but inactive"
+	case analyzer.ReasonPruneFirst:
+		return "Prune first"
+	case analyzer.ReasonAuditConfig:
+		return "Audit config"
+	case analyzer.ReasonServerQuotaCheck:
+		return "Check quota config"
+	case analyzer.ReasonRejectedAlternative:
+		return "Previously rejected"
+	case analyzer.ReasonActivePersistent:
+		return "Already active"
+	default:
+		return string(rec.Reason)
+	}
+}
+
+func recommendationSignalLabel(signal analyzer.Signal) string {
+	switch signal {
+	case analyzer.SignalNoUsageVisibility:
+		return "No usage visibility"
+	case analyzer.SignalToolOutputBloat:
+		return "Tool output bloat"
+	case analyzer.SignalShellOutputBloat:
+		return "Shell output bloat"
+	case analyzer.SignalMCPToolOutputBloat:
+		return "MCP output bloat"
+	case analyzer.SignalRepeatedFileReads:
+		return "Repeated file reads"
+	case analyzer.SignalBroadRepoExploration:
+		return "Broad repo exploration"
+	case analyzer.SignalUnchangedFileRereads:
+		return "Unchanged rereads"
+	case analyzer.SignalMCPSkillBloat:
+		return "MCP / skill bloat"
+	case analyzer.SignalOutputVerbosity:
+		return "Output verbosity"
+	case analyzer.SignalRetryLoop:
+		return "Retry loop"
+	case analyzer.SignalContextGrowthSpikes:
+		return "Context growth spikes"
+	default:
+		return string(signal)
+	}
 }
 
 func recommendationLabel(rec analyzer.TokenSavingRecommendation) string {
