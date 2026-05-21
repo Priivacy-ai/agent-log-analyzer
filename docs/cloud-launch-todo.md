@@ -158,9 +158,9 @@ Acceptance:
 ## 6. TLS, DNS, CDN, And WAF
 
 - [x] Add or pass `certificate_arn` for HTTPS listener:
-  `arn:aws:acm:us-east-1:129875099715:certificate/0620795a-f10b-49c1-b030-3f39756be44f`
+  `arn:aws:acm:us-east-1:129875099715:certificate/03dcfd02-72a9-41ff-82d6-e2fb489c1541`
 - [x] Preserve the currently deployed image when applying TLS unless intentionally deploying a new image:
-  `129875099715.dkr.ecr.us-east-1.amazonaws.com/claude-analyzer-prod:f195181-amd64`
+  `129875099715.dkr.ecr.us-east-1.amazonaws.com/claude-analyzer-prod:4ef4fadfcd5f-amd64`
 - [ ] Configure DNS record for the launch domain:
   `analyzer.spec-kitty.ai CNAME claude-analyzer-prod-720064025.us-east-1.elb.amazonaws.com`
 - [ ] Keep `claude-code.spec-kitty.ai` only as a compatibility redirect to `analyzer.spec-kitty.ai`; do not use it in public launch copy.
@@ -170,14 +170,25 @@ Acceptance:
 
   ```sh
   AWS_PROFILE=claude-analyzer-prod AWS_REGION=us-east-1 terraform -chdir=infra/aws apply \
-    -var='certificate_arn=arn:aws:acm:us-east-1:129875099715:certificate/0620795a-f10b-49c1-b030-3f39756be44f' \
-    -var='container_image=129875099715.dkr.ecr.us-east-1.amazonaws.com/claude-analyzer-prod:f195181-amd64'
+    -var='certificate_arn=arn:aws:acm:us-east-1:129875099715:certificate/03dcfd02-72a9-41ff-82d6-e2fb489c1541' \
+    -var='container_image=129875099715.dkr.ecr.us-east-1.amazonaws.com/claude-analyzer-prod:4ef4fadfcd5f-amd64'
   ```
 - [ ] Put CloudFront in front of the ALB.
 - [ ] Add WAF protections:
   - [x] Managed common rule set.
   - [x] Rate-based rule for upload/job endpoints.
   - [x] Body size limits aligned with app max upload size.
+
+## 7. SES Transactional Email Monitoring
+
+- [x] Verify `spec-kitty.ai` SES domain identity and DKIM in `us-east-1`.
+- [x] Add SES account-level suppression for bounces and complaints.
+- [x] Send production transactional email through an SES configuration set.
+- [x] Publish SES send/delivery/bounce/complaint/reject events to SNS and SQS.
+- [x] Run a dedicated email-event worker that stores bounded delivery events and recipient-hash suppression state.
+- [x] Add CloudWatch alarms and dashboard widgets for SES outcomes, event queue age, and event-worker failures.
+- [x] Document the operations procedure in [SES Transactional Email Operations](ses-operations.md).
+- [ ] SES production access approval is granted by AWS Support.
   - [ ] Bot-control only if cost is acceptable.
 - [ ] Cache static assets aggressively.
 - [ ] Do not cache job or report JSON unless report URLs are made unguessable and TTL-safe.

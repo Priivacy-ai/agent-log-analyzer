@@ -34,6 +34,12 @@ variable "worker_desired_count" {
   default     = 4
 }
 
+variable "email_events_desired_count" {
+  type        = number
+  description = "Initial SES email event worker task count."
+  default     = 1
+}
+
 variable "max_queue_depth" {
   type        = number
   description = "Queue depth where API load-sheds uploads."

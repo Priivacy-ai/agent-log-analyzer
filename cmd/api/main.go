@@ -63,7 +63,7 @@ func main() {
 
 func buildMux(store app.APIStore) http.Handler {
 	mux := http.NewServeMux()
-	emailSender := configuredEmailSender()
+	emailSender := guardEmailSender(configuredEmailSender(), store)
 	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
 	})

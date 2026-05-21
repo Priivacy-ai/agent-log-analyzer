@@ -31,6 +31,8 @@ func New(root string) (*Store, error) {
 		filepath.Join(root, "reports"),
 		filepath.Join(root, "analytics"),
 		filepath.Join(root, "email_unlocks"),
+		filepath.Join(root, "email_events"),
+		filepath.Join(root, "email_suppressions"),
 	} {
 		if err := os.MkdirAll(dir, 0o700); err != nil {
 			return nil, err
@@ -98,6 +100,57 @@ func (s *Store) UpdateEmailUnlock(unlock app.EmailUnlock) error {
 	}
 	unlock.UpdatedAt = time.Now().UTC()
 	return writeJSON(s.emailUnlockPath(unlock.ID), unlock)
+}
+
+func (s *Store) GetEmailSuppression(emailHash string) (app.EmailSuppression, error) {
+	var suppression app.EmailSuppression
+	if !validHash(emailHash) {
+		return suppression, errors.New("invalid email hash")
+	}
+	data, err := os.ReadFile(s.emailSuppressionPath(emailHash))
+	if err != nil {
+		return suppression, err
+	}
+	return suppression, json.Unmarshal(data, &suppression)
+}
+
+func (s *Store) RecordEmailEvent(event app.EmailDeliveryEvent) error {
+	if !validHash(event.EmailHash) {
+		return errors.New("invalid email hash")
+	}
+	now := time.Now().UTC()
+	if event.ID == "" {
+		event.ID = app.NewJobID()
+	}
+	if event.CreatedAt.IsZero() {
+		event.CreatedAt = now
+	}
+	if err := appendJSONLine(filepath.Join(s.root, "email_events", "events.jsonl"), event); err != nil {
+		return err
+	}
+	if !event.IsSuppressing() {
+		return nil
+	}
+	suppression, err := s.GetEmailSuppression(event.EmailHash)
+	if err != nil && !errors.Is(err, os.ErrNotExist) {
+		return err
+	}
+	if suppression.EmailHash == "" {
+		suppression.EmailHash = event.EmailHash
+		suppression.SuppressedAt = event.CreatedAt
+	}
+	suppression.Reason = event.Type
+	suppression.LastMessageID = event.MessageID
+	suppression.UpdatedAt = event.CreatedAt
+	switch event.Type {
+	case app.EmailEventBounce:
+		suppression.BounceCount++
+	case app.EmailEventComplaint:
+		suppression.ComplaintCount++
+	case app.EmailEventReject:
+		suppression.RejectCount++
+	}
+	return writeJSON(s.emailSuppressionPath(event.EmailHash), suppression)
 }
 
 func (s *Store) AppendAnalyticsEvent(event analytics.Event) error {
@@ -340,6 +393,10 @@ func (s *Store) emailUnlockPath(id string) string {
 	return filepath.Join(s.root, "email_unlocks", id+".json")
 }
 
+func (s *Store) emailSuppressionPath(emailHash string) string {
+	return filepath.Join(s.root, "email_suppressions", emailHash+".json")
+}
+
 func (s *Store) writeJob(status string, job app.Job) error {
 	if !validID(job.ID) {
 		return errors.New("invalid job id")
@@ -368,12 +425,41 @@ func writeJSON(path string, value any) error {
 	return os.Rename(tmp, path)
 }
 
+func appendJSONLine(path string, value any) error {
+	data, err := json.Marshal(value)
+	if err != nil {
+		return err
+	}
+	f, err := os.OpenFile(path, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0o600)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	if _, err := f.Write(append(data, '\n')); err != nil {
+		return err
+	}
+	return nil
+}
+
 func validID(id string) bool {
 	if len(id) < 8 || len(id) > 80 {
 		return false
 	}
 	for _, r := range id {
 		if (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') || r == '-' {
+			continue
+		}
+		return false
+	}
+	return true
+}
+
+func validHash(value string) bool {
+	if len(value) != 64 {
+		return false
+	}
+	for _, r := range value {
+		if (r >= 'a' && r <= 'f') || (r >= '0' && r <= '9') {
 			continue
 		}
 		return false

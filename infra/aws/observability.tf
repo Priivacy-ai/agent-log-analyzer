@@ -39,6 +39,30 @@ resource "aws_cloudwatch_log_metric_filter" "sweeps_completed" {
   }
 }
 
+resource "aws_cloudwatch_log_metric_filter" "email_event_failures" {
+  name           = "${local.name}-email-event-failures"
+  log_group_name = aws_cloudwatch_log_group.app.name
+  pattern        = "\"email event process failed\""
+
+  metric_transformation {
+    name      = "EmailEventFailures"
+    namespace = local.metric_namespace
+    value     = "1"
+  }
+}
+
+resource "aws_cloudwatch_log_metric_filter" "email_events_recorded" {
+  name           = "${local.name}-email-events-recorded"
+  log_group_name = aws_cloudwatch_log_group.app.name
+  pattern        = "\"email event recorded\""
+
+  metric_transformation {
+    name      = "EmailEventsRecorded"
+    namespace = local.metric_namespace
+    value     = "1"
+  }
+}
+
 resource "aws_cloudwatch_metric_alarm" "alb_elb_5xx" {
   alarm_name          = "${local.name}-alb-elb-5xx"
   comparison_operator = "GreaterThanOrEqualToThreshold"
@@ -158,6 +182,26 @@ resource "aws_cloudwatch_metric_alarm" "worker_cpu_high" {
   tags = local.common_tags
 }
 
+resource "aws_cloudwatch_metric_alarm" "email_events_cpu_high" {
+  alarm_name          = "${local.name}-email-events-cpu-high"
+  comparison_operator = "GreaterThanThreshold"
+  evaluation_periods  = 3
+  threshold           = 80
+  period              = 60
+  statistic           = "Average"
+  namespace           = "AWS/ECS"
+  metric_name         = "CPUUtilization"
+  treat_missing_data  = "notBreaching"
+  alarm_actions       = local.alarm_actions
+
+  dimensions = {
+    ClusterName = aws_ecs_cluster.main.name
+    ServiceName = aws_ecs_service.email_events.name
+  }
+
+  tags = local.common_tags
+}
+
 resource "aws_cloudwatch_metric_alarm" "queue_age_high" {
   alarm_name          = "${local.name}-queue-age-high"
   comparison_operator = "GreaterThanThreshold"
@@ -175,6 +219,96 @@ resource "aws_cloudwatch_metric_alarm" "queue_age_high" {
   }
 
   tags = local.common_tags
+}
+
+resource "aws_cloudwatch_metric_alarm" "email_events_queue_age_high" {
+  alarm_name          = "${local.name}-email-events-queue-age-high"
+  comparison_operator = "GreaterThanThreshold"
+  evaluation_periods  = 2
+  threshold           = 300
+  period              = 60
+  statistic           = "Maximum"
+  namespace           = "AWS/SQS"
+  metric_name         = "ApproximateAgeOfOldestMessage"
+  treat_missing_data  = "notBreaching"
+  alarm_actions       = local.alarm_actions
+
+  dimensions = {
+    QueueName = aws_sqs_queue.email_events.name
+  }
+
+  tags = local.common_tags
+}
+
+resource "aws_cloudwatch_metric_alarm" "ses_bounces" {
+  alarm_name          = "${local.name}-ses-bounces"
+  comparison_operator = "GreaterThanOrEqualToThreshold"
+  evaluation_periods  = 1
+  threshold           = 1
+  period              = 300
+  statistic           = "Sum"
+  namespace           = "AWS/SES"
+  metric_name         = "Bounce"
+  treat_missing_data  = "notBreaching"
+  alarm_actions       = local.alarm_actions
+
+  dimensions = {
+    ConfigurationSet = aws_sesv2_configuration_set.transactional.configuration_set_name
+  }
+
+  tags = local.common_tags
+}
+
+resource "aws_cloudwatch_metric_alarm" "ses_complaints" {
+  alarm_name          = "${local.name}-ses-complaints"
+  comparison_operator = "GreaterThanOrEqualToThreshold"
+  evaluation_periods  = 1
+  threshold           = 1
+  period              = 300
+  statistic           = "Sum"
+  namespace           = "AWS/SES"
+  metric_name         = "Complaint"
+  treat_missing_data  = "notBreaching"
+  alarm_actions       = local.alarm_actions
+
+  dimensions = {
+    ConfigurationSet = aws_sesv2_configuration_set.transactional.configuration_set_name
+  }
+
+  tags = local.common_tags
+}
+
+resource "aws_cloudwatch_metric_alarm" "ses_rejects" {
+  alarm_name          = "${local.name}-ses-rejects"
+  comparison_operator = "GreaterThanOrEqualToThreshold"
+  evaluation_periods  = 1
+  threshold           = 1
+  period              = 300
+  statistic           = "Sum"
+  namespace           = "AWS/SES"
+  metric_name         = "Reject"
+  treat_missing_data  = "notBreaching"
+  alarm_actions       = local.alarm_actions
+
+  dimensions = {
+    ConfigurationSet = aws_sesv2_configuration_set.transactional.configuration_set_name
+  }
+
+  tags = local.common_tags
+}
+
+resource "aws_cloudwatch_metric_alarm" "email_event_failures" {
+  alarm_name          = "${local.name}-email-event-failures"
+  comparison_operator = "GreaterThanOrEqualToThreshold"
+  evaluation_periods  = 1
+  threshold           = 1
+  period              = 60
+  statistic           = "Sum"
+  namespace           = local.metric_namespace
+  metric_name         = aws_cloudwatch_log_metric_filter.email_event_failures.metric_transformation[0].name
+  treat_missing_data  = "notBreaching"
+  alarm_actions       = local.alarm_actions
+  tags                = local.common_tags
 }
 
 resource "aws_cloudwatch_metric_alarm" "worker_failures" {
@@ -261,7 +395,8 @@ resource "aws_cloudwatch_dashboard" "launch" {
           region = var.aws_region
           metrics = [
             ["AWS/ECS", "CPUUtilization", "ClusterName", aws_ecs_cluster.main.name, "ServiceName", aws_ecs_service.api.name, { label = "api" }],
-            [".", ".", ".", ".", "ServiceName", aws_ecs_service.worker.name, { label = "worker" }]
+            [".", ".", ".", ".", "ServiceName", aws_ecs_service.worker.name, { label = "worker" }],
+            [".", ".", ".", ".", "ServiceName", aws_ecs_service.email_events.name, { label = "email-events" }]
           ]
         }
       },
@@ -277,7 +412,9 @@ resource "aws_cloudwatch_dashboard" "launch" {
           metrics = [
             ["AWS/SQS", "ApproximateNumberOfMessagesVisible", "QueueName", aws_sqs_queue.jobs.name, { stat = "Maximum" }],
             [".", "ApproximateNumberOfMessagesNotVisible", ".", ".", { stat = "Maximum" }],
-            [".", "ApproximateAgeOfOldestMessage", ".", ".", { stat = "Maximum" }]
+            [".", "ApproximateAgeOfOldestMessage", ".", ".", { stat = "Maximum" }],
+            [".", "ApproximateNumberOfMessagesVisible", ".", aws_sqs_queue.email_events.name, { stat = "Maximum", label = "email-events visible" }],
+            [".", "ApproximateAgeOfOldestMessage", ".", aws_sqs_queue.email_events.name, { stat = "Maximum", label = "email-events age" }]
           ]
         }
       },
@@ -307,6 +444,39 @@ resource "aws_cloudwatch_dashboard" "launch" {
           region = var.aws_region
           metrics = [
             [local.metric_namespace, aws_cloudwatch_log_metric_filter.sweeps_completed.metric_transformation[0].name, { stat = "Sum" }]
+          ]
+        }
+      },
+      {
+        type   = "metric"
+        x      = 0
+        y      = 20
+        width  = 12
+        height = 6
+        properties = {
+          title  = "SES transactional outcomes"
+          region = var.aws_region
+          metrics = [
+            ["AWS/SES", "Send", "ConfigurationSet", aws_sesv2_configuration_set.transactional.configuration_set_name, { stat = "Sum" }],
+            [".", "Delivery", ".", ".", { stat = "Sum" }],
+            [".", "Bounce", ".", ".", { stat = "Sum" }],
+            [".", "Complaint", ".", ".", { stat = "Sum" }],
+            [".", "Reject", ".", ".", { stat = "Sum" }]
+          ]
+        }
+      },
+      {
+        type   = "metric"
+        x      = 12
+        y      = 20
+        width  = 12
+        height = 6
+        properties = {
+          title  = "SES event worker"
+          region = var.aws_region
+          metrics = [
+            [local.metric_namespace, aws_cloudwatch_log_metric_filter.email_events_recorded.metric_transformation[0].name, { stat = "Sum" }],
+            [".", aws_cloudwatch_log_metric_filter.email_event_failures.metric_transformation[0].name, { stat = "Sum" }]
           ]
         }
       }

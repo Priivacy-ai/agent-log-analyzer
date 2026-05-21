@@ -62,7 +62,7 @@ func createEmailUnlockHandler(store app.APIStore, sender emailSender) http.Handl
 		unlock := app.EmailUnlock{
 			ID:                           app.NewJobID(),
 			Email:                        normalized,
-			EmailHash:                    tokenHash(normalized),
+			EmailHash:                    app.HashEmail(normalized),
 			MarketingOptIn:               request.MarketingOptIn,
 			SourceReportJobID:            request.SourceReportJobID,
 			ConfirmationTokenHash:        tokenHash(confirmationToken),
@@ -81,6 +81,10 @@ func createEmailUnlockHandler(store app.APIStore, sender emailSender) http.Handl
 			Subject: "Confirm your Agent Analyzer full scan",
 			Body:    confirmationEmailBody(confirmURL),
 		}); err != nil {
+			if errors.As(err, &errEmailSuppressed{}) {
+				writeErrorOrHTML(w, r, http.StatusConflict, "email address is suppressed for transactional delivery")
+				return
+			}
 			writeErrorOrHTML(w, r, http.StatusInternalServerError, "could not send confirmation email")
 			return
 		}
@@ -141,6 +145,10 @@ func confirmEmailUnlockHandler(store app.APIStore, sender emailSender) http.Hand
 				Subject: "Your Agent Analyzer full-scan command",
 				Body:    fullScanCommandEmailBody(command, unlock.FullScanTokenExpiresAt),
 			}); err != nil {
+				if errors.As(err, &errEmailSuppressed{}) {
+					writeError(w, http.StatusConflict, "email address is suppressed for transactional delivery")
+					return
+				}
 				writeError(w, http.StatusInternalServerError, "could not send full-scan command email")
 				return
 			}
