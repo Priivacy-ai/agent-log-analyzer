@@ -17,6 +17,7 @@ import (
 	"runtime"
 	"sort"
 	"strings"
+	"sync"
 	"time"
 	"unicode/utf8"
 
@@ -304,6 +305,14 @@ type sourceAnalysisResult struct {
 	Bytes     int
 }
 
+type candidateAnalysisResult struct {
+	Index     int
+	Result    sourceAnalysisResult
+	Skipped   bool
+	SkipLabel string
+	Err       error
+}
+
 func reportsFromResults(results []sourceAnalysisResult) []analyzer.Report {
 	reports := make([]analyzer.Report, 0, len(results))
 	for _, result := range results {
@@ -425,41 +434,21 @@ func analyzeDiscovered(candidates []logCandidate, out string, mode string, print
 	if len(candidates) == 0 {
 		return noSupportedLogsError()
 	}
-	results := make([]sourceAnalysisResult, 0, len(candidates))
+	progress := newProgressBar(len(candidates)*2 + 1)
+
+	results, completedSteps, err := analyzeCandidates(candidates, progress)
+	if err != nil {
+		progress.Fail()
+		return err
+	}
+
 	totalBytes := 0
 	totalRedacted := 0
-	analyzedCandidates := make([]logCandidate, 0, len(candidates))
-	progress := newProgressBar(len(candidates)*2 + 1)
-	step := 0
-	for index, candidate := range candidates {
-		progress.Update(step, fmt.Sprintf("reading %s %s", candidate.SourceLabel, candidate.shortDisplay()))
-		data, err := candidate.readBytes()
-		if err != nil {
-			if isPermissionError(err) {
-				step += 2
-				progress.Update(step, fmt.Sprintf("skipped unreadable %s", candidate.SourceLabel))
-				continue
-			}
-			progress.Fail()
-			return fmt.Errorf("read %s log %q: %w", candidate.SourceLabel, candidate.Display, err)
-		}
-		step++
-		progress.Update(step, fmt.Sprintf("analyzing %s %s", candidate.SourceLabel, candidate.shortDisplay()))
-		report, err := analyzeBytesForSource(fmt.Sprintf("local-%s-%03d", candidate.SourceID, index+1), candidate.SourceID, data)
-		if err != nil {
-			progress.Fail()
-			return fmt.Errorf("analyze %s log %d: %w", candidate.SourceLabel, index+1, err)
-		}
-		results = append(results, sourceAnalysisResult{
-			Candidate: candidate,
-			Report:    report,
-			Bytes:     len(data),
-		})
-		analyzedCandidates = append(analyzedCandidates, candidate)
-		totalBytes += len(data)
-		totalRedacted += report.SecurityReceipt.SecretsRedacted
-		step++
-		progress.Update(step, fmt.Sprintf("complete %s", candidate.SourceLabel))
+	analyzedCandidates := make([]logCandidate, 0, len(results))
+	for _, result := range results {
+		totalBytes += result.Bytes
+		totalRedacted += result.Report.SecurityReceipt.SecretsRedacted
+		analyzedCandidates = append(analyzedCandidates, result.Candidate)
 	}
 	if len(results) == 0 {
 		progress.Fail()
@@ -467,7 +456,6 @@ func analyzeDiscovered(candidates []logCandidate, out string, mode string, print
 	}
 
 	var report analyzer.Report
-	var err error
 	reports := reportsFromResults(results)
 	if mode == "" && len(reports) == 1 {
 		report = reports[0]
@@ -490,7 +478,7 @@ func analyzeDiscovered(candidates []logCandidate, out string, mode string, print
 		report.SecurityReceipt.RawLogTTL = "not uploaded"
 	}
 	report.SourceReports = buildSourceReports(results)
-	progress.Update(step, "writing sanitized report")
+	progress.Update(completedSteps, "writing sanitized report")
 	if err := writeReport(out, report); err != nil {
 		progress.Fail()
 		return err
@@ -520,6 +508,109 @@ func analyzeDiscovered(candidates []logCandidate, out string, mode string, print
 		}
 	}
 	return nil
+}
+
+func analyzeCandidates(candidates []logCandidate, progress *progressBar) ([]sourceAnalysisResult, int, error) {
+	workerCount := analysisWorkerCount(len(candidates))
+	if workerCount > 1 {
+		progress.Update(0, fmt.Sprintf("analyzing %d logs with %d workers", len(candidates), workerCount))
+	}
+
+	jobs := make(chan int)
+	outcomes := make(chan candidateAnalysisResult, len(candidates))
+	var wg sync.WaitGroup
+	wg.Add(workerCount)
+	for worker := 0; worker < workerCount; worker++ {
+		go func() {
+			defer wg.Done()
+			for index := range jobs {
+				candidate := candidates[index]
+				data, err := candidate.readBytes()
+				if err != nil {
+					if isPermissionError(err) {
+						outcomes <- candidateAnalysisResult{
+							Index:     index,
+							Skipped:   true,
+							SkipLabel: candidate.SourceLabel,
+						}
+						continue
+					}
+					outcomes <- candidateAnalysisResult{
+						Index: index,
+						Err:   fmt.Errorf("read %s log %q: %w", candidate.SourceLabel, candidate.Display, err),
+					}
+					continue
+				}
+				report, err := analyzeBytesForSource(fmt.Sprintf("local-%s-%03d", candidate.SourceID, index+1), candidate.SourceID, data)
+				if err != nil {
+					outcomes <- candidateAnalysisResult{
+						Index: index,
+						Err:   fmt.Errorf("analyze %s log %d: %w", candidate.SourceLabel, index+1, err),
+					}
+					continue
+				}
+				outcomes <- candidateAnalysisResult{
+					Index: index,
+					Result: sourceAnalysisResult{
+						Candidate: candidate,
+						Report:    report,
+						Bytes:     len(data),
+					},
+				}
+			}
+		}()
+	}
+
+	go func() {
+		for index := range candidates {
+			jobs <- index
+		}
+		close(jobs)
+		wg.Wait()
+		close(outcomes)
+	}()
+
+	results := make([]sourceAnalysisResult, len(candidates))
+	completedSteps := 0
+	readableCount := 0
+	for outcome := range outcomes {
+		if outcome.Err != nil {
+			return nil, completedSteps, outcome.Err
+		}
+		completedSteps += 2
+		if outcome.Skipped {
+			progress.Update(completedSteps, fmt.Sprintf("skipped unreadable %s", outcome.SkipLabel))
+			continue
+		}
+		results[outcome.Index] = outcome.Result
+		readableCount++
+		progress.Update(completedSteps, fmt.Sprintf("complete %s %s", outcome.Result.Candidate.SourceLabel, outcome.Result.Candidate.shortDisplay()))
+	}
+	readableResults := make([]sourceAnalysisResult, 0, readableCount)
+	for _, result := range results {
+		if result.Candidate.SourceID == "" {
+			continue
+		}
+		readableResults = append(readableResults, result)
+	}
+	return readableResults, completedSteps, nil
+}
+
+func analysisWorkerCount(candidateCount int) int {
+	if candidateCount <= 1 {
+		return 1
+	}
+	workers := runtime.NumCPU()
+	if workers > 4 {
+		workers = 4
+	}
+	if workers > candidateCount {
+		workers = candidateCount
+	}
+	if workers < 1 {
+		workers = 1
+	}
+	return workers
 }
 
 func runOneShot(args []string) error {
