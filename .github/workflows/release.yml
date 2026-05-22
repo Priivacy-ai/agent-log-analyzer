@@ -89,28 +89,11 @@ jobs:
           commit="$(git rev-parse HEAD)"
           date="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
           npm version "$version" --no-git-tag-version --allow-same-version
-          mkdir -p npm/bin
-          build() {
-            goos="$1"
-            goarch="$2"
-            node_platform="$3"
-            node_arch="$4"
-            suffix="$5"
-            output="npm/bin/agent-analyzer-${node_platform}-${node_arch}${suffix}"
-            GOOS="$goos" GOARCH="$goarch" CGO_ENABLED=0 go build \
-              -ldflags="-s -w -X main.version=${version} -X main.commit=${commit} -X main.date=${date}" \
-              -o "$output" ./cmd/agent-analyzer
-            chmod +x "$output" || true
-          }
-          build darwin amd64 darwin x64 ""
-          build darwin arm64 darwin arm64 ""
-          build linux amd64 linux x64 ""
-          build linux arm64 linux arm64 ""
-          build windows amd64 win32 x64 ".exe"
+          AGENT_ANALYZER_VERSION="$version" \
+            AGENT_ANALYZER_COMMIT="$commit" \
+            AGENT_ANALYZER_DATE="$date" \
+            scripts/build-npm-binaries.sh
       - name: Verify npm package
-        run: |
-          test -z "$(node -e 'const p=require("./package.json"); const s=p.scripts||{}; const bad=["preinstall","install","postinstall","prepare"].filter(k => s[k]); console.log(bad.join("\\n"))')"
-          npm pack --dry-run
-          node npm/bin/agent-analyzer.js version
+        run: scripts/smoke-npm-package.sh
       - name: Publish npm package
         run: npm publish --provenance --access public

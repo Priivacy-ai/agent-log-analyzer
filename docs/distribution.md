@@ -61,6 +61,13 @@ npm pack --dry-run
 node npm/bin/agent-analyzer.js version
 ```
 
+Release CI uses `scripts/build-npm-binaries.sh` and
+`scripts/smoke-npm-package.sh` to cross-build every advertised npm native
+target, verify the wrapper can locate the current platform binary, and run a
+minimal local analyze flow from the npm package layout.
+Keep this smoke in place when changing CLI dependencies such as SQLite drivers;
+the npm package must continue to build for every advertised native target.
+
 ## Cutting A Release
 
 `v0.1.0` was cut before the public NPX rename and should not be used for the
