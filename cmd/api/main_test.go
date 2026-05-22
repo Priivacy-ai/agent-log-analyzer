@@ -1118,7 +1118,7 @@ func TestUnlockStripeCheckoutSessionPendingAndPaid(t *testing.T) {
 	if err := json.Unmarshal(paidRec.Body.Bytes(), &session); err != nil {
 		t.Fatalf("response is not valid paid session JSON: %v", err)
 	}
-	if !strings.Contains(session.Command, "analyze --paid --limit 3") || !strings.Contains(session.Command, "/api/paid-client-reports") {
+	if !strings.Contains(session.Command, "analyze --paid --limit 5") || !strings.Contains(session.Command, "/api/paid-client-reports") {
 		t.Fatalf("expected paid local-first command, got %#v", session)
 	}
 }
