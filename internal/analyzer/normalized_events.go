@@ -38,11 +38,13 @@ func normalizeEvents(source string, input []byte) []normalizedEvent {
 	scanner.Buffer(make([]byte, 0, 64*1024), 2*1024*1024)
 	var events []normalizedEvent
 	turn := 0
+	mcpToolRequestIDs := map[string]bool{}
 	for scanner.Scan() {
 		raw := bytes.TrimSpace(scanner.Bytes())
 		if len(raw) == 0 {
 			continue
 		}
+		raw = normalizeRawEventLine(source, raw)
 		var obj map[string]any
 		if json.Unmarshal(raw, &obj) != nil {
 			turn++
@@ -56,12 +58,24 @@ func normalizeEvents(source string, input []byte) []normalizedEvent {
 			continue
 		}
 		turn++
+		if source == "claude_desktop_mcp" {
+			events = append(events, normalizeMCPLogJSONObjectWithState(obj, turn, mcpToolRequestIDs)...)
+			continue
+		}
 		events = append(events, normalizeJSONObject(source, obj, turn)...)
 	}
 	return events
 }
 
 func normalizeJSONObject(source string, obj map[string]any, turn int) []normalizedEvent {
+	if source == "codex" {
+		return normalizeCodexJSONObject(source, obj, turn)
+	}
+	if source == "claude_desktop_mcp" || source == "cursor" || source == "kiro_cli" || source == "kiro_ide" || source == "antigravity" {
+		if events := normalizeDesktopAgentJSONObject(source, obj, turn); len(events) > 0 {
+			return events
+		}
+	}
 	role := boundedRole(firstJSONStringByKey(obj, "role"))
 	kind := boundedKind(firstJSONStringByKey(obj, "type"))
 	if kind == "" {
@@ -115,6 +129,301 @@ func normalizeJSONObject(source string, obj map[string]any, turn int) []normaliz
 		events = []normalizedEvent{base}
 	}
 	return events
+}
+
+func normalizeDesktopAgentJSONObject(source string, obj map[string]any, turn int) []normalizedEvent {
+	base := normalizedEvent{
+		Source: source,
+		Role:   boundedRole(firstJSONStringByKey(obj, "role")),
+		Kind:   boundedKind(firstPresentString(obj, "type", "kind", "hook_event_name", "event_type")),
+		Turn:   turn,
+		Error:  jsonHasError(obj),
+	}
+	applyUsage(&base, obj)
+	applyPatchStats(&base, obj)
+	switch source {
+	case "claude_desktop_mcp":
+		return normalizeMCPLogJSONObject(obj, base)
+	case "cursor":
+		return normalizeCursorJSONObject(obj, base)
+	case "kiro_cli", "kiro_ide":
+		return normalizeKiroJSONObject(obj, base)
+	case "antigravity":
+		return normalizeAntigravityJSONObject(obj, base)
+	default:
+		return nil
+	}
+}
+
+func normalizeMCPLogJSONObject(obj map[string]any, base normalizedEvent) []normalizedEvent {
+	return normalizeMCPLogJSONObjectWithStateAndBase(obj, base, nil)
+}
+
+func normalizeMCPLogJSONObjectWithState(obj map[string]any, turn int, toolRequestIDs map[string]bool) []normalizedEvent {
+	base := normalizedEvent{
+		Source: "claude_desktop_mcp",
+		Role:   boundedRole(firstJSONStringByKey(obj, "role")),
+		Kind:   boundedKind(firstPresentString(obj, "type", "kind")),
+		Turn:   turn,
+		Error:  jsonHasError(obj),
+	}
+	applyUsage(&base, obj)
+	applyPatchStats(&base, obj)
+	return normalizeMCPLogJSONObjectWithStateAndBase(obj, base, toolRequestIDs)
+}
+
+func normalizeMCPLogJSONObjectWithStateAndBase(obj map[string]any, base normalizedEvent, toolRequestIDs map[string]bool) []normalizedEvent {
+	method := firstPresentString(obj, "method")
+	if method == "" {
+		method = firstJSONStringByKey(obj, "method")
+	}
+	id := firstPresentString(obj, "id")
+	if method != "" {
+		event := base
+		event.Kind = "message"
+		if strings.Contains(strings.ToLower(method), "tools/call") || strings.Contains(strings.ToLower(method), "resources/read") {
+			event.Kind = "tool_call"
+			params := firstJSONMapByKey(obj, "params")
+			event.Tool = boundedTool(firstPresentString(params, "name", "tool", "method"))
+			if event.Tool == "" {
+				event.Tool = boundedTool(method)
+			}
+			event.ToolArgsHash = hashJSONValue(params)
+			if id != "" && toolRequestIDs != nil {
+				toolRequestIDs[id] = true
+			}
+		}
+		event.CallIDHash = hashIfPresent(id)
+		return []normalizedEvent{event}
+	}
+	if result := firstJSONValueByKey(obj, "result"); result != nil {
+		if toolRequestIDs == nil || id == "" || !toolRequestIDs[id] {
+			return nil
+		}
+		delete(toolRequestIDs, id)
+		base.Kind = "tool_result"
+		base.ToolOutputBytes = jsonValueSize(result)
+		base.CallIDHash = hashIfPresent(id)
+		return []normalizedEvent{base}
+	}
+	return nil
+}
+
+func normalizeCursorJSONObject(obj map[string]any, base normalizedEvent) []normalizedEvent {
+	if keyType := firstPresentString(obj, "key_type"); keyType != "" {
+		if nested, ok := sqliteStateContentObject(obj); ok {
+			nestedBase := base
+			nestedBase.Kind = ""
+			if events := normalizeCursorJSONObject(nested, nestedBase); len(events) > 0 {
+				return events
+			}
+		}
+		base.Kind = "message"
+		if strings.Contains(keyType, "agentkv") || firstJSONValueByKey(obj, "tool") != nil || firstJSONValueByKey(obj, "toolCall") != nil {
+			base.Kind = "tool_call"
+			base.Tool = boundedTool(firstJSONStringByKey(obj, "tool"))
+			base.ToolArgsHash = hashJSONValue(firstPresentValue(obj, "content", "value"))
+		}
+		return []normalizedEvent{base}
+	}
+	if tool := firstJSONStringByKey(obj, "tool"); tool != "" {
+		base.Kind = "tool_call"
+		base.Tool = boundedTool(tool)
+		base.ToolArgsHash = hashJSONValue(firstPresentValue(obj, "args", "arguments", "input"))
+		return []normalizedEvent{base}
+	}
+	return nil
+}
+
+func sqliteStateContentObject(obj map[string]any) (map[string]any, bool) {
+	text, ok := firstPresentValue(obj, "content", "value").(string)
+	if !ok || strings.TrimSpace(text) == "" {
+		return nil, false
+	}
+	var nested map[string]any
+	if json.Unmarshal([]byte(text), &nested) != nil {
+		return nil, false
+	}
+	return nested, true
+}
+
+func normalizeKiroJSONObject(obj map[string]any, base normalizedEvent) []normalizedEvent {
+	if event, ok := normalizeKiroToolObject(obj, base); ok {
+		return []normalizedEvent{event}
+	}
+	var events []normalizedEvent
+	var walk func(any, bool)
+	walk = func(value any, root bool) {
+		switch typed := value.(type) {
+		case []any:
+			for _, item := range typed {
+				walk(item, false)
+			}
+		case map[string]any:
+			if !root {
+				if event, ok := normalizeKiroToolObject(typed, base); ok {
+					events = append(events, event)
+					return
+				}
+			}
+			for _, item := range typed {
+				walk(item, false)
+			}
+		}
+	}
+	walk(obj, true)
+	return events
+}
+
+func normalizeKiroToolObject(obj map[string]any, base normalizedEvent) (normalizedEvent, bool) {
+	hook := strings.ToLower(firstPresentString(obj, "hook_event_name", "eventName", "event"))
+	tool := firstPresentString(obj, "tool_name", "toolName", "tool", "name")
+	if strings.Contains(hook, "tool") || tool != "" {
+		event := base
+		event.Tool = boundedTool(tool)
+		if event.Tool == "" {
+			event.Tool = "tool"
+		}
+		if strings.Contains(hook, "post") || firstJSONValueByKey(obj, "tool_response") != nil || firstJSONValueByKey(obj, "output") != nil {
+			event.Kind = "tool_result"
+			event.ToolOutputBytes = outputBytes(obj)
+		} else {
+			event.Kind = "tool_call"
+			event.ToolArgsHash = hashJSONValue(firstPresentValue(obj, "tool_input", "input", "arguments"))
+		}
+		event.CallIDHash = hashIfPresent(firstPresentString(obj, "session_id", "call_id", "id"))
+		return event, true
+	}
+	return normalizedEvent{}, false
+}
+
+func normalizeAntigravityJSONObject(obj map[string]any, base normalizedEvent) []normalizedEvent {
+	eventType := strings.ToLower(firstPresentString(obj, "type", "event_type", "kind"))
+	switch {
+	case eventType == "user_input" || eventType == "user":
+		base.Kind = "message"
+		base.Role = "user"
+		return []normalizedEvent{base}
+	case strings.Contains(eventType, "tool") || strings.Contains(eventType, "terminal") || strings.Contains(eventType, "command"):
+		base.Tool = boundedTool(firstPresentString(obj, "tool", "tool_name", "name", "command"))
+		if base.Tool == "" && strings.Contains(eventType, "terminal") {
+			base.Tool = "terminal"
+		}
+		if firstJSONValueByKey(obj, "output") != nil || firstJSONValueByKey(obj, "result") != nil || strings.Contains(eventType, "result") {
+			base.Kind = "tool_result"
+			base.ToolOutputBytes = outputBytes(obj)
+		} else {
+			base.Kind = "tool_call"
+			base.ToolArgsHash = hashJSONValue(firstPresentValue(obj, "input", "arguments", "command", "content"))
+		}
+		return []normalizedEvent{base}
+	default:
+		return nil
+	}
+}
+
+func normalizeRawEventLine(source string, raw []byte) []byte {
+	switch source {
+	case "claude_desktop_mcp", "kiro_cli", "kiro_ide":
+		trimmed := bytes.TrimSpace(raw)
+		if len(trimmed) == 0 || trimmed[0] == '{' {
+			return raw
+		}
+		if idx := bytes.IndexByte(trimmed, '{'); idx >= 0 {
+			candidate := bytes.TrimSpace(trimmed[idx:])
+			var obj map[string]any
+			if json.Unmarshal(candidate, &obj) == nil {
+				return candidate
+			}
+		}
+	}
+	return raw
+}
+
+func normalizeCodexJSONObject(source string, obj map[string]any, turn int) []normalizedEvent {
+	itemType := directString(obj, "type")
+	payload := firstJSONMapByKey(obj, "payload")
+	if len(payload) == 0 {
+		return normalizeGenericJSONObject(source, obj, turn)
+	}
+	base := normalizedEvent{
+		Source:       source,
+		Role:         boundedRole(firstJSONStringByKey(payload, "role")),
+		Kind:         boundedKind(itemType),
+		ParentIDHash: hashIfPresent(firstPresentString(payload, "parentUuid", "parentID", "parent_id")),
+		Turn:         turn,
+		Error:        jsonHasError(payload),
+	}
+	applyUsage(&base, payload)
+	applyPatchStats(&base, payload)
+
+	switch itemType {
+	case "session_meta", "turn_context", "compacted":
+		if base.Kind == "" {
+			base.Kind = "message"
+		}
+		return []normalizedEvent{base}
+	case "event_msg":
+		if eventType := boundedKind(firstJSONStringByKey(payload, "type")); eventType != "message" {
+			base.Kind = eventType
+		}
+		if baseHasSignal(base) || base.Kind == "token_count" || base.Kind == "patch" || base.Kind == "compact" || base.Error {
+			return []normalizedEvent{base}
+		}
+		return []normalizedEvent{base}
+	case "response_item":
+		return normalizeCodexResponseItem(source, payload, base)
+	default:
+		return normalizeGenericJSONObject(source, payload, turn)
+	}
+}
+
+func normalizeCodexResponseItem(source string, payload map[string]any, base normalizedEvent) []normalizedEvent {
+	item := firstJSONMapByKey(payload, "item")
+	if len(item) == 0 {
+		item = payload
+	}
+	itemType := directString(item, "type")
+	if itemType == "" {
+		itemType = firstJSONStringByKey(item, "type")
+	}
+	base.Role = boundedRole(firstPresentString(item, "role"))
+	base.Kind = boundedKind(itemType)
+	base.CallIDHash = hashIfPresent(firstPresentString(item, "call_id", "callID", "id"))
+	base.Error = base.Error || jsonHasError(item)
+
+	switch itemType {
+	case "function_call", "local_shell_call", "custom_tool_call", "tool_search_call":
+		base.Kind = "tool_call"
+		base.Tool = boundedTool(firstPresentString(item, "name", "tool", "callable_tool_name"))
+		if base.Tool == "" && itemType == "local_shell_call" {
+			base.Tool = "shell"
+		}
+		if base.Tool == "" {
+			base.Tool = boundedTool(itemType)
+		}
+		base.ToolArgsHash = hashJSONValue(firstPresentValue(item, "arguments", "input", "command", "action"))
+		return []normalizedEvent{base}
+	case "function_call_output", "custom_tool_call_output", "local_shell_call_output", "tool_search_call_output":
+		base.Kind = "tool_result"
+		base.ToolOutputBytes = outputBytes(item)
+		return []normalizedEvent{base}
+	default:
+		if base.Kind == "tool_result" {
+			base.ToolOutputBytes = outputBytes(item)
+		}
+		if baseHasSignal(base) || base.Kind != "" {
+			return []normalizedEvent{base}
+		}
+		return normalizeGenericJSONObject(source, item, base.Turn)
+	}
+}
+
+func normalizeGenericJSONObject(source string, obj map[string]any, turn int) []normalizedEvent {
+	if source == "codex" {
+		source = "codex_generic"
+	}
+	return normalizeJSONObject(source, obj, turn)
 }
 
 func extractToolEvent(source string, obj map[string]any, base normalizedEvent) normalizedEvent {

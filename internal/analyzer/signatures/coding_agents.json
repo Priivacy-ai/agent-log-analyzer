@@ -1,12 +1,16 @@
 [
   {"id":"aider","patterns":["(?i)\\baider\\b"]},
   {"id":"claude_code","patterns":["(?i)\\bClaude Code\\b","(?i)\\.claude/"]},
+  {"id":"claude_desktop_mcp","patterns":["(?i)\\bClaude Desktop\\b","(?i)Claude[/\\\\]mcp","(?i)mcp-server-"]},
   {"id":"cline","patterns":["\\bCline\\b","(?i)\\.cline/"]},
   {"id":"codex","patterns":["(?i)\\bCodex CLI\\b","(?i)codex"]},
   {"id":"continue","patterns":["(?i)\\bcontinue\\.dev\\b","\\bContinue (?:IDE|extension|agent)\\b","(?i)\\.continue/"]},
   {"id":"copilot","patterns":["(?i)\\bGitHub Copilot\\b"]},
   {"id":"cursor","patterns":["\\bCursor (?:IDE|rules|agent)\\b","(?i)\\.cursor/","(?i)cursor\\.rules"]},
+  {"id":"antigravity","patterns":["(?i)\\bGoogle Antigravity\\b","(?i)\\bAntigravity IDE\\b","(?i)\\.gemini[/\\\\]antigravity"]},
   {"id":"gemini_cli","patterns":["(?i)\\bGemini CLI\\b"]},
+  {"id":"kiro_cli","patterns":["(?i)\\bKiro CLI\\b","(?i)kiro-chat\\.log","(?i)KIRO_CHAT_LOG_FILE"]},
+  {"id":"kiro_ide","patterns":["(?i)\\bKiro\\b","(?i)\\bKiro IDE\\b","(?i)\\.kiro/","(?i)kiro\\.kiroAgent"]},
   {"id":"opencode","patterns":["(?i)\\bopencode\\b","(?i)\\bOpenCode\\b"]},
   {"id":"roo","patterns":["(?i)\\bRoo Code\\b","(?i)\\.roo/"]},
   {"id":"windsurf","patterns":["\\bWindsurf\\b","(?i)\\.windsurf/"]}

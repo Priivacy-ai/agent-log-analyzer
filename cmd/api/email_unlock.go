@@ -388,7 +388,7 @@ func confirmationEmailBody(confirmURL string) string {
 
 func fullScanCommandEmailBody(command string, expiresAt time.Time) string {
 	return "Your full-scan command is ready.\n\nRun this one-liner:\n\n" + command + "\n\n" +
-		"It analyzes Claude Code, Codex, and OpenCode logs locally, then uploads only the sanitized aggregate report JSON. Token expires: " + expiresAt.Local().Format(time.RFC1123) + "\n"
+		"It analyzes supported agent logs locally, then uploads only the sanitized aggregate report JSON. Token expires: " + expiresAt.Local().Format(time.RFC1123) + "\n"
 }
 
 func pluginReadyEmailBody(reportURL, artifactURL string) string {

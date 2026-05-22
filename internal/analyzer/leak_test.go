@@ -95,6 +95,48 @@ func TestReportSerializationContainsNoForbiddenStrings(t *testing.T) {
 	}
 }
 
+func TestDesktopSourceReportSerializationContainsNoForbiddenStrings(t *testing.T) {
+	canaries := []string{
+		"FORBIDDEN-PROMPT-CANARY",
+		"FORBIDDEN-TOOLIN-CANARY",
+		"FORBIDDEN-TOOLOUT-CANARY",
+		"/Users/robert/private-project",
+		"private.user@example.internal",
+		"sess_PRIVATESESSION",
+		"mcp__private__internal",
+		"customer-private-tool",
+		"sha256-of-private-name-DO-NOT-LEAK",
+	}
+	joined := strings.Join(canaries, " ")
+	escaped := jsonEscape(joined)
+	fixtures := map[string]string{
+		"claude_desktop_mcp": `2026-05-21T19:00:00Z {"jsonrpc":"2.0","id":"sess_PRIVATESESSION","method":"tools/call","params":{"name":"customer-private-tool","arguments":{"path":"` + escaped + `"}}}
+2026-05-21T19:00:01Z {"jsonrpc":"2.0","id":"sess_PRIVATESESSION","result":{"content":"` + escaped + `"}}`,
+		"cursor":      `{"tool":"customer-private-tool","arguments":{"command":"` + escaped + `"},"content":"` + escaped + `"}`,
+		"kiro_cli":    `2026-05-21 19:00:00.000 [info] {"hook_event_name":"PreToolUse","session_id":"sess_PRIVATESESSION","tool_name":"customer-private-tool","tool_input":{"command":"` + escaped + `"}}`,
+		"kiro_ide":    `{"sessionId":"sess_PRIVATESESSION","history":[{"hook_event_name":"PreToolUse","tool_name":"customer-private-tool","tool_input":{"command":"` + escaped + `"}},{"hook_event_name":"PostToolUse","tool_name":"customer-private-tool","tool_response":"` + escaped + `"}]}`,
+		"antigravity": `{"type":"terminal_command","command":"` + escaped + `"}` + "\n" + `{"type":"tool_result","output":"` + escaped + `"}`,
+	}
+	for source, input := range fixtures {
+		t.Run(source, func(t *testing.T) {
+			rep, err := analyzer.AnalyzeForSource("job-"+source, source, []byte(input))
+			if err != nil {
+				t.Fatalf("AnalyzeForSource failed: %v", err)
+			}
+			b, err := json.Marshal(rep)
+			if err != nil {
+				t.Fatalf("marshal report: %v", err)
+			}
+			s := string(b)
+			for _, c := range canaries {
+				if strings.Contains(s, c) {
+					t.Errorf("forbidden canary %q leaked into %s report JSON", c, source)
+				}
+			}
+		})
+	}
+}
+
 // buildHostileInput constructs a synthetic JSONL transcript that crams each
 // canary into multiple plausible carrier fields (user message, tool input,
 // tool output) plus a bare line. This maximizes the chance that any leak

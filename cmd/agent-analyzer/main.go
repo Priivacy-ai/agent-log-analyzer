@@ -2,7 +2,7 @@ package main
 
 import (
 	"bytes"
-	"crypto/sha256"
+	"database/sql"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
@@ -18,8 +18,10 @@ import (
 	"sort"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"github.com/priivacy-ai/agent-log-analyzer/internal/analyzer"
+	_ "modernc.org/sqlite"
 )
 
 const defaultBaseURL = "https://analyzer.spec-kitty.ai"
@@ -29,6 +31,17 @@ const maxAutoLogLimit = 5
 const targetAutoLogMinBytes = 5 * 1024 * 1024
 const targetAutoLogMaxBytes = 10 * 1024 * 1024
 const largestRecentHalfLife = 14 * 24 * time.Hour
+
+var representativeSourceOrder = []string{
+	"claude_code",
+	"codex",
+	"opencode",
+	"claude_desktop_mcp",
+	"cursor",
+	"kiro_cli",
+	"kiro_ide",
+	"antigravity",
+}
 
 func main() {
 	if err := run(os.Args[1:]); err != nil {
@@ -353,14 +366,13 @@ func buildSourceReports(results []sourceAnalysisResult) []analyzer.SourceReport 
 }
 
 func safeAnalyzedLogRef(candidate logCandidate, ordinal int, bytesRead int) analyzer.AnalyzedLogRef {
-	sum := sha256.Sum256([]byte(candidate.SourceID + "\x00" + candidate.Display))
 	prefix := candidate.SourceID
 	if prefix == "" {
 		prefix = "log"
 	}
 	return analyzer.AnalyzedLogRef{
 		Label:      fmt.Sprintf("%s log %d", candidate.SourceLabel, ordinal),
-		LocalRef:   fmt.Sprintf("%s-%s", prefix, hex.EncodeToString(sum[:])[:10]),
+		LocalRef:   fmt.Sprintf("%s-log-%d", prefix, ordinal),
 		SizeBucket: byteSizeBucket(bytesRead),
 	}
 }
@@ -384,17 +396,23 @@ func byteSizeBucket(bytesRead int) string {
 
 func analyzeDiscovered(candidates []logCandidate, out string, mode string, printNextSteps bool) error {
 	if len(candidates) == 0 {
-		return errors.New("no supported agent logs found; checked Claude Code, Codex, and OpenCode")
+		return noSupportedLogsError()
 	}
 	results := make([]sourceAnalysisResult, 0, len(candidates))
 	totalBytes := 0
 	totalRedacted := 0
+	analyzedCandidates := make([]logCandidate, 0, len(candidates))
 	progress := newProgressBar(len(candidates)*2 + 1)
 	step := 0
 	for index, candidate := range candidates {
 		progress.Update(step, fmt.Sprintf("reading %s %s", candidate.SourceLabel, candidate.shortDisplay()))
 		data, err := candidate.readBytes()
 		if err != nil {
+			if isPermissionError(err) {
+				step += 2
+				progress.Update(step, fmt.Sprintf("skipped unreadable %s", candidate.SourceLabel))
+				continue
+			}
 			progress.Fail()
 			return fmt.Errorf("read %s log %q: %w", candidate.SourceLabel, candidate.Display, err)
 		}
@@ -410,10 +428,15 @@ func analyzeDiscovered(candidates []logCandidate, out string, mode string, print
 			Report:    report,
 			Bytes:     len(data),
 		})
+		analyzedCandidates = append(analyzedCandidates, candidate)
 		totalBytes += len(data)
 		totalRedacted += report.SecurityReceipt.SecretsRedacted
 		step++
 		progress.Update(step, fmt.Sprintf("complete %s", candidate.SourceLabel))
+	}
+	if len(results) == 0 {
+		progress.Fail()
+		return errors.New("no readable supported agent logs found")
 	}
 
 	var report analyzer.Report
@@ -448,9 +471,9 @@ func analyzeDiscovered(candidates []logCandidate, out string, mode string, print
 	progress.Finish("complete")
 
 	if mode == "paid" || mode == "full_scan" {
-		fmt.Printf("Analyzed locally: %d supported agent logs across %d sources (%s)\n", len(candidates), sourceCount(candidates), sourceSummary(candidates))
+		fmt.Printf("Analyzed locally: %d supported agent logs across %d sources (%s)\n", len(analyzedCandidates), sourceCount(analyzedCandidates), sourceSummary(analyzedCandidates))
 	} else {
-		fmt.Printf("Analyzed locally: %d target-sized recent supported agent log(s) across %d sources (%s)\n", len(candidates), sourceCount(candidates), sourceSummary(candidates))
+		fmt.Printf("Analyzed locally: %d target-sized recent supported agent log(s) across %d sources (%s)\n", len(analyzedCandidates), sourceCount(analyzedCandidates), sourceSummary(analyzedCandidates))
 	}
 	fmt.Printf("Raw bytes read locally: %d\n", totalBytes)
 	fmt.Printf("Secrets redacted before report write: %d\n", totalRedacted)
@@ -558,7 +581,7 @@ func runAnalyzePaid(out string, limit int) error {
 		return err
 	}
 	if len(candidates) == 0 {
-		return errors.New("no supported agent logs found; checked Claude Code, Codex, and OpenCode")
+		return noSupportedLogsError()
 	}
 	return analyzeDiscovered(candidates, out, "paid", true)
 }
@@ -575,7 +598,7 @@ func runAnalyzeFullScan(out string, limit int) error {
 		return err
 	}
 	if len(candidates) == 0 {
-		return errors.New("no supported agent logs found; checked Claude Code, Codex, and OpenCode")
+		return noSupportedLogsError()
 	}
 	return analyzeDiscovered(candidates, out, "full_scan", true)
 }
@@ -742,27 +765,8 @@ func recentSupportedLogsWithBounds(limit int, maxBytes int64, minBytes int64) ([
 		return nil, errors.New("log discovery limit must be greater than zero")
 	}
 	var candidates []logCandidate
-	fileSources := []struct {
-		id    string
-		label string
-		root  []string
-		exts  map[string]bool
-	}{
-		{
-			id:    "claude_code",
-			label: "Claude Code",
-			root:  []string{".claude", "projects"},
-			exts:  map[string]bool{".jsonl": true},
-		},
-		{
-			id:    "codex",
-			label: "Codex",
-			root:  []string{".codex", "sessions"},
-			exts:  map[string]bool{".jsonl": true},
-		},
-	}
-	for _, source := range fileSources {
-		found, err := recentFileLogs(source.id, source.label, source.root, source.exts, limit, maxBytes, minBytes)
+	for _, source := range logSourceDefinitions() {
+		found, err := recentPathLogs(source.id, source.label, source.roots, source.accept, limit, maxBytes, minBytes)
 		if err != nil {
 			return nil, err
 		}
@@ -773,42 +777,122 @@ func recentSupportedLogsWithBounds(limit int, maxBytes int64, minBytes int64) ([
 		return nil, err
 	}
 	candidates = append(candidates, openCode...)
+	kiroSessions, err := recentKiroWorkspaceSessions(limit, maxBytes, minBytes)
+	if err != nil {
+		return nil, err
+	}
+	candidates = append(candidates, kiroSessions...)
+	if sqliteSourcesEnabled() {
+		sqliteCandidates, err := recentSQLiteSourceLogs(limit, maxBytes, minBytes)
+		if err != nil {
+			return nil, err
+		}
+		candidates = append(candidates, sqliteCandidates...)
+	}
+	candidates = selectLargestRecentCandidatesPerSource(candidates, limit)
 	if len(candidates) == 0 {
-		return nil, errors.New("no supported agent logs found; checked Claude Code, Codex, and OpenCode")
+		return nil, noSupportedLogsError()
 	}
 	return candidates, nil
 }
 
-func recentFileLogs(sourceID, sourceLabel string, rootParts []string, extensions map[string]bool, limit int, maxBytes int64, minBytes int64) ([]logCandidate, error) {
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return nil, err
+type logSourceDefinition struct {
+	id     string
+	label  string
+	roots  []string
+	accept func(path string, info os.FileInfo) bool
+}
+
+func logSourceDefinitions() []logSourceDefinition {
+	return []logSourceDefinition{
+		{
+			id:     "claude_code",
+			label:  "Claude Code",
+			roots:  []string{filepath.Join(claudeConfigDir(), "projects")},
+			accept: acceptExtension(".jsonl"),
+		},
+		{
+			id:     "codex",
+			label:  "Codex",
+			roots:  codexSessionRoots(),
+			accept: acceptCodexRollout,
+		},
+		{
+			id:     "claude_desktop_mcp",
+			label:  "Claude Desktop MCP",
+			roots:  claudeDesktopLogRoots(),
+			accept: acceptClaudeDesktopMCPLog,
+		},
+		{
+			id:     "cursor",
+			label:  "Cursor",
+			roots:  cursorTranscriptRoots(),
+			accept: acceptCursorTranscript,
+		},
+		{
+			id:     "kiro_cli",
+			label:  "Kiro CLI",
+			roots:  kiroCLILogRoots(),
+			accept: acceptKiroCLILog,
+		},
+		{
+			id:     "kiro_ide",
+			label:  "Kiro IDE",
+			roots:  kiroIDELogRoots(),
+			accept: acceptKiroIDELog,
+		},
+		{
+			id:     "antigravity",
+			label:  "Google Antigravity",
+			roots:  antigravityTranscriptRoots(),
+			accept: acceptAntigravityTranscript,
+		},
 	}
-	parts := append([]string{home}, rootParts...)
-	root := filepath.Join(parts...)
+}
+
+func recentPathLogs(sourceID, sourceLabel string, roots []string, accept func(string, os.FileInfo) bool, limit int, maxBytes int64, minBytes int64) ([]logCandidate, error) {
 	var matches []logMatch
-	err = filepath.WalkDir(root, func(path string, entry os.DirEntry, err error) error {
+	seenRoots := map[string]bool{}
+	for _, root := range roots {
+		if root == "" || seenRoots[root] {
+			continue
+		}
+		seenRoots[root] = true
+		err := filepath.WalkDir(root, func(path string, entry os.DirEntry, err error) error {
+			if err != nil {
+				if isSkippableDiscoveryError(err) {
+					return nil
+				}
+				return err
+			}
+			if entry.IsDir() {
+				return nil
+			}
+			info, err := entry.Info()
+			if err != nil {
+				if isSkippableDiscoveryError(err) {
+					return nil
+				}
+				return err
+			}
+			if accept != nil && !accept(path, info) {
+				return nil
+			}
+			if maxBytes > 0 && info.Size() > maxBytes {
+				return nil
+			}
+			if minBytes > 0 && info.Size() < minBytes {
+				return nil
+			}
+			matches = append(matches, logMatch{path: path, modTime: info.ModTime(), size: info.Size()})
+			return nil
+		})
 		if err != nil {
-			return nil
+			if isSkippableDiscoveryError(err) {
+				continue
+			}
+			return nil, fmt.Errorf("discover %s root %q: %w", sourceLabel, root, err)
 		}
-		if entry.IsDir() || !extensions[strings.ToLower(filepath.Ext(path))] {
-			return nil
-		}
-		info, err := entry.Info()
-		if err != nil {
-			return nil
-		}
-		if maxBytes > 0 && info.Size() > maxBytes {
-			return nil
-		}
-		if minBytes > 0 && info.Size() < minBytes {
-			return nil
-		}
-		matches = append(matches, logMatch{path: path, modTime: info.ModTime(), size: info.Size()})
-		return nil
-	})
-	if err != nil && !errors.Is(err, os.ErrNotExist) {
-		return nil, err
 	}
 	if len(matches) == 0 {
 		return nil, nil
@@ -822,9 +906,581 @@ func recentFileLogs(sourceID, sourceLabel string, rootParts []string, extensions
 			Display:     match.path,
 			ModTime:     match.modTime,
 			Size:        match.size,
+			Read:        candidateReadFunc(sourceID, match.path),
 		})
 	}
 	return candidates, nil
+}
+
+func candidateReadFunc(sourceID, path string) func() ([]byte, error) {
+	if sourceID == "claude_desktop_mcp" {
+		if server := claudeDesktopMCPServerName(path); server != "" {
+			return func() ([]byte, error) {
+				data, err := os.ReadFile(path)
+				if err != nil {
+					return nil, err
+				}
+				header := []byte("Available MCP servers:\n- " + server + "\n")
+				return append(header, data...), nil
+			}
+		}
+	}
+	return nil
+}
+
+func noSupportedLogsError() error {
+	return errors.New("no supported agent logs found; checked Claude Code, Codex, OpenCode, Claude Desktop MCP, Cursor, Kiro, and Google Antigravity")
+}
+
+func acceptExtension(ext string) func(string, os.FileInfo) bool {
+	return func(path string, _ os.FileInfo) bool {
+		return strings.EqualFold(filepath.Ext(path), ext)
+	}
+}
+
+func acceptCodexRollout(path string, _ os.FileInfo) bool {
+	return strings.EqualFold(filepath.Ext(path), ".jsonl")
+}
+
+func acceptClaudeDesktopMCPLog(path string, _ os.FileInfo) bool {
+	base := strings.ToLower(filepath.Base(path))
+	return filepath.Ext(base) == ".log" && (base == "mcp.log" || strings.HasPrefix(base, "mcp-server-"))
+}
+
+func acceptCursorTranscript(path string, _ os.FileInfo) bool {
+	normalized := filepath.ToSlash(path)
+	return strings.EqualFold(filepath.Ext(path), ".jsonl") && strings.Contains(normalized, "/agent-transcripts/")
+}
+
+func acceptKiroCLILog(path string, _ os.FileInfo) bool {
+	if configured := os.Getenv("KIRO_CHAT_LOG_FILE"); configured != "" && filepath.Clean(path) == filepath.Clean(configured) {
+		return true
+	}
+	return strings.EqualFold(filepath.Base(path), "kiro-chat.log")
+}
+
+func acceptKiroIDELog(path string, _ os.FileInfo) bool {
+	if !strings.EqualFold(filepath.Ext(path), ".log") {
+		return false
+	}
+	base := strings.ToLower(filepath.Base(path))
+	return strings.Contains(base, "kiro") ||
+		base == "main.log" ||
+		base == "renderer.log" ||
+		base == "terminal.log" ||
+		base == "telemetry.log"
+}
+
+func acceptAntigravityTranscript(path string, _ os.FileInfo) bool {
+	return strings.EqualFold(filepath.Base(path), "transcript.jsonl")
+}
+
+func claudeConfigDir() string {
+	if configured := os.Getenv("CLAUDE_CONFIG_DIR"); configured != "" {
+		return configured
+	}
+	return filepath.Join(homeDir(), ".claude")
+}
+
+func codexSessionRoots() []string {
+	root := os.Getenv("CODEX_HOME")
+	if root == "" {
+		root = filepath.Join(homeDir(), ".codex")
+	}
+	return []string{
+		filepath.Join(root, "sessions"),
+		filepath.Join(root, "archived_sessions"),
+	}
+}
+
+func claudeDesktopLogRoots() []string {
+	return claudeDesktopLogRootsFor(runtime.GOOS, homeDir(), appDataDir())
+}
+
+func claudeDesktopLogRootsFor(goos, home, appData string) []string {
+	switch goos {
+	case "darwin":
+		return []string{filepath.Join(home, "Library", "Logs", "Claude")}
+	case "windows":
+		return []string{filepath.Join(appData, "Claude", "logs")}
+	default:
+		return nil
+	}
+}
+
+func cursorTranscriptRoots() []string {
+	return []string{
+		filepath.Join(homeDir(), ".cursor", "projects"),
+		filepath.Join(appSupportDir("Cursor"), "User", "workspaceStorage"),
+		filepath.Join(appSupportDir("Cursor"), "User", "globalStorage"),
+	}
+}
+
+func kiroCLILogRoots() []string {
+	roots := kiroCLILogRootsFor(runtime.GOOS, os.TempDir(), os.Getenv("XDG_RUNTIME_DIR"), kiroHomeDir())
+	if configured := os.Getenv("KIRO_CHAT_LOG_FILE"); configured != "" {
+		return append([]string{filepath.Dir(configured)}, roots...)
+	}
+	return roots
+}
+
+func kiroCLILogRootsFor(goos, tempDir, runtimeDir, kiroHome string) []string {
+	roots := []string{filepath.Join(kiroHome, "logs")}
+	switch goos {
+	case "windows":
+		return append(roots, filepath.Join(tempDir, "kiro-log", "logs"))
+	case "linux":
+		if runtimeDir != "" {
+			return append(roots, filepath.Join(runtimeDir, "kiro-log"))
+		}
+		return append(roots, filepath.Join(tempDir, "kiro-log"))
+	default:
+		return append(roots, filepath.Join(tempDir, "kiro-log"))
+	}
+}
+
+func kiroHomeDir() string {
+	if configured := os.Getenv("KIRO_HOME"); configured != "" {
+		return configured
+	}
+	return filepath.Join(homeDir(), ".kiro")
+}
+
+func kiroIDELogRoots() []string {
+	return []string{filepath.Join(appSupportDir("Kiro"), "logs")}
+}
+
+func kiroWorkspaceSessionRoots() []string {
+	return []string{filepath.Join(appSupportDir("Kiro"), "User", "globalStorage", "kiro.kiroagent", "workspace-sessions")}
+}
+
+func recentKiroWorkspaceSessions(limit int, maxBytes int64, minBytes int64) ([]logCandidate, error) {
+	return recentPathLogs("kiro_ide", "Kiro IDE", kiroWorkspaceSessionRoots(), acceptKiroWorkspaceSession, limit, maxBytes, minBytes)
+}
+
+func acceptKiroWorkspaceSession(path string, _ os.FileInfo) bool {
+	if !strings.EqualFold(filepath.Ext(path), ".json") {
+		return false
+	}
+	base := strings.ToLower(filepath.Base(path))
+	return base != "sessions.json"
+}
+
+func sqliteSourcesEnabled() bool {
+	value := strings.ToLower(os.Getenv("AGENT_ANALYZER_ENABLE_SQLITE_SOURCES"))
+	return value == "1" || value == "true" || value == "yes"
+}
+
+type sqliteSourceDefinition struct {
+	id       string
+	label    string
+	roots    []string
+	prefixes []string
+}
+
+func recentSQLiteSourceLogs(limit int, maxBytes int64, minBytes int64) ([]logCandidate, error) {
+	var candidates []logCandidate
+	for _, source := range sqliteSourceDefinitions() {
+		found, err := recentSQLiteStores(source, limit, maxBytes, minBytes)
+		if err != nil {
+			return nil, err
+		}
+		candidates = append(candidates, found...)
+	}
+	return candidates, nil
+}
+
+func sqliteSourceDefinitions() []sqliteSourceDefinition {
+	return []sqliteSourceDefinition{
+		{
+			id:    "cursor",
+			label: "Cursor SQLite",
+			roots: []string{
+				filepath.Join(appSupportDir("Cursor"), "User", "globalStorage"),
+				filepath.Join(appSupportDir("Cursor"), "User", "workspaceStorage"),
+			},
+			prefixes: []string{"bubbleId:", "composerData:", "composer.composerData", "agentKv:", "messageRequestContext:"},
+		},
+		{
+			id:    "kiro_ide",
+			label: "Kiro IDE SQLite",
+			roots: []string{
+				filepath.Join(appSupportDir("Kiro"), "User", "globalStorage"),
+				filepath.Join(appSupportDir("Kiro"), "User", "workspaceStorage"),
+			},
+			prefixes: []string{"kiro.kiroAgent", "kiro:", "chat", "session"},
+		},
+		{
+			id:    "antigravity",
+			label: "Google Antigravity SQLite",
+			roots: append(
+				sqliteAppStorageRoots("Antigravity"),
+				sqliteAppStorageRoots("Antigravity IDE")...,
+			),
+			prefixes: []string{"agent", "chat", "conversation", "task", "transcript"},
+		},
+	}
+}
+
+func sqliteAppStorageRoots(app string) []string {
+	return []string{
+		filepath.Join(appSupportDir(app), "User", "globalStorage"),
+		filepath.Join(appSupportDir(app), "User", "workspaceStorage"),
+	}
+}
+
+func recentSQLiteStores(source sqliteSourceDefinition, limit int, maxBytes int64, minBytes int64) ([]logCandidate, error) {
+	var matches []logMatch
+	seenRoots := map[string]bool{}
+	for _, root := range source.roots {
+		if root == "" || seenRoots[root] {
+			continue
+		}
+		seenRoots[root] = true
+		err := filepath.WalkDir(root, func(path string, entry os.DirEntry, err error) error {
+			if err != nil {
+				if isSkippableDiscoveryError(err) {
+					return nil
+				}
+				return err
+			}
+			if entry.IsDir() || filepath.Base(path) != "state.vscdb" {
+				return nil
+			}
+			info, err := entry.Info()
+			if err != nil {
+				if isSkippableDiscoveryError(err) {
+					return nil
+				}
+				return err
+			}
+			storeSize, err := sqliteStoreSize(path)
+			if err != nil {
+				return nil
+			}
+			if maxBytes > 0 && storeSize > maxBytes {
+				return nil
+			}
+			if minBytes > 0 && storeSize < minBytes {
+				return nil
+			}
+			matches = append(matches, logMatch{path: path, modTime: info.ModTime(), size: storeSize})
+			return nil
+		})
+		if err != nil {
+			if isSkippableDiscoveryError(err) {
+				continue
+			}
+			return nil, fmt.Errorf("discover %s root %q: %w", source.label, root, err)
+		}
+	}
+	if len(matches) == 0 {
+		return nil, nil
+	}
+	matches = selectTargetSizedRecentMatches(matches, limit)
+	candidates := make([]logCandidate, 0, len(matches))
+	for _, match := range matches {
+		dbPath := match.path
+		candidates = append(candidates, logCandidate{
+			SourceID:    source.id,
+			SourceLabel: source.label,
+			Display:     dbPath,
+			ModTime:     match.modTime,
+			Size:        match.size,
+			Read: func() ([]byte, error) {
+				return readSQLiteStateAsJSONL(dbPath, source.prefixes, maxBytes)
+			},
+		})
+	}
+	return candidates, nil
+}
+
+func sqliteStoreSize(path string) (int64, error) {
+	var total int64
+	for _, suffix := range []string{"", "-wal", "-shm"} {
+		info, err := os.Stat(path + suffix)
+		if err != nil {
+			if suffix != "" && (errors.Is(err, os.ErrNotExist) || isPermissionError(err)) {
+				continue
+			}
+			return 0, err
+		}
+		total += info.Size()
+	}
+	return total, nil
+}
+
+func readSQLiteStateAsJSONL(path string, keyPrefixes []string, maxOutputBytes int64) ([]byte, error) {
+	copied, cleanup, err := copySQLiteDBForRead(path)
+	if err != nil {
+		return nil, err
+	}
+	defer cleanup()
+	db, err := sql.Open("sqlite", copied)
+	if err != nil {
+		return nil, err
+	}
+	defer db.Close()
+	var output bytes.Buffer
+	for _, table := range []string{"ItemTable", "cursorDiskKV"} {
+		if err := appendSQLiteKVTable(&output, db, table, keyPrefixes, maxOutputBytes); err != nil {
+			return nil, err
+		}
+	}
+	if output.Len() == 0 {
+		return []byte("{\"type\":\"message\",\"kind\":\"sqlite_state_empty\"}\n"), nil
+	}
+	return output.Bytes(), nil
+}
+
+func appendSQLiteKVTable(output *bytes.Buffer, db *sql.DB, table string, keyPrefixes []string, maxOutputBytes int64) error {
+	if !sqliteTableExists(db, table) {
+		return nil
+	}
+	where, args := sqlitePrefixWhereClause(keyPrefixes)
+	if where == "" {
+		return nil
+	}
+	query := "SELECT key, value FROM " + table + " WHERE " + where + " ORDER BY key LIMIT 500"
+	rows, err := db.Query(query, args...)
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var key string
+		var value []byte
+		if err := rows.Scan(&key, &value); err != nil {
+			return err
+		}
+		keyType := sqliteKeyType(key, keyPrefixes)
+		if keyType == "" {
+			continue
+		}
+		text := sqliteValueText(value)
+		if strings.TrimSpace(text) == "" {
+			continue
+		}
+		line, err := json.Marshal(map[string]any{
+			"type":      "message",
+			"kind":      "sqlite_state",
+			"key_type":  keyType,
+			"content":   text,
+			"truncated": len(text) >= maxSQLiteValueTextBytes,
+		})
+		if err != nil {
+			return err
+		}
+		if maxOutputBytes > 0 && int64(output.Len()+len(line)+1) > maxOutputBytes {
+			return nil
+		}
+		output.Write(line)
+		output.WriteByte('\n')
+	}
+	return rows.Err()
+}
+
+func sqlitePrefixWhereClause(prefixes []string) (string, []any) {
+	clauses := make([]string, 0, len(prefixes))
+	args := make([]any, 0, len(prefixes))
+	for _, prefix := range prefixes {
+		prefix = strings.TrimSpace(prefix)
+		if prefix == "" {
+			continue
+		}
+		clauses = append(clauses, "key LIKE ? ESCAPE '\\'")
+		args = append(args, escapeSQLiteLike(prefix)+"%")
+	}
+	return strings.Join(clauses, " OR "), args
+}
+
+func escapeSQLiteLike(value string) string {
+	value = strings.ReplaceAll(value, `\`, `\\`)
+	value = strings.ReplaceAll(value, `%`, `\%`)
+	value = strings.ReplaceAll(value, `_`, `\_`)
+	return value
+}
+
+func sqliteTableExists(db *sql.DB, table string) bool {
+	var name string
+	err := db.QueryRow("SELECT name FROM sqlite_master WHERE type='table' AND name=? LIMIT 1", table).Scan(&name)
+	return err == nil && name == table
+}
+
+const maxSQLiteValueTextBytes = 256 * 1024
+
+func sqliteValueText(value []byte) string {
+	if len(value) > maxSQLiteValueTextBytes {
+		value = value[:maxSQLiteValueTextBytes]
+	}
+	if !utf8.Valid(value) {
+		return ""
+	}
+	text := strings.TrimSpace(string(value))
+	if text == "" {
+		return ""
+	}
+	if len(text)%2 == 0 && looksHex(text) {
+		decoded, err := hex.DecodeString(text)
+		if err == nil && utf8.Valid(decoded) {
+			text = strings.TrimSpace(string(decoded))
+		}
+	}
+	return text
+}
+
+func looksHex(value string) bool {
+	if len(value) < 8 {
+		return false
+	}
+	for _, r := range value {
+		if (r >= '0' && r <= '9') || (r >= 'a' && r <= 'f') || (r >= 'A' && r <= 'F') {
+			continue
+		}
+		return false
+	}
+	return true
+}
+
+func sqliteKeyType(key string, prefixes []string) string {
+	lower := strings.ToLower(key)
+	for _, prefix := range prefixes {
+		if strings.HasPrefix(lower, strings.ToLower(prefix)) {
+			return sanitizeKeyType(prefix)
+		}
+	}
+	return ""
+}
+
+func sanitizeKeyType(value string) string {
+	value = strings.TrimSuffix(value, ":")
+	value = strings.TrimSpace(strings.ToLower(value))
+	var out []rune
+	for _, r := range value {
+		if (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') {
+			out = append(out, r)
+			continue
+		}
+		if r == '_' || r == '-' || r == '.' {
+			out = append(out, '_')
+		}
+	}
+	if len(out) == 0 {
+		return "state"
+	}
+	return string(out)
+}
+
+func copySQLiteDBForRead(path string) (string, func(), error) {
+	dir, err := os.MkdirTemp("", "agent-analyzer-sqlite-*")
+	if err != nil {
+		return "", func() {}, err
+	}
+	cleanup := func() { _ = os.RemoveAll(dir) }
+	base := filepath.Join(dir, "state.vscdb")
+	for _, suffix := range []string{"", "-wal", "-shm"} {
+		src := path + suffix
+		dst := base + suffix
+		data, err := os.ReadFile(src)
+		if err != nil {
+			if suffix != "" && (errors.Is(err, os.ErrNotExist) || isPermissionError(err)) {
+				continue
+			}
+			cleanup()
+			return "", func() {}, err
+		}
+		if err := os.WriteFile(dst, data, 0o600); err != nil {
+			cleanup()
+			return "", func() {}, err
+		}
+	}
+	return base, cleanup, nil
+}
+
+func antigravityTranscriptRoots() []string {
+	geminiRoot := filepath.Join(homeDir(), ".gemini")
+	roots := []string{
+		filepath.Join(geminiRoot, "antigravity"),
+		filepath.Join(geminiRoot, "antigravity-ide"),
+		filepath.Join(appSupportDir("Antigravity"), "User", "workspaceStorage"),
+		filepath.Join(appSupportDir("Antigravity"), "User", "globalStorage"),
+		filepath.Join(appSupportDir("Antigravity IDE"), "User", "workspaceStorage"),
+		filepath.Join(appSupportDir("Antigravity IDE"), "User", "globalStorage"),
+	}
+	entries, err := os.ReadDir(geminiRoot)
+	if err != nil {
+		return roots
+	}
+	for _, entry := range entries {
+		if !entry.IsDir() {
+			continue
+		}
+		name := strings.ToLower(entry.Name())
+		if strings.HasPrefix(name, "antigravity") {
+			roots = append(roots, filepath.Join(geminiRoot, entry.Name()))
+		}
+	}
+	return roots
+}
+
+func claudeDesktopMCPServerName(path string) string {
+	base := strings.ToLower(filepath.Base(path))
+	if !strings.HasPrefix(base, "mcp-server-") || !strings.HasSuffix(base, ".log") {
+		return ""
+	}
+	name := strings.TrimSuffix(strings.TrimPrefix(base, "mcp-server-"), ".log")
+	var out []rune
+	for _, r := range name {
+		if (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') || r == '_' || r == '-' {
+			out = append(out, r)
+		}
+		if len(out) >= 64 {
+			break
+		}
+	}
+	return string(out)
+}
+
+func appSupportDir(app string) string {
+	return appSupportDirFor(runtime.GOOS, homeDir(), appDataDir(), os.Getenv("XDG_CONFIG_HOME"), app)
+}
+
+func appSupportDirFor(goos, home, appData, xdgConfig, app string) string {
+	switch goos {
+	case "darwin":
+		return filepath.Join(home, "Library", "Application Support", app)
+	case "windows":
+		return filepath.Join(appData, app)
+	default:
+		config := xdgConfig
+		if config == "" {
+			config = filepath.Join(home, ".config")
+		}
+		return filepath.Join(config, app)
+	}
+}
+
+func appDataDir() string {
+	if value := os.Getenv("APPDATA"); value != "" {
+		return value
+	}
+	return filepath.Join(homeDir(), "AppData", "Roaming")
+}
+
+func homeDir() string {
+	home, err := os.UserHomeDir()
+	if err == nil {
+		return home
+	}
+	return ""
+}
+
+func isPermissionError(err error) bool {
+	return errors.Is(err, os.ErrPermission)
+}
+
+func isSkippableDiscoveryError(err error) bool {
+	return errors.Is(err, os.ErrNotExist) || isPermissionError(err)
 }
 
 type logMatch struct {
@@ -910,6 +1566,49 @@ func distanceFromTargetBand(total int64) int64 {
 	return 0
 }
 
+func selectLargestRecentCandidatesPerSource(candidates []logCandidate, limit int) []logCandidate {
+	if limit <= 0 || len(candidates) == 0 {
+		return candidates
+	}
+	groups := map[string][]logCandidate{}
+	var order []string
+	for _, candidate := range candidates {
+		if _, ok := groups[candidate.SourceID]; !ok {
+			order = append(order, candidate.SourceID)
+		}
+		groups[candidate.SourceID] = append(groups[candidate.SourceID], candidate)
+	}
+	var selected []logCandidate
+	for _, sourceID := range order {
+		group := groups[sourceID]
+		newest := group[0].ModTime
+		for _, candidate := range group[1:] {
+			if candidate.ModTime.After(newest) {
+				newest = candidate.ModTime
+			}
+		}
+		sort.Slice(group, func(i, j int) bool {
+			left := largestRecentScore(logMatch{path: group[i].Display, modTime: group[i].ModTime, size: group[i].Size}, newest)
+			right := largestRecentScore(logMatch{path: group[j].Display, modTime: group[j].ModTime, size: group[j].Size}, newest)
+			if left == right {
+				if group[i].ModTime.Equal(group[j].ModTime) {
+					if group[i].Size == group[j].Size {
+						return group[i].Display > group[j].Display
+					}
+					return group[i].Size > group[j].Size
+				}
+				return group[i].ModTime.After(group[j].ModTime)
+			}
+			return left > right
+		})
+		if len(group) > limit {
+			group = group[:limit]
+		}
+		selected = append(selected, group...)
+	}
+	return selected
+}
+
 func largestRecentScore(match logMatch, newest time.Time) float64 {
 	age := newest.Sub(match.modTime)
 	if age < 0 {
@@ -927,7 +1626,7 @@ func recentOpenCodeSessions(limit int, maxBytes int64, minBytes int64) ([]logCan
 	root := filepath.Join(home, ".local", "share", "opencode", "storage", "message")
 	entries, err := os.ReadDir(root)
 	if err != nil {
-		if errors.Is(err, os.ErrNotExist) {
+		if errors.Is(err, os.ErrNotExist) || isPermissionError(err) {
 			return nil, nil
 		}
 		return nil, err
@@ -1213,7 +1912,7 @@ func usage() {
 	fmt.Fprintln(os.Stderr, "  run            analyze locally, ask for upload confirmation, upload sanitized JSON, and open the report.")
 	fmt.Fprintln(os.Stderr, "  <log-path>     path to a supported JSON/JSONL log; mutually exclusive with --log.")
 	fmt.Fprintf(os.Stderr, "                 if neither is supplied, recent logs per source are selected to target %s-%s total.\n", formatBytesForHelp(targetAutoLogMinBytes), formatBytesForHelp(targetAutoLogMaxBytes))
-	fmt.Fprintln(os.Stderr, "                 currently auto-discovers Claude Code, Codex, and OpenCode.")
+	fmt.Fprintln(os.Stderr, "                 currently auto-discovers Claude Code, Codex, OpenCode, Claude Desktop MCP, Cursor, Kiro, and Google Antigravity.")
 	fmt.Fprintln(os.Stderr, "  --log <path>   explicit log path; mutually exclusive with a positional <log-path>.")
 	fmt.Fprintln(os.Stderr, "  --out <path>   output path for the sanitized report JSON (default: ./agent-analyzer-report.json).")
 	fmt.Fprintln(os.Stderr, "  --paid         legacy alias: analyze target-sized recent supported logs locally and write a sanitized aggregate report.")

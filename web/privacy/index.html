@@ -12,7 +12,7 @@
       <p class="eyebrow">privacy</p>
       <h1>We collect performance signals, not transcripts.</h1>
       <p class="subhead">The useful product data is aggregate workflow intelligence: token buckets, waste patterns, known public tooling fingerprints, parser status, and redaction counts.</p>
-      <p class="subhead">Agent Analyzer is an independent third-party tool and is not affiliated with Anthropic. The public flow is local-first: raw Claude Code, Codex, and OpenCode logs stay on your machine, and only the sanitized report JSON is uploaded after review.</p>
+      <p class="subhead">Agent Analyzer is an independent third-party tool and is not affiliated with Anthropic, OpenAI, Anysphere, Amazon, or Google. The public flow is local-first: raw supported agent logs stay on your machine, and only the sanitized report JSON is uploaded after review.</p>
 
       <section class="panel">
         <h2>What We Receive</h2>
@@ -28,6 +28,7 @@
         <h2>What We Do Not Receive</h2>
         <ul>
           <li>Raw agent logs in the public launch flow.</li>
+          <li>Raw SQLite state stores. Cursor, Kiro, and Google Antigravity state extraction is disabled by default, opt-in only, copied read-only, and analyzed locally.</li>
           <li>Prompt text, tool output, file contents, command arguments, secret values, repo names, usernames, hostnames, or full file paths.</li>
           <li>Unknown private tool names unless a future explicit opt-in path is added.</li>
         </ul>

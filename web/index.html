@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Agent Analyzer | Deterministic Profiler for Agentic Coding Logs</title>
-    <meta name="description" content="Agent Analyzer is a local-first deterministic profiler for Claude Code, Codex, and OpenCode logs. Find token waste, retry loops, repeated reads, context bloat, and optimization opportunities without uploading raw transcripts." />
+    <meta name="description" content="Agent Analyzer is a local-first deterministic profiler for agentic coding logs from Claude Code, Codex, OpenCode, Cursor, Kiro, Claude Desktop MCP, and Google Antigravity. Find token waste without uploading raw transcripts." />
     <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1" />
     <meta name="author" content="Priivacy.ai" />
     <meta name="application-name" content="Agent Analyzer" />
@@ -14,11 +14,11 @@
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Agent Analyzer" />
     <meta property="og:title" content="Agent Analyzer | Deterministic Profiler for Agentic Coding Logs" />
-    <meta property="og:description" content="Analyze Claude Code, Codex, and OpenCode logs locally. Upload only sanitized report JSON and get a deterministic token-waste profiler report." />
+    <meta property="og:description" content="Analyze supported agentic coding logs locally. Upload only sanitized report JSON and get a deterministic token-waste profiler report." />
     <meta property="og:url" content="https://analyzer.spec-kitty.ai/" />
     <meta name="twitter:card" content="summary" />
     <meta name="twitter:title" content="Agent Analyzer | Deterministic Profiler for Agentic Coding Logs" />
-    <meta name="twitter:description" content="Local-first deterministic profiler for Claude Code, Codex, and OpenCode token waste." />
+    <meta name="twitter:description" content="Local-first deterministic profiler for supported agentic coding log token waste." />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="/vendor/tippy/tippy.css" />
     <link rel="stylesheet" href="/styles.css" />
@@ -55,9 +55,9 @@
             "downloadUrl": "https://www.npmjs.com/package/agent-analyzer",
             "codeRepository": "https://github.com/Priivacy-ai/agent-log-analyzer",
             "isAccessibleForFree": true,
-            "description": "Local-first deterministic profiler for Claude Code, Codex, and OpenCode logs that detects token waste, repeated reads, retry loops, context bloat, and tool-output overhead.",
+            "description": "Local-first deterministic profiler for supported agentic coding logs that detects token waste, repeated reads, retry loops, context bloat, and tool-output overhead.",
             "featureList": [
-              "Local Claude Code, Codex, and OpenCode log parsing",
+              "Local Claude Code, Codex, OpenCode, Claude Desktop MCP, Cursor, Kiro, and Google Antigravity log parsing",
               "Sanitized report JSON upload",
               "Deterministic token-waste findings",
               "Context bloat and retry-loop detection",
@@ -140,7 +140,7 @@
                 "name": "What agent logs are supported?",
                 "acceptedAnswer": {
                   "@type": "Answer",
-                  "text": "Agent Analyzer currently auto-discovers Claude Code, Codex, and OpenCode logs."
+                  "text": "Agent Analyzer currently auto-discovers Claude Code, Codex, OpenCode, Claude Desktop MCP, Cursor, Kiro, and Google Antigravity logs."
                 }
               }
             ]
@@ -159,8 +159,11 @@
             <span>Claude Code</span>
             <span>Codex</span>
             <span>OpenCode</span>
+            <span>Cursor</span>
+            <span>Kiro</span>
+            <span>Antigravity</span>
           </span>
-          <span class="sr-only">Claude Code, Codex, or OpenCode</span>
+          <span class="sr-only">Claude Code, Codex, OpenCode, Cursor, Kiro, or Antigravity</span>
           tokens.
         </h1>
         <p class="subhead" itemprop="description">Analyze one session locally. Upload only the sanitized report.</p>
@@ -174,7 +177,7 @@
         <h2 class="sr-only">Privacy and trust guarantees</h2>
         <ul class="trust" aria-label="Privacy and trust guarantees">
           <li>No account required</li>
-          <li>Raw logs stay local in the public flow <button type="button" class="help-tip" data-tippy-content="The NPX command analyzes Claude Code, Codex, and OpenCode logs on your machine first. The upload step sends the generated sanitized report JSON, not raw transcript files." aria-label="More information">?</button></li>
+          <li>Raw logs stay local in the public flow <button type="button" class="help-tip" data-tippy-content="The NPX command analyzes supported agent logs on your machine first. Optional SQLite state-store extraction for Cursor, Kiro, and Google Antigravity is disabled by default and remains local when explicitly enabled. The upload step sends the generated sanitized report JSON, not raw transcript files or raw state databases." aria-label="More information">?</button></li>
           <li>Reports are not used for training <button type="button" class="help-tip" data-tippy-content="The service stores sanitized reports for rendering and bounded aggregate analytics. It does not feed uploaded reports into model training." aria-label="More information">?</button></li>
           <li>Secrets redacted locally before upload <button type="button" class="help-tip" data-tippy-content="The CLI runs deterministic redaction on your computer before writing the report JSON. The hosted service receives category counts and placeholders, not the original redacted values. Redaction is best-effort; users should still review the JSON before upload." aria-label="More information">?</button></li>
         </ul>
@@ -210,7 +213,7 @@
           <div class="data-path">
             <h2>Data path</h2>
             <div class="path-rail" aria-label="Raw logs to local analyzer to sanitized report to private hosted report">
-              <span>Claude / Codex / OpenCode logs</span>
+              <span>supported agent logs</span>
               <span>local analyzer</span>
               <span>sanitized JSON</span>
               <span>private report link</span>

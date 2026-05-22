@@ -99,7 +99,9 @@ unguessable private report token; it is not the analytics storage format. See
 
 ## Upload Scope
 
-The public scan analyzes target-sized recent sessions per auto-discovered supported source selected by the local CLI. The current auto-discovered sources are Claude Code, Codex, and OpenCode. Selection uses bounded local metadata: file/session size and recency, targeting roughly 5-10 MB per source while avoiding very large multi-file reads. The server receives only the generated sanitized report JSON after the user has had a chance to inspect it.
+The public scan analyzes target-sized recent sessions per auto-discovered supported source selected by the local CLI. The current auto-discovered sources are Claude Code, Codex, OpenCode, Claude Desktop MCP, Cursor, Kiro, and Google Antigravity. Selection uses bounded local metadata: file/session size and recency, targeting roughly 5-10 MB per source while avoiding very large multi-file reads. The server receives only the generated sanitized report JSON after the user has had a chance to inspect it.
+
+Cursor, Kiro, and Google Antigravity may also keep conversation state in VS Code-style SQLite stores. Those stores are raw-sensitive: they can contain prompts, drafts, code, tool inputs, tool outputs, workspace paths, provider metadata, and extension state. The CLI only extracts known bounded key prefixes from copied read-only SQLite database snapshots when `AGENT_ANALYZER_ENABLE_SQLITE_SOURCES=1` is explicitly set. Raw database keys, raw paths, unknown state rows, OAuth/session material, protobuf blobs, and transcript lines are not emitted in reports.
 
 Aggregate analytics from public scans must still use the same allowlist: known public ecosystem IDs, counts, buckets, timing, parser status, and redaction totals. Raw logs, raw paths, unknown private names, emails, and report JSON are not retained as analytics.
 

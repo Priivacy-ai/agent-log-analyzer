@@ -1,0 +1,423 @@
+# Developer Capability Reference
+
+This document describes the current Agent Analyzer implementation from a
+developer and maintainer perspective. It covers the local CLI, source discovery,
+source-specific readers, normalization, privacy boundaries, aggregation, and the
+test surface that protects those capabilities.
+
+## System Shape
+
+Agent Analyzer is a local-first profiler for agentic coding logs.
+
+The public flow is:
+
+1. A user runs the local CLI.
+2. The CLI discovers supported agent logs on the user's machine.
+3. The CLI reads raw logs locally, redacts secrets, normalizes events, and
+   writes a sanitized report JSON.
+4. The user reviews that JSON.
+5. Only the sanitized report JSON is uploaded.
+
+The server-side app stores and renders sanitized reports. It does not need raw
+transcripts for the public launch path.
+
+Important entry points:
+
+- CLI: `cmd/agent-analyzer/main.go`
+- Core analyzer: `internal/analyzer/analyzer.go`
+- Source-specific normalized events: `internal/analyzer/normalized_events.go`
+- Ecosystem allowlists: `internal/analyzer/signatures/*.json`
+- Aggregate analytics contract: `internal/analytics`
+- Report/remediation artifact safety: `internal/remediation`
+
+## Supported Source IDs
+
+The source IDs used by discovery, normalization, source reports, analytics
+allowlists, and remediation allowlists are:
+
+| Source ID | Product / surface |
+| --- | --- |
+| `claude_code` | Claude Code JSONL sessions |
+| `codex` | Codex CLI / Codex desktop session JSONL |
+| `opencode` | OpenCode session directories |
+| `claude_desktop_mcp` | Claude Desktop MCP logs |
+| `cursor` | Cursor agent transcripts and optional state DB rows |
+| `kiro_cli` | Kiro CLI chat logs |
+| `kiro_ide` | Kiro IDE logs, workspace sessions, and optional state DB rows |
+| `antigravity` | Google Antigravity transcripts and optional state DB rows |
+
+These IDs are registered in `internal/analyzer/signatures/coding_agents.json`.
+When adding a new source, keep the discovery source ID, normalizer source ID,
+and coding-agent registry ID aligned. Any ID not in the registry is filtered
+out by analytics/remediation allowlist code.
+
+## Discovery Model
+
+`recentSupportedLogsWithBounds` is the main discovery coordinator. It collects
+candidates from the source registry, OpenCode session discovery, Kiro workspace
+session discovery, and optional SQLite source discovery. After collection, it
+applies a final largest-recent per-source cap so a source cannot exceed the
+requested limit by contributing multiple reader families.
+
+The selection model favors files that are both large enough to be meaningful and
+recent enough to represent current workflows. The scoring function is
+`largestRecentScore`, with a 14 day half-life.
+
+Discovery boundaries:
+
+- Missing roots are skipped.
+- Permission-denied roots and entries are skipped.
+- Unexpected filesystem errors are returned with source/root context.
+- Unreadable candidates discovered later are skipped at read time if the error
+  is permission-related; valid siblings still analyze.
+
+The free scan uses bounded candidates to keep the one-line command responsive.
+The full scan can analyze up to 10 largest-recent logs per supported source.
+
+## OS-Aware Roots
+
+Root helpers are deliberately centralized in `cmd/agent-analyzer/main.go`.
+
+General helpers:
+
+- `homeDir()` reads the current user's home directory.
+- `appDataDir()` reads `%APPDATA%`, falling back to
+  `$HOME/AppData/Roaming`.
+- `appSupportDirFor(goos, home, appData, xdgConfig, app)` resolves:
+  - macOS: `$HOME/Library/Application Support/<app>`
+  - Windows: `%APPDATA%/<app>`
+  - Linux: `$XDG_CONFIG_HOME/<app>` or `$HOME/.config/<app>`
+
+Environment variables used by discovery:
+
+- `$HOME`
+- `%APPDATA%`
+- `%TEMP%` / Go `os.TempDir()`
+- `$XDG_CONFIG_HOME`
+- `$XDG_RUNTIME_DIR`
+- `$CODEX_HOME`
+- `$KIRO_HOME`
+- `$KIRO_CHAT_LOG_FILE`
+- `$CLAUDE_CONFIG_DIR`
+
+Source roots:
+
+| Source | Roots |
+| --- | --- |
+| Claude Code | `$CLAUDE_CONFIG_DIR/projects` or `$HOME/.claude/projects` |
+| Codex | `$CODEX_HOME/sessions`, `$CODEX_HOME/archived_sessions`, or `$HOME/.codex/...` |
+| OpenCode | `$HOME/.local/share/opencode/storage/message` plus associated part files |
+| Claude Desktop MCP | macOS `$HOME/Library/Logs/Claude`; Windows `%APPDATA%/Claude/logs` |
+| Cursor JSONL | `$HOME/.cursor/projects`, plus Cursor app-support workspace/global storage roots |
+| Kiro CLI | exact `$KIRO_CHAT_LOG_FILE` when set, `$KIRO_HOME/logs`, temp/runtime Kiro log roots |
+| Kiro IDE | Kiro app-support `logs` plus Kiro workspace-session storage |
+| Antigravity JSONL | `$HOME/.gemini/antigravity*` plus Antigravity app-support workspace/global storage roots |
+| SQLite state | app-support `User/globalStorage` and `User/workspaceStorage` for Cursor, Kiro, and Antigravity |
+
+Linux Kiro runtime discovery only uses `$XDG_RUNTIME_DIR/kiro-log` when
+`XDG_RUNTIME_DIR` is non-empty; otherwise it falls back to an absolute temp root
+instead of scanning a relative `kiro-log` directory.
+
+## Readers
+
+### Plain Path Reader
+
+Most file-backed sources use `recentPathLogs`, which walks configured roots and
+accepts files using a source-specific predicate.
+
+Examples:
+
+- Codex accepts `.jsonl`.
+- Claude Desktop MCP accepts `mcp.log` and `mcp-server-*.log`.
+- Cursor accepts JSONL under `agent-transcripts`.
+- Kiro CLI accepts the exact `KIRO_CHAT_LOG_FILE` path when configured, or
+  files named `kiro-chat.log`.
+- Antigravity accepts `transcript.jsonl`.
+
+### Claude Desktop MCP Server Header Reader
+
+Claude Desktop server logs are often named `mcp-server-<server>.log`. For those
+logs, the reader prepends a bounded synthetic availability header:
+
+```text
+Available MCP servers:
+- <server>
+```
+
+The server name is sanitized to a bounded identifier. This lets the existing
+MCP utilization detector count known public MCP servers without emitting raw
+paths or private server metadata.
+
+### OpenCode Session Reader
+
+OpenCode uses a directory/session layout rather than a single JSONL file. The
+reader:
+
+- selects `ses_*` message directories,
+- reads message JSON files in stable order,
+- follows message IDs to associated part files,
+- appends message and part JSON as synthetic JSONL for the analyzer.
+
+### Kiro Workspace Session Reader
+
+Kiro IDE workspace sessions live under app-support global storage:
+
+```text
+Kiro/User/globalStorage/kiro.kiroagent/workspace-sessions
+```
+
+The reader accepts session `.json` files and skips `sessions.json`. The
+normalizer walks nested arrays/maps, so hook events inside session `history`
+arrays are converted into tool calls/results.
+
+### SQLite State Reader
+
+Cursor, Kiro, and Antigravity can store conversation state in VS Code-style
+SQLite databases named `state.vscdb`.
+
+SQLite extraction is disabled by default. It runs only when:
+
+```sh
+AGENT_ANALYZER_ENABLE_SQLITE_SOURCES=1
+```
+
+Accepted truthy values are `1`, `true`, and `yes` case-insensitively.
+
+The SQLite reader:
+
+- discovers `state.vscdb` under app-support `User/globalStorage` and
+  `User/workspaceStorage`,
+- includes `state.vscdb-wal` and `state.vscdb-shm` sizes in candidate bounds,
+- copies `state.vscdb`, `-wal`, and `-shm` into a temporary read-only snapshot
+  before opening the database,
+- skips missing or unreadable WAL/SHM files,
+- reads only `ItemTable` and `cursorDiskKV`,
+- pushes key-prefix filtering into SQL before `LIMIT`,
+- uses deterministic `ORDER BY key`,
+- emits bounded synthetic JSONL rows,
+- caps emitted JSONL by the source byte budget when one is provided,
+- skips unsupported keys, empty values, invalid UTF-8/protobuf blobs, and
+  unknown state rows.
+
+Supported key prefixes:
+
+| Source | Prefixes |
+| --- | --- |
+| Cursor | `bubbleId:`, `composerData:`, `composer.composerData`, `agentKv:`, `messageRequestContext:` |
+| Kiro IDE | `kiro.kiroAgent`, `kiro:`, `chat`, `session` |
+| Antigravity | `agent`, `chat`, `conversation`, `task`, `transcript` |
+
+Synthetic SQLite JSONL rows contain only:
+
+- `type`
+- `kind`
+- sanitized `key_type`
+- bounded `content`
+- `truncated`
+
+Raw DB keys are never emitted. The normalizers parse stringified JSON in
+SQLite `content` when it is valid JSON, so a supported row containing a tool
+call still contributes tool-call signals.
+
+## Normalization
+
+The analyzer first scrubs raw input, then `normalizeEvents` converts supported
+source shapes into bounded `normalizedEvent` records.
+
+`normalizedEvent` is an internal type. It carries counts, closed-enum roles and
+kinds, bounded tool identifiers, and hashes of call IDs/tool arguments. It does
+not carry prompts, command arguments, raw outputs, paths, DB keys, workspace
+names, or transcript IDs.
+
+### Codex
+
+Codex supports both older direct JSONL and newer rollout-style records with a
+top-level `payload`.
+
+The Codex normalizer:
+
+- unwraps `payload`,
+- handles `session_meta`, `turn_context`, `compacted`, `event_msg`, and
+  `response_item`,
+- reads token counts from nested `event_msg` / `last_token_usage`,
+- maps `response_item` item types:
+  - `function_call`
+  - `local_shell_call`
+  - `custom_tool_call`
+  - `tool_search_call`
+  into `tool_call`,
+- maps corresponding `*_output` item types into `tool_result`,
+- hashes call IDs and tool arguments instead of emitting raw values,
+- extracts patch statistics from patch events.
+
+### Claude Desktop MCP
+
+Claude Desktop MCP logs are text logs containing JSON-RPC payloads. The raw-line
+preprocessor strips timestamp/log-level prefixes by extracting the JSON suffix.
+
+The MCP normalizer:
+
+- recognizes JSON-RPC `tools/call` and `resources/read` methods as tool calls,
+- records request IDs only for those tool/resource requests,
+- emits a tool result only when a later JSON-RPC `result` has a matching tracked
+  request ID,
+- ignores `initialize`, `tools/list`, and similar non-call results for tool
+  result counts.
+
+### Cursor
+
+Cursor support covers transcript JSONL first, plus optional SQLite synthetic
+JSONL.
+
+The Cursor normalizer:
+
+- maps direct transcript objects with `tool`, `args`, `arguments`, or `input`
+  into tool calls,
+- handles SQLite synthetic rows with `key_type`,
+- parses JSON stored as a string in SQLite `content` and normalizes nested tool
+  calls where present,
+- hashes argument payloads.
+
+### Kiro CLI And Kiro IDE
+
+Kiro logs can include timestamp/level prefixes followed by JSON. The raw-line
+preprocessor extracts valid JSON suffixes.
+
+The Kiro normalizer:
+
+- maps `PreToolUse` style hook events to tool calls,
+- maps `PostToolUse`, `tool_response`, and `output` shapes to tool results,
+- hashes session/call IDs,
+- walks nested session structures such as workspace `history` arrays.
+
+### Antigravity
+
+Antigravity transcript support maps:
+
+- `USER_INPUT` / `user` to user messages,
+- terminal/tool/command events to tool calls,
+- result/output events to tool results.
+
+Raw command text and tool output are counted or hashed, not emitted.
+
+## Report And Aggregation Capabilities
+
+The analyzer emits `Report` with:
+
+- score and waste range,
+- token and workflow metrics,
+- deterministic findings,
+- ecosystem signals,
+- tooling utilization,
+- timeline buckets,
+- source reports,
+- security receipt,
+- aggregate-safe event,
+- recommendation set.
+
+When multiple sources are analyzed, source reports are grouped by source ID.
+Each source report includes bounded metrics/findings/timeline/signals and
+ordinal log references.
+
+`AnalyzedLogRef.LocalRef` is intentionally ordinal only:
+
+```text
+<source-id>-log-<ordinal>
+```
+
+It is not a hash of a path, thread ID, workspace name, session ID, DB key, or
+any other private value.
+
+## Privacy Invariants
+
+Raw logs and raw state stores are toxic inputs.
+
+The public flow must not upload or emit:
+
+- raw transcript lines,
+- raw paths,
+- thread IDs,
+- workspace names,
+- tool arguments,
+- prompts or drafts,
+- DB keys,
+- protobuf blobs,
+- OAuth/session material,
+- unknown private tool names,
+- stable hashes of private strings.
+
+Allowed report/analytics surfaces are bounded to:
+
+- known public allowlist IDs,
+- counts,
+- buckets,
+- booleans,
+- closed enums,
+- redaction totals,
+- token/tool/output byte counts,
+- ordinal local references.
+
+Unknown private names are counted, not stored.
+
+## Tests Protecting These Capabilities
+
+Important tests:
+
+- `cmd/agent-analyzer/main_test.go`
+  - source discovery for desktop and agent sources,
+  - cross-platform root helpers,
+  - exact `KIRO_CHAT_LOG_FILE` discovery,
+  - app-support Cursor/Antigravity transcripts,
+  - Claude Desktop MCP server-log header synthesis,
+  - permission-denied discovery/read behavior,
+  - Kiro workspace session reads and nested tool signal extraction,
+  - SQLite opt-in, empty stores, Kiro/Antigravity stores, filtering before
+    limit, output bounds, invalid UTF-8/protobuf skipping,
+  - ordinal-only local refs.
+- `internal/analyzer/normalized_events_test.go`
+  - Codex payload token/tool normalization,
+  - desktop-agent source-specific signals,
+  - MCP request/result pairing,
+  - registered coding-agent source IDs.
+- `internal/analyzer/leak_test.go`
+  - end-to-end serialization canaries,
+  - hostile fixtures for new desktop source normalizers.
+
+Verification used for the current implementation:
+
+```sh
+go test ./cmd/agent-analyzer ./internal/analyzer
+go test ./...
+git diff --check
+```
+
+## Adding A New Source
+
+Use this checklist:
+
+1. Add the source ID to `representativeSourceOrder` when it should appear in
+   representative local scans.
+2. Add the source ID to `internal/analyzer/signatures/coding_agents.json`.
+3. Add a source definition in `logSourceDefinitions()` or a dedicated reader
+   if the source is directory/database-backed.
+4. Keep root resolution OS-aware. Prefer helper functions that can be unit
+   tested without changing `runtime.GOOS`.
+5. Bound discovery by file size and final per-source limit.
+6. Skip permission-denied roots and unreadable candidates without aborting valid
+   siblings.
+7. Normalize into counts, enums, and hashes only. Do not add raw string fields
+   to `normalizedEvent` or `Report`.
+8. Add synthetic fixtures for:
+   - path discovery,
+   - parser mapping,
+   - leak canaries,
+   - permission/read failure behavior,
+   - opt-in gates if raw-sensitive state extraction is involved.
+9. Run `go test ./...` and `git diff --check`.
+
+## Known Human Validation Gap
+
+Synthetic coverage is broad, but real logs from desktop tools can vary across
+versions. Before calling a new source production-complete, validate against
+real logs from macOS, Windows, and Linux machines and add sanitized fixtures for
+any new shapes found.
