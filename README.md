@@ -23,7 +23,7 @@ npx --yes agent-analyzer@latest run
 ```
 
 That command fetches a scriptless npm package, runs the bundled native Go binary,
-selects recent logs per supported agent source to target roughly 5-10 MB locally, writes `agent-analyzer-report.json`,
+selects recent logs per supported agent source to target roughly 5 MB locally, writes `agent-analyzer-report.json`,
 shows the upload boundary, asks for confirmation, uploads only sanitized report
 JSON, and opens the private report page.
 
@@ -33,7 +33,7 @@ For users who do not want npm/NPX, versioned GitHub Release archives with
 There is intentionally no browser upload form. Agent logs live in hidden tool-specific directories, which are awkward for Finder/browser upload flows. The public launch path is local-first:
 
 1. `npx --yes agent-analyzer@latest run` starts the local native analyzer.
-2. The analyzer selects recent logs per supported source, currently Claude Code, Codex, and OpenCode, targeting roughly 5-10 MB per source, parses and redacts them locally, and writes `agent-analyzer-report.json`.
+2. The analyzer selects recent logs per supported source, currently Claude Code, Codex, and OpenCode, targeting roughly 5 MB total per source, parses and redacts them locally, and writes `agent-analyzer-report.json`.
 3. The CLI prints the upload boundary and asks for confirmation.
 4. After confirmation, it sends only the sanitized report to `POST /api/client-reports`.
 5. The private report opens at `/r/{job_id}/{report_token}` and remains available for later review.
@@ -57,7 +57,7 @@ agent-analyzer analyze ~/.claude/projects/some-session.jsonl --out ./report.json
 agent-analyzer analyze --log ~/.claude/projects/some-session.jsonl --out ./report.json
 ```
 
-If neither form is supplied, the CLI auto-discovers target-sized recent logs per supported source. It aims for roughly 5-10 MB per source, reads up to five small logs when needed, and falls back to a single huge log when only oversized sessions are available.
+If neither form is supplied, the CLI auto-discovers target-sized recent logs per supported source. It aims for roughly 5 MB total per source, combines up to five small logs when that gets closer to the target, and falls back to a single huge log when only oversized sessions are available.
 
 ```bash
 docker compose up --build
