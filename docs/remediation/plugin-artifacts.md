@@ -18,10 +18,9 @@ Plugin purchase:
 - generates a customized Claude Code plugin archive from that report
 - shows copyable install commands and a Claude-native install prompt
 
-The public flow must not ask users to tar, gzip, upload raw Claude Code JSONL
-logs, or run a second scan. Any raw-log paid bundle or email/full-scan endpoint
-is legacy/internal smoke coverage only and must require an explicit internal
-request path.
+The public flow must not ask users to tar, gzip, or upload raw Claude Code JSONL
+logs. Any raw-log paid bundle or email/full-scan endpoint is legacy/internal
+smoke coverage only and must require an explicit internal request path.
 
 ## Plugin Shape
 

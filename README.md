@@ -37,7 +37,7 @@ There is intentionally no browser upload form. Agent logs live in hidden tool-sp
 3. The CLI prints the upload boundary and asks for confirmation.
 4. After confirmation, it sends only the sanitized report to `POST /api/client-reports`.
 5. The private report opens at `/r/{job_id}/{report_token}` and remains available for later review.
-6. The report page offers a free extended Markdown download from the same sanitized report. The custom plugin artifact is generated from that same scan; there is no second local scan in the public flow.
+6. The report page offers a free extended Markdown download from the same sanitized report. The custom plugin artifact is generated from the sanitized report data.
 
 Legacy raw-log token upload and email/full-scan endpoints still exist for internal compatibility tests. They are not the public onboarding path.
 
