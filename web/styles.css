@@ -348,6 +348,20 @@ button:disabled {
   opacity: 0.5;
 }
 
+#copy-prompt {
+  background: rgba(126, 231, 135, 0.1);
+  border-color: rgba(126, 231, 135, 0.9);
+  box-shadow: 0 0 0 1px rgba(126, 231, 135, 0.08), 0 0 22px rgba(126, 231, 135, 0.08);
+  color: #a9f5ae;
+  font-weight: 700;
+}
+
+#copy-prompt:hover,
+#copy-prompt:focus {
+  background: rgba(126, 231, 135, 0.16);
+  box-shadow: 0 0 0 1px rgba(126, 231, 135, 0.18), 0 0 26px rgba(126, 231, 135, 0.14);
+}
+
 .command-panel {
   margin-top: 0;
   padding: 24px;
