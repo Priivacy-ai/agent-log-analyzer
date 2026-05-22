@@ -4,10 +4,15 @@ import (
 	"archive/tar"
 	"bytes"
 	"compress/gzip"
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -330,7 +335,7 @@ func TestReportPageServerRendersCompletedReport(t *testing.T) {
 		"Cap noisy command output",
 		"Get my optimization plugin",
 		"Download extended report",
-		"$10 / €10",
+		"$10 / â‚¬10",
 		"0 model tokens used to generate this report.",
 		"Model tokens for report",
 		"Copy line",
@@ -1033,6 +1038,74 @@ func TestCreatePaidSessionReturnsLegacyPaidBundleOnlyWhenExplicit(t *testing.T) 
 	}
 }
 
+func TestStripeWebhookRejectsInvalidSignature(t *testing.T) {
+	t.Setenv("CLAUDE_ANALYZER_ENABLE_LOCAL_PAID_SESSIONS", "true")
+	t.Setenv("CLAUDE_ANALYZER_STRIPE_WEBHOOK_SECRET", "whsec_test")
+	store, err := localstore.New(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	payload := stripeWebhookPayload(t, "evt_bad_sig", "cs_bad_sig", "paid", 5000, "usd")
+	req := httptest.NewRequest(http.MethodPost, "/api/stripe/webhook", bytes.NewReader(payload))
+	req.Header.Set("Stripe-Signature", "t=1,v1=invalid")
+	rec := httptest.NewRecorder()
+
+	createStripeWebhookHandler(store, 15*time.Minute).ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusUnauthorized {
+		t.Fatalf("expected invalid signature status 401, got %d: %s", rec.Code, rec.Body.String())
+	}
+}
+
+func TestStripeWebhookCreatesPaidSessionAndHandlesReplay(t *testing.T) {
+	t.Setenv("CLAUDE_ANALYZER_ENABLE_LOCAL_PAID_SESSIONS", "true")
+	t.Setenv("CLAUDE_ANALYZER_STRIPE_WEBHOOK_SECRET", "whsec_test")
+	store, err := localstore.New(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	payload := stripeWebhookPayload(t, "evt_paid_1", "cs_paid_1", "paid", 5000, "usd")
+	signature := stripeWebhookSignature("whsec_test", payload, time.Now().UTC().Unix())
+
+	req := httptest.NewRequest(http.MethodPost, "/api/stripe/webhook", bytes.NewReader(payload))
+	req.Host = "example.test"
+	req.Header.Set("Stripe-Signature", signature)
+	rec := httptest.NewRecorder()
+	createStripeWebhookHandler(store, 15*time.Minute).ServeHTTP(rec, req)
+	if rec.Code != http.StatusCreated {
+		t.Fatalf("expected stripe webhook status 201, got %d: %s", rec.Code, rec.Body.String())
+	}
+	var session analysisSessionResponse
+	if err := json.Unmarshal(rec.Body.Bytes(), &session); err != nil {
+		t.Fatalf("response is not valid session JSON: %v", err)
+	}
+	if session.JobID == "" || session.Token == "" || !strings.Contains(session.UploadPath, "/api/paid-uploads/") {
+		t.Fatalf("expected paid upload session response, got %#v", session)
+	}
+	job, err := store.GetJob(session.JobID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if job.PaymentProvider != "stripe" || job.PaymentSessionID != "cs_paid_1" || job.PaymentEventID != "evt_paid_1" || job.PaymentAmountCents != 5000 || job.PaymentCurrency != "usd" {
+		t.Fatalf("expected stripe payment metadata on job, got %#v", job)
+	}
+
+	replayReq := httptest.NewRequest(http.MethodPost, "/api/stripe/webhook", bytes.NewReader(payload))
+	replayReq.Header.Set("Stripe-Signature", signature)
+	replayRec := httptest.NewRecorder()
+	createStripeWebhookHandler(store, 15*time.Minute).ServeHTTP(replayRec, replayReq)
+	if replayRec.Code != http.StatusOK {
+		t.Fatalf("expected replay status 200, got %d: %s", replayRec.Code, replayRec.Body.String())
+	}
+	var replay map[string]string
+	if err := json.Unmarshal(replayRec.Body.Bytes(), &replay); err != nil {
+		t.Fatalf("replay response is not JSON: %v", err)
+	}
+	if replay["status"] != "already_processed" || replay["job_id"] != session.JobID {
+		t.Fatalf("expected replay idempotency response, got %#v", replay)
+	}
+}
+
 func TestPaidBundleUploadRejectsFreeToken(t *testing.T) {
 	store, err := localstore.New(t.TempDir())
 	if err != nil {
@@ -1168,4 +1241,30 @@ func paidAggregateReport() analyzer.Report {
 			{ID: "repeated_file_reads", Severity: "high", CostImpact: "medium-high", Evidence: analyzer.FindingEvidence{Count: 6}},
 		},
 	}
+}
+
+func stripeWebhookPayload(t *testing.T, eventID, sessionID, paymentStatus string, amountCents int64, currency string) []byte {
+	t.Helper()
+	event := stripeWebhookEvent{
+		ID:   eventID,
+		Type: "checkout.session.completed",
+	}
+	event.Data.Object = stripeCheckoutSession{
+		ID:            sessionID,
+		PaymentStatus: paymentStatus,
+		AmountTotal:   amountCents,
+		Currency:      currency,
+	}
+	payload, err := json.Marshal(event)
+	if err != nil {
+		t.Fatalf("marshal stripe payload: %v", err)
+	}
+	return payload
+}
+
+func stripeWebhookSignature(secret string, payload []byte, timestamp int64) string {
+	message := strconv.FormatInt(timestamp, 10) + "." + string(payload)
+	mac := hmac.New(sha256.New, []byte(secret))
+	_, _ = mac.Write([]byte(message))
+	return fmt.Sprintf("t=%d,v1=%s", timestamp, hex.EncodeToString(mac.Sum(nil)))
 }

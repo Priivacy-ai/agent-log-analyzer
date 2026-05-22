@@ -539,6 +539,21 @@ func (s *Store) putJob(job app.Job) error {
 	if !job.WaiverAcceptedAt.IsZero() {
 		item["waiver_accepted_at"] = &dynamodbtypes.AttributeValueMemberS{Value: job.WaiverAcceptedAt.Format(time.RFC3339Nano)}
 	}
+	if job.PaymentProvider != "" {
+		item["payment_provider"] = &dynamodbtypes.AttributeValueMemberS{Value: job.PaymentProvider}
+	}
+	if job.PaymentSessionID != "" {
+		item["payment_session_id"] = &dynamodbtypes.AttributeValueMemberS{Value: job.PaymentSessionID}
+	}
+	if job.PaymentEventID != "" {
+		item["payment_event_id"] = &dynamodbtypes.AttributeValueMemberS{Value: job.PaymentEventID}
+	}
+	if job.PaymentAmountCents > 0 {
+		item["payment_amount_cents"] = &dynamodbtypes.AttributeValueMemberN{Value: strconv.FormatInt(job.PaymentAmountCents, 10)}
+	}
+	if job.PaymentCurrency != "" {
+		item["payment_currency"] = &dynamodbtypes.AttributeValueMemberS{Value: job.PaymentCurrency}
+	}
 	if !job.CompletedAt.IsZero() {
 		item["completed_at"] = &dynamodbtypes.AttributeValueMemberS{Value: job.CompletedAt.Format(time.RFC3339Nano)}
 	}
@@ -664,15 +679,20 @@ func jobIDFromMessage(message sqstypes.Message) (string, error) {
 
 func jobFromItem(item map[string]dynamodbtypes.AttributeValue) (app.Job, error) {
 	job := app.Job{
-		ID:              stringAttr(item, "id"),
-		Status:          app.JobStatus(stringAttr(item, "status")),
-		ScanType:        app.ScanType(stringAttr(item, "scan_type")),
-		UploadPath:      stringAttr(item, "upload_path"),
-		MaxUploadBytes:  int64Attr(item, "max_upload_bytes"),
-		UploadTokenHash: stringAttr(item, "upload_token_hash"),
-		ReportTokenHash: stringAttr(item, "report_token_hash"),
-		ReportPath:      stringAttr(item, "report_path"),
-		Error:           stringAttr(item, "error"),
+		ID:                 stringAttr(item, "id"),
+		Status:             app.JobStatus(stringAttr(item, "status")),
+		ScanType:           app.ScanType(stringAttr(item, "scan_type")),
+		UploadPath:         stringAttr(item, "upload_path"),
+		MaxUploadBytes:     int64Attr(item, "max_upload_bytes"),
+		UploadTokenHash:    stringAttr(item, "upload_token_hash"),
+		ReportTokenHash:    stringAttr(item, "report_token_hash"),
+		PaymentProvider:    stringAttr(item, "payment_provider"),
+		PaymentSessionID:   stringAttr(item, "payment_session_id"),
+		PaymentEventID:     stringAttr(item, "payment_event_id"),
+		PaymentAmountCents: int64Attr(item, "payment_amount_cents"),
+		PaymentCurrency:    stringAttr(item, "payment_currency"),
+		ReportPath:         stringAttr(item, "report_path"),
+		Error:              stringAttr(item, "error"),
 	}
 	var err error
 	job.CreatedAt, err = parseTimeAttr(item, "created_at")

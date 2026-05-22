@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"crypto/hmac"
 	"crypto/rand"
 	"crypto/sha256"
 	"crypto/subtle"
@@ -26,6 +27,7 @@ import (
 const maxUploadBytes = 50 * 1024 * 1024
 const maxPaidUploadBytes = 250 * 1024 * 1024
 const maxClientReportBytes = 1024 * 1024
+const maxStripeWebhookBytes = 1024 * 1024
 
 type analysisSessionResponse struct {
 	JobID        string     `json:"job_id"`
@@ -43,6 +45,21 @@ type analysisSessionResponse struct {
 type paidSessionRequest struct {
 	WaiverAccepted bool   `json:"waiver_accepted"`
 	Acknowledgment string `json:"acknowledgment"`
+}
+
+type stripeWebhookEvent struct {
+	ID   string `json:"id"`
+	Type string `json:"type"`
+	Data struct {
+		Object stripeCheckoutSession `json:"object"`
+	} `json:"data"`
+}
+
+type stripeCheckoutSession struct {
+	ID            string `json:"id"`
+	PaymentStatus string `json:"payment_status"`
+	AmountTotal   int64  `json:"amount_total"`
+	Currency      string `json:"currency"`
 }
 
 func main() {
@@ -69,6 +86,7 @@ func buildMux(store app.APIStore) http.Handler {
 	})
 	mux.HandleFunc("POST /api/analysis-sessions", createAnalysisSessionHandler(store, maxQueueDepth(), uploadTokenTTL()))
 	mux.HandleFunc("POST /api/paid-sessions", createPaidSessionHandler(store, uploadTokenTTL()))
+	mux.HandleFunc("POST /api/stripe/webhook", createStripeWebhookHandler(store, uploadTokenTTL()))
 	mux.HandleFunc("POST /api/client-reports", createClientReportHandler(store, reportTTL()))
 	mux.HandleFunc("POST /api/paid-client-reports", createPaidClientReportHandler(store, reportTTL()))
 	mux.HandleFunc("POST /api/email-unlocks", createEmailUnlockHandler(store, emailSender))
@@ -271,52 +289,187 @@ func createPaidSessionHandler(store app.APIStore, expiresIn time.Duration) http.
 			writeJSON(w, http.StatusCreated, paidLocalFirstSessionResponse(publicBaseURL(r)))
 			return
 		}
-		uploadToken, err := newToken()
+		response, err := createPaidBundleSession(sessionStore, publicBaseURL(r), expiresIn, app.NewJobID(), app.Job{
+			WaiverAcceptedAt: time.Now().UTC(),
+		})
 		if err != nil {
-			writeError(w, http.StatusInternalServerError, "could not create upload token")
-			return
-		}
-		reportToken, err := newToken()
-		if err != nil {
-			writeError(w, http.StatusInternalServerError, "could not create report token")
-			return
-		}
-		now := time.Now().UTC()
-		jobID := app.NewJobID()
-		job := app.Job{
-			ID:                   jobID,
-			Status:               app.StatusUploading,
-			ScanType:             app.ScanTypePaidBundle,
-			MaxUploadBytes:       maxPaidUploadBytes,
-			UploadTokenHash:      tokenHash(uploadToken),
-			ReportTokenHash:      tokenHash(reportToken),
-			UploadTokenExpiresAt: now.Add(expiresIn),
-			WaiverAcceptedAt:     now,
-			CreatedAt:            now,
-			UpdatedAt:            now,
-		}
-		if err := sessionStore.CreateUploadSession(job); err != nil {
 			writeError(w, http.StatusInternalServerError, "could not create paid scan session")
 			return
 		}
-		baseURL := publicBaseURL(r)
-		uploadPath := "/api/paid-uploads/" + jobID
-		finalizePath := uploadPath + "/finalize"
-		reportPath := "/r/" + jobID + "/" + reportToken
-		response := analysisSessionResponse{
-			JobID:        jobID,
-			Token:        uploadToken,
-			UploadPath:   uploadPath,
-			FinalizePath: finalizePath,
-			ReportPath:   reportPath,
-			ReportURL:    baseURL + reportPath,
-			ExpiresAt:    timePtr(job.UploadTokenExpiresAt),
-			MaxBytes:     maxPaidUploadBytes,
-		}
-		response.Command = paidShellCommand(baseURL, response)
-		response.Prompt = paidClaudePrompt(response.Command)
 		writeJSON(w, http.StatusCreated, response)
 	}
+}
+
+func createStripeWebhookHandler(store app.APIStore, expiresIn time.Duration) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if !localPaidSessionsEnabled() {
+			writeError(w, http.StatusPaymentRequired, "paid checkout is not configured")
+			return
+		}
+		secret := strings.TrimSpace(os.Getenv("CLAUDE_ANALYZER_STRIPE_WEBHOOK_SECRET"))
+		if secret == "" {
+			writeError(w, http.StatusPaymentRequired, "stripe webhook secret is not configured")
+			return
+		}
+		sessionStore, ok := store.(app.TokenUploadStore)
+		if !ok {
+			writeError(w, http.StatusNotImplemented, "token upload unavailable")
+			return
+		}
+		payload, err := analyzer.ReadAllLimited(r.Body, maxStripeWebhookBytes)
+		if err != nil {
+			writeError(w, http.StatusRequestEntityTooLarge, "stripe webhook payload too large")
+			return
+		}
+		if !validStripeSignature(secret, r.Header.Get("Stripe-Signature"), payload) {
+			writeError(w, http.StatusUnauthorized, "invalid stripe signature")
+			return
+		}
+		var event stripeWebhookEvent
+		if err := json.Unmarshal(payload, &event); err != nil {
+			writeError(w, http.StatusBadRequest, "invalid stripe webhook payload")
+			return
+		}
+		if event.Type != "checkout.session.completed" {
+			writeJSON(w, http.StatusOK, map[string]string{"status": "ignored"})
+			return
+		}
+		session := event.Data.Object
+		if session.ID == "" {
+			writeError(w, http.StatusBadRequest, "stripe session id is required")
+			return
+		}
+		if session.PaymentStatus != "paid" {
+			writeError(w, http.StatusBadRequest, "stripe session is not paid")
+			return
+		}
+		if session.AmountTotal != stripePaidAmountCents() {
+			writeError(w, http.StatusBadRequest, "unexpected paid amount")
+			return
+		}
+		jobID := stripePaidJobID(session.ID)
+		if _, err := store.GetJob(jobID); err == nil {
+			writeJSON(w, http.StatusOK, map[string]string{"status": "already_processed", "job_id": jobID})
+			return
+		} else if !errors.Is(err, os.ErrNotExist) {
+			writeError(w, http.StatusInternalServerError, "could not check paid session state")
+			return
+		}
+		response, err := createPaidBundleSession(sessionStore, publicBaseURL(r), expiresIn, jobID, app.Job{
+			PaymentProvider:    "stripe",
+			PaymentSessionID:   session.ID,
+			PaymentEventID:     event.ID,
+			PaymentAmountCents: session.AmountTotal,
+			PaymentCurrency:    strings.ToLower(strings.TrimSpace(session.Currency)),
+		})
+		if err != nil {
+			writeError(w, http.StatusInternalServerError, "could not create paid scan session")
+			return
+		}
+		writeJSON(w, http.StatusCreated, response)
+	}
+}
+
+func createPaidBundleSession(sessionStore app.TokenUploadStore, baseURL string, expiresIn time.Duration, jobID string, baseJob app.Job) (analysisSessionResponse, error) {
+	uploadToken, err := newToken()
+	if err != nil {
+		return analysisSessionResponse{}, err
+	}
+	reportToken, err := newToken()
+	if err != nil {
+		return analysisSessionResponse{}, err
+	}
+	now := time.Now().UTC()
+	job := app.Job{
+		ID:                   jobID,
+		Status:               app.StatusUploading,
+		ScanType:             app.ScanTypePaidBundle,
+		MaxUploadBytes:       maxPaidUploadBytes,
+		UploadTokenHash:      tokenHash(uploadToken),
+		ReportTokenHash:      tokenHash(reportToken),
+		UploadTokenExpiresAt: now.Add(expiresIn),
+		WaiverAcceptedAt:     baseJob.WaiverAcceptedAt,
+		PaymentProvider:      baseJob.PaymentProvider,
+		PaymentSessionID:     baseJob.PaymentSessionID,
+		PaymentEventID:       baseJob.PaymentEventID,
+		PaymentAmountCents:   baseJob.PaymentAmountCents,
+		PaymentCurrency:      baseJob.PaymentCurrency,
+		CreatedAt:            now,
+		UpdatedAt:            now,
+	}
+	if err := sessionStore.CreateUploadSession(job); err != nil {
+		return analysisSessionResponse{}, err
+	}
+	uploadPath := "/api/paid-uploads/" + jobID
+	finalizePath := uploadPath + "/finalize"
+	reportPath := "/r/" + jobID + "/" + reportToken
+	response := analysisSessionResponse{
+		JobID:        jobID,
+		Token:        uploadToken,
+		UploadPath:   uploadPath,
+		FinalizePath: finalizePath,
+		ReportPath:   reportPath,
+		ReportURL:    baseURL + reportPath,
+		ExpiresAt:    timePtr(job.UploadTokenExpiresAt),
+		MaxBytes:     maxPaidUploadBytes,
+	}
+	response.Command = paidShellCommand(baseURL, response)
+	response.Prompt = paidClaudePrompt(response.Command)
+	return response, nil
+}
+
+func validStripeSignature(secret, signatureHeader string, payload []byte) bool {
+	parts := strings.Split(signatureHeader, ",")
+	var timestamp string
+	signatures := make([]string, 0, 1)
+	for _, part := range parts {
+		part = strings.TrimSpace(part)
+		switch {
+		case strings.HasPrefix(part, "t="):
+			timestamp = strings.TrimPrefix(part, "t=")
+		case strings.HasPrefix(part, "v1="):
+			signatures = append(signatures, strings.TrimPrefix(part, "v1="))
+		}
+	}
+	if timestamp == "" || len(signatures) == 0 {
+		return false
+	}
+	unixTS, err := strconv.ParseInt(timestamp, 10, 64)
+	if err != nil {
+		return false
+	}
+	webhookTime := time.Unix(unixTS, 0).UTC()
+	now := time.Now().UTC()
+	if now.Sub(webhookTime) > 5*time.Minute || webhookTime.Sub(now) > 5*time.Minute {
+		return false
+	}
+	message := timestamp + "." + string(payload)
+	mac := hmac.New(sha256.New, []byte(secret))
+	_, _ = mac.Write([]byte(message))
+	expected := hex.EncodeToString(mac.Sum(nil))
+	for _, candidate := range signatures {
+		if subtle.ConstantTimeCompare([]byte(candidate), []byte(expected)) == 1 {
+			return true
+		}
+	}
+	return false
+}
+
+func stripePaidAmountCents() int64 {
+	raw := strings.TrimSpace(os.Getenv("CLAUDE_ANALYZER_STRIPE_PAID_AMOUNT_CENTS"))
+	if raw == "" {
+		return 5000
+	}
+	value, err := strconv.ParseInt(raw, 10, 64)
+	if err != nil || value <= 0 {
+		return 5000
+	}
+	return value
+}
+
+func stripePaidJobID(sessionID string) string {
+	sum := sha256.Sum256([]byte("stripe-session:" + sessionID))
+	return "paid-stripe-" + hex.EncodeToString(sum[:8])
 }
 
 func waiverAccepted(r *http.Request) bool {

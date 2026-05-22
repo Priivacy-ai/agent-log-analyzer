@@ -29,6 +29,11 @@ type Job struct {
 	ReportTokenHash      string    `json:"report_token_hash,omitempty"`
 	UploadTokenExpiresAt time.Time `json:"upload_token_expires_at,omitempty"`
 	WaiverAcceptedAt     time.Time `json:"waiver_accepted_at,omitempty"`
+	PaymentProvider      string    `json:"payment_provider,omitempty"`
+	PaymentSessionID     string    `json:"payment_session_id,omitempty"`
+	PaymentEventID       string    `json:"payment_event_id,omitempty"`
+	PaymentAmountCents   int64     `json:"payment_amount_cents,omitempty"`
+	PaymentCurrency      string    `json:"payment_currency,omitempty"`
 	ReportPath           string    `json:"report_path,omitempty"`
 	Error                string    `json:"error,omitempty"`
 	QueueReceipt         string    `json:"-"`
