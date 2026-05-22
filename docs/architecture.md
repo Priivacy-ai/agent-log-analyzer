@@ -22,6 +22,10 @@ API Gateway / tiny Go control plane
 
 The launch architecture keeps raw agent logs on the user's machine. The public upload UX is local CLI analysis plus sanitized-report upload; there is no browser file upload form, no public multipart upload endpoint, and no public raw-log upload prompt.
 
+For the developer-facing capability map of local source discovery, readers,
+normalizers, privacy invariants, and tests, see
+[`developer-capabilities.md`](developer-capabilities.md).
+
 ## Local Target
 
 The local implementation uses Docker Compose with one API container, one worker container, and one shared data volume.
