@@ -30,11 +30,8 @@ jobs:
         run: go test ./...
       - name: npm package smoke
         run: |
-          mkdir -p npm/bin
-          go build -o npm/bin/agent-analyzer-linux-x64 ./cmd/agent-analyzer
-          test -z "$(node -e 'const p=require("./package.json"); const s=p.scripts||{}; const bad=["preinstall","install","postinstall","prepare"].filter(k => s[k]); console.log(bad.join("\\n"))')"
-          npm pack --dry-run
-          node npm/bin/agent-analyzer.js version
+          scripts/build-npm-binaries.sh
+          scripts/smoke-npm-package.sh
       - name: terraform fmt
         run: terraform -chdir=infra/aws fmt -check -recursive
       - name: terraform validate
