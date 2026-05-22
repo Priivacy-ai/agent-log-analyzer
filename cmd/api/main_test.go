@@ -335,7 +335,7 @@ func TestReportPageServerRendersCompletedReport(t *testing.T) {
 		"Cap noisy command output",
 		"Get my optimization plugin",
 		"Download extended report",
-		"$10 / â‚¬10",
+		"$10 / €10",
 		"0 model tokens used to generate this report.",
 		"Model tokens for report",
 		"Copy line",
