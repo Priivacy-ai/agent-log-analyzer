@@ -270,10 +270,10 @@
         </div>
         <div class="score">
           <span id="score">--</span>
-          <small>efficiency score <button type="button" class="help-tip" data-tippy-content="What does this score mean? It is a heuristic score from deterministic findings: repeated reads, retry depth, context-growth events, tool-output share, and normalized signal findings. It is a profiler score, not a model-quality grade." aria-label="More information">?</button></small>
+          <small>efficiency score <button type="button" class="help-tip" data-tippy-content="What does this score mean? Efficiency is 100 minus the high end of estimated plugin-addressable token savings. The estimate is deterministic: each finding gets a bounded token-impact estimate and a conservative plugin capture range, then totals are capped at 65%." aria-label="More information">?</button></small>
         </div>
         <div>
-          <h2>Estimated Waste <button type="button" class="help-tip" data-tippy-content="How is waste estimated? Avoidable spend is a heuristic range derived from the efficiency score and detected waste patterns. It is intended to rank severity and prompt investigation, not to reproduce provider billing." aria-label="More information">?</button></h2>
+          <h2>Estimated Waste <button type="button" class="help-tip" data-tippy-content="How is waste estimated? This is the estimated token range our generated plugin can plausibly help recover. Repeated-read guardrails, retry-loop stops, tool-output caps, context-boundary guidance, and cache hygiene each have bounded capture rates." aria-label="More information">?</button></h2>
           <p id="waste"></p>
           <p id="token-volume" class="command-note"></p>
           <p class="capacity-note">Cutting this waste helps the same coding plan produce more useful implementation work before you run out of tokens.</p>
@@ -283,8 +283,8 @@
           </div>
         </div>
         <div class="problem-section">
-          <h2>Top Problems <button type="button" class="help-tip" data-tippy-content="Bubble size is representative impact, not a precise measurement. Tool-output and cache issues use token fields when available; rereads, retries, and context spikes use bounded count-scaled estimates." aria-label="More information">?</button></h2>
-          <div id="findings" class="problem-bubbles" role="list" aria-label="Top problems sized by representative token impact"></div>
+          <h2>Top Problems <button type="button" class="help-tip" data-tippy-content="Bubble size is estimated plugin-addressable token savings for that finding. Tool-output and cache issues use token fields when available; rereads, retries, and context spikes use bounded count-scaled estimates multiplied by conservative plugin capture rates." aria-label="More information">?</button></h2>
+          <div id="findings" class="problem-bubbles" role="list" aria-label="Top problems sized by estimated plugin-addressable token savings"></div>
         </div>
         <div id="timeline-section">
           <h2>Session Timeline <button type="button" class="help-tip" data-tippy-content="Timeline points are sampled from parsed log rows, usually every ten rows plus the final row. Token height is estimated context/token volume at that point, not exact provider billing." aria-label="More information">?</button></h2>

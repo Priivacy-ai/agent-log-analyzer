@@ -143,10 +143,10 @@ var reportHTMLTemplate = template.Must(template.New("report").Funcs(template.Fun
         </div>
         <div class="score">
           <span id="score">{{.Report.Score}}</span>
-          <small>efficiency score {{helpTip "What does this score mean? It is a heuristic score from deterministic findings: repeated reads, retry depth, context-growth events, tool-output share, and normalized signal findings. It is a profiler score, not a model-quality grade."}}</small>
+          <small>efficiency score {{helpTip "What does this score mean? Efficiency is 100 minus the high end of estimated plugin-addressable token savings. The estimate is deterministic: each finding gets a bounded token-impact estimate and a conservative plugin capture range, then totals are capped at 65% to avoid promising perfect recovery."}}</small>
         </div>
         <div>
-          <h2>Estimated Waste {{helpTip "How is waste estimated? Avoidable spend is a heuristic range derived from the efficiency score and detected waste patterns. It is intended to rank severity and prompt investigation, not to reproduce provider billing."}}</h2>
+          <h2>Estimated Waste {{helpTip "How is waste estimated? This is the estimated token range our generated plugin can plausibly help recover. Repeated-read guardrails, retry-loop stops, tool-output caps, context-boundary guidance, and cache hygiene each have bounded capture rates; the range is directional, not provider billing."}}</h2>
           <p id="waste">{{.Report.EstimatedWaste.Low}}-{{.Report.EstimatedWaste.High}}% avoidable token spend</p>
           <p class="command-note">Analyzed token volume: {{formatTokens .Report.Metrics.EstimatedTokens}} estimated input/output tokens; {{formatTokens .Report.Metrics.ToolOutputTokens}} estimated from tool output. {{helpTip "What is counted here? Accuracy depends on the source log. When native usage fields exist, we use them. Otherwise we estimate roughly one token per four characters. Tool-output volume is derived from tool-result payload size and similar estimates. This is directional, not invoice-grade accounting."}}</p>
           <p class="capacity-note">Cutting this waste helps the same coding plan produce more useful implementation work before you run out of tokens.</p>
@@ -156,7 +156,7 @@ var reportHTMLTemplate = template.Must(template.New("report").Funcs(template.Fun
           </div>
         </div>
         <div class="problem-section">
-          <h2>Top Problems {{helpTip "Why are these bubbles different sizes? Bubble size is representative impact, not a precise measurement. Tool-output and cache issues use token fields when available; rereads, retries, and context spikes use bounded count-scaled estimates so the graph shows relative severity without exposing raw content."}}</h2>
+          <h2>Top Problems {{helpTip "Why are these bubbles different sizes? Bubble size is estimated plugin-addressable token savings for that finding. Tool-output and cache issues use token fields when available; rereads, retries, and context spikes use bounded count-scaled estimates multiplied by conservative plugin capture rates."}}</h2>
           {{findingsBubbleChart .Report}}
         </div>
         {{if not .Report.SourceReports}}
@@ -179,12 +179,12 @@ var reportHTMLTemplate = template.Must(template.New("report").Funcs(template.Fun
               </div>
               <div class="source-score">
                 <strong>{{.Score}}</strong>
-                <span>efficiency</span>
+                <span>efficiency {{helpTip "Source efficiency uses the same plugin-addressable savings model: 100 minus the high end of estimated token savings for this agent source."}}</span>
               </div>
             </header>
             <div class="source-report-grid">
               <div>
-                <h4>Waste {{helpTip "Source-level waste is computed with the same deterministic heuristic as the full report, using only this source's parsed logs."}}</h4>
+                <h4>Waste {{helpTip "Source-level waste is the plugin-addressable savings estimate for this agent source only, using the same bounded capture-rate model as the full report."}}</h4>
                 <p>{{.EstimatedWaste.Low}}-{{.EstimatedWaste.High}}% avoidable token spend</p>
                 <p class="command-note">{{formatTokens .Metrics.EstimatedTokens}} estimated input/output tokens; {{formatTokens .Metrics.ToolOutputTokens}} estimated tool-output tokens; {{formatInt .Metrics.Rereads}} rereads; {{formatInt .Metrics.FailedCommands}} retries. {{helpTip "What is counted for this agent? Token counts use native usage fields when available and fall back to rough text-size estimates. Rereads and retries are deterministic pattern detections over sanitized local parse output."}}</p>
               </div>
@@ -1255,9 +1255,10 @@ func findingsBubbleChartHTML(report analyzer.Report) template.HTML {
 		estimates[index] = estimate
 	}
 	var b strings.Builder
-	b.WriteString(`<div id="findings" class="problem-bubbles" role="list" aria-label="Top problems sized by representative token impact">`)
+	maxDiameter := maxBubbleDiameter(len(report.Findings))
+	fmt.Fprintf(&b, `<div id="findings" class="problem-bubbles" role="list" aria-label="Top problems sized by representative token impact" style="--problem-count:%d">`, len(report.Findings))
 	for index, finding := range report.Findings {
-		diameter := bubbleDiameter(estimates[index], maxEstimate)
+		diameter := bubbleDiameter(estimates[index], maxEstimate, maxDiameter)
 		tone := bubbleTone(finding, index)
 		detail := fmt.Sprintf("%s. %s", findingEvidence(finding.Evidence), finding.Recommendation)
 		fmt.Fprintf(
@@ -1267,13 +1268,13 @@ func findingsBubbleChartHTML(report analyzer.Report) template.HTML {
 			diameter,
 			bubbleOffset(index),
 			bubbleLabelFontSize(finding.Title, diameter, 21, 10.5),
-			bubbleLabelFontSize(finding.Severity+" - "+finding.CostImpact+" "+compactNumber(estimates[index])+" representative tokens", diameter, 12, 9.5),
-			htmlstd.EscapeString(fmt.Sprintf("%s. %s. %s representative tokens. %s", finding.Title, finding.Severity, compactNumber(estimates[index]), detail)),
+			bubbleLabelFontSize(finding.Severity+" - "+finding.CostImpact+" "+compactNumber(estimates[index])+" potential savings", diameter, 12, 9.5),
+			htmlstd.EscapeString(fmt.Sprintf("%s. %s. %s potential token savings. %s", finding.Title, finding.Severity, compactNumber(estimates[index]), detail)),
 		)
 		fmt.Fprintf(&b, `<span class="problem-rank">%d</span>`, index+1)
 		fmt.Fprintf(&b, `<strong>%s</strong>`, htmlstd.EscapeString(finding.Title))
 		fmt.Fprintf(&b, `<span class="problem-meta">%s - %s</span>`, htmlstd.EscapeString(finding.Severity), htmlstd.EscapeString(finding.CostImpact))
-		fmt.Fprintf(&b, `<span class="problem-impact">%s representative tokens</span>`, htmlstd.EscapeString(compactNumber(estimates[index])))
+		fmt.Fprintf(&b, `<span class="problem-impact">%s potential savings</span>`, htmlstd.EscapeString(compactNumber(estimates[index])))
 		fmt.Fprintf(&b, `<p>%s</p>`, htmlstd.EscapeString(findingEvidence(finding.Evidence)))
 		fmt.Fprintf(&b, `<p>%s</p>`, htmlstd.EscapeString(finding.Recommendation))
 		b.WriteString(`</article>`)
@@ -1283,6 +1284,9 @@ func findingsBubbleChartHTML(report analyzer.Report) template.HTML {
 }
 
 func representativeProblemTokens(finding analyzer.Finding, report analyzer.Report) int {
+	if potential := findingSavingsHigh(finding.ID, report.PluginSavings); potential > 0 {
+		return potential
+	}
 	total := report.Metrics.EstimatedTokens
 	if total <= 0 {
 		total = report.AnalysisSignals.InputTokens + report.AnalysisSignals.OutputTokens
@@ -1331,6 +1335,15 @@ func representativeProblemTokens(finding analyzer.Finding, report analyzer.Repor
 	return clampRepresentativeTokens(total*wasteMid/100, total)
 }
 
+func findingSavingsHigh(findingID string, savings analyzer.SavingsEstimate) int {
+	for _, estimate := range savings.FindingEstimates {
+		if estimate.FindingID == findingID {
+			return estimate.PotentialTokensHigh
+		}
+	}
+	return 0
+}
+
 func percentageTokens(total, count, perCountPct, maxPct int) int {
 	if count <= 0 {
 		count = 1
@@ -1359,9 +1372,36 @@ func clampRepresentativeTokens(tokens, total int) int {
 	return tokens
 }
 
-func bubbleDiameter(tokens, maxTokens int) int {
+func maxBubbleDiameter(count int) int {
+	if count <= 0 {
+		return 268
+	}
+	const (
+		chartWidth = 1040
+		gap        = 22
+		maxSize    = 268
+		minSize    = 132
+	)
+	available := chartWidth - gap*(count-1)
+	if available < minSize {
+		return minSize
+	}
+	size := available / count
+	if size > maxSize {
+		return maxSize
+	}
+	if size < minSize {
+		return minSize
+	}
+	return size
+}
+
+func bubbleDiameter(tokens, maxTokens, maxDiameter int) int {
 	if maxTokens <= 0 {
 		maxTokens = 1
+	}
+	if maxDiameter <= 0 {
+		maxDiameter = 268
 	}
 	ratio := float64(tokens) / float64(maxTokens)
 	if ratio < 0 {
@@ -1370,7 +1410,14 @@ func bubbleDiameter(tokens, maxTokens int) int {
 	if ratio > 1 {
 		ratio = 1
 	}
-	return 170 + int(ratio*98)
+	minDiameter := int(float64(maxDiameter) * 0.68)
+	if minDiameter < 132 {
+		minDiameter = 132
+	}
+	if minDiameter > 170 {
+		minDiameter = 170
+	}
+	return minDiameter + int(ratio*float64(maxDiameter-minDiameter))
 }
 
 func bubbleLabelFontSize(text string, diameter int, maxPx, minPx float64) float64 {
@@ -1415,10 +1462,7 @@ func timelineChartHTML(points []analyzer.TimelinePoint, waste analyzer.WasteRang
 	if len(points) == 0 {
 		return template.HTML(`<div class="timeline-empty">No timeline points were available.</div>`)
 	}
-	visible := points
-	if len(visible) > 60 {
-		visible = visible[len(visible)-60:]
-	}
+	visible := sampleTimelinePoints(points, 60)
 	maxTokens := 1
 	for _, point := range visible {
 		if point.EstimatedTokens > maxTokens {
@@ -1508,6 +1552,25 @@ func timelineAxisHTML(points []analyzer.TimelinePoint) string {
 	}
 	b.WriteString(`</div>`)
 	return b.String()
+}
+
+func sampleTimelinePoints(points []analyzer.TimelinePoint, limit int) []analyzer.TimelinePoint {
+	if limit <= 0 || len(points) <= limit {
+		out := make([]analyzer.TimelinePoint, len(points))
+		copy(out, points)
+		return out
+	}
+	out := make([]analyzer.TimelinePoint, 0, limit)
+	lastIndex := -1
+	for i := 0; i < limit; i++ {
+		index := i * (len(points) - 1) / (limit - 1)
+		if index == lastIndex {
+			continue
+		}
+		out = append(out, points[index])
+		lastIndex = index
+	}
+	return out
 }
 
 func compactNumber(value int) string {

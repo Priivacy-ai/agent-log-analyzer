@@ -1,10 +1,10 @@
 {
   "job_id": "job-golden-sample",
   "version": "0.1.0",
-  "score": 48,
+  "score": 62,
   "estimated_waste_pct": {
-    "low": 26,
-    "high": 34
+    "low": 17,
+    "high": 38
   },
   "metrics": {
     "turns": 11,
@@ -161,6 +161,38 @@
       "thin_event_sample"
     ]
   },
+  "plugin_savings": {
+    "potential_tokens_low": 25,
+    "potential_tokens_high": 54,
+    "potential_pct_low": 17,
+    "potential_pct_high": 38,
+    "finding_estimates": [
+      {
+        "finding_id": "repeated_file_reads",
+        "gross_tokens": 8,
+        "capture_pct_low": 35,
+        "capture_pct_high": 60,
+        "potential_tokens_low": 2,
+        "potential_tokens_high": 4
+      },
+      {
+        "finding_id": "tool_output_bloat",
+        "gross_tokens": 90,
+        "capture_pct_low": 20,
+        "capture_pct_high": 45,
+        "potential_tokens_low": 18,
+        "potential_tokens_high": 40
+      },
+      {
+        "finding_id": "retry_loop",
+        "gross_tokens": 21,
+        "capture_pct_low": 25,
+        "capture_pct_high": 50,
+        "potential_tokens_low": 5,
+        "potential_tokens_high": 10
+      }
+    ]
+  },
   "immediate_fixes": [
     "Prefer targeted searches and summarize file state before rereading the same files.",
     "Cap command output and use narrower queries before pasting long terminal output into context.",
@@ -171,7 +203,7 @@
     "parser_type": "jsonl",
     "input_size_bucket": "0_1024",
     "turn_bucket": "10_50",
-    "score_bucket": "40_60",
+    "score_bucket": "60_80",
     "waste_bucket": "20_40",
     "findings": {
       "repeated_file_reads": "medium",

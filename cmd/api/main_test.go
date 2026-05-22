@@ -359,6 +359,37 @@ func TestReportPageServerRendersCompletedReport(t *testing.T) {
 	}
 }
 
+func TestTimelineChartSamplesAcrossFullTimeline(t *testing.T) {
+	points := make([]analyzer.TimelinePoint, 120)
+	for i := range points {
+		points[i] = analyzer.TimelinePoint{
+			Turn:            i + 1,
+			EstimatedTokens: (i + 1) * 100,
+		}
+	}
+
+	sampled := sampleTimelinePoints(points, 60)
+	if len(sampled) != 60 {
+		t.Fatalf("expected 60 sampled points, got %d", len(sampled))
+	}
+	if sampled[0].Turn != 1 || sampled[len(sampled)-1].Turn != 120 {
+		t.Fatalf("expected full-range sampling from first to last turn, got first=%#v last=%#v", sampled[0], sampled[len(sampled)-1])
+	}
+	if sampled[1].EstimatedTokens <= sampled[0].EstimatedTokens {
+		t.Fatalf("expected sampled timeline to preserve accumulation, got %#v", sampled[:2])
+	}
+}
+
+func TestProblemBubbleDiameterCapsByFindingCount(t *testing.T) {
+	maxDiameter := maxBubbleDiameter(4)
+	if maxDiameter >= 268 {
+		t.Fatalf("expected four-bubble row to cap below default max, got %d", maxDiameter)
+	}
+	if got := bubbleDiameter(100, 100, maxDiameter); got > maxDiameter {
+		t.Fatalf("bubble diameter exceeded row cap: got %d cap %d", got, maxDiameter)
+	}
+}
+
 func TestReportPageRequiresReportToken(t *testing.T) {
 	store := fakeStore{
 		job: app.Job{

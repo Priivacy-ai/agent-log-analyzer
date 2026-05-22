@@ -54,6 +54,28 @@ func writeLogContent(t *testing.T, path string, content string) {
 	}
 }
 
+func isolatedDiscoveryHome(t *testing.T) string {
+	t.Helper()
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	t.Setenv("PATH", "")
+	t.Setenv("APPDATA", filepath.Join(home, "AppData", "Roaming"))
+	t.Setenv("XDG_CONFIG_HOME", filepath.Join(home, ".config"))
+	t.Setenv("XDG_RUNTIME_DIR", filepath.Join(home, "run"))
+	t.Setenv("TMPDIR", filepath.Join(home, "tmp"))
+	t.Setenv("CLAUDE_CONFIG_DIR", filepath.Join(home, ".claude"))
+	t.Setenv("CODEX_HOME", filepath.Join(home, ".codex"))
+	t.Setenv("KIRO_HOME", filepath.Join(home, ".kiro"))
+	t.Setenv("KIRO_CHAT_LOG_FILE", "")
+	t.Setenv("AGENT_ANALYZER_ENABLE_SQLITE_SOURCES", "")
+	for _, dir := range []string{os.Getenv("TMPDIR"), os.Getenv("XDG_RUNTIME_DIR"), os.Getenv("XDG_CONFIG_HOME"), os.Getenv("APPDATA")} {
+		if err := os.MkdirAll(dir, 0o700); err != nil {
+			t.Fatalf("mkdir isolated discovery dir %s: %v", dir, err)
+		}
+	}
+	return home
+}
+
 func withDefaultDiscoveryShim(t *testing.T, path string) {
 	t.Helper()
 	original := defaultSupportedLogsFn
@@ -182,10 +204,54 @@ func TestSafeAnalyzedLogRefDoesNotHashLocalPath(t *testing.T) {
 	}
 }
 
+func TestBuildSourceReports_CombinesSameSourceTimelinesCumulatively(t *testing.T) {
+	reports := buildSourceReports([]sourceAnalysisResult{
+		{
+			Candidate: fileCandidate("opencode", "OpenCode", "/tmp/opencode-1.jsonl"),
+			Report: analyzer.Report{
+				Metrics: analyzer.Metrics{Turns: 20, EstimatedTokens: 1000, ToolOutputTokens: 100, Rereads: 1, FailedCommands: 2},
+				Timeline: []analyzer.TimelinePoint{
+					{Turn: 10, EstimatedTokens: 400, ToolTokens: 40, Rereads: 1, Retries: 1},
+					{Turn: 20, EstimatedTokens: 1000, ToolTokens: 100, Rereads: 1, Retries: 2},
+				},
+			},
+			Bytes: 100,
+		},
+		{
+			Candidate: fileCandidate("opencode", "OpenCode", "/tmp/opencode-2.jsonl"),
+			Report: analyzer.Report{
+				Metrics: analyzer.Metrics{Turns: 15, EstimatedTokens: 700, ToolOutputTokens: 80, Rereads: 2, FailedCommands: 1},
+				Timeline: []analyzer.TimelinePoint{
+					{Turn: 10, EstimatedTokens: 500, ToolTokens: 50, Rereads: 1, Retries: 1},
+					{Turn: 15, EstimatedTokens: 700, ToolTokens: 80, Rereads: 2, Retries: 1},
+				},
+			},
+			Bytes: 100,
+		},
+	})
+
+	if len(reports) != 1 {
+		t.Fatalf("expected one source report, got %#v", reports)
+	}
+	got := reports[0].Timeline
+	want := []analyzer.TimelinePoint{
+		{Turn: 10, EstimatedTokens: 400, ToolTokens: 40, Rereads: 1, Retries: 1},
+		{Turn: 20, EstimatedTokens: 1000, ToolTokens: 100, Rereads: 1, Retries: 2},
+		{Turn: 30, EstimatedTokens: 1500, ToolTokens: 150, Rereads: 2, Retries: 3},
+		{Turn: 35, EstimatedTokens: 1700, ToolTokens: 180, Rereads: 3, Retries: 3},
+	}
+	if len(got) != len(want) {
+		t.Fatalf("unexpected timeline length: got %#v want %#v", got, want)
+	}
+	for i := range want {
+		if got[i] != want[i] {
+			t.Fatalf("timeline[%d] = %#v, want %#v", i, got[i], want[i])
+		}
+	}
+}
+
 func TestRecentSupportedLogs_LimitsPerSource(t *testing.T) {
-	home := t.TempDir()
-	t.Setenv("HOME", home)
-	t.Setenv("PATH", "")
+	home := isolatedDiscoveryHome(t)
 	claudeRoot := filepath.Join(home, ".claude", "projects", "repo")
 	codexRoot := filepath.Join(home, ".codex", "sessions", "2026")
 	if err := os.MkdirAll(claudeRoot, 0o700); err != nil {
@@ -224,9 +290,7 @@ func TestRecentSupportedLogs_LimitsPerSource(t *testing.T) {
 }
 
 func TestRecentSupportedLogs_AppliesFinalLimitPerSource(t *testing.T) {
-	home := t.TempDir()
-	t.Setenv("HOME", home)
-	t.Setenv("PATH", "")
+	isolatedDiscoveryHome(t)
 	writeLogContent(t, filepath.Join(appSupportDir("Kiro"), "logs", "main.log"), strings.Repeat(`{"tool_name":"Bash","tool_input":{"command":"npm test"}}`+"\n", 80))
 	writeLogContent(t, filepath.Join(appSupportDir("Kiro"), "User", "globalStorage", "kiro.kiroagent", "workspace-sessions", "workspace-a", "session-1.json"), strings.Repeat(`{"history":[{"hook_event_name":"PreToolUse","tool_name":"Bash"}]}`+"\n", 80))
 
@@ -244,9 +308,7 @@ func TestRecentSupportedLogs_AppliesFinalLimitPerSource(t *testing.T) {
 }
 
 func TestRecentSupportedLogs_DiscoversDesktopAndAgentSources(t *testing.T) {
-	home := t.TempDir()
-	t.Setenv("HOME", home)
-	t.Setenv("PATH", "")
+	home := isolatedDiscoveryHome(t)
 	t.Setenv("APPDATA", filepath.Join(home, "AppData", "Roaming"))
 	t.Setenv("XDG_CONFIG_HOME", filepath.Join(home, ".config"))
 	t.Setenv("XDG_RUNTIME_DIR", filepath.Join(home, "run"))
@@ -329,9 +391,7 @@ func TestCrossPlatformSourceRootHelpers(t *testing.T) {
 }
 
 func TestRecentSupportedLogs_DiscoversExactKiroChatLogFile(t *testing.T) {
-	home := t.TempDir()
-	t.Setenv("HOME", home)
-	t.Setenv("PATH", "")
+	home := isolatedDiscoveryHome(t)
 	customLog := filepath.Join(home, "custom-kiro-chat.jsonl")
 	t.Setenv("KIRO_CHAT_LOG_FILE", customLog)
 	writeLogContent(t, customLog, strings.Repeat(`{"hook_event_name":"PreToolUse","tool_name":"Bash","tool_input":{"command":"go test ./..."}}`+"\n", 80))
@@ -346,9 +406,7 @@ func TestRecentSupportedLogs_DiscoversExactKiroChatLogFile(t *testing.T) {
 }
 
 func TestRecentSupportedLogs_DiscoversAppSupportTranscripts(t *testing.T) {
-	home := t.TempDir()
-	t.Setenv("HOME", home)
-	t.Setenv("PATH", "")
+	isolatedDiscoveryHome(t)
 	cursorTranscript := filepath.Join(appSupportDir("Cursor"), "User", "workspaceStorage", "repo", "agent-transcripts", "session.jsonl")
 	antigravityTranscript := filepath.Join(appSupportDir("Antigravity"), "User", "workspaceStorage", "repo", "transcript.jsonl")
 	writeLogContent(t, cursorTranscript, strings.Repeat(`{"tool":"terminal","arguments":{"command":"go test ./..."}}`+"\n", 80))
@@ -391,9 +449,7 @@ func TestRecentSupportedLogs_SkipsPermissionDeniedDirectories(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("chmod permission-denied semantics differ on Windows")
 	}
-	home := t.TempDir()
-	t.Setenv("HOME", home)
-	t.Setenv("PATH", "")
+	home := isolatedDiscoveryHome(t)
 	denied := filepath.Join(home, ".cursor", "projects", "denied")
 	if err := os.MkdirAll(denied, 0o700); err != nil {
 		t.Fatalf("mkdir denied: %v", err)
@@ -443,9 +499,7 @@ func TestAnalyzeDiscovered_SkipsUnreadableCandidates(t *testing.T) {
 }
 
 func TestRecentKiroWorkspaceSessions_ReadsSessionJSON(t *testing.T) {
-	home := t.TempDir()
-	t.Setenv("HOME", home)
-	t.Setenv("PATH", "")
+	isolatedDiscoveryHome(t)
 	sessionPath := filepath.Join(appSupportDir("Kiro"), "User", "globalStorage", "kiro.kiroagent", "workspace-sessions", "workspace-a", "session-1.json")
 	writeLogContent(t, sessionPath, `{"sessionId":"session-secret","history":[{"role":"user","content":"run tests for private@example.com"},{"hook_event_name":"PreToolUse","tool_name":"Bash","tool_input":{"command":"aws sts get-caller-identity"}},{"hook_event_name":"PostToolUse","tool_name":"Bash","tool_response":"arn:aws:iam::123456789012:user/private"}]}`)
 
@@ -471,9 +525,7 @@ func TestRecentKiroWorkspaceSessions_ReadsSessionJSON(t *testing.T) {
 }
 
 func TestSQLiteSourceExtraction_OptInCopiesAndBoundsStateDB(t *testing.T) {
-	home := t.TempDir()
-	t.Setenv("HOME", home)
-	t.Setenv("PATH", "")
+	isolatedDiscoveryHome(t)
 	t.Setenv("AGENT_ANALYZER_ENABLE_SQLITE_SOURCES", "1")
 	dbPath := filepath.Join(appSupportDir("Cursor"), "User", "workspaceStorage", "abc123", "state.vscdb")
 	writeCursorStateDB(t, dbPath)
@@ -532,9 +584,7 @@ func TestSQLiteSourceExtraction_OptInGateValues(t *testing.T) {
 }
 
 func TestSQLiteSourceExtraction_KiroAndAntigravityFixtures(t *testing.T) {
-	home := t.TempDir()
-	t.Setenv("HOME", home)
-	t.Setenv("PATH", "")
+	isolatedDiscoveryHome(t)
 	kiroDB := filepath.Join(appSupportDir("Kiro"), "User", "workspaceStorage", "kiro-workspace", "state.vscdb")
 	antigravityDB := filepath.Join(appSupportDir("Antigravity"), "User", "workspaceStorage", "ag-workspace", "state.vscdb")
 	writeStateDBRows(t, kiroDB, map[string]any{
@@ -573,9 +623,7 @@ func TestSQLiteSourceExtraction_KiroAndAntigravityFixtures(t *testing.T) {
 }
 
 func TestSQLiteSourceExtraction_FiltersBeforeLimitAndBoundsOutput(t *testing.T) {
-	home := t.TempDir()
-	t.Setenv("HOME", home)
-	t.Setenv("PATH", "")
+	isolatedDiscoveryHome(t)
 	dbPath := filepath.Join(appSupportDir("Cursor"), "User", "workspaceStorage", "abc123", "state.vscdb")
 	writeLargeCursorStateDB(t, dbPath)
 
@@ -596,9 +644,7 @@ func TestSQLiteSourceExtraction_FiltersBeforeLimitAndBoundsOutput(t *testing.T) 
 }
 
 func TestSQLiteSourceExtraction_EmptySupportedRowsDoesNotFailAnalysis(t *testing.T) {
-	home := t.TempDir()
-	t.Setenv("HOME", home)
-	t.Setenv("PATH", "")
+	isolatedDiscoveryHome(t)
 	t.Setenv("AGENT_ANALYZER_ENABLE_SQLITE_SOURCES", "1")
 	dbPath := filepath.Join(appSupportDir("Cursor"), "User", "workspaceStorage", "abc123", "state.vscdb")
 	writeEmptyStateDB(t, dbPath)
@@ -711,9 +757,7 @@ func writeLargeCursorStateDB(t *testing.T, path string) {
 }
 
 func TestRecentSupportedLogs_SelectsClosestTargetSizeWhenLimitIsOne(t *testing.T) {
-	home := t.TempDir()
-	t.Setenv("HOME", home)
-	t.Setenv("PATH", "")
+	home := isolatedDiscoveryHome(t)
 	claudeRoot := filepath.Join(home, ".claude", "projects", "repo")
 	if err := os.MkdirAll(claudeRoot, 0o700); err != nil {
 		t.Fatalf("mkdir claude: %v", err)
@@ -757,9 +801,7 @@ func TestRecentSupportedLogs_SelectsClosestTargetSizeWhenLimitIsOne(t *testing.T
 }
 
 func TestDefaultSupportedLogs_UsesSmallFilesToApproachTargetSize(t *testing.T) {
-	home := t.TempDir()
-	t.Setenv("HOME", home)
-	t.Setenv("PATH", "")
+	home := isolatedDiscoveryHome(t)
 	codexRoot := filepath.Join(home, ".codex", "sessions", "2026")
 	if err := os.MkdirAll(codexRoot, 0o700); err != nil {
 		t.Fatalf("mkdir codex: %v", err)
@@ -794,9 +836,7 @@ func TestDefaultSupportedLogs_UsesSmallFilesToApproachTargetSize(t *testing.T) {
 }
 
 func TestDefaultSupportedLogs_UsesOneHugeFileWhenOnlyHugeFilesExist(t *testing.T) {
-	home := t.TempDir()
-	t.Setenv("HOME", home)
-	t.Setenv("PATH", "")
+	home := isolatedDiscoveryHome(t)
 	root := filepath.Join(home, ".claude", "projects", "repo")
 	if err := os.MkdirAll(root, 0o700); err != nil {
 		t.Fatalf("mkdir claude: %v", err)
@@ -828,9 +868,7 @@ func TestDefaultSupportedLogs_UsesOneHugeFileWhenOnlyHugeFilesExist(t *testing.T
 }
 
 func TestDefaultSupportedLogs_UsesOneNearTargetFileInsteadOfTwo(t *testing.T) {
-	home := t.TempDir()
-	t.Setenv("HOME", home)
-	t.Setenv("PATH", "")
+	home := isolatedDiscoveryHome(t)
 	root := filepath.Join(home, ".claude", "projects", "repo")
 	if err := os.MkdirAll(root, 0o700); err != nil {
 		t.Fatalf("mkdir claude: %v", err)
@@ -862,9 +900,7 @@ func TestDefaultSupportedLogs_UsesOneNearTargetFileInsteadOfTwo(t *testing.T) {
 }
 
 func TestDefaultSupportedLogs_DoesNotOvershootTargetWithHugeSecondFile(t *testing.T) {
-	home := t.TempDir()
-	t.Setenv("HOME", home)
-	t.Setenv("PATH", "")
+	home := isolatedDiscoveryHome(t)
 	root := filepath.Join(home, ".claude", "projects", "repo")
 	if err := os.MkdirAll(root, 0o700); err != nil {
 		t.Fatalf("mkdir claude: %v", err)
@@ -898,9 +934,7 @@ func TestDefaultSupportedLogs_DoesNotOvershootTargetWithHugeSecondFile(t *testin
 }
 
 func TestDefaultSupportedLogs_PrefersLargestRecentMeaningfulLogs(t *testing.T) {
-	home := t.TempDir()
-	t.Setenv("HOME", home)
-	t.Setenv("PATH", "")
+	home := isolatedDiscoveryHome(t)
 	root := filepath.Join(home, ".claude", "projects", "repo")
 	if err := os.MkdirAll(root, 0o700); err != nil {
 		t.Fatalf("mkdir claude: %v", err)
@@ -940,8 +974,7 @@ func TestDefaultSupportedLogs_PrefersLargestRecentMeaningfulLogs(t *testing.T) {
 }
 
 func TestRecentOpenCodeSessions_ReadsMessageDirectoriesAndSkipsTinySessions(t *testing.T) {
-	home := t.TempDir()
-	t.Setenv("HOME", home)
+	home := isolatedDiscoveryHome(t)
 	root := filepath.Join(home, ".local", "share", "opencode", "storage", "message")
 	partRoot := filepath.Join(home, ".local", "share", "opencode", "storage", "part")
 	tiny := filepath.Join(root, "ses_tiny")

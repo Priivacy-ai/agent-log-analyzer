@@ -41,12 +41,13 @@ func AggregateReportsWithParserType(jobID string, reports []Report, inputSize in
 	signals.SampleConfidence, signals.SampleWarnings = sampleConfidence(len(reports), signals)
 	findings := aggregateFindings(metrics)
 	findings = appendSignalFindings(findings, signals)
-	score := score(metrics, findings)
+	pluginSavings := estimatePluginSavings(metrics, findings, signals)
+	score := scoreFromSavings(pluginSavings)
 	report := Report{
 		JobID:          jobID,
 		Version:        Version,
 		Score:          score,
-		EstimatedWaste: wasteRange(score, metrics),
+		EstimatedWaste: wasteRangeFromSavings(pluginSavings),
 		Metrics:        metrics,
 		Findings:       findings,
 		Ecosystem:      ecosystem,
@@ -59,6 +60,7 @@ func AggregateReportsWithParserType(jobID string, reports []Report, inputSize in
 		},
 		Timeline:        timeline,
 		AnalysisSignals: signals,
+		PluginSavings:   pluginSavings,
 		ImmediateFixes:  immediateFixes(findings),
 	}
 	normalizeReportCollections(&report)

@@ -49,8 +49,9 @@ func AnalyzeForSource(jobID string, source string, input []byte) (Report, error)
 	ecosystem.ToolingUtilization = computeToolingUtilization(scrubbed, lines, metrics)
 	findings := buildFindings(metrics, lines, ecosystem)
 	findings = appendSignalFindings(findings, signals)
-	score := score(metrics, findings)
-	waste := wasteRange(score, metrics)
+	pluginSavings := estimatePluginSavings(metrics, findings, signals)
+	score := scoreFromSavings(pluginSavings)
+	waste := wasteRangeFromSavings(pluginSavings)
 
 	report := Report{
 		JobID:          jobID,
@@ -69,6 +70,7 @@ func AnalyzeForSource(jobID string, source string, input []byte) (Report, error)
 		},
 		Timeline:        timeline,
 		AnalysisSignals: signals,
+		PluginSavings:   pluginSavings,
 		ImmediateFixes:  immediateFixes(findings),
 	}
 	normalizeReportCollections(&report)
@@ -428,28 +430,6 @@ func buildFindings(m Metrics, lines []parsedLine, eco Ecosystem) []Finding {
 	return findings
 }
 
-func score(m Metrics, findings []Finding) int {
-	score := 100
-	score -= min(m.Rereads*2, 25)
-	score -= min(m.RetryDepthMax*4, 20)
-	if m.EstimatedTokens > 0 {
-		share := int(float64(m.ToolOutputTokens) / float64(m.EstimatedTokens) * 100)
-		score -= min(max(share-25, 0), 25)
-	}
-	score -= min(m.ContextGrowthEvents*5, 20)
-	score -= len(findings) * 3
-	if score < 0 {
-		return 0
-	}
-	return score
-}
-
-func wasteRange(score int, m Metrics) WasteRange {
-	low := max(0, (100-score)/2)
-	high := min(65, low+max(8, m.Rereads/2+m.RetryDepthMax))
-	return WasteRange{Low: low, High: high}
-}
-
 func immediateFixes(findings []Finding) []string {
 	if len(findings) == 0 {
 		return []string{"Keep sessions scoped and compact before major task pivots."}
@@ -534,6 +514,9 @@ func normalizeReportCollections(report *Report) {
 	if report.AnalysisSignals.SampleWarnings == nil {
 		report.AnalysisSignals.SampleWarnings = []string{}
 	}
+	if report.PluginSavings.FindingEstimates == nil {
+		report.PluginSavings.FindingEstimates = []FindingSavingsEstimate{}
+	}
 	for index := range report.SourceReports {
 		if report.SourceReports[index].Findings == nil {
 			report.SourceReports[index].Findings = []Finding{}
@@ -546,6 +529,9 @@ func normalizeReportCollections(report *Report) {
 		}
 		if report.SourceReports[index].AnalysisSignals.SampleWarnings == nil {
 			report.SourceReports[index].AnalysisSignals.SampleWarnings = []string{}
+		}
+		if report.SourceReports[index].PluginSavings.FindingEstimates == nil {
+			report.SourceReports[index].PluginSavings.FindingEstimates = []FindingSavingsEstimate{}
 		}
 	}
 	normalizeEcosystemCollections(&report.Ecosystem)

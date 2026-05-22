@@ -348,6 +348,10 @@ func buildSourceReports(results []sourceAnalysisResult) []analyzer.SourceReport 
 				report = merged
 			}
 		}
+		timeline := report.Timeline
+		if len(timeline) == 0 {
+			timeline = combinedSourceTimeline(group.reports)
+		}
 		sourceReports = append(sourceReports, analyzer.SourceReport{
 			SourceID:        group.sourceID,
 			SourceLabel:     group.sourceLabel,
@@ -357,12 +361,35 @@ func buildSourceReports(results []sourceAnalysisResult) []analyzer.SourceReport 
 			EstimatedWaste:  report.EstimatedWaste,
 			Metrics:         report.Metrics,
 			Findings:        report.Findings,
-			Timeline:        report.Timeline,
+			Timeline:        timeline,
 			AnalysisSignals: report.AnalysisSignals,
+			PluginSavings:   report.PluginSavings,
 			ImmediateFixes:  report.ImmediateFixes,
 		})
 	}
 	return sourceReports
+}
+
+func combinedSourceTimeline(reports []analyzer.Report) []analyzer.TimelinePoint {
+	var timeline []analyzer.TimelinePoint
+	var turnOffset, tokenOffset, toolOffset, rereadOffset, retryOffset int
+	for _, report := range reports {
+		for _, point := range report.Timeline {
+			timeline = append(timeline, analyzer.TimelinePoint{
+				Turn:            turnOffset + point.Turn,
+				EstimatedTokens: tokenOffset + point.EstimatedTokens,
+				ToolTokens:      toolOffset + point.ToolTokens,
+				Rereads:         rereadOffset + point.Rereads,
+				Retries:         retryOffset + point.Retries,
+			})
+		}
+		turnOffset += report.Metrics.Turns
+		tokenOffset += report.Metrics.EstimatedTokens
+		toolOffset += report.Metrics.ToolOutputTokens
+		rereadOffset += report.Metrics.Rereads
+		retryOffset += report.Metrics.FailedCommands
+	}
+	return timeline
 }
 
 func safeAnalyzedLogRef(candidate logCandidate, ordinal int, bytesRead int) analyzer.AnalyzedLogRef {

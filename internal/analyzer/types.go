@@ -12,6 +12,7 @@ type Report struct {
 	SecurityReceipt SecurityReceipt    `json:"security_receipt"`
 	Timeline        []TimelinePoint    `json:"timeline"`
 	AnalysisSignals AnalysisSignals    `json:"analysis_signals"`
+	PluginSavings   SavingsEstimate    `json:"plugin_savings"`
 	ImmediateFixes  []string           `json:"immediate_fixes"`
 	SourceReports   []SourceReport     `json:"source_reports,omitempty"`
 	AggregateEvent  AggregateSafeEvent `json:"aggregate_event"`
@@ -21,6 +22,23 @@ type Report struct {
 type WasteRange struct {
 	Low  int `json:"low"`
 	High int `json:"high"`
+}
+
+type SavingsEstimate struct {
+	PotentialTokensLow  int                      `json:"potential_tokens_low"`
+	PotentialTokensHigh int                      `json:"potential_tokens_high"`
+	PotentialPctLow     int                      `json:"potential_pct_low"`
+	PotentialPctHigh    int                      `json:"potential_pct_high"`
+	FindingEstimates    []FindingSavingsEstimate `json:"finding_estimates"`
+}
+
+type FindingSavingsEstimate struct {
+	FindingID           string `json:"finding_id"`
+	GrossTokens         int    `json:"gross_tokens"`
+	CapturePctLow       int    `json:"capture_pct_low"`
+	CapturePctHigh      int    `json:"capture_pct_high"`
+	PotentialTokensLow  int    `json:"potential_tokens_low"`
+	PotentialTokensHigh int    `json:"potential_tokens_high"`
 }
 
 type Metrics struct {
@@ -166,6 +184,7 @@ type SourceReport struct {
 	Findings        []Finding        `json:"findings"`
 	Timeline        []TimelinePoint  `json:"timeline"`
 	AnalysisSignals AnalysisSignals  `json:"analysis_signals"`
+	PluginSavings   SavingsEstimate  `json:"plugin_savings"`
 	ImmediateFixes  []string         `json:"immediate_fixes"`
 }
 

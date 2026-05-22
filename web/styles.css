@@ -656,10 +656,13 @@ pre {
 .problem-bubbles {
   min-height: 260px;
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
+  justify-content: space-between;
   gap: 18px clamp(18px, 3vw, 34px);
   padding: 12px 0 20px;
+  overflow-x: auto;
+  overflow-y: visible;
 }
 
 .problem-bubbles-empty {
@@ -675,9 +678,10 @@ pre {
 .problem-bubble {
   --bubble-size: 180px;
   --bubble-offset: 0px;
+  flex: 0 0 var(--bubble-size);
   position: relative;
-  width: clamp(158px, var(--bubble-size), 272px);
-  height: clamp(158px, var(--bubble-size), 272px);
+  width: var(--bubble-size);
+  height: var(--bubble-size);
   transform: translateY(var(--bubble-offset));
   display: grid;
   align-content: center;
@@ -1769,6 +1773,8 @@ pre {
 
   .problem-bubbles {
     justify-content: center;
+    flex-wrap: wrap;
+    overflow-x: visible;
   }
 
   .problem-bubble {

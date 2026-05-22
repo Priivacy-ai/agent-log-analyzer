@@ -335,7 +335,8 @@ function escapeHTML(value) {
 function buildFindingItem(finding, report, index, estimatedTokens, maxEstimate) {
   const item = document.createElement("article");
   item.className = `problem-bubble problem-bubble-${bubbleTone(finding, index)}`;
-  const diameter = bubbleDiameter(estimatedTokens, maxEstimate);
+  const findingCount = Array.isArray(report?.findings) ? report.findings.length : 1;
+  const diameter = bubbleDiameter(estimatedTokens, maxEstimate, maxBubbleDiameter(findingCount));
   item.style.setProperty("--bubble-size", `${diameter}px`);
   item.style.setProperty("--bubble-offset", `${bubbleOffset(index)}px`);
   item.setAttribute("role", "listitem");
@@ -344,7 +345,7 @@ function buildFindingItem(finding, report, index, estimatedTokens, maxEstimate) 
     [
       typeof finding?.title === "string" ? finding.title : "Problem",
       typeof finding?.severity === "string" ? finding.severity : "unknown severity",
-      `${formatCompactNumber(estimatedTokens)} representative tokens`,
+      `${formatCompactNumber(estimatedTokens)} potential savings`,
       findingEvidence(finding?.evidence),
       typeof finding?.recommendation === "string" ? finding.recommendation : "",
     ].filter(Boolean).join(". "),
@@ -371,7 +372,7 @@ function buildFindingItem(finding, report, index, estimatedTokens, maxEstimate) 
 
   const estimate = document.createElement("span");
   estimate.className = "problem-impact";
-  const estimateText = `${formatCompactNumber(estimatedTokens)} representative tokens`;
+  const estimateText = `${formatCompactNumber(estimatedTokens)} potential savings`;
   estimate.textContent = estimateText;
   item.style.setProperty("--problem-detail-size", `${bubbleLabelFontSize(`${metaText} ${estimateText}`, diameter, 12, 9.5)}px`);
   item.appendChild(estimate);
@@ -388,6 +389,8 @@ function buildFindingItem(finding, report, index, estimatedTokens, maxEstimate) 
 }
 
 function representativeProblemTokens(finding, report) {
+  const potentialSavings = findingSavingsHigh(finding?.id, report?.plugin_savings);
+  if (potentialSavings > 0) return potentialSavings;
   const metrics = report?.metrics || {};
   const signals = report?.analysis_signals || {};
   let total = numberValue(metrics.estimated_tokens);
@@ -416,6 +419,12 @@ function representativeProblemTokens(finding, report) {
       return clampProblemTokens(Math.round(total * wasteMid / 100), total);
     }
   }
+}
+
+function findingSavingsHigh(findingID, savings) {
+  if (!findingID || !Array.isArray(savings?.finding_estimates)) return 0;
+  const estimate = savings.finding_estimates.find((item) => item?.finding_id === findingID);
+  return numberValue(estimate?.potential_tokens_high);
 }
 
 function percentageProblemTokens(total, count, perCountPct, maxPct) {
@@ -453,9 +462,19 @@ function buildHelpTip(text) {
   return tip;
 }
 
-function bubbleDiameter(tokens, maxTokens) {
+function maxBubbleDiameter(count) {
+  const boundedCount = Math.max(1, numberValue(count));
+  const chartWidth = 1040;
+  const gap = 22;
+  const available = chartWidth - gap * (boundedCount - 1);
+  return Math.max(132, Math.min(268, Math.floor(available / boundedCount)));
+}
+
+function bubbleDiameter(tokens, maxTokens, maxDiameter = 268) {
   const ratio = Math.min(1, Math.max(0, numberValue(tokens) / Math.max(1, numberValue(maxTokens))));
-  return 170 + Math.round(ratio * 98);
+  const boundedMax = Math.max(132, numberValue(maxDiameter) || 268);
+  const minDiameter = Math.min(170, Math.max(132, Math.floor(boundedMax * 0.68)));
+  return minDiameter + Math.round(ratio * (boundedMax - minDiameter));
 }
 
 function bubbleLabelFontSize(text, diameter, maxPx, minPx) {
@@ -499,7 +518,7 @@ function renderTimeline(points, estimatedWaste) {
     if (yMax) yMax.textContent = "max";
     return;
   }
-  const visiblePoints = points.slice(-60);
+  const visiblePoints = sampleTimelinePoints(points, 60);
   const maxTokens = Math.max(...visiblePoints.map((point) => numberValue(point.estimated_tokens)), 1);
   const wasteRange = normalizeWasteRange(estimatedWaste);
   const savingsPct = Math.min(95, Math.max(0, (wasteRange.low + wasteRange.high) / 2));
@@ -547,6 +566,20 @@ function renderTimeline(points, estimatedWaste) {
     chart.appendChild(bar);
   }
   renderTimelineAxis(xAxis, visiblePoints);
+}
+
+function sampleTimelinePoints(points, limit) {
+  if (!Array.isArray(points)) return [];
+  if (limit <= 0 || points.length <= limit) return points.slice();
+  const sampled = [];
+  let lastIndex = -1;
+  for (let i = 0; i < limit; i += 1) {
+    const index = Math.floor(i * (points.length - 1) / (limit - 1));
+    if (index === lastIndex) continue;
+    sampled.push(points[index]);
+    lastIndex = index;
+  }
+  return sampled;
 }
 
 function normalizeWasteRange(estimatedWaste) {
