@@ -710,7 +710,7 @@ func writeLargeCursorStateDB(t *testing.T, path string) {
 	}
 }
 
-func TestRecentSupportedLogs_SelectsBestRecentLogWhenLimitIsOne(t *testing.T) {
+func TestRecentSupportedLogs_SelectsClosestTargetSizeWhenLimitIsOne(t *testing.T) {
 	home := t.TempDir()
 	t.Setenv("HOME", home)
 	t.Setenv("PATH", "")
@@ -751,8 +751,8 @@ func TestRecentSupportedLogs_SelectsBestRecentLogWhenLimitIsOne(t *testing.T) {
 	if len(candidates) != 1 {
 		t.Fatalf("expected one Claude candidate, got %#v", candidates)
 	}
-	if got := filepath.Base(candidates[0].Display); got != "recent-large.jsonl" {
-		t.Fatalf("expected best recent log, got %s", got)
+	if got := filepath.Base(candidates[0].Display); got != "stale-huge.jsonl" {
+		t.Fatalf("expected closest-to-target log, got %s", got)
 	}
 }
 
@@ -827,6 +827,40 @@ func TestDefaultSupportedLogs_UsesOneHugeFileWhenOnlyHugeFilesExist(t *testing.T
 	}
 }
 
+func TestDefaultSupportedLogs_UsesOneNearTargetFileInsteadOfTwo(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	t.Setenv("PATH", "")
+	root := filepath.Join(home, ".claude", "projects", "repo")
+	if err := os.MkdirAll(root, 0o700); err != nil {
+		t.Fatalf("mkdir claude: %v", err)
+	}
+	first := filepath.Join(root, "first-near-target.jsonl")
+	second := filepath.Join(root, "second-near-target.jsonl")
+	for _, path := range []string{first, second} {
+		writeMeaningfulLog(t, path)
+		if err := os.Truncate(path, targetAutoLogBytes-128*1024); err != nil {
+			t.Fatalf("truncate near-target: %v", err)
+		}
+	}
+	for path, modTime := range map[string]time.Time{
+		first:  time.Unix(200, 0),
+		second: time.Unix(100, 0),
+	} {
+		if err := os.Chtimes(path, modTime, modTime); err != nil {
+			t.Fatalf("chtimes %s: %v", path, err)
+		}
+	}
+
+	candidates, err := defaultSupportedLogs()
+	if err != nil {
+		t.Fatalf("defaultSupportedLogs: %v", err)
+	}
+	if len(candidates) != 1 || filepath.Base(candidates[0].Display) != "first-near-target.jsonl" {
+		t.Fatalf("expected one near-target file, got %#v", candidates)
+	}
+}
+
 func TestDefaultSupportedLogs_DoesNotOvershootTargetWithHugeSecondFile(t *testing.T) {
 	home := t.TempDir()
 	t.Setenv("HOME", home)
@@ -839,7 +873,7 @@ func TestDefaultSupportedLogs_DoesNotOvershootTargetWithHugeSecondFile(t *testin
 	huge := filepath.Join(root, "huge.jsonl")
 	writeMeaningfulLog(t, nearTarget)
 	writeMeaningfulLog(t, huge)
-	if err := os.Truncate(nearTarget, targetAutoLogMinBytes-128*1024); err != nil {
+	if err := os.Truncate(nearTarget, targetAutoLogBytes-128*1024); err != nil {
 		t.Fatalf("truncate near target: %v", err)
 	}
 	if err := os.Truncate(huge, 50*1024*1024); err != nil {
