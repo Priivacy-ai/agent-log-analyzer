@@ -84,61 +84,25 @@ func Evaluate(
 
 		matched := map[SourceClass]int{}
 		var versionBucket string
-		var negativeHit bool
-
 		for i := range d.Markers {
 			m := &d.Markers[i]
-			hit := false
-
-			switch m.SourceClass {
-			case SourceCLIBinary:
-				hit = cliBinaryHit[m.Binary]
-			case SourceCLIVersionProbe:
-				if !cliBinaryHit[m.Binary] {
-					continue
-				}
-				probeCtx, cancel := context.WithTimeout(ctx, perProbeTimeout)
-				raw, ok := probe.Version(probeCtx, m.Binary, m.VersionArgs)
-				cancel()
-				if !ok {
-					continue
-				}
-				bucket := NormalizeVersionBucket(raw)
-				if bucket == "" {
-					continue
-				}
-				versionBucket = bucket
-				hit = true
-			default:
-				re := m.Compiled()
-				if re == nil {
-					continue
-				}
-				if re.MatchString(text) {
-					hit = true
-				} else if m.SourceClass == SourceSlashCommand && slashCorpus != "" && re.MatchString(slashCorpus) {
-					// Fallback to caller-extracted slash tokens for cases
-					// where the raw transcript text has been normalized.
-					hit = true
-				}
+			if m.Negative {
+				continue
 			}
-
+			hit, bucket := markerHit(ctx, m, text, slashCorpus, probe, cliBinaryHit)
 			if !hit {
 				continue
 			}
-			if m.Negative {
-				negativeHit = true
-				// Don't break — we still scan the rest in case validation
-				// would surface issues, but the detector is vetoed.
-			} else {
-				matched[m.SourceClass]++
+			if bucket != "" {
+				versionBucket = bucket
 			}
+			matched[m.SourceClass]++
 		}
 
-		if negativeHit {
+		if len(matched) == 0 {
 			continue
 		}
-		if len(matched) == 0 {
+		if hasNegativeMarkerHit(ctx, d.Markers, text, slashCorpus, probe, cliBinaryHit) {
 			continue
 		}
 
@@ -176,6 +140,70 @@ func Evaluate(
 	})
 
 	return out
+}
+
+func markerHit(
+	ctx context.Context,
+	m *Marker,
+	text string,
+	slashCorpus string,
+	probe CLIProbe,
+	cliBinaryHit map[string]bool,
+) (bool, string) {
+	switch m.SourceClass {
+	case SourceCLIBinary:
+		return cliBinaryHit[m.Binary], ""
+	case SourceCLIVersionProbe:
+		if !cliBinaryHit[m.Binary] {
+			return false, ""
+		}
+		probeCtx, cancel := context.WithTimeout(ctx, perProbeTimeout)
+		raw, ok := probe.Version(probeCtx, m.Binary, m.VersionArgs)
+		cancel()
+		if !ok {
+			return false, ""
+		}
+		bucket := NormalizeVersionBucket(raw)
+		if bucket == "" {
+			return false, ""
+		}
+		return true, bucket
+	default:
+		re := m.Compiled()
+		if re == nil {
+			return false, ""
+		}
+		if re.MatchString(text) {
+			return true, ""
+		}
+		if m.SourceClass == SourceSlashCommand && slashCorpus != "" && re.MatchString(slashCorpus) {
+			// Fallback to caller-extracted slash tokens for cases where the raw
+			// transcript text has been normalized.
+			return true, ""
+		}
+		return false, ""
+	}
+}
+
+func hasNegativeMarkerHit(
+	ctx context.Context,
+	markers []Marker,
+	text string,
+	slashCorpus string,
+	probe CLIProbe,
+	cliBinaryHit map[string]bool,
+) bool {
+	for i := range markers {
+		m := &markers[i]
+		if !m.Negative {
+			continue
+		}
+		hit, _ := markerHit(ctx, m, text, slashCorpus, probe, cliBinaryHit)
+		if hit {
+			return true
+		}
+	}
+	return false
 }
 
 // scoreConfidence walks ConfidenceRules and returns the highest tier whose
