@@ -26,8 +26,8 @@ const defaultBaseURL = "https://analyzer.spec-kitty.ai"
 const freeAutoMinLogBytes = 4 * 1024
 const defaultAutoLogLimit = 5
 const maxAutoLogLimit = 5
-const targetAutoLogMinBytes = 5 * 1024 * 1024
-const targetAutoLogMaxBytes = 10 * 1024 * 1024
+const targetAutoLogBytes = 5 * 1024 * 1024
+const targetSelectionPoolLimit = 40
 const largestRecentHalfLife = 14 * 24 * time.Hour
 
 func main() {
@@ -839,7 +839,7 @@ func selectTargetSizedRecentMatches(matches []logMatch, limit int) []logMatch {
 	}
 	bounded := make([]logMatch, 0, len(matches))
 	for _, match := range matches {
-		if match.size <= targetAutoLogMaxBytes {
+		if match.size <= targetAutoLogBytes {
 			bounded = append(bounded, match)
 		}
 	}
@@ -870,44 +870,72 @@ func selectTargetSizedRecentMatches(matches []logMatch, limit int) []logMatch {
 	if limit <= 0 {
 		return matches
 	}
-	selected := make([]logMatch, 0, min(limit, len(matches)))
-	var total int64
-	for _, match := range matches {
-		if len(selected) >= limit {
-			break
-		}
-		if len(selected) == 0 {
-			selected = append(selected, match)
-			total += match.size
-			if total >= targetAutoLogMinBytes {
-				break
+	poolLimit := min(len(matches), targetSelectionPoolLimit)
+	pool := matches[:poolLimit]
+	limit = min(limit, len(pool))
+	var best selectionCandidate
+	var walk func(index int, selected []logMatch, total int64, score float64)
+	walk = func(index int, selected []logMatch, total int64, score float64) {
+		if len(selected) > 0 {
+			candidate := selectionCandidate{matches: append([]logMatch(nil), selected...), total: total, score: score}
+			if betterSelection(candidate, best) {
+				best = candidate
 			}
-			continue
 		}
-		if total >= targetAutoLogMinBytes {
-			break
+		if index >= len(pool) || len(selected) >= limit {
+			return
 		}
-		nextTotal := total + match.size
-		if nextTotal > targetAutoLogMaxBytes {
-			if distanceFromTargetBand(nextTotal) <= distanceFromTargetBand(total) {
-				selected = append(selected, match)
-			}
-			break
+		for next := index; next < len(pool); next++ {
+			match := pool[next]
+			walk(next+1, append(selected, match), total+match.size, score+largestRecentScore(match, newest))
 		}
-		selected = append(selected, match)
-		total = nextTotal
 	}
-	return selected
+	walk(0, nil, 0, 0)
+	if len(best.matches) == 0 {
+		return nil
+	}
+	sort.Slice(best.matches, func(i, j int) bool {
+		left := largestRecentScore(best.matches[i], newest)
+		right := largestRecentScore(best.matches[j], newest)
+		if left == right {
+			return best.matches[i].path < best.matches[j].path
+		}
+		return left > right
+	})
+	return best.matches
 }
 
-func distanceFromTargetBand(total int64) int64 {
-	if total < targetAutoLogMinBytes {
-		return targetAutoLogMinBytes - total
+type selectionCandidate struct {
+	matches []logMatch
+	total   int64
+	score   float64
+}
+
+func betterSelection(candidate selectionCandidate, best selectionCandidate) bool {
+	if len(best.matches) == 0 {
+		return true
 	}
-	if total > targetAutoLogMaxBytes {
-		return total - targetAutoLogMaxBytes
+	candidateDistance := absInt64(candidate.total - targetAutoLogBytes)
+	bestDistance := absInt64(best.total - targetAutoLogBytes)
+	if candidateDistance != bestDistance {
+		return candidateDistance < bestDistance
 	}
-	return 0
+	candidateOvershoots := candidate.total > targetAutoLogBytes
+	bestOvershoots := best.total > targetAutoLogBytes
+	if candidateOvershoots != bestOvershoots {
+		return !candidateOvershoots
+	}
+	if candidate.score != best.score {
+		return candidate.score > best.score
+	}
+	return len(candidate.matches) < len(best.matches)
+}
+
+func absInt64(value int64) int64 {
+	if value < 0 {
+		return -value
+	}
+	return value
 }
 
 func largestRecentScore(match logMatch, newest time.Time) float64 {
@@ -1212,7 +1240,7 @@ func usage() {
 	fmt.Fprintln(os.Stderr, "")
 	fmt.Fprintln(os.Stderr, "  run            analyze locally, ask for upload confirmation, upload sanitized JSON, and open the report.")
 	fmt.Fprintln(os.Stderr, "  <log-path>     path to a supported JSON/JSONL log; mutually exclusive with --log.")
-	fmt.Fprintf(os.Stderr, "                 if neither is supplied, recent logs per source are selected to target %s-%s total.\n", formatBytesForHelp(targetAutoLogMinBytes), formatBytesForHelp(targetAutoLogMaxBytes))
+	fmt.Fprintf(os.Stderr, "                 if neither is supplied, recent logs per source are selected to target about %s total.\n", formatBytesForHelp(targetAutoLogBytes))
 	fmt.Fprintln(os.Stderr, "                 currently auto-discovers Claude Code, Codex, and OpenCode.")
 	fmt.Fprintln(os.Stderr, "  --log <path>   explicit log path; mutually exclusive with a positional <log-path>.")
 	fmt.Fprintln(os.Stderr, "  --out <path>   output path for the sanitized report JSON (default: ./agent-analyzer-report.json).")
