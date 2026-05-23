@@ -26,3 +26,25 @@ AWS_PROFILE=claude-analyzer-prod terraform -chdir=infra/aws plan
 - Do not paste AWS access keys or secret access keys into chat, docs, commits, or logs.
 - The local `.env` may contain profile/region selectors only. It must not contain credentials.
 - The profile may exist before it has sufficient IAM permissions. Verify identity and permissions before applying infrastructure.
+
+## Production Usage Stats Access
+
+- The authenticated usage stats endpoint is `https://analyzer.spec-kitty.ai/api/admin/usage-stats`.
+- Access requires `Authorization: Bearer <token>`. The endpoint returns `401` without the correct bearer token.
+- On this Mac, the admin bearer token is stored in macOS Keychain as a generic password:
+
+```sh
+security find-generic-password \
+  -a robert \
+  -s 'claude-analyzer-prod/admin/usage-token' \
+  -w
+```
+
+- The durable backup copy is in AWS Secrets Manager under `claude-analyzer-prod/admin/usage-token`.
+- Do not paste the raw usage stats token into chat, docs, commits, logs, or shell history. Retrieve it into an environment variable when needed:
+
+```sh
+TOKEN="$(security find-generic-password -a robert -s 'claude-analyzer-prod/admin/usage-token' -w)"
+curl -H "Authorization: Bearer $TOKEN" \
+  "https://analyzer.spec-kitty.ai/api/admin/usage-stats?since=24h" | jq
+```
