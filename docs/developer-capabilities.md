@@ -55,7 +55,7 @@ out by analytics/remediation allowlist code.
 
 `recentSupportedLogsWithBounds` is the main discovery coordinator. It collects
 candidates from the source registry, OpenCode session discovery, Kiro workspace
-session discovery, and optional SQLite source discovery. After collection, it
+session discovery, and SQLite source discovery. After collection, it
 applies a final largest-recent per-source cap so a source cannot exceed the
 requested limit by contributing multiple reader families.
 
@@ -262,7 +262,7 @@ The MCP normalizer:
 
 ### Cursor
 
-Cursor support covers transcript JSONL first, plus optional SQLite synthetic
+Cursor support covers transcript JSONL first, plus SQLite synthetic
 JSONL.
 
 The Cursor normalizer:

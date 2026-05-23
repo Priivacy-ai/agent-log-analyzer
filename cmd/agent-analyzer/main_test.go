@@ -81,6 +81,16 @@ func snapshotFileModTimes(t *testing.T, paths ...string) map[string]int64 {
 	return modTimes
 }
 
+func existingPaths(paths ...string) []string {
+	var out []string
+	for _, path := range paths {
+		if _, err := os.Stat(path); err == nil {
+			out = append(out, path)
+		}
+	}
+	return out
+}
+
 func isolatedDiscoveryHome(t *testing.T) string {
 	t.Helper()
 	home := t.TempDir()
@@ -594,6 +604,67 @@ func TestSQLiteSourceExtraction_ReadsStateDBByDefaultWithoutSourceWrites(t *test
 		t.Fatalf("expected Cursor SQLite stringified JSON tool call, got %#v", report.AnalysisSignals)
 	}
 	assertReportDoesNotContain(t, report, "private@example.com", "arn:aws:iam::123456789012:user/private", "oauth-refresh-token", "composer-secret")
+}
+
+func TestSQLiteReadOnlyDSNRejectsWrites(t *testing.T) {
+	isolatedDiscoveryHome(t)
+	dbPath := filepath.Join(appSupportDir("Cursor"), "User", "workspaceStorage", "abc123", "state.vscdb")
+	writeCursorStateDB(t, dbPath)
+
+	db, err := sql.Open("sqlite", sqliteReadOnlyDSN(dbPath))
+	if err != nil {
+		t.Fatalf("open read-only sqlite: %v", err)
+	}
+	defer db.Close()
+
+	if _, err := db.Exec(`INSERT INTO ItemTable(key, value) VALUES ('bubbleId:write-attempt', 'should fail')`); err == nil {
+		t.Fatal("expected read-only SQLite DSN to reject writes")
+	}
+}
+
+func TestSQLiteSourceExtraction_ReadsWALStateDBWithoutSourceWrites(t *testing.T) {
+	isolatedDiscoveryHome(t)
+	dbPath := filepath.Join(appSupportDir("Cursor"), "User", "workspaceStorage", "abc123", "state.vscdb")
+	if err := os.MkdirAll(filepath.Dir(dbPath), 0o700); err != nil {
+		t.Fatalf("mkdir sqlite parent: %v", err)
+	}
+	db, err := sql.Open("sqlite", dbPath)
+	if err != nil {
+		t.Fatalf("open sqlite: %v", err)
+	}
+	defer db.Close()
+	for _, stmt := range []string{
+		`PRAGMA journal_mode=WAL`,
+		`PRAGMA wal_autocheckpoint=0`,
+		`CREATE TABLE ItemTable (key TEXT UNIQUE ON CONFLICT REPLACE, value BLOB)`,
+		`INSERT INTO ItemTable(key, value) VALUES ('bubbleId:wal-message', '{"role":"user","content":"wal content"}')`,
+	} {
+		if _, err := db.Exec(stmt); err != nil {
+			t.Fatalf("exec sqlite stmt %q: %v", stmt, err)
+		}
+	}
+	sidecars := existingPaths(dbPath, dbPath+"-wal", dbPath+"-shm")
+	if len(sidecars) < 2 {
+		t.Fatalf("expected SQLite WAL sidecars, got %#v", sidecars)
+	}
+	beforeEntries := snapshotDirEntries(t, filepath.Dir(dbPath))
+	beforeModTimes := snapshotFileModTimes(t, sidecars...)
+
+	data, err := readSQLiteStateAsJSONL(dbPath, []string{"bubbleId:"}, 0)
+	if err != nil {
+		t.Fatalf("read WAL SQLite state: %v", err)
+	}
+	if !strings.Contains(string(data), "wal content") {
+		t.Fatalf("expected WAL-backed content, got %s", data)
+	}
+	afterEntries := snapshotDirEntries(t, filepath.Dir(dbPath))
+	if !reflect.DeepEqual(beforeEntries, afterEntries) {
+		t.Fatalf("SQLite WAL read changed source directory entries: before=%#v after=%#v", beforeEntries, afterEntries)
+	}
+	afterModTimes := snapshotFileModTimes(t, sidecars...)
+	if !reflect.DeepEqual(beforeModTimes, afterModTimes) {
+		t.Fatalf("SQLite WAL read changed source file mtimes: before=%#v after=%#v", beforeModTimes, afterModTimes)
+	}
 }
 
 func TestSQLiteSourceExtraction_KiroAndAntigravityFixtures(t *testing.T) {
