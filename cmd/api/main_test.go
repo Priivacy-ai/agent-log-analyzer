@@ -672,6 +672,26 @@ func TestLegacyUploadRoutesAreNotMounted(t *testing.T) {
 	}
 }
 
+func TestHealthRoutes(t *testing.T) {
+	mux := buildMux(fakeStore{})
+	for _, path := range []string{"/health", "/healthz"} {
+		req := httptest.NewRequest(http.MethodGet, path, nil)
+		rec := httptest.NewRecorder()
+
+		mux.ServeHTTP(rec, req)
+
+		if rec.Code != http.StatusOK {
+			t.Fatalf("%s got status %d", path, rec.Code)
+		}
+		if body := strings.TrimSpace(rec.Body.String()); body != `{"status":"ok"}` {
+			t.Fatalf("%s returned unexpected body %q", path, body)
+		}
+		if got := rec.Header().Get("Content-Type"); got != "application/json" {
+			t.Fatalf("%s content-type = %q", path, got)
+		}
+	}
+}
+
 func TestAnalysisSessionCurlFlow(t *testing.T) {
 	store, err := localstore.New(t.TempDir())
 	if err != nil {

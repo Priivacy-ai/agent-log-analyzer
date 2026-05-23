@@ -64,9 +64,8 @@ func main() {
 func buildMux(store app.APIStore) http.Handler {
 	mux := http.NewServeMux()
 	emailSender := guardEmailSender(configuredEmailSender(), store)
-	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, r *http.Request) {
-		writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
-	})
+	mux.HandleFunc("GET /health", healthHandler())
+	mux.HandleFunc("GET /healthz", healthHandler())
 	mux.HandleFunc("POST /api/analysis-sessions", createAnalysisSessionHandler(store, maxQueueDepth(), uploadTokenTTL()))
 	mux.HandleFunc("POST /api/paid-sessions", createPaidSessionHandler(store, uploadTokenTTL()))
 	mux.HandleFunc("POST /api/client-reports", createClientReportHandler(store, reportTTL()))
@@ -87,6 +86,12 @@ func buildMux(store app.APIStore) http.Handler {
 	mux.HandleFunc("GET /api/admin/usage-stats", usageStatsHandler(store))
 	mux.Handle("/", http.FileServer(http.Dir("web")))
 	return mux
+}
+
+func healthHandler() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
+	}
 }
 
 func createClientReportHandler(store app.APIStore, expiresIn time.Duration) http.HandlerFunc {
