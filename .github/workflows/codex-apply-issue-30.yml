@@ -1,0 +1,67 @@
+name: Apply Codex issue 30 patch
+
+on:
+  push:
+    branches:
+      - codex/fix-paid-plugin-install-unpack
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply source patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          artifact = Path('internal/remediation/artifact.go')
+          s = artifact.read_text()
+          replacements = [
+              (
+                  '''\t\t`PLUGIN_ZIP="$(mktemp -t agent-analyzer-plugin.XXXXXX.zip)"`,\n\t\t`curl -fsS "$PLUGIN_URL" -o "$PLUGIN_ZIP"`,\n\t\t`claude --plugin-dir "$PLUGIN_ZIP"`,''',
+                  '''\t\t`PLUGIN_ZIP="$(mktemp -t agent-analyzer-plugin.XXXXXX.zip)"`,\n\t\t`PLUGIN_DIR="$(mktemp -d -t agent-analyzer-plugin.XXXXXX)"`,\n\t\t`trap 'rm -rf "$PLUGIN_ZIP" "$PLUGIN_DIR"' EXIT`,\n\t\t`curl -fsS "$PLUGIN_URL" -o "$PLUGIN_ZIP"`,\n\t\t`unzip -q "$PLUGIN_ZIP" -d "$PLUGIN_DIR"`,\n\t\t`claude --plugin-dir "$PLUGIN_DIR"`,''',
+              ),
+              (
+                  '''\t\tUninstallCommand: "No persistent install is performed by the default command. Close the Claude Code session to unload " + pluginName + ".",''',
+                  '''\t\tUninstallCommand: `rm -rf "$PLUGIN_ZIP" "$PLUGIN_DIR"`,''',
+              ),
+              (
+                  '''\t\t\t"The default command uses Claude Code's --plugin-dir support with a private-link zip artifact.",''',
+                  '''\t\t\t"The default command downloads the private-link zip artifact, unpacks it into a temporary plugin directory, and loads that directory with Claude Code's --plugin-dir support.",\n\t\t\t"The cleanup trap removes the temporary archive and plugin directory when the shell exits.",''',
+              ),
+          ]
+          for old, new in replacements:
+              if old not in s:
+                  raise SystemExit(f'artifact.go pattern not found: {old!r}')
+              s = s.replace(old, new, 1)
+          artifact.write_text(s)
+
+          tests = Path('internal/remediation/artifact_test.go')
+          t = tests.read_text()
+          old = '''\tif !strings.Contains(artifact.Install.Command, "claude --plugin-dir") {\n\t\tt.Fatalf("expected plugin-dir install command, got %s", artifact.Install.Command)\n\t}\n'''
+          new = '''\tif !strings.Contains(artifact.Install.Command, "claude --plugin-dir") {\n\t\tt.Fatalf("expected plugin-dir install command, got %s", artifact.Install.Command)\n\t}\n\tif strings.Contains(artifact.Install.Command, `claude --plugin-dir "$PLUGIN_ZIP"`) {\n\t\tt.Fatalf("install command must unpack the zip before passing a plugin directory: %s", artifact.Install.Command)\n\t}\n\tfor _, want := range []string{\n\t\t`PLUGIN_DIR="$(mktemp -d -t agent-analyzer-plugin.XXXXXX)"`,\n\t\t`unzip -q "$PLUGIN_ZIP" -d "$PLUGIN_DIR"`,\n\t\t`claude --plugin-dir "$PLUGIN_DIR"`,\n\t} {\n\t\tif !strings.Contains(artifact.Install.Command, want) {\n\t\t\tt.Fatalf("install command missing %q: %s", want, artifact.Install.Command)\n\t\t}\n\t}\n'''
+          if old not in t:
+              raise SystemExit('artifact_test.go install command assertion anchor not found')
+          t = t.replace(old, new, 1)
+
+          anchor = '''}\n\nfunc TestToolRecommendationsUsePreciseSources(t *testing.T) {'''
+          insert = '''}\n\nfunc TestInstallInstructionsCleanUpTemporaryPluginFiles(t *testing.T) {\n\tinstall := installInstructions("agent-analyzer-optimization", "https://example.test/plugin.zip")\n\tfor _, want := range []string{\n\t\t`trap 'rm -rf "$PLUGIN_ZIP" "$PLUGIN_DIR"' EXIT`,\n\t\t`rm -rf "$PLUGIN_ZIP" "$PLUGIN_DIR"`,\n\t} {\n\t\tif !strings.Contains(install.Command, want) && !strings.Contains(install.UninstallCommand, want) {\n\t\t\tt.Fatalf("expected cleanup instruction %q in install metadata: %#v", want, install)\n\t\t}\n\t}\n}\n\nfunc TestToolRecommendationsUsePreciseSources(t *testing.T) {'''
+          if anchor not in t:
+              raise SystemExit('artifact_test.go function insertion anchor not found')
+          t = t.replace(anchor, insert, 1)
+          tests.write_text(t)
+          PY
+          gofmt -w internal/remediation/artifact.go internal/remediation/artifact_test.go
+          rm .github/workflows/codex-apply-issue-30.yml
+          git config user.name 'codex-bot'
+          git config user.email 'codex-bot@users.noreply.github.com'
+          git add internal/remediation/artifact.go internal/remediation/artifact_test.go .github/workflows/codex-apply-issue-30.yml
+          git commit -m 'fix(remediation): unpack paid plugin artifact before install'
+          git push
