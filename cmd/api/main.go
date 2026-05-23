@@ -71,6 +71,7 @@ func buildMux(store app.APIStore) http.Handler {
 	mux.HandleFunc("POST /api/client-reports", createClientReportHandler(store, reportTTL()))
 	mux.HandleFunc("POST /api/paid-client-reports", createPaidClientReportHandler(store, reportTTL()))
 	mux.HandleFunc("POST /api/email-unlocks", createEmailUnlockHandler(store, emailSender))
+	mux.HandleFunc("POST /api/report-deliveries", createReportDeliveryHandler(store, emailSender))
 	mux.HandleFunc("GET /email/confirm/{id}/{token}", confirmEmailUnlockHandler(store, emailSender))
 	mux.HandleFunc("POST /api/full-scan-client-reports", createFullScanClientReportHandler(store, emailSender, reportTTL()))
 	mux.HandleFunc("PUT /api/uploads/{id}", tokenUploadHandler(store))
@@ -585,10 +586,8 @@ func getPublicArtifactHandler(store app.APIStore) http.HandlerFunc {
 			writeError(w, http.StatusBadRequest, "invalid report id")
 			return
 		}
-		artifactURL := publicBaseURL(r) + r.URL.Path
-		artifact := remediation.Generate(report, remediation.Options{ArtifactURL: artifactURL})
-		var buffer bytes.Buffer
-		if err := remediation.WriteZip(&buffer, artifact); err != nil {
+		artifactBytes, err := renderPluginArtifactZip(report, publicBaseURL(r)+r.URL.Path)
+		if err != nil {
 			writeError(w, http.StatusInternalServerError, "could not generate plugin artifact")
 			return
 		}
@@ -596,8 +595,17 @@ func getPublicArtifactHandler(store app.APIStore) http.HandlerFunc {
 		w.Header().Set("Content-Disposition", `attachment; filename="agent-analyzer-optimization.zip"`)
 		w.Header().Set("Cache-Control", "no-store")
 		w.WriteHeader(http.StatusOK)
-		_, _ = w.Write(buffer.Bytes())
+		_, _ = w.Write(artifactBytes)
 	}
+}
+
+func renderPluginArtifactZip(report analyzer.Report, artifactURL string) ([]byte, error) {
+	artifact := remediation.Generate(report, remediation.Options{ArtifactURL: artifactURL})
+	var buffer bytes.Buffer
+	if err := remediation.WriteZip(&buffer, artifact); err != nil {
+		return nil, err
+	}
+	return buffer.Bytes(), nil
 }
 
 func jobAllowsPluginArtifact(job app.Job) bool {
@@ -644,6 +652,9 @@ func sanitizePath(path string) string {
 	}
 	if strings.HasPrefix(path, "/api/email-unlocks") {
 		return "/api/email-unlocks"
+	}
+	if strings.HasPrefix(path, "/api/report-deliveries") {
+		return "/api/report-deliveries"
 	}
 	if strings.HasPrefix(path, "/api/full-scan-client-reports") {
 		return "/api/full-scan-client-reports"

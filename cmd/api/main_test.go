@@ -120,12 +120,86 @@ func TestSanitizePathRedactsDynamicIDs(t *testing.T) {
 		"/api/public-reports/job-1234567890/token-secret/extended.md",
 		"/api/public-reports/job-1234567890/token-secret/download.zip",
 		"/api/public-artifacts/job-1234567890/token-secret/plugin.zip",
+		"/api/report-deliveries",
 		"/api/jobs/job-1234567890",
 		"/r/job-1234567890/token-secret",
 	} {
 		got := sanitizePath(path)
 		if strings.Contains(got, "job-1234567890") || strings.Contains(got, "token-secret") {
 			t.Fatalf("sanitizePath leaked job id for %q: %q", path, got)
+		}
+	}
+}
+
+func TestReportDeliveryEmailsReportPackAndPluginAttachments(t *testing.T) {
+	store, err := localstore.New(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	report := analyzer.Report{
+		JobID:   "job-source-1234",
+		Version: analyzer.Version,
+		Score:   72,
+		Metrics: analyzer.Metrics{
+			Turns:           12,
+			EstimatedTokens: 2400,
+			SessionCount:    3,
+		},
+		EstimatedWaste: analyzer.WasteRange{Low: 12, High: 18},
+		SecurityReceipt: analyzer.SecurityReceipt{
+			RawTranscriptSentToLLM: false,
+			OutboundDuringAnalysis: false,
+			RawLogTTL:              "not uploaded",
+		},
+	}
+	sourceJob := app.Job{
+		ID:              "job-source-1234",
+		Status:          app.StatusCompleted,
+		ScanType:        app.ScanTypeSingle,
+		ReportTokenHash: tokenHash("source-token"),
+	}
+	if err := store.CreateCompletedReport(sourceJob, report); err != nil {
+		t.Fatal(err)
+	}
+	sender := &captureEmailSender{}
+	body := `{"email":"Dev@Example.com","marketing_opt_in":true,"source_report_job_id":"job-source-1234","source_report_token":"source-token"}`
+	req := httptest.NewRequest(http.MethodPost, "/api/report-deliveries", strings.NewReader(body))
+	req.Host = "example.test"
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+
+	createReportDeliveryHandler(store, sender).ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusAccepted {
+		t.Fatalf("expected accepted status, got %d: %s", rec.Code, rec.Body.String())
+	}
+	var response reportDeliveryResponse
+	if err := json.Unmarshal(rec.Body.Bytes(), &response); err != nil {
+		t.Fatalf("response is not valid JSON: %v", err)
+	}
+	unlock, err := store.GetEmailUnlock(response.DeliveryID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if unlock.Email != "dev@example.com" || !unlock.MarketingOptIn || unlock.SourceReportJobID != sourceJob.ID || unlock.Status != app.EmailUnlockUsed {
+		t.Fatalf("unexpected stored email delivery record: %#v", unlock)
+	}
+	if len(sender.messages) != 1 {
+		t.Fatalf("expected one email, got %#v", sender.messages)
+	}
+	message := sender.messages[0]
+	if message.To != "dev@example.com" || !strings.Contains(message.Body, "claude --plugin-dir") || !strings.Contains(message.Body, "Raw transcripts were not uploaded") {
+		t.Fatalf("unexpected delivery email: %#v", message)
+	}
+	if len(message.Attachments) != 2 {
+		t.Fatalf("expected report pack and plugin attachments, got %#v", message.Attachments)
+	}
+	if message.Attachments[0].Filename != "agent-analyzer-report-pack.zip" || message.Attachments[1].Filename != "agent-analyzer-optimization-plugin.zip" {
+		t.Fatalf("unexpected attachment filenames: %#v", message.Attachments)
+	}
+	for _, attachment := range message.Attachments {
+		if attachment.ContentType != "application/zip" || !bytes.HasPrefix(attachment.Data, []byte("PK")) {
+			t.Fatalf("attachment %s is not a zip: type=%q len=%d", attachment.Filename, attachment.ContentType, len(attachment.Data))
 		}
 	}
 }
@@ -493,8 +567,10 @@ func TestReportPageServerRendersCompletedReport(t *testing.T) {
 		"Large shell/tool output overhead",
 		"Cap noisy command output",
 		"Get my optimization plugin",
-		"Download report pack",
-		"$10 / €10",
+		"Get report pack",
+		"Get the report pack and plugin by email",
+		"Email for report + plugin attachments",
+		"Email me the report + plugin",
 		"0 model tokens used to generate this report.",
 		"Model tokens for report",
 		"Copy line",

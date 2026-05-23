@@ -151,7 +151,7 @@ var reportHTMLTemplate = template.Must(template.New("report").Funcs(template.Fun
           <p class="command-note">Analyzed token volume: {{formatTokens .Report.Metrics.EstimatedTokens}} estimated input/output tokens; {{formatTokens .Report.Metrics.ToolOutputTokens}} estimated from tool output. {{helpTip "What is counted here? Accuracy depends on the source log. When native usage fields exist, we use them. Otherwise we estimate roughly one token per four characters. Tool-output volume is derived from tool-result payload size and similar estimates. This is directional, not invoice-grade accounting."}}</p>
           <p class="capacity-note">Cutting this waste helps the same coding plan produce more useful implementation work before you run out of tokens.</p>
           <div class="report-cta-row" aria-label="Report actions">
-            <a class="report-primary-cta" href="#download-report-section">Download report pack</a>
+            <a class="report-primary-cta" href="#download-report-section">Get report pack</a>
             <a class="report-secondary-cta" href="#plugin-purchase">Get custom plugin</a>
           </div>
         </div>
@@ -256,21 +256,27 @@ var reportHTMLTemplate = template.Must(template.New("report").Funcs(template.Fun
         <div class="upsell" id="download-report-section">
           <div class="upsell-copy">
           <p class="eyebrow">portable findings</p>
-          <h2>Download the report pack for free</h2>
+          <h2>Get the report pack and plugin by email</h2>
           <p class="upsell-lede">The report pack shows where your agent sessions are burning tokens, includes a token-saving field guide PDF, and gives you a partner voucher. The generated plugin turns those findings into setup rules and workflow nudges so you can get more useful coding work from the same plan.</p>
           <ul class="upsell-proof">
             <li>Raw transcripts stay local.</li>
-            <li>No email required for the download.</li>
+            <li>Email delivery includes the report pack and generated plugin as attachments.</li>
           </ul>
           </div>
           <div class="upsell-action" id="plugin-purchase">
-          <p><a class="plugin-cta" href="{{.ExtendedReportURL}}">Download report pack</a></p>
-          {{if .ArtifactURL}}
-          <p class="command-note">Custom optimization plugin: $10 / €10 target price. Checkout enforcement is not active in this test build; this link generates the plugin from this report.</p>
-          <p><a class="plugin-cta" href="{{.ArtifactURL}}">Download custom plugin</a></p>
-          {{else}}
-          <p class="command-note">Custom optimization plugin: $10 / €10. Payment checkout is the remaining step before public sales.</p>
-          {{end}}
+          <form class="email-unlock-form" action="/api/report-deliveries" method="post">
+            <input type="hidden" name="source_report_job_id" value="{{.Job.ID}}" />
+            <input type="hidden" name="source_report_token" value="{{.ReportToken}}" />
+            <label>Email for report + plugin attachments
+              <input type="email" name="email" placeholder="you@example.com" required />
+            </label>
+            <label class="checkbox-row">
+              <input type="checkbox" name="marketing_opt_in" value="1" />
+              <span>Also send me occasional updates about agentic coding products.</span>
+            </label>
+            <button class="plugin-cta" type="submit">Email me the report + plugin</button>
+            <p class="command-note">We send the branded report pack and generated plugin zip to this address. The email also includes install instructions. Raw transcripts are not attached or uploaded.</p>
+          </form>
           </div>
         </div>
         {{else}}

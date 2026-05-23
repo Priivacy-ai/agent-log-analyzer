@@ -3,11 +3,13 @@ package main
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"log/slog"
+	"mime"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -22,9 +24,16 @@ import (
 )
 
 type emailMessage struct {
-	To      string
-	Subject string
-	Body    string
+	To          string
+	Subject     string
+	Body        string
+	Attachments []emailAttachment
+}
+
+type emailAttachment struct {
+	Filename    string
+	ContentType string
+	Data        []byte
 }
 
 type emailSender interface {
@@ -74,13 +83,20 @@ type postmarkEmailSender struct {
 }
 
 type postmarkEmailRequest struct {
-	From          string `json:"From"`
-	To            string `json:"To"`
-	Subject       string `json:"Subject"`
-	TextBody      string `json:"TextBody"`
-	MessageStream string `json:"MessageStream,omitempty"`
-	TrackOpens    bool   `json:"TrackOpens"`
-	TrackLinks    string `json:"TrackLinks"`
+	From          string               `json:"From"`
+	To            string               `json:"To"`
+	Subject       string               `json:"Subject"`
+	TextBody      string               `json:"TextBody"`
+	MessageStream string               `json:"MessageStream,omitempty"`
+	TrackOpens    bool                 `json:"TrackOpens"`
+	TrackLinks    string               `json:"TrackLinks"`
+	Attachments   []postmarkAttachment `json:"Attachments,omitempty"`
+}
+
+type postmarkAttachment struct {
+	Name        string `json:"Name"`
+	Content     string `json:"Content"`
+	ContentType string `json:"ContentType"`
 }
 
 type postmarkEmailResponse struct {
@@ -90,19 +106,29 @@ type postmarkEmailResponse struct {
 }
 
 func (sender sesEmailSender) Send(message emailMessage) error {
+	content := &sestypes.EmailContent{
+		Simple: &sestypes.Message{
+			Subject: &sestypes.Content{Data: aws.String(message.Subject)},
+			Body: &sestypes.Body{
+				Text: &sestypes.Content{Data: aws.String(message.Body)},
+			},
+		},
+	}
+	if len(message.Attachments) > 0 {
+		raw, err := renderRawEmail(sender.from, message)
+		if err != nil {
+			return err
+		}
+		content = &sestypes.EmailContent{
+			Raw: &sestypes.RawMessage{Data: raw},
+		}
+	}
 	input := &sesv2.SendEmailInput{
 		FromEmailAddress: aws.String(sender.from),
 		Destination: &sestypes.Destination{
 			ToAddresses: []string{message.To},
 		},
-		Content: &sestypes.EmailContent{
-			Simple: &sestypes.Message{
-				Subject: &sestypes.Content{Data: aws.String(message.Subject)},
-				Body: &sestypes.Body{
-					Text: &sestypes.Content{Data: aws.String(message.Body)},
-				},
-			},
-		},
+		Content: content,
 	}
 	if sender.configurationSet != "" {
 		input.ConfigurationSetName = aws.String(sender.configurationSet)
@@ -115,6 +141,14 @@ func (sender sesEmailSender) Send(message emailMessage) error {
 }
 
 func (sender postmarkEmailSender) Send(message emailMessage) error {
+	attachments := make([]postmarkAttachment, 0, len(message.Attachments))
+	for _, attachment := range message.Attachments {
+		attachments = append(attachments, postmarkAttachment{
+			Name:        attachment.Filename,
+			Content:     base64.StdEncoding.EncodeToString(attachment.Data),
+			ContentType: defaultAttachmentContentType(attachment),
+		})
+	}
 	requestBody := postmarkEmailRequest{
 		From:          sender.from,
 		To:            message.To,
@@ -123,6 +157,7 @@ func (sender postmarkEmailSender) Send(message emailMessage) error {
 		MessageStream: sender.messageStream,
 		TrackOpens:    false,
 		TrackLinks:    "None",
+		Attachments:   attachments,
 	}
 	body, err := json.Marshal(requestBody)
 	if err != nil {
@@ -206,14 +241,69 @@ func (sender fileEmailSender) Send(message emailMessage) error {
 	}
 	name := fmt.Sprintf("%d-%s.eml", time.Now().UTC().UnixNano(), safeEmailFilename(message.To))
 	path := filepath.Join(sender.dir, name)
-	body := strings.Join([]string{
-		"To: " + message.To,
-		"Subject: " + message.Subject,
-		"",
-		message.Body,
-		"",
-	}, "\n")
-	return os.WriteFile(path, []byte(body), 0o600)
+	body, err := renderRawEmail("file-sink@agent-analyzer.local", message)
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(path, body, 0o600)
+}
+
+func renderRawEmail(from string, message emailMessage) ([]byte, error) {
+	boundary := "agent-analyzer-boundary-20260523"
+	var b strings.Builder
+	fmt.Fprintf(&b, "From: %s\r\n", headerAddress(from))
+	fmt.Fprintf(&b, "To: %s\r\n", headerAddress(message.To))
+	fmt.Fprintf(&b, "Subject: %s\r\n", mime.QEncoding.Encode("utf-8", message.Subject))
+	fmt.Fprintf(&b, "MIME-Version: 1.0\r\n")
+	fmt.Fprintf(&b, "Content-Type: multipart/mixed; boundary=%q\r\n", boundary)
+	fmt.Fprintf(&b, "\r\n")
+	fmt.Fprintf(&b, "--%s\r\n", boundary)
+	fmt.Fprintf(&b, "Content-Type: text/plain; charset=utf-8\r\n")
+	fmt.Fprintf(&b, "Content-Transfer-Encoding: 7bit\r\n\r\n")
+	fmt.Fprintf(&b, "%s\r\n", normalizeEmailLineEndings(message.Body))
+	for _, attachment := range message.Attachments {
+		if attachment.Filename == "" || len(attachment.Data) == 0 {
+			continue
+		}
+		fmt.Fprintf(&b, "--%s\r\n", boundary)
+		fmt.Fprintf(&b, "Content-Type: %s; name=%q\r\n", defaultAttachmentContentType(attachment), attachment.Filename)
+		fmt.Fprintf(&b, "Content-Disposition: attachment; filename=%q\r\n", attachment.Filename)
+		fmt.Fprintf(&b, "Content-Transfer-Encoding: base64\r\n\r\n")
+		writeBase64Lines(&b, attachment.Data)
+		fmt.Fprintf(&b, "\r\n")
+	}
+	fmt.Fprintf(&b, "--%s--\r\n", boundary)
+	return []byte(b.String()), nil
+}
+
+func writeBase64Lines(b *strings.Builder, data []byte) {
+	encoded := base64.StdEncoding.EncodeToString(data)
+	for len(encoded) > 76 {
+		b.WriteString(encoded[:76])
+		b.WriteString("\r\n")
+		encoded = encoded[76:]
+	}
+	if encoded != "" {
+		b.WriteString(encoded)
+		b.WriteString("\r\n")
+	}
+}
+
+func headerAddress(value string) string {
+	return strings.NewReplacer("\r", "", "\n", "").Replace(value)
+}
+
+func normalizeEmailLineEndings(value string) string {
+	value = strings.ReplaceAll(value, "\r\n", "\n")
+	value = strings.ReplaceAll(value, "\r", "\n")
+	return strings.ReplaceAll(value, "\n", "\r\n")
+}
+
+func defaultAttachmentContentType(attachment emailAttachment) string {
+	if attachment.ContentType != "" {
+		return attachment.ContentType
+	}
+	return "application/octet-stream"
 }
 
 func configuredEmailSender() emailSender {
