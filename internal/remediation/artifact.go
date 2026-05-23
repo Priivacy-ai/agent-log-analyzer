@@ -752,16 +752,20 @@ func installInstructions(pluginName, artifactURL string) Install {
 	command := strings.Join([]string{
 		`PLUGIN_URL="` + artifactURL + `"`,
 		`PLUGIN_ZIP="$(mktemp -t agent-analyzer-plugin.XXXXXX.zip)"`,
+		`PLUGIN_DIR="$(mktemp -d -t agent-analyzer-plugin.XXXXXX)"`,
+		`trap 'rm -rf "$PLUGIN_ZIP" "$PLUGIN_DIR"' EXIT`,
 		`curl -fsS "$PLUGIN_URL" -o "$PLUGIN_ZIP"`,
-		`claude --plugin-dir "$PLUGIN_ZIP"`,
+		`unzip -q "$PLUGIN_ZIP" -d "$PLUGIN_DIR"`,
+		`claude --plugin-dir "$PLUGIN_DIR"`,
 	}, "\n")
 	prompt := "Install the generated Agent Analyzer optimization plugin for this session. Run the command below, explain what it installs, and ask for approval before executing it. Do not print plugin archive contents.\n\n```sh\n" + command + "\n```"
 	return Install{
 		Command:          command,
 		ClaudePrompt:     prompt,
-		UninstallCommand: "No persistent install is performed by the default command. Close the Claude Code session to unload " + pluginName + ".",
+		UninstallCommand: `rm -rf "$PLUGIN_ZIP" "$PLUGIN_DIR"`,
 		Notes: []string{
-			"The default command uses Claude Code's --plugin-dir support with a private-link zip artifact.",
+			"The default command downloads the private-link zip artifact, unpacks it into a temporary plugin directory, and loads that directory with Claude Code's --plugin-dir support.",
+			"The cleanup trap removes the temporary archive and plugin directory when the shell exits.",
 			"Marketplace installation can be added later once the plugin store is live.",
 		},
 	}

@@ -95,6 +95,18 @@ func TestGenerateCreatesClaudePluginArtifact(t *testing.T) {
 	if !strings.Contains(artifact.Install.Command, "claude --plugin-dir") {
 		t.Fatalf("expected plugin-dir install command, got %s", artifact.Install.Command)
 	}
+	if strings.Contains(artifact.Install.Command, `claude --plugin-dir "$PLUGIN_ZIP"`) {
+		t.Fatalf("install command must unpack the zip before passing a plugin directory: %s", artifact.Install.Command)
+	}
+	for _, want := range []string{
+		`PLUGIN_DIR="$(mktemp -d -t agent-analyzer-plugin.XXXXXX)"`,
+		`unzip -q "$PLUGIN_ZIP" -d "$PLUGIN_DIR"`,
+		`claude --plugin-dir "$PLUGIN_DIR"`,
+	} {
+		if !strings.Contains(artifact.Install.Command, want) {
+			t.Fatalf("install command missing %q: %s", want, artifact.Install.Command)
+		}
+	}
 	if !containsCustomization(artifact, "retrieval-hygiene") || !containsCustomization(artifact, "output-budget") || !containsCustomization(artifact, "retry-breaker") {
 		t.Fatalf("missing expected customizations: %#v", artifact.Customizations)
 	}
@@ -116,6 +128,18 @@ func TestGenerateCreatesClaudePluginArtifact(t *testing.T) {
 	}
 	if !strings.Contains(artifact.RequiredAcknowledgment, "at my own risk") {
 		t.Fatalf("expected liability acknowledgment, got %q", artifact.RequiredAcknowledgment)
+	}
+}
+
+func TestInstallInstructionsCleanUpTemporaryPluginFiles(t *testing.T) {
+	install := installInstructions("agent-analyzer-optimization", "https://example.test/plugin.zip")
+	for _, want := range []string{
+		`trap 'rm -rf "$PLUGIN_ZIP" "$PLUGIN_DIR"' EXIT`,
+		`rm -rf "$PLUGIN_ZIP" "$PLUGIN_DIR"`,
+	} {
+		if !strings.Contains(install.Command, want) && !strings.Contains(install.UninstallCommand, want) {
+			t.Fatalf("expected cleanup instruction %q in install metadata: %#v", want, install)
+		}
 	}
 }
 
