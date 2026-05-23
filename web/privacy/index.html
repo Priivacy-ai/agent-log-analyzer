@@ -28,7 +28,7 @@
         <h2>What We Do Not Receive</h2>
         <ul>
           <li>Raw agent logs in the public launch flow.</li>
-          <li>Raw SQLite state stores. Cursor, Kiro, and Google Antigravity state extraction is disabled by default, opt-in only, copied read-only, and analyzed locally.</li>
+          <li>Raw SQLite state stores. Cursor, Kiro, and Google Antigravity state extraction is read-only, bounded to known conversation keys, and analyzed locally without writing database snapshots.</li>
           <li>Prompt text, tool output, file contents, command arguments, secret values, repo names, usernames, hostnames, or full file paths.</li>
           <li>Unknown private tool names unless a future explicit opt-in path is added.</li>
         </ul>

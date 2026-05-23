@@ -59,7 +59,7 @@ agent-analyzer analyze --log ~/.claude/projects/some-session.jsonl --out ./repor
 
 If neither form is supplied, the CLI auto-discovers target-sized recent logs per supported source. It aims for roughly 5 MB total per source, combines up to five small logs when that gets closer to the target, and falls back to a single huge log when only oversized sessions are available.
 
-VS Code-style SQLite state extraction for Cursor, Kiro, and Google Antigravity is off by default. To include bounded known conversation keys from copied read-only `state.vscdb` snapshots, run with `AGENT_ANALYZER_ENABLE_SQLITE_SOURCES=1`.
+VS Code-style SQLite state extraction for Cursor, Kiro, and Google Antigravity is included in automatic discovery. The CLI opens readable `state.vscdb` stores in SQLite read-only mode, extracts only bounded known conversation keys, and does not write database snapshots or modify source stores.
 
 ```bash
 docker compose up --build

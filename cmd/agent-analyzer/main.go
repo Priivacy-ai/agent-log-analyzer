@@ -11,6 +11,7 @@ import (
 	"io"
 	"math"
 	"net/http"
+	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -900,13 +901,11 @@ func recentSupportedLogsWithBounds(limit int, maxBytes int64, minBytes int64) ([
 		return nil, err
 	}
 	candidates = append(candidates, kiroSessions...)
-	if sqliteSourcesEnabled() {
-		sqliteCandidates, err := recentSQLiteSourceLogs(limit, maxBytes, minBytes)
-		if err != nil {
-			return nil, err
-		}
-		candidates = append(candidates, sqliteCandidates...)
+	sqliteCandidates, err := recentSQLiteSourceLogs(limit, maxBytes, minBytes)
+	if err != nil {
+		return nil, err
 	}
+	candidates = append(candidates, sqliteCandidates...)
 	candidates = selectLargestRecentCandidatesPerSource(candidates, limit)
 	if len(candidates) == 0 {
 		return nil, noSupportedLogsError()
@@ -1184,11 +1183,6 @@ func acceptKiroWorkspaceSession(path string, _ os.FileInfo) bool {
 	return base != "sessions.json"
 }
 
-func sqliteSourcesEnabled() bool {
-	value := strings.ToLower(os.Getenv("AGENT_ANALYZER_ENABLE_SQLITE_SOURCES"))
-	return value == "1" || value == "true" || value == "yes"
-}
-
 type sqliteSourceDefinition struct {
 	id       string
 	label    string
@@ -1329,12 +1323,7 @@ func sqliteStoreSize(path string) (int64, error) {
 }
 
 func readSQLiteStateAsJSONL(path string, keyPrefixes []string, maxOutputBytes int64) ([]byte, error) {
-	copied, cleanup, err := copySQLiteDBForRead(path)
-	if err != nil {
-		return nil, err
-	}
-	defer cleanup()
-	db, err := sql.Open("sqlite", copied)
+	db, err := sql.Open("sqlite", sqliteReadOnlyDSN(path))
 	if err != nil {
 		return nil, err
 	}
@@ -1349,6 +1338,15 @@ func readSQLiteStateAsJSONL(path string, keyPrefixes []string, maxOutputBytes in
 		return []byte("{\"type\":\"message\",\"kind\":\"sqlite_state_empty\"}\n"), nil
 	}
 	return output.Bytes(), nil
+}
+
+func sqliteReadOnlyDSN(path string) string {
+	uri := url.URL{Scheme: "file", Path: filepath.ToSlash(path)}
+	query := url.Values{}
+	query.Set("mode", "ro")
+	query.Set("_pragma", "query_only(1)")
+	uri.RawQuery = query.Encode()
+	return uri.String()
 }
 
 func appendSQLiteKVTable(output *bytes.Buffer, db *sql.DB, table string, keyPrefixes []string, maxOutputBytes int64) error {
@@ -1487,32 +1485,6 @@ func sanitizeKeyType(value string) string {
 		return "state"
 	}
 	return string(out)
-}
-
-func copySQLiteDBForRead(path string) (string, func(), error) {
-	dir, err := os.MkdirTemp("", "agent-analyzer-sqlite-*")
-	if err != nil {
-		return "", func() {}, err
-	}
-	cleanup := func() { _ = os.RemoveAll(dir) }
-	base := filepath.Join(dir, "state.vscdb")
-	for _, suffix := range []string{"", "-wal", "-shm"} {
-		src := path + suffix
-		dst := base + suffix
-		data, err := os.ReadFile(src)
-		if err != nil {
-			if suffix != "" && (errors.Is(err, os.ErrNotExist) || isPermissionError(err)) {
-				continue
-			}
-			cleanup()
-			return "", func() {}, err
-		}
-		if err := os.WriteFile(dst, data, 0o600); err != nil {
-			cleanup()
-			return "", func() {}, err
-		}
-	}
-	return base, cleanup, nil
 }
 
 func antigravityTranscriptRoots() []string {

@@ -55,7 +55,7 @@ out by analytics/remediation allowlist code.
 
 `recentSupportedLogsWithBounds` is the main discovery coordinator. It collects
 candidates from the source registry, OpenCode session discovery, Kiro workspace
-session discovery, and optional SQLite source discovery. After collection, it
+session discovery, and SQLite source discovery. After collection, it
 applies a final largest-recent per-source cap so a source cannot exceed the
 requested limit by contributing multiple reader families.
 
@@ -175,21 +175,17 @@ arrays are converted into tool calls/results.
 Cursor, Kiro, and Antigravity can store conversation state in VS Code-style
 SQLite databases named `state.vscdb`.
 
-SQLite extraction is disabled by default. It runs only when:
-
-```sh
-AGENT_ANALYZER_ENABLE_SQLITE_SOURCES=1
-```
-
-Accepted truthy values are `1`, `true`, and `yes` case-insensitively.
+SQLite extraction is part of normal automatic discovery. The CLI should read
+every supported store it can read safely, while preserving the invariant that
+it does not change source files. The only normal filesystem write made by the
+CLI is the sanitized report path requested by the user.
 
 The SQLite reader:
 
 - discovers `state.vscdb` under app-support `User/globalStorage` and
   `User/workspaceStorage`,
 - includes `state.vscdb-wal` and `state.vscdb-shm` sizes in candidate bounds,
-- copies `state.vscdb`, `-wal`, and `-shm` into a temporary read-only snapshot
-  before opening the database,
+- opens databases through a SQLite `mode=ro` URI with `query_only` enabled,
 - skips missing or unreadable WAL/SHM files,
 - reads only `ItemTable` and `cursorDiskKV`,
 - pushes key-prefix filtering into SQL before `LIMIT`,
@@ -266,7 +262,7 @@ The MCP normalizer:
 
 ### Cursor
 
-Cursor support covers transcript JSONL first, plus optional SQLite synthetic
+Cursor support covers transcript JSONL first, plus SQLite synthetic
 JSONL.
 
 The Cursor normalizer:
@@ -371,8 +367,9 @@ Important tests:
   - Claude Desktop MCP server-log header synthesis,
   - permission-denied discovery/read behavior,
   - Kiro workspace session reads and nested tool signal extraction,
-  - SQLite opt-in, empty stores, Kiro/Antigravity stores, filtering before
-    limit, output bounds, invalid UTF-8/protobuf skipping,
+  - SQLite default discovery, read-only source behavior, empty stores,
+    Kiro/Antigravity stores, filtering before limit, output bounds, invalid
+    UTF-8/protobuf skipping,
   - ordinal-only local refs.
 - `internal/analyzer/normalized_events_test.go`
   - Codex payload token/tool normalization,
@@ -412,7 +409,7 @@ Use this checklist:
    - parser mapping,
    - leak canaries,
    - permission/read failure behavior,
-   - opt-in gates if raw-sensitive state extraction is involved.
+   - read-only database/state extraction behavior for raw-sensitive stores.
 9. Run `go test ./...` and `git diff --check`.
 
 ## Known Human Validation Gap

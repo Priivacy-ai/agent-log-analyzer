@@ -11,6 +11,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"reflect"
 	"runtime"
 	"strings"
 	"testing"
@@ -54,6 +55,42 @@ func writeLogContent(t *testing.T, path string, content string) {
 	}
 }
 
+func snapshotDirEntries(t *testing.T, dir string) []string {
+	t.Helper()
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		t.Fatalf("read dir entries: %v", err)
+	}
+	names := make([]string, 0, len(entries))
+	for _, entry := range entries {
+		names = append(names, entry.Name())
+	}
+	return names
+}
+
+func snapshotFileModTimes(t *testing.T, paths ...string) map[string]int64 {
+	t.Helper()
+	modTimes := map[string]int64{}
+	for _, path := range paths {
+		info, err := os.Stat(path)
+		if err != nil {
+			t.Fatalf("stat %s: %v", path, err)
+		}
+		modTimes[filepath.Base(path)] = info.ModTime().UnixNano()
+	}
+	return modTimes
+}
+
+func existingPaths(paths ...string) []string {
+	var out []string
+	for _, path := range paths {
+		if _, err := os.Stat(path); err == nil {
+			out = append(out, path)
+		}
+	}
+	return out
+}
+
 func isolatedDiscoveryHome(t *testing.T) string {
 	t.Helper()
 	home := t.TempDir()
@@ -67,7 +104,6 @@ func isolatedDiscoveryHome(t *testing.T) string {
 	t.Setenv("CODEX_HOME", filepath.Join(home, ".codex"))
 	t.Setenv("KIRO_HOME", filepath.Join(home, ".kiro"))
 	t.Setenv("KIRO_CHAT_LOG_FILE", "")
-	t.Setenv("AGENT_ANALYZER_ENABLE_SQLITE_SOURCES", "")
 	for _, dir := range []string{os.Getenv("TMPDIR"), os.Getenv("XDG_RUNTIME_DIR"), os.Getenv("XDG_CONFIG_HOME"), os.Getenv("APPDATA")} {
 		if err := os.MkdirAll(dir, 0o700); err != nil {
 			t.Fatalf("mkdir isolated discovery dir %s: %v", dir, err)
@@ -524,11 +560,12 @@ func TestRecentKiroWorkspaceSessions_ReadsSessionJSON(t *testing.T) {
 	assertReportDoesNotContain(t, report, "private@example.com", "aws sts get-caller-identity", "session-secret", "arn:aws:iam::123456789012:user/private")
 }
 
-func TestSQLiteSourceExtraction_OptInCopiesAndBoundsStateDB(t *testing.T) {
+func TestSQLiteSourceExtraction_ReadsStateDBByDefaultWithoutSourceWrites(t *testing.T) {
 	isolatedDiscoveryHome(t)
-	t.Setenv("AGENT_ANALYZER_ENABLE_SQLITE_SOURCES", "1")
 	dbPath := filepath.Join(appSupportDir("Cursor"), "User", "workspaceStorage", "abc123", "state.vscdb")
 	writeCursorStateDB(t, dbPath)
+	beforeEntries := snapshotDirEntries(t, filepath.Dir(dbPath))
+	beforeModTimes := snapshotFileModTimes(t, dbPath)
 
 	candidates, err := recentSupportedLogs(1)
 	if err != nil {
@@ -551,6 +588,14 @@ func TestSQLiteSourceExtraction_OptInCopiesAndBoundsStateDB(t *testing.T) {
 	if !strings.Contains(string(data), `"key_type":"bubbleid"`) || strings.Contains(string(data), "bubbleId:composer-secret") {
 		t.Fatalf("expected bounded key type without raw DB key, got %s", data)
 	}
+	afterEntries := snapshotDirEntries(t, filepath.Dir(dbPath))
+	if !reflect.DeepEqual(beforeEntries, afterEntries) {
+		t.Fatalf("SQLite read changed source directory entries: before=%#v after=%#v", beforeEntries, afterEntries)
+	}
+	afterModTimes := snapshotFileModTimes(t, dbPath)
+	if !reflect.DeepEqual(beforeModTimes, afterModTimes) {
+		t.Fatalf("SQLite read changed source file mtimes: before=%#v after=%#v", beforeModTimes, afterModTimes)
+	}
 	report, err := analyzer.AnalyzeForSource("cursor-sqlite-test", "cursor", data)
 	if err != nil {
 		t.Fatalf("AnalyzeForSource: %v", err)
@@ -561,25 +606,64 @@ func TestSQLiteSourceExtraction_OptInCopiesAndBoundsStateDB(t *testing.T) {
 	assertReportDoesNotContain(t, report, "private@example.com", "arn:aws:iam::123456789012:user/private", "oauth-refresh-token", "composer-secret")
 }
 
-func TestSQLiteSourceExtraction_OptInGateValues(t *testing.T) {
-	for _, tc := range []struct {
-		value string
-		want  bool
-	}{
-		{"", false},
-		{"0", false},
-		{"false", false},
-		{"1", true},
-		{"true", true},
-		{"yes", true},
-		{"YES", true},
+func TestSQLiteReadOnlyDSNRejectsWrites(t *testing.T) {
+	isolatedDiscoveryHome(t)
+	dbPath := filepath.Join(appSupportDir("Cursor"), "User", "workspaceStorage", "abc123", "state.vscdb")
+	writeCursorStateDB(t, dbPath)
+
+	db, err := sql.Open("sqlite", sqliteReadOnlyDSN(dbPath))
+	if err != nil {
+		t.Fatalf("open read-only sqlite: %v", err)
+	}
+	defer db.Close()
+
+	if _, err := db.Exec(`INSERT INTO ItemTable(key, value) VALUES ('bubbleId:write-attempt', 'should fail')`); err == nil {
+		t.Fatal("expected read-only SQLite DSN to reject writes")
+	}
+}
+
+func TestSQLiteSourceExtraction_ReadsWALStateDBWithoutSourceWrites(t *testing.T) {
+	isolatedDiscoveryHome(t)
+	dbPath := filepath.Join(appSupportDir("Cursor"), "User", "workspaceStorage", "abc123", "state.vscdb")
+	if err := os.MkdirAll(filepath.Dir(dbPath), 0o700); err != nil {
+		t.Fatalf("mkdir sqlite parent: %v", err)
+	}
+	db, err := sql.Open("sqlite", dbPath)
+	if err != nil {
+		t.Fatalf("open sqlite: %v", err)
+	}
+	defer db.Close()
+	for _, stmt := range []string{
+		`PRAGMA journal_mode=WAL`,
+		`PRAGMA wal_autocheckpoint=0`,
+		`CREATE TABLE ItemTable (key TEXT UNIQUE ON CONFLICT REPLACE, value BLOB)`,
+		`INSERT INTO ItemTable(key, value) VALUES ('bubbleId:wal-message', '{"role":"user","content":"wal content"}')`,
 	} {
-		t.Run(tc.value, func(t *testing.T) {
-			t.Setenv("AGENT_ANALYZER_ENABLE_SQLITE_SOURCES", tc.value)
-			if got := sqliteSourcesEnabled(); got != tc.want {
-				t.Fatalf("sqliteSourcesEnabled(%q) = %v, want %v", tc.value, got, tc.want)
-			}
-		})
+		if _, err := db.Exec(stmt); err != nil {
+			t.Fatalf("exec sqlite stmt %q: %v", stmt, err)
+		}
+	}
+	sidecars := existingPaths(dbPath, dbPath+"-wal", dbPath+"-shm")
+	if len(sidecars) < 2 {
+		t.Fatalf("expected SQLite WAL sidecars, got %#v", sidecars)
+	}
+	beforeEntries := snapshotDirEntries(t, filepath.Dir(dbPath))
+	beforeModTimes := snapshotFileModTimes(t, sidecars...)
+
+	data, err := readSQLiteStateAsJSONL(dbPath, []string{"bubbleId:"}, 0)
+	if err != nil {
+		t.Fatalf("read WAL SQLite state: %v", err)
+	}
+	if !strings.Contains(string(data), "wal content") {
+		t.Fatalf("expected WAL-backed content, got %s", data)
+	}
+	afterEntries := snapshotDirEntries(t, filepath.Dir(dbPath))
+	if !reflect.DeepEqual(beforeEntries, afterEntries) {
+		t.Fatalf("SQLite WAL read changed source directory entries: before=%#v after=%#v", beforeEntries, afterEntries)
+	}
+	afterModTimes := snapshotFileModTimes(t, sidecars...)
+	if !reflect.DeepEqual(beforeModTimes, afterModTimes) {
+		t.Fatalf("SQLite WAL read changed source file mtimes: before=%#v after=%#v", beforeModTimes, afterModTimes)
 	}
 }
 
@@ -645,7 +729,6 @@ func TestSQLiteSourceExtraction_FiltersBeforeLimitAndBoundsOutput(t *testing.T) 
 
 func TestSQLiteSourceExtraction_EmptySupportedRowsDoesNotFailAnalysis(t *testing.T) {
 	isolatedDiscoveryHome(t)
-	t.Setenv("AGENT_ANALYZER_ENABLE_SQLITE_SOURCES", "1")
 	dbPath := filepath.Join(appSupportDir("Cursor"), "User", "workspaceStorage", "abc123", "state.vscdb")
 	writeEmptyStateDB(t, dbPath)
 
