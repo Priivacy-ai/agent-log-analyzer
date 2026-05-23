@@ -127,3 +127,32 @@ func TestAppendAnalyticsEventWritesJSONLWithoutReportIdentifiers(t *testing.T) {
 		}
 	}
 }
+
+func TestUsageEventsAppendAndRead(t *testing.T) {
+	store, err := New(t.TempDir())
+	if err != nil {
+		t.Fatalf("New failed: %v", err)
+	}
+	now := time.Now().UTC()
+	old := analytics.NewUsageEvent(now.Add(-48 * time.Hour))
+	old.Path = "/old"
+	recent := analytics.NewUsageEvent(now.Add(-time.Hour))
+	recent.Path = "/recent"
+	recent.Method = "GET"
+	recent.Status = 200
+	recent.AuthSurface = "none"
+	if err := store.AppendUsageEvent(old); err != nil {
+		t.Fatalf("AppendUsageEvent old failed: %v", err)
+	}
+	if err := store.AppendUsageEvent(recent); err != nil {
+		t.Fatalf("AppendUsageEvent recent failed: %v", err)
+	}
+
+	events, err := store.ReadUsageEvents(now.Add(-24*time.Hour), 10)
+	if err != nil {
+		t.Fatalf("ReadUsageEvents failed: %v", err)
+	}
+	if len(events) != 1 || events[0].Path != "/recent" {
+		t.Fatalf("unexpected usage events: %#v", events)
+	}
+}

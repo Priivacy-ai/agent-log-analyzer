@@ -24,6 +24,14 @@ locals {
   postmark_secrets = var.postmark_server_token_secret_arn == "" ? [] : [
     { name = "POSTMARK_SERVER_TOKEN", valueFrom = var.postmark_server_token_secret_arn }
   ]
+  admin_usage_env = concat(
+    var.admin_token_sha256 == "" ? [] : [
+      { name = "CLAUDE_ANALYZER_ADMIN_TOKEN_SHA256", value = var.admin_token_sha256 }
+    ],
+    var.usage_hash_salt == "" ? [] : [
+      { name = "CLAUDE_ANALYZER_USAGE_HASH_SALT", value = var.usage_hash_salt }
+    ]
+  )
 }
 
 resource "aws_ecr_repository" "app" {
@@ -617,7 +625,7 @@ resource "aws_ecs_task_definition" "api" {
     command      = ["claude-analyzer-api"]
     essential    = true
     portMappings = [{ containerPort = 8080, protocol = "tcp" }]
-    environment = concat(local.env, [
+    environment = concat(local.env, local.admin_usage_env, [
       { name = "CLAUDE_ANALYZER_ADDR", value = ":8080" },
       { name = "CLAUDE_ANALYZER_MAX_QUEUE_DEPTH", value = tostring(var.max_queue_depth) },
       { name = "CLAUDE_ANALYZER_SES_CONFIGURATION_SET", value = aws_sesv2_configuration_set.transactional.configuration_set_name }

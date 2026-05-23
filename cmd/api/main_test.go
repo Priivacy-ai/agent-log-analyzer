@@ -12,6 +12,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/priivacy-ai/agent-log-analyzer/internal/analytics"
 	"github.com/priivacy-ai/agent-log-analyzer/internal/analyzer"
 	"github.com/priivacy-ai/agent-log-analyzer/internal/app"
 	"github.com/priivacy-ai/agent-log-analyzer/internal/localstore"
@@ -21,6 +22,11 @@ type fakeStore struct {
 	job        app.Job
 	report     analyzer.Report
 	queueDepth int
+}
+
+type usageFakeStore struct {
+	fakeStore
+	events []analytics.UsageEvent
 }
 
 type captureEmailSender struct {
@@ -82,6 +88,25 @@ func (f fakeStore) GetReport(id string) (analyzer.Report, error) {
 	return f.report, nil
 }
 
+func (f *usageFakeStore) AppendUsageEvent(event analytics.UsageEvent) error {
+	f.events = append(f.events, event)
+	return nil
+}
+
+func (f *usageFakeStore) ReadUsageEvents(since time.Time, limit int) ([]analytics.UsageEvent, error) {
+	var events []analytics.UsageEvent
+	for _, event := range f.events {
+		if !since.IsZero() && event.Timestamp.Before(since) {
+			continue
+		}
+		events = append(events, event)
+		if limit > 0 && len(events) >= limit {
+			break
+		}
+	}
+	return events, nil
+}
+
 func TestSanitizePathRedactsDynamicIDs(t *testing.T) {
 	for _, path := range []string{
 		"/api/uploads/job-1234567890",
@@ -98,6 +123,81 @@ func TestSanitizePathRedactsDynamicIDs(t *testing.T) {
 		if strings.Contains(got, "job-1234567890") || strings.Contains(got, "token-secret") {
 			t.Fatalf("sanitizePath leaked job id for %q: %q", path, got)
 		}
+	}
+}
+
+func TestUsageStatsEndpointRequiresAdminToken(t *testing.T) {
+	t.Setenv("CLAUDE_ANALYZER_ADMIN_TOKEN", "secret-admin-token")
+	store := &usageFakeStore{}
+	req := httptest.NewRequest(http.MethodGet, "/api/admin/usage-stats", nil)
+	rec := httptest.NewRecorder()
+
+	buildMux(store).ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusUnauthorized {
+		t.Fatalf("expected unauthorized status, got %d: %s", rec.Code, rec.Body.String())
+	}
+}
+
+func TestUsageStatsEndpointReturnsAggregates(t *testing.T) {
+	t.Setenv("CLAUDE_ANALYZER_ADMIN_TOKEN", "secret-admin-token")
+	now := time.Now().UTC()
+	store := &usageFakeStore{
+		events: []analytics.UsageEvent{
+			{Timestamp: now.Add(-time.Hour), Method: http.MethodGet, Path: "/healthz", Status: http.StatusOK, AuthSurface: "none", UserAgent: "curl"},
+			{Timestamp: now.Add(-2 * time.Hour), Method: http.MethodGet, Path: "/api/admin/usage-stats", Status: http.StatusOK, AuthSurface: "admin_token", Authenticated: true, UserAgent: "browser", ClientHash: "client-1"},
+			{Timestamp: now.Add(-48 * time.Hour), Method: http.MethodPost, Path: "/api/client-reports", Status: http.StatusCreated, AuthSurface: "none", UserAgent: "node"},
+		},
+	}
+	req := httptest.NewRequest(http.MethodGet, "/api/admin/usage-stats?since=24h", nil)
+	req.Header.Set("Authorization", "Bearer secret-admin-token")
+	rec := httptest.NewRecorder()
+
+	buildMux(store).ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected usage stats status 200, got %d: %s", rec.Code, rec.Body.String())
+	}
+	var stats analytics.UsageStats
+	if err := json.NewDecoder(rec.Body).Decode(&stats); err != nil {
+		t.Fatalf("decode stats: %v", err)
+	}
+	if stats.EventCount != 2 || stats.Requests.Success != 2 {
+		t.Fatalf("unexpected stats: %#v", stats)
+	}
+	if stats.UniqueClientHashes != 1 {
+		t.Fatalf("expected one unique client hash, got %d", stats.UniqueClientHashes)
+	}
+}
+
+func TestLogRequestsAppendsSanitizedUsageEvent(t *testing.T) {
+	t.Setenv("CLAUDE_ANALYZER_USAGE_HASH_SALT", "test-salt")
+	store := &usageFakeStore{}
+	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		writeJSON(w, http.StatusAccepted, map[string]string{"ok": "true"})
+	})
+	req := httptest.NewRequest(http.MethodGet, "/api/public-reports/job-1234567890/report-token", nil)
+	req.RemoteAddr = "203.0.113.7:12345"
+	req.Header.Set("User-Agent", "curl/8.0.0")
+	rec := httptest.NewRecorder()
+
+	logRequests(next, store).ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusAccepted {
+		t.Fatalf("expected wrapped response, got %d", rec.Code)
+	}
+	if len(store.events) != 1 {
+		t.Fatalf("expected one usage event, got %d", len(store.events))
+	}
+	event := store.events[0]
+	if event.Path != "/api/public-reports/:id/:token" {
+		t.Fatalf("expected sanitized path, got %q", event.Path)
+	}
+	if strings.Contains(event.Path, "job-1234567890") || strings.Contains(event.Path, "report-token") {
+		t.Fatalf("usage event leaked path secret: %#v", event)
+	}
+	if event.Status != http.StatusAccepted || event.UserAgent != "curl" || event.ClientHash == "" {
+		t.Fatalf("unexpected usage event: %#v", event)
 	}
 }
 

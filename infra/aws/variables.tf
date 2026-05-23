@@ -93,3 +93,17 @@ variable "waf_rate_limit_per_5m" {
   description = "Maximum requests per source IP per five-minute WAF window."
   default     = 2000
 }
+
+variable "admin_token_sha256" {
+  type        = string
+  description = "Optional SHA-256 hex digest for the bearer token that can read /api/admin/usage-stats."
+  default     = ""
+  sensitive   = true
+}
+
+variable "usage_hash_salt" {
+  type        = string
+  description = "Optional salt used to hash client IPs in usage logs. Leave empty to disable client hashes."
+  default     = ""
+  sensitive   = true
+}

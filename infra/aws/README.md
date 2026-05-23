@@ -81,3 +81,7 @@ AWS_PROFILE=claude-analyzer-prod AWS_REGION=us-east-1 terraform -chdir=infra/aws
 ```
 
 Do not switch production to Postmark until Postmark account review is complete. Until then, keep SES/fallback behavior for testing.
+
+Admin usage stats:
+
+The API can expose aggregate usage stats at `/api/admin/usage-stats`. Set `admin_token_sha256` to the SHA-256 hex digest of a strong bearer token; do not pass or commit the raw token through Terraform. Set `usage_hash_salt` to enable privacy-preserving unique-client counts in usage logs.

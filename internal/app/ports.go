@@ -33,6 +33,11 @@ type AnalyticsStore interface {
 	AppendAnalyticsEvent(event analytics.Event) error
 }
 
+type UsageStore interface {
+	AppendUsageEvent(event analytics.UsageEvent) error
+	ReadUsageEvents(since time.Time, limit int) ([]analytics.UsageEvent, error)
+}
+
 type EmailUnlockStore interface {
 	CreateEmailUnlock(unlock EmailUnlock) error
 	GetEmailUnlock(id string) (EmailUnlock, error)

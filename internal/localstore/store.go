@@ -1,6 +1,7 @@
 package localstore
 
 import (
+	"bufio"
 	"encoding/json"
 	"errors"
 	"os"
@@ -30,6 +31,7 @@ func New(root string) (*Store, error) {
 		filepath.Join(root, "jobs", "failed"),
 		filepath.Join(root, "reports"),
 		filepath.Join(root, "analytics"),
+		filepath.Join(root, "usage"),
 		filepath.Join(root, "email_unlocks"),
 		filepath.Join(root, "email_events"),
 		filepath.Join(root, "email_suppressions"),
@@ -166,6 +168,42 @@ func (s *Store) AppendAnalyticsEvent(event analytics.Event) error {
 	defer f.Close()
 	_, err = f.Write(data)
 	return err
+}
+
+func (s *Store) AppendUsageEvent(event analytics.UsageEvent) error {
+	return appendJSONLine(filepath.Join(s.root, "usage", "events.jsonl"), event)
+}
+
+func (s *Store) ReadUsageEvents(since time.Time, limit int) ([]analytics.UsageEvent, error) {
+	path := filepath.Join(s.root, "usage", "events.jsonl")
+	f, err := os.Open(path)
+	if errors.Is(err, os.ErrNotExist) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+
+	var events []analytics.UsageEvent
+	scanner := bufio.NewScanner(f)
+	for scanner.Scan() {
+		var event analytics.UsageEvent
+		if err := json.Unmarshal(scanner.Bytes(), &event); err != nil {
+			continue
+		}
+		if !since.IsZero() && event.Timestamp.Before(since) {
+			continue
+		}
+		events = append(events, event)
+		if limit > 0 && len(events) >= limit {
+			break
+		}
+	}
+	if err := scanner.Err(); err != nil {
+		return events, err
+	}
+	return events, nil
 }
 
 func (s *Store) SaveUpload(jobID string, data []byte) (string, error) {
