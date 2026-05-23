@@ -99,6 +99,83 @@ func (s *Store) AppendAnalyticsEvent(event analytics.Event) error {
 	return err
 }
 
+func (s *Store) AppendUsageEvent(event analytics.UsageEvent) error {
+	data, err := json.Marshal(event)
+	if err != nil {
+		return err
+	}
+	data = append(data, '\n')
+	now := time.Now().UTC()
+	key, err := usageObjectKey(now)
+	if err != nil {
+		return err
+	}
+	_, err = s.s3.PutObject(context.Background(), &s3.PutObjectInput{
+		Bucket:               aws.String(s.reportBucket),
+		Key:                  aws.String(key),
+		Body:                 bytes.NewReader(data),
+		ServerSideEncryption: "AES256",
+		ContentType:          aws.String("application/x-ndjson"),
+	})
+	return err
+}
+
+func (s *Store) ReadUsageEvents(since time.Time, limit int) ([]analytics.UsageEvent, error) {
+	ctx := context.Background()
+	var events []analytics.UsageEvent
+	paginator := s3.NewListObjectsV2Paginator(s.s3, &s3.ListObjectsV2Input{
+		Bucket: aws.String(s.reportBucket),
+		Prefix: aws.String("usage/events/"),
+	})
+	for paginator.HasMorePages() {
+		page, err := paginator.NextPage(ctx)
+		if err != nil {
+			return events, err
+		}
+		for _, object := range page.Contents {
+			if limit > 0 && len(events) >= limit {
+				return events, nil
+			}
+			if object.LastModified != nil && !since.IsZero() && object.LastModified.Before(since.Add(-1*time.Hour)) {
+				continue
+			}
+			output, err := s.s3.GetObject(ctx, &s3.GetObjectInput{
+				Bucket: aws.String(s.reportBucket),
+				Key:    object.Key,
+			})
+			if err != nil {
+				return events, err
+			}
+			data, readErr := analyzer.ReadAllLimited(output.Body, 1024*1024)
+			closeErr := output.Body.Close()
+			if readErr != nil {
+				return events, readErr
+			}
+			if closeErr != nil {
+				return events, closeErr
+			}
+			for _, line := range bytes.Split(data, []byte{'\n'}) {
+				line = bytes.TrimSpace(line)
+				if len(line) == 0 {
+					continue
+				}
+				var event analytics.UsageEvent
+				if err := json.Unmarshal(line, &event); err != nil {
+					continue
+				}
+				if !since.IsZero() && event.Timestamp.Before(since) {
+					continue
+				}
+				events = append(events, event)
+				if limit > 0 && len(events) >= limit {
+					return events, nil
+				}
+			}
+		}
+	}
+	return events, nil
+}
+
 func analyticsObjectKey(now time.Time) (string, error) {
 	var random [16]byte
 	if _, err := rand.Read(random[:]); err != nil {
@@ -106,6 +183,19 @@ func analyticsObjectKey(now time.Time) (string, error) {
 	}
 	return fmt.Sprintf(
 		"analytics/events/date=%s/hour=%02d/%x.jsonl",
+		now.Format("2006-01-02"),
+		now.Hour(),
+		random[:],
+	), nil
+}
+
+func usageObjectKey(now time.Time) (string, error) {
+	var random [16]byte
+	if _, err := rand.Read(random[:]); err != nil {
+		return "", err
+	}
+	return fmt.Sprintf(
+		"usage/events/date=%s/hour=%02d/%x.jsonl",
 		now.Format("2006-01-02"),
 		now.Hour(),
 		random[:],

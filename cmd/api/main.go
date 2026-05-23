@@ -55,7 +55,7 @@ func main() {
 
 	mux := buildMux(store)
 	slog.Info("api listening", "addr", addr)
-	if err := http.ListenAndServe(addr, logRequests(mux)); err != nil {
+	if err := http.ListenAndServe(addr, logRequests(mux, store)); err != nil {
 		slog.Error("api stopped", "error", err)
 		os.Exit(1)
 	}
@@ -83,6 +83,7 @@ func buildMux(store app.APIStore) http.Handler {
 	mux.HandleFunc("GET /api/public-artifacts/{id}/{token}/plugin.zip", getPublicArtifactHandler(store))
 	mux.HandleFunc("GET /r/{id}/{token}", reportPageHandler(store))
 	mux.HandleFunc("GET /api/jobs/{id}", getJobHandler(store))
+	mux.HandleFunc("GET /api/admin/usage-stats", usageStatsHandler(store))
 	mux.Handle("/", http.FileServer(http.Dir("web")))
 	return mux
 }
@@ -620,13 +621,6 @@ func getJobHandler(store app.APIStore) http.HandlerFunc {
 		job.ReportTokenHash = ""
 		writeJSON(w, http.StatusOK, job)
 	}
-}
-
-func logRequests(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		slog.Info("request", "method", r.Method, "path", sanitizePath(r.URL.Path))
-		next.ServeHTTP(w, r)
-	})
 }
 
 func sanitizePath(path string) string {
