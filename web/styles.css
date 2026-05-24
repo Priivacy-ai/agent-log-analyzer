@@ -2308,7 +2308,13 @@ pre {
 }
 
 .proof-page {
-  max-width: 1080px;
+  width: min(1560px, calc(100vw - 32px));
+  max-width: 1560px;
+}
+
+.proof-page.doc-page h1,
+.proof-page.doc-page .panel {
+  max-width: 100%;
 }
 
 .proof-page .trust-links {
@@ -2409,6 +2415,13 @@ pre {
   font-size: 14px;
 }
 
+.table-scroll {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
 .comparison-table th,
 .comparison-table td {
   padding: 13px;
@@ -2423,6 +2436,99 @@ pre {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
   font-size: 12px;
   text-transform: uppercase;
+}
+
+.results-table {
+  table-layout: fixed;
+}
+
+.results-table th,
+.results-table td {
+  overflow-wrap: anywhere;
+}
+
+.results-table th:nth-child(3),
+.results-table td:nth-child(3),
+.results-table th:nth-child(4),
+.results-table td:nth-child(4),
+.results-table th:nth-child(5),
+.results-table td:nth-child(5),
+.results-table th:nth-child(8),
+.results-table td:nth-child(8) {
+  white-space: nowrap;
+}
+
+.recommendation-matrix th:nth-child(1),
+.recommendation-matrix td:nth-child(1) {
+  width: 15%;
+}
+
+.recommendation-matrix th:nth-child(2),
+.recommendation-matrix td:nth-child(2) {
+  width: 15%;
+}
+
+.recommendation-matrix th:nth-child(3),
+.recommendation-matrix td:nth-child(3) {
+  width: 6%;
+}
+
+.recommendation-matrix th:nth-child(4),
+.recommendation-matrix td:nth-child(4),
+.recommendation-matrix th:nth-child(5),
+.recommendation-matrix td:nth-child(5) {
+  width: 9%;
+}
+
+.recommendation-matrix th:nth-child(6),
+.recommendation-matrix td:nth-child(6) {
+  width: 11%;
+}
+
+.recommendation-matrix th:nth-child(7),
+.recommendation-matrix td:nth-child(7) {
+  width: 13%;
+}
+
+.recommendation-matrix th:nth-child(8),
+.recommendation-matrix td:nth-child(8) {
+  width: 9%;
+}
+
+.recommendation-matrix th:nth-child(9),
+.recommendation-matrix td:nth-child(9) {
+  width: 13%;
+}
+
+.controls-matrix th:nth-child(1),
+.controls-matrix td:nth-child(1),
+.controls-matrix th:nth-child(2),
+.controls-matrix td:nth-child(2) {
+  width: 16%;
+}
+
+.controls-matrix th:nth-child(3),
+.controls-matrix td:nth-child(3) {
+  width: 7%;
+}
+
+.controls-matrix th:nth-child(4),
+.controls-matrix td:nth-child(4),
+.controls-matrix th:nth-child(5),
+.controls-matrix td:nth-child(5),
+.controls-matrix th:nth-child(7),
+.controls-matrix td:nth-child(7) {
+  width: 12%;
+}
+
+.controls-matrix th:nth-child(6),
+.controls-matrix td:nth-child(6) {
+  width: 20%;
+}
+
+.controls-matrix th:nth-child(8),
+.controls-matrix td:nth-child(8) {
+  width: 13%;
 }
 
 .comparison-table tr:last-child td {
@@ -2503,5 +2609,131 @@ pre {
   .comparison-table {
     display: block;
     overflow-x: auto;
+  }
+}
+
+@media (max-width: 1500px) {
+  .results-table {
+    display: block;
+    table-layout: auto;
+  }
+
+  .results-table thead {
+    display: none;
+  }
+
+  .results-table tbody,
+  .results-table tr,
+  .results-table td {
+    display: block;
+  }
+
+  .results-table tr {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    column-gap: 28px;
+    row-gap: 4px;
+    padding: 14px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .results-table tr:first-child {
+    padding-top: 0;
+  }
+
+  .results-table tr:last-child {
+    padding-bottom: 0;
+    border-bottom: 0;
+  }
+
+  .results-table td {
+    min-width: 0;
+    width: auto !important;
+    padding: 7px 0;
+    border-bottom: 0;
+    white-space: normal !important;
+  }
+
+  .results-table td::before {
+    display: block;
+    margin-bottom: 2px;
+    color: var(--green);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+    font-size: 11px;
+    text-transform: uppercase;
+  }
+
+  .recommendation-matrix td:nth-child(1)::before {
+    content: "Recommendation";
+  }
+
+  .recommendation-matrix td:nth-child(2)::before {
+    content: "Target category";
+  }
+
+  .recommendation-matrix td:nth-child(3)::before {
+    content: "Quality";
+  }
+
+  .recommendation-matrix td:nth-child(4)::before {
+    content: "Estimated tokens";
+  }
+
+  .recommendation-matrix td:nth-child(5)::before {
+    content: "Tool output";
+  }
+
+  .recommendation-matrix td:nth-child(6)::before {
+    content: "Output / reasoning";
+  }
+
+  .recommendation-matrix td:nth-child(7)::before {
+    content: "Published API delta";
+  }
+
+  .recommendation-matrix td:nth-child(8)::before {
+    content: "API-rate percent";
+  }
+
+  .recommendation-matrix td:nth-child(9)::before {
+    content: "Verdict";
+  }
+
+  .controls-matrix td:nth-child(1)::before {
+    content: "Harness";
+  }
+
+  .controls-matrix td:nth-child(2)::before {
+    content: "Intervention";
+  }
+
+  .controls-matrix td:nth-child(3)::before {
+    content: "Quality";
+  }
+
+  .controls-matrix td:nth-child(4)::before {
+    content: "Analyzer estimated";
+  }
+
+  .controls-matrix td:nth-child(5)::before {
+    content: "Tool output";
+  }
+
+  .controls-matrix td:nth-child(6)::before {
+    content: "Native token signal";
+  }
+
+  .controls-matrix td:nth-child(7)::before {
+    content: "Published API delta";
+  }
+
+  .controls-matrix td:nth-child(8)::before {
+    content: "Verdict";
+  }
+}
+
+@media (max-width: 700px) {
+  .results-table tr {
+    grid-template-columns: 1fr;
   }
 }
