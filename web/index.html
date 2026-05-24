@@ -166,34 +166,34 @@
           <span class="sr-only">Claude Code, Codex, OpenCode, Cursor, Kiro, or Antigravity</span>
           tokens.
         </h1>
-        <p class="subhead" itemprop="description">Analyze one session locally. Upload only the sanitized report.</p>
+        <p class="subhead" itemprop="description">Analyze the most relevant recent sessions locally. Upload only the sanitized report.</p>
         <p class="capacity-note">Every wasted reread, retry, and bloated context window burns the same plan capacity you need for actual coding. Recover it so your agentic coding plan ships more software before you hit token limits.</p>
         <h2 class="sr-only">What Agent Analyzer detects</h2>
         <ul class="proof" aria-label="Agent Analyzer detection capabilities">
           <li>Detect context bloat</li>
           <li>Find retry loops and wasted reads</li>
-          <li>Get an installable optimization pack</li>
+          <li>Get a report pack and generated optimization plugin</li>
         </ul>
         <h2 class="sr-only">Privacy and trust guarantees</h2>
         <ul class="trust" aria-label="Privacy and trust guarantees">
           <li>No account required</li>
-          <li>Raw logs stay local in the public flow <button type="button" class="help-tip" data-tippy-content="The NPX command analyzes supported agent logs on your machine first. SQLite state-store extraction for Cursor, Kiro, and Google Antigravity is read-only, bounded to known conversation keys, and remains local. The upload step sends the generated sanitized report JSON, not raw transcript files or raw state databases." aria-label="More information">?</button></li>
+          <li>Raw logs stay local <button type="button" class="help-tip" data-tippy-content="The NPX command analyzes supported agent logs on your machine first. SQLite state-store extraction for Cursor, Kiro, and Google Antigravity is read-only, bounded to known conversation keys, and remains local. The upload step sends the generated sanitized report JSON, not raw transcript files or raw state databases." aria-label="More information">?</button></li>
           <li>Reports are not used for training <button type="button" class="help-tip" data-tippy-content="The service stores sanitized reports for rendering and bounded aggregate analytics. It does not feed uploaded reports into model training." aria-label="More information">?</button></li>
           <li>Secrets redacted locally before upload <button type="button" class="help-tip" data-tippy-content="The CLI runs deterministic redaction on your computer before writing the report JSON. The hosted service receives category counts and placeholders, not the original redacted values. Redaction is best-effort; users should still review the JSON before upload." aria-label="More information">?</button></li>
         </ul>
-        <p class="disclaimer">The public flow runs analysis on your machine and uploads only the sanitized JSON report you review.</p>
+        <p class="disclaimer">The analysis runs on your machine and uploads only the sanitized JSON report you review.</p>
         <p class="trust-links"><a href="/security/">Security</a> <a href="/privacy/">Privacy</a></p>
 
-        <section class="panel command-panel" id="session-panel">
+        <section class="panel command-panel command-panel-primary" id="session-panel">
           <p class="status-line" id="session-status" hidden></p>
           <div class="panel-heading">
             <div>
-              <p class="eyebrow">copy / paste</p>
+              <p class="eyebrow">start here</p>
               <h2>Run the local analyzer</h2>
             </div>
-            <button id="copy-prompt" type="button">Copy NPX Command</button>
+            <button id="copy-prompt" class="cta-copy-button" data-copy-prompt type="button">Copy command</button>
           </div>
-          <pre id="claude-prompt">npx --yes agent-analyzer@latest run</pre>
+          <pre id="claude-prompt" data-run-command>npx --yes agent-analyzer@latest run</pre>
           <p class="command-note">Runs on your machine first, asks before upload, and sends only the sanitized report JSON. <button type="button" class="help-tip" data-tippy-content="This command uses the published npm package. It discovers supported local agent logs, parses and redacts locally, writes a report file, asks for confirmation, then uploads only that report JSON." aria-label="More information">?</button></p>
         </section>
 
@@ -343,17 +343,27 @@
         <div class="upsell" id="download-report-section">
           <div class="upsell-copy">
             <p class="eyebrow">portable findings</p>
-            <h2>Download the report pack for free</h2>
+            <h2>Get the report pack and plugin by email</h2>
             <p class="upsell-lede">The report pack shows where your agent sessions are burning tokens, includes a token-saving field guide PDF, and gives you a partner voucher. The generated plugin turns those findings into setup rules and workflow nudges so you can get more useful coding work from the same plan.</p>
             <ul class="upsell-proof">
               <li>Raw transcripts stay local.</li>
-              <li>No email required for the download.</li>
+              <li>Email delivery includes the report pack and generated plugin as attachments.</li>
             </ul>
           </div>
           <div class="upsell-action" id="plugin-purchase">
-            <p><a id="extended-report-link" class="plugin-cta" href="#">Download report pack</a></p>
-            <p class="command-note">Custom optimization plugin: $10 / €10 target price. Checkout enforcement is not active in this test build; this link generates the plugin from this report.</p>
-            <p><a id="plugin-download-link" class="plugin-cta" href="#">Download custom plugin</a></p>
+            <form class="email-unlock-form" action="/api/report-deliveries" method="post">
+              <input type="hidden" name="source_report_job_id" value="" />
+              <input type="hidden" name="source_report_token" value="" />
+              <label>Email for report + plugin attachments
+                <input type="email" name="email" placeholder="you@example.com" required />
+              </label>
+              <label class="checkbox-row">
+                <input type="checkbox" name="marketing_opt_in" value="1" />
+                <span>Also send me occasional updates about agentic coding products.</span>
+              </label>
+              <button class="plugin-cta" type="submit">Email me the report + plugin</button>
+              <p class="command-note">We send the branded report pack and generated plugin zip to this address. The email also includes install instructions. Raw transcripts are not attached or uploaded.</p>
+            </form>
           </div>
         </div>
       </section>

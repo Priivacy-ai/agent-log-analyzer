@@ -1699,12 +1699,20 @@ function renderPluginDownloadPreview() {
 function updateReportDownloadLinks(activeRoute) {
   const extended = document.querySelector("#extended-report-link");
   const plugin = document.querySelector("#plugin-download-link");
+  const jobIDInput = document.querySelector('input[name="source_report_job_id"]');
+  const tokenInput = document.querySelector('input[name="source_report_token"]');
   if (!activeRoute) return;
   if (extended) {
     extended.href = `${window.location.origin}/api/public-reports/${activeRoute.jobID}/${activeRoute.token}/download.zip`;
   }
   if (plugin) {
     plugin.href = `${window.location.origin}/api/public-artifacts/${activeRoute.jobID}/${activeRoute.token}/plugin.zip`;
+  }
+  if (jobIDInput) {
+    jobIDInput.value = activeRoute.jobID;
+  }
+  if (tokenInput) {
+    tokenInput.value = activeRoute.token;
   }
 }
 

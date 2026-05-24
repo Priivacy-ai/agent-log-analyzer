@@ -90,16 +90,20 @@ h1 {
 }
 
 .tool-rotator {
-  display: inline-grid;
-  width: 6.1em;
+  position: relative;
+  display: inline-block;
+  width: 7.2em;
+  height: 0.98em;
   max-width: 100%;
   color: var(--green);
   white-space: nowrap;
-  vertical-align: baseline;
+  vertical-align: -0.04em;
+  overflow: hidden;
 }
 
 .tool-rotator span {
-  grid-area: 1 / 1;
+  position: absolute;
+  inset: 0 auto auto 0;
   opacity: 0;
   transform: translateY(0.18em);
   animation: tool-name-rotate 12s ease-in-out infinite;

@@ -188,7 +188,12 @@ func TestReportDeliveryEmailsReportPackAndPluginAttachments(t *testing.T) {
 		t.Fatalf("expected one email, got %#v", sender.messages)
 	}
 	message := sender.messages[0]
-	if message.To != "dev@example.com" || !strings.Contains(message.Body, "claude --plugin-dir") || !strings.Contains(message.Body, "Raw transcripts were not uploaded") {
+	if message.To != "dev@example.com" ||
+		!strings.Contains(message.Body, "Choose your harness") ||
+		!strings.Contains(message.Body, "claude --plugin-dir") ||
+		!strings.Contains(message.Body, "harnesses/codex/AGENTS-snippet.md") ||
+		!strings.Contains(message.Body, "harnesses/claude-desktop-mcp/README.md") ||
+		!strings.Contains(message.Body, "Raw transcripts were not uploaded") {
 		t.Fatalf("unexpected delivery email: %#v", message)
 	}
 	if len(message.Attachments) != 2 {
@@ -201,6 +206,25 @@ func TestReportDeliveryEmailsReportPackAndPluginAttachments(t *testing.T) {
 		if attachment.ContentType != "application/zip" || !bytes.HasPrefix(attachment.Data, []byte("PK")) {
 			t.Fatalf("attachment %s is not a zip: type=%q len=%d", attachment.Filename, attachment.ContentType, len(attachment.Data))
 		}
+	}
+}
+
+func TestPluginReadyEmailBodyNamesHarnessDirectories(t *testing.T) {
+	body := pluginReadyEmailBody("https://example.test/report", "https://example.test/plugin.zip")
+	for _, want := range []string{
+		"harnesses/codex/",
+		"harnesses/opencode/",
+		"harnesses/cursor/",
+		"harnesses/kiro/",
+		"harnesses/antigravity/",
+		"harnesses/claude-desktop-mcp/",
+	} {
+		if !strings.Contains(body, want) {
+			t.Fatalf("plugin ready email missing harness path %s:\n%s", want, body)
+		}
+	}
+	if strings.Contains(body, "files under harnesses/") {
+		t.Fatalf("plugin ready email should name specific harness directories:\n%s", body)
 	}
 }
 
@@ -373,12 +397,21 @@ func TestGetExtendedReportDownloadsPackage(t *testing.T) {
 		t.Fatalf("sanitized JSON entry unexpected:\n%s", string(reportJSON))
 	}
 	preview := mustZipEntry(t, reader, "plugin-preview.md")
-	if !bytes.Contains(preview, []byte("Plugin Preview")) || !bytes.Contains(preview, []byte("sanitized report JSON only")) {
+	if !bytes.Contains(preview, []byte("Plugin Preview")) ||
+		!bytes.Contains(preview, []byte("Harness install matrix")) ||
+		!bytes.Contains(preview, []byte("Codex")) ||
+		!bytes.Contains(preview, []byte("sanitized report JSON only")) {
 		t.Fatalf("plugin preview missing expected copy:\n%s", string(preview))
 	}
 	voucher := mustZipEntry(t, reader, "partner-vouchers/spec-kitty-training-voucher.txt")
-	if !regexp.MustCompile(`Code: [A-Z0-9]{6}`).Match(voucher) || !bytes.Contains(voucher, []byte("20% off Spec Kitty trainings")) {
+	if !regexp.MustCompile(`Code: [A-Z0-9]{6}`).Match(voucher) ||
+		!bytes.Contains(voucher, []byte("20% off Spec Kitty training")) ||
+		!bytes.Contains(voucher, []byte("https://spec-kitty.ai/training")) ||
+		!bytes.Contains(voucher, []byte("Agent Analyzer partner credit")) {
 		t.Fatalf("voucher missing code/discount:\n%s", string(voucher))
+	}
+	if !bytes.Contains(voucherPDF, []byte("SPEC KITTY")) || !bytes.Contains(voucherPDF, []byte("spec-kitty.ai/training")) {
+		t.Fatalf("voucher PDF missing branding or training link")
 	}
 }
 

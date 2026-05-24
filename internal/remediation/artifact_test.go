@@ -73,15 +73,31 @@ func TestGenerateCreatesClaudePluginArtifact(t *testing.T) {
 	for _, path := range []string{
 		".claude-plugin/plugin.json",
 		"README.md",
+		"INSTALL.md",
+		"SOURCE-NOTES.md",
 		"WAIVER.md",
+		"agents/token-hygiene-reviewer.md",
+		"commands/agent-analyzer-review.md",
 		"skills/session-hygiene/SKILL.md",
 		"skills/codebase-navigation/SKILL.md",
 		"skills/tooling-setup/SKILL.md",
+		"skills/token-hygiene/SKILL.md",
+		"skills/token-hygiene/references/retrieval-ladder.md",
+		"skills/token-hygiene/references/output-budget.md",
+		"skills/token-hygiene/scripts/summarize-command-output.sh",
 		"skills/retrieval-hygiene/SKILL.md",
 		"skills/output-budget/SKILL.md",
 		"skills/retry-breaker/SKILL.md",
 		"commands/agent-analyzer-status.md",
 		"commands/agent-analyzer-tooling.md",
+		"harnesses/codex/AGENTS-snippet.md",
+		"harnesses/codex/.agents/skills/agent-analyzer-token-hygiene/SKILL.md",
+		"harnesses/cursor/.cursor/rules/agent-analyzer-token-hygiene.mdc",
+		"harnesses/kiro/.kiro/steering/agent-analyzer-token-hygiene.md",
+		"harnesses/opencode/AGENTS.md",
+		"harnesses/opencode/.opencode/commands/agent-analyzer-review.md",
+		"harnesses/antigravity/.agents/rules/agent-analyzer-token-hygiene.md",
+		"harnesses/claude-desktop-mcp/README.md",
 	} {
 		if !hasFile(artifact, path) {
 			t.Fatalf("expected artifact file %s in %#v", path, artifact.Files)
@@ -94,6 +110,55 @@ func TestGenerateCreatesClaudePluginArtifact(t *testing.T) {
 	}
 	if !strings.Contains(artifact.Install.Command, "claude --plugin-dir") {
 		t.Fatalf("expected plugin-dir install command, got %s", artifact.Install.Command)
+	}
+	readme := fileContent(t, artifact, "README.md")
+	for _, want := range []string{
+		"harnesses/codex/",
+		"harnesses/opencode/",
+		"harnesses/cursor/",
+		"harnesses/kiro/",
+		"harnesses/antigravity/",
+		"harnesses/claude-desktop-mcp/",
+	} {
+		if !strings.Contains(readme, want) {
+			t.Fatalf("README missing harness-specific path %s:\n%s", want, readme)
+		}
+	}
+	if len(artifact.Install.Harnesses) < 7 {
+		t.Fatalf("expected harness-specific install matrix, got %#v", artifact.Install.Harnesses)
+	}
+	codexInstall := harnessInstallByName(artifact.Install.Harnesses, "Codex")
+	if codexInstall == nil {
+		t.Fatalf("expected Codex install instructions: %#v", artifact.Install.Harnesses)
+	}
+	if strings.Contains(codexInstall.Install, "claude --plugin-dir") {
+		t.Fatalf("Codex instructions must not claim Claude Code plugin install support: %#v", codexInstall)
+	}
+	if !strings.Contains(fileContent(t, artifact, "harnesses/cursor/.cursor/rules/agent-analyzer-token-hygiene.mdc"), "Agent Analyzer Token Hygiene") {
+		t.Fatalf("expected Cursor rule content to mention Cursor rule surface")
+	}
+	if !strings.Contains(fileContent(t, artifact, "harnesses/kiro/.kiro/steering/agent-analyzer-token-hygiene.md"), "inclusion: always") {
+		t.Fatalf("expected Kiro steering frontmatter")
+	}
+	for _, path := range []string{
+		"INSTALL.md",
+		"skills/token-hygiene/SKILL.md",
+		"skills/session-hygiene/SKILL.md",
+		"commands/agent-analyzer-review.md",
+		"harnesses/codex/AGENTS-snippet.md",
+		"harnesses/codex/.agents/skills/agent-analyzer-token-hygiene/SKILL.md",
+		"harnesses/cursor/.cursor/rules/agent-analyzer-token-hygiene.mdc",
+		"harnesses/kiro/.kiro/steering/agent-analyzer-token-hygiene.md",
+		"harnesses/opencode/AGENTS.md",
+		"harnesses/antigravity/.agents/rules/agent-analyzer-token-hygiene.md",
+	} {
+		content := fileContent(t, artifact, path)
+		if !strings.Contains(content, "Spec Kitty training voucher") ||
+			!strings.Contains(content, sourceSpecKittyTraining) ||
+			!strings.Contains(content, "repeatable") ||
+			!strings.Contains(content, "work packages") {
+			t.Fatalf("expected %s to coach voucher/training handoff, got:\n%s", path, content)
+		}
 	}
 	if !containsCustomization(artifact, "retrieval-hygiene") || !containsCustomization(artifact, "output-budget") || !containsCustomization(artifact, "retry-breaker") {
 		t.Fatalf("missing expected customizations: %#v", artifact.Customizations)
@@ -516,6 +581,26 @@ func hasFile(artifact Artifact, path string) bool {
 		}
 	}
 	return false
+}
+
+func fileContent(t *testing.T, artifact Artifact, path string) string {
+	t.Helper()
+	for _, file := range artifact.Files {
+		if file.Path == path {
+			return file.Content
+		}
+	}
+	t.Fatalf("artifact missing file %s", path)
+	return ""
+}
+
+func harnessInstallByName(installs []HarnessInstall, name string) *HarnessInstall {
+	for i := range installs {
+		if installs[i].Harness == name {
+			return &installs[i]
+		}
+	}
+	return nil
 }
 
 func containsCustomization(artifact Artifact, id string) bool {

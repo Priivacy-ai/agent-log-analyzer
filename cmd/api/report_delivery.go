@@ -162,7 +162,7 @@ func renderReportDeliverySentPage(w http.ResponseWriter, email string) {
 claude --plugin-dir "$PLUGIN_ZIP"`
 	escapedCommand := htmlstd.EscapeString(command)
 	body := fmt.Sprintf(
-		`<p>We sent the report pack and generated plugin to <strong>%s</strong>.</p><p>Open the email and save the attachment named <strong>agent-analyzer-optimization-plugin.zip</strong>. Then point Claude Code at that zip:</p><div class="simple-command-copy"><pre><code>%s</code></pre><button type="button" class="copy-agents-line" data-copy="%s">Copy command</button></div><p>The plugin was generated from sanitized report JSON only. Raw transcripts were not attached or uploaded.</p>`,
+		`<p>We sent the report pack and generated plugin to <strong>%s</strong>.</p><p>Choose your harness in <strong>INSTALL.md</strong> inside the plugin zip. For Claude Code, point Claude at the zip:</p><div class="simple-command-copy"><pre><code>%s</code></pre><button type="button" class="copy-agents-line" data-copy="%s">Copy command</button></div><p>For other harnesses, use the matching folder instead of installing the Claude Code plugin: Codex uses <strong>harnesses/codex/</strong>, OpenCode uses <strong>harnesses/opencode/</strong>, Cursor uses <strong>harnesses/cursor/</strong>, Kiro uses <strong>harnesses/kiro/</strong>, Antigravity uses <strong>harnesses/antigravity/</strong>, and Claude Desktop MCP uses <strong>harnesses/claude-desktop-mcp/</strong>. The plugin was generated from sanitized report JSON only. Raw transcripts were not attached or uploaded.</p>`,
 		htmlstd.EscapeString(email),
 		escapedCommand,
 		escapedCommand,
@@ -175,10 +175,11 @@ func reportDeliveryEmailBody() string {
 
 Attachments:
 - agent-analyzer-report-pack.zip: branded PDF guide, personalized PDF report, sanitized report JSON, plugin preview, and partner voucher.
-- agent-analyzer-optimization-plugin.zip: generated Claude Code optimization plugin for this report.
+- agent-analyzer-optimization-plugin.zip: generated Claude Code optimization plugin plus harness-specific rule/skill/steering files for this report.
 
-Install the plugin:
+Choose your harness:
 
+Claude Code:
 1. Save agent-analyzer-optimization-plugin.zip somewhere local.
 2. Run:
 
@@ -186,6 +187,26 @@ Install the plugin:
    claude --plugin-dir "$PLUGIN_ZIP"
 
 3. Ask Claude Code to explain what the plugin installs before approving any recommended tool setup.
+
+Codex:
+- Merge harnesses/codex/AGENTS-snippet.md into AGENTS.md.
+- Optionally copy harnesses/codex/.agents/skills/agent-analyzer-token-hygiene/ into your repo's .agents/skills/ folder.
+
+OpenCode:
+- Merge harnesses/opencode/AGENTS.md into AGENTS.md.
+- Copy harnesses/opencode/.opencode/commands/agent-analyzer-review.md into .opencode/commands/.
+
+Cursor:
+- Copy harnesses/cursor/.cursor/rules/agent-analyzer-token-hygiene.mdc into .cursor/rules/.
+
+Kiro:
+- Copy harnesses/kiro/.kiro/steering/agent-analyzer-token-hygiene.md into .kiro/steering/.
+
+Google Antigravity:
+- Copy harnesses/antigravity/.agents/rules/agent-analyzer-token-hygiene.md into .agents/rules/.
+
+Claude Desktop MCP:
+- Read harnesses/claude-desktop-mcp/README.md. Desktop uses connectors or .mcpb extensions, not Claude Code plugin zips.
 
 Privacy boundary:
 - Raw transcripts were not attached.
