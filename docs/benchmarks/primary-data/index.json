@@ -20,8 +20,8 @@
     },
     {
       "path": "docs/benchmarks/primary-data/suites/agent-analyzer-guided-v3/manifest.json",
-      "bytes": 837,
-      "sha256": "4411c56436be1d8fadcf3eadecf4c52b9306382f03c0f7db787994b7789e6a5e"
+      "bytes": 830,
+      "sha256": "08d073a336c630aa6dc23fa3b9a2a71db131b9e8d1f8296b9b48cf4b6fd160e0"
     },
     {
       "path": "docs/benchmarks/primary-data/suites/agent-analyzer-guided-v3/run-01/baseline-quality-status",
@@ -200,8 +200,8 @@
     },
     {
       "path": "docs/benchmarks/primary-data/suites/caveman-claude/manifest.json",
-      "bytes": 1539,
-      "sha256": "6f6e357fd58d9c272087fdba2bca919ea24370661dd25e872e97307e5d8b6d98"
+      "bytes": 1532,
+      "sha256": "20923e5681ca9d049fdaf8efdb1d119be3e7503abb4f02f37fd615eaa497bff3"
     },
     {
       "path": "docs/benchmarks/primary-data/suites/caveman-claude/run-01/baseline-quality-status",
@@ -380,8 +380,8 @@
     },
     {
       "path": "docs/benchmarks/primary-data/suites/caveman-codex/manifest.json",
-      "bytes": 748,
-      "sha256": "e6d223adf24df5c4a7277a627203756b9b9f4ddb7f8c48255a3412f46cb98a40"
+      "bytes": 741,
+      "sha256": "f1a689aa53c1b7dcce6ec6615e62a46f23b90b857edf668e9b84d15d8a22dcbb"
     },
     {
       "path": "docs/benchmarks/primary-data/suites/caveman-codex/run-01/baseline-quality-status",
@@ -560,8 +560,8 @@
     },
     {
       "path": "docs/benchmarks/primary-data/suites/claude-context-limit3/manifest.json",
-      "bytes": 1768,
-      "sha256": "1462cfa795dc36008800c9d23de230d8e872da7afda3da49f04638d0417e82d1"
+      "bytes": 1761,
+      "sha256": "911824a2e8ef2751630029f253ee53ac158c747063ad01c6103bde7feef688e3"
     },
     {
       "path": "docs/benchmarks/primary-data/suites/claude-context-limit3/run-01/baseline-quality-status",
@@ -740,8 +740,8 @@
     },
     {
       "path": "docs/benchmarks/primary-data/suites/claude-rlm-discovery/manifest.json",
-      "bytes": 1320,
-      "sha256": "402161937868038bca60e6d86a72524337d17dd9e0c92ec268b034502d7eb25b"
+      "bytes": 1313,
+      "sha256": "587334fe3c0fe8a570889cbc92001b277d2a2c7d80931482843b3045d6108d3c"
     },
     {
       "path": "docs/benchmarks/primary-data/suites/claude-rlm-discovery/run-01/baseline-quality-status",
@@ -920,8 +920,8 @@
     },
     {
       "path": "docs/benchmarks/primary-data/suites/claude-token-efficient/manifest.json",
-      "bytes": 983,
-      "sha256": "185828124e3e2bf38e316d36402461e35adb343dead0aa3bcc48bf96f50353f8"
+      "bytes": 976,
+      "sha256": "d6c511c3e7eb5cf16f861da6d10aa0be4e8da531e1f5bb5a96112f1aa2941066"
     },
     {
       "path": "docs/benchmarks/primary-data/suites/claude-token-efficient/run-01/baseline-quality-status",
@@ -1100,8 +1100,8 @@
     },
     {
       "path": "docs/benchmarks/primary-data/suites/codex-guided/manifest.json",
-      "bytes": 760,
-      "sha256": "b5b4c0240b850d81bc0828984c1cf8bb8ed52b38f88c899aec375215d1500435"
+      "bytes": 753,
+      "sha256": "63b4c20eb58082ceb35dcabdaa43ac21c1c187313f4498bafa57aa160bdb81e9"
     },
     {
       "path": "docs/benchmarks/primary-data/suites/codex-guided/run-01/baseline-quality-status",
@@ -1280,8 +1280,8 @@
     },
     {
       "path": "docs/benchmarks/primary-data/suites/context-mode-batch/manifest.json",
-      "bytes": 1652,
-      "sha256": "054b5eda7c956971d1b0ba8830fd823f39bd1ca4b3426a4da4dba569f2348a8d"
+      "bytes": 1645,
+      "sha256": "d6d815f95f310ee44ac2dca36d36f64bae7ac39685a68fbf981262286ba46f35"
     },
     {
       "path": "docs/benchmarks/primary-data/suites/context-mode-batch/run-01/baseline-quality-status",
@@ -1460,8 +1460,8 @@
     },
     {
       "path": "docs/benchmarks/primary-data/suites/grepai-path-constrained/manifest.json",
-      "bytes": 1564,
-      "sha256": "4c0b7514478fcddf4dd7e9700bb24801be22c08072400bc16a6b0b2d76fdbf00"
+      "bytes": 1557,
+      "sha256": "933974e77b6729a648f4827b8fb0d1ce3707869a33d1bd18766805d912d7e300"
     },
     {
       "path": "docs/benchmarks/primary-data/suites/grepai-path-constrained/run-01/baseline-quality-status",
@@ -1640,8 +1640,8 @@
     },
     {
       "path": "docs/benchmarks/primary-data/suites/probe/manifest.json",
-      "bytes": 807,
-      "sha256": "323db1c5598952673f0b11d23bb0ed19f66631cbab4674b5efd9bf5668439bf3"
+      "bytes": 800,
+      "sha256": "bb7619593311543c21229b1c752a2199dc11cbdd44b419a40b52cb4a5343cd21"
     },
     {
       "path": "docs/benchmarks/primary-data/suites/probe/run-01/baseline-quality-status",
@@ -1820,8 +1820,8 @@
     },
     {
       "path": "docs/benchmarks/primary-data/suites/rtk-explicit/manifest.json",
-      "bytes": 821,
-      "sha256": "24e3c5059bd10a6d95311466589cb97df8f6ec3c9960e1802ec53b3741b36fb0"
+      "bytes": 814,
+      "sha256": "365a460a993b6f1c799f21576660c5ad32ec8eb27aeb5ef472398920052ac0ed"
     },
     {
       "path": "docs/benchmarks/primary-data/suites/rtk-explicit/run-01/baseline-quality-status",
@@ -2000,8 +2000,8 @@
     },
     {
       "path": "docs/benchmarks/primary-data/suites/semble/manifest.json",
-      "bytes": 809,
-      "sha256": "dbd16bd22d732684dcb464d721b8fdb74bbe191a6564cc0efc405fa9479d5c42"
+      "bytes": 802,
+      "sha256": "7b1b5ef383b42fc79cb78ad8fb29ee64a77989dc332083f082cdc63b2ffb1e16"
     },
     {
       "path": "docs/benchmarks/primary-data/suites/semble/run-01/baseline-quality-status",
@@ -2180,8 +2180,8 @@
     },
     {
       "path": "docs/benchmarks/primary-data/suites/spec-kitty-agent-analyzer-guided/manifest.json",
-      "bytes": 2083,
-      "sha256": "ec0e4bfaef0a4de467976b11e0eafa738c1702d1b6ed6de7a43070fa44d2a053"
+      "bytes": 2076,
+      "sha256": "4db17e3bf063787fa977618e84b3960db54a3cd923b51c1d5a3443759a5f9f22"
     },
     {
       "path": "docs/benchmarks/primary-data/suites/spec-kitty-agent-analyzer-guided/run-01/baseline-quality-status",
@@ -2250,8 +2250,8 @@
     },
     {
       "path": "docs/benchmarks/primary-data/suites/squeez/manifest.json",
-      "bytes": 809,
-      "sha256": "f3d2b1e495588f76489d7e5316de1705647bcd7cf75b8d20b6b4f6d178c612a9"
+      "bytes": 802,
+      "sha256": "d42c7e0d2cd2d57e5f3e73cb2fd9ffd3feae7f65db0b501474659e11e395c6d0"
     },
     {
       "path": "docs/benchmarks/primary-data/suites/squeez/run-01/baseline-quality-status",

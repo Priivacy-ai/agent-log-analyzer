@@ -7,7 +7,7 @@
   "task_prompt_file": "<repo>/docs/benchmarks/fixtures/tasks/spec-kitty-high-context-ci.txt",
   "analyzer_repo": "<repo>",
   "environment": {
-    "SOURCE_REPO": "/private/tmp/agent-analyzer-spec-kitty-target",
+    "SOURCE_REPO": "<tmp>/agent-analyzer-spec-kitty-target",
     "BASE_REF": "38abeebf6fab2215fb52a099bfad707a7a503ad7",
     "QUALITY_COMMAND": "test -s benchmark-answer.md && rg -q 'src/charter/compiler.py' benchmark-answer.md && rg -q '_auth_doctor.py' benchmark-answer.md && rg -q 'SonarCloud Quality Gate|Quality Gate' benchmark-answer.md && rg -q '34|thirty-four' benchmark-answer.md && rg -q '3 coverage report|3 .*coverage report|three coverage report' benchmark-answer.md",
     "BENCHMARK_SETUP_COMMAND": "mkdir -p .benchmark-fixtures/spec-kitty-ci && cp \"$ANALYZER_REPO/docs/benchmarks/fixtures/spec-kitty/ci-logs/\"*.txt .benchmark-fixtures/spec-kitty-ci/",

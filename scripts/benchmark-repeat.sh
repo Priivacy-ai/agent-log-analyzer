@@ -111,6 +111,9 @@ def clean_value(key, value):
     marker = key.upper()
     if any(secret in marker for secret in ("KEY", "TOKEN", "SECRET", "PASSWORD")):
         return "<redacted>"
+    value = value.replace(analyzer_repo, "<repo>")
+    value = value.replace("/private/tmp/", "<tmp>/")
+    value = value.replace("/tmp/", "<tmp>/")
     return value
 
 env = {key: clean_value(key, os.environ[key]) for key in keys if key in os.environ}

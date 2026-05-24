@@ -5,7 +5,7 @@ Research date: 2026-05-24
 Fresh source workspace used for discovery:
 
 ```text
-/var/folders/gj/bxx0438j003b20kn5b6s7bsh0000gn/T/spec-kitty-20260524-154607-XDlS5K
+<tmp>/spec-kitty-20260524-154607
 ```
 
 The permanent benchmark source is the public `Priivacy-ai/spec-kitty` repository at commit:

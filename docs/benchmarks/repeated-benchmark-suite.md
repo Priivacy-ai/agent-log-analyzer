@@ -56,6 +56,16 @@ Sanitized primary recordings from completed suites are committed under `docs/ben
 
 For MCP-backed runs, `benchmark-repeat.sh` generates a per-run MCP config when the config contains `CODE_CHUNKS_COLLECTION_NAME_OVERRIDE`. That keeps claude-context Milvus collections from leaking across repeats.
 
+## Public Artifact Audit
+
+Before publishing proof-page changes, run:
+
+```sh
+./scripts/validate-benchmark-artifacts.py
+```
+
+The validator checks that repeated verdicts have at least three quality-passing fresh pairs, diagnostic/smoke runs are not promoted into recommendation evidence, primary-data SHA-256 entries match the committed files, proof aggregates map to committed primary recordings, fixture references exist, and private local path patterns are absent from the public benchmark artifacts.
+
 ## Fixture Contract
 
 The permanent fixture lives under `docs/benchmarks/fixtures/`:

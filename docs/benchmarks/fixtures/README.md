@@ -24,6 +24,12 @@ Run all locally available suites:
 REPEATS=3 ./scripts/benchmark-suite.sh
 ```
 
+Audit the committed public artifacts:
+
+```sh
+./scripts/validate-benchmark-artifacts.py
+```
+
 The suite runner writes local raw artifacts under `.data/benchmarks/suites/<suite-id>/`. These raw local directories are not intended for publication. Public artifacts should be generated from `aggregate.json` and sanitized comparison JSON only.
 
 ## Evidence Standard
