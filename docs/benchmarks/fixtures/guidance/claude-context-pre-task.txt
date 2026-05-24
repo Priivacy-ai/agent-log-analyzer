@@ -1,0 +1,8 @@
+Index this exact repository with the claude-context MCP, then confirm the index is ready.
+
+Requirements:
+- Do not edit files.
+- Use the claude-context MCP tools only.
+- Index the current working directory.
+- Wait until indexing is complete enough for semantic searches to return results.
+- Return a short status summary with indexed file/chunk counts if available.

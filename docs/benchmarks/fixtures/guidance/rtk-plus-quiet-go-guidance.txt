@@ -1,0 +1,9 @@
+Use low-output verification.
+
+1. Start with targeted tests: `go test ./internal/events ./internal/report`.
+2. If a broad test run is needed while tests are still failing, use `rtk go test ./...`.
+3. For final verification, prefer quiet raw Go output:
+   `go test ./... >/tmp/go-test.log && echo "go test ./... passed" || { grep -A3 -B2 -E "FAIL|--- FAIL" /tmp/go-test.log; exit 1; }`
+4. Inspect only files named by failing tests or exact searches.
+5. Do not install RTK hooks.
+6. Do not use unrelated optional tools.

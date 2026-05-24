@@ -1,0 +1,130 @@
+{
+  "schema_version": "2026-05-24",
+  "benchmark_harness": "codex-exec",
+  "fixed_commit": "b96b8a7f5cc57c4335bc7bc85ec726c836ed0996",
+  "codex_version": "codex-cli 0.128.0",
+  "baseline_codex_args": "-s danger-full-access -a never",
+  "optimized_codex_args": "-s danger-full-access -a never",
+  "baseline_codex_exec_args": "--ignore-rules --ignore-user-config",
+  "optimized_codex_exec_args": "--ignore-rules --ignore-user-config",
+  "baseline_exit_status": 0,
+  "optimized_exit_status": 0,
+  "baseline_quality_status": "0",
+  "optimized_quality_status": "0",
+  "baseline": {
+    "label": "baseline Codex exec",
+    "score": 68,
+    "estimated_tokens": 16950,
+    "tool_output_tokens": 16402,
+    "avoidable_waste_pct": {
+      "low": 16,
+      "high": 24
+    },
+    "rereads": 0,
+    "retry_depth_max": 1,
+    "context_growth_events": 0,
+    "failed_commands": 3
+  },
+  "optimized": {
+    "label": "guidance-assisted Codex exec",
+    "score": 68,
+    "estimated_tokens": 4406,
+    "tool_output_tokens": 3790,
+    "avoidable_waste_pct": {
+      "low": 16,
+      "high": 24
+    },
+    "rereads": 0,
+    "retry_depth_max": 1,
+    "context_growth_events": 0,
+    "failed_commands": 3
+  },
+  "baseline_codex_usage": {
+    "input_tokens": 276839,
+    "cached_input_tokens": 231680,
+    "output_tokens": 1766,
+    "reasoning_output_tokens": 45,
+    "total_uncached_plus_output_tokens": 46925
+  },
+  "optimized_codex_usage": {
+    "input_tokens": 322397,
+    "cached_input_tokens": 259456,
+    "output_tokens": 1933,
+    "reasoning_output_tokens": 71,
+    "total_uncached_plus_output_tokens": 64874
+  },
+  "stderr_summary": {
+    "baseline": {
+      "line_count": 89,
+      "skill_load_errors": 5,
+      "mcp_auth_errors": 0,
+      "icon_warnings": 84
+    },
+    "optimized": {
+      "line_count": 125,
+      "skill_load_errors": 5,
+      "mcp_auth_errors": 0,
+      "icon_warnings": 120
+    }
+  },
+  "delta": {
+    "estimated_tokens": -12544,
+    "tool_output_tokens": -12612,
+    "avoidable_waste_low_points": 0,
+    "avoidable_waste_high_points": 0,
+    "rereads": 0,
+    "context_growth_events": 0,
+    "failed_commands": 0,
+    "codex_input_tokens": 45558,
+    "codex_cached_input_tokens": 27776,
+    "codex_output_tokens": 167,
+    "codex_reasoning_output_tokens": 26,
+    "codex_total_uncached_plus_output_tokens": 17949
+  },
+  "privacy_boundary": "Publish sanitized reports, filtered Codex event JSONL, and comparison JSON only. Do not publish raw private prompts, secrets, or unredacted local paths.",
+  "comparability_note": "Codex exec exposes token usage but not the same Claude Code total_cost_usd field. Compare quality, event-stream analyzer metrics, and token counts separately from Claude Code dollar cost.",
+  "published_api_cost_estimate": {
+    "provider": "openai",
+    "pricing": {
+      "model_assumption": "gpt-5.3-codex",
+      "source": "https://developers.openai.com/api/docs/pricing",
+      "token_category_source": "https://help.openai.com/en/articles/4936856-what-are-tokens-and-how-to-count-them",
+      "as_of": "2026-05-24",
+      "rates_usd_per_mtok": {
+        "input_tokens": 1.75,
+        "cached_input_tokens": 0.175,
+        "output_tokens": 14.0,
+        "reasoning_output_tokens": 14.0
+      },
+      "reasoning_pricing_note": "OpenAI reports reasoning tokens as usage metadata used for billing/tracking. Because the Codex JSON exposes reasoning_output_tokens separately, this estimate bills them at the output-token rate. If a future exporter includes reasoning inside output_tokens, do not add it twice."
+    },
+    "baseline_usd": 0.14492625,
+    "optimized_usd": 0.18360755,
+    "delta_usd": 0.0386813,
+    "baseline_breakdown": {
+      "uncached_input_usd": 0.07902825,
+      "cached_input_usd": 0.040544,
+      "visible_output_usd": 0.024724,
+      "reasoning_output_usd": 0.00063,
+      "total_usd": 0.14492625,
+      "visible_output_only_total_usd": 0.14429625
+    },
+    "optimized_breakdown": {
+      "uncached_input_usd": 0.11014675,
+      "cached_input_usd": 0.0454048,
+      "visible_output_usd": 0.027062,
+      "reasoning_output_usd": 0.000994,
+      "total_usd": 0.18360755,
+      "visible_output_only_total_usd": 0.18261355
+    },
+    "delta_breakdown": {
+      "uncached_input_usd": 0.0311185,
+      "cached_input_usd": 0.0048608,
+      "visible_output_usd": 0.002338,
+      "reasoning_output_usd": 0.000364,
+      "total_usd": 0.0386813,
+      "visible_output_only_total_usd": 0.0383173
+    },
+    "note": "API-rate estimate under the gpt-5.3-codex Standard pricing assumption. The saved Codex harness did not record an explicit model name."
+  }
+}

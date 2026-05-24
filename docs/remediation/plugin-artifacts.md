@@ -2,7 +2,7 @@
 
 The launch product is one local scan, a free report pack, and an optional generated Claude Code plugin/remediation artifact. Stripe checkout is still the intended paid gate for the plugin.
 
-The plugin should optimize Claude Code's harness, not nag on shell commands. The primary value is turning the analysis into a vetted setup plan: lean CLAUDE.md hierarchy, scoped skills, official code-intelligence plugins, language-server binaries, and trusted MCP-backed integrations.
+The plugin should optimize Claude Code's harness, not nag on shell commands. The primary value is turning the analysis into a benchmark-backed setup plan: lean CLAUDE.md hierarchy, scoped skills, output-budgeted commands, retrieval hygiene, session/retry breaks, official code-intelligence plugins, and only the conditional reducers that worked in repeated runs.
 
 ## Contract
 
@@ -66,23 +66,48 @@ Never generate a Bash nag hook as the primary paid value. Pre-command hooks may 
 
 ## Vetted Tooling Recommendations
 
-The generator may recommend only allowlisted, public, stable tools. Recommendations are advice plus Claude-native setup instructions; each install still requires explicit user approval.
+The generator may recommend only allowlisted, public, stable tools that survived the repeated benchmark for the matching waste category. Recommendations are advice plus Claude-native setup instructions; each install still requires explicit user approval.
 
 Initial allowlist is maintained in `docs/remediation/token-saving-tooling-matrix.md`.
 
-Generated recommendations now include two classes:
+Generated recommendations now include three classes:
 
+- built-in Agent Analyzer workflow recommendations that require no third-party install
 - official Claude Code marketplace/code-intelligence recommendations
-- GitHub-hosted open-source token-saving tools that are waiver-gated and mapped to analyzer signals
+- conditional GitHub-hosted token-saving tools that are waiver-gated, mapped to analyzer signals, and labeled by token category
+- measurement-only tools documented as telemetry, not as reducers
 
-Core open-source recommendations:
+Default pack:
 
-- `context-mode` for context defense and large tool-output compression
-- `ccusage` for independent usage analysis and before/after telemetry
-- `grepai` and `claude-context` for repeated-reread/retrieval problems
-- `claude-token-efficient` as a minimal CLAUDE.md diff, never an overwrite
-- `ccstatusline` and Claude Code Usage Monitor as out-of-context awareness tools
-- `RTK (Rust Token Killer, rtk-ai/rtk)` only as an advanced shell-compression option because it rewrites shell command execution; never install npm `rtk`, which is an unrelated release/changelog package
+- Agent Analyzer workflow: `-12,370` estimated tokens, `-12,698` tool-output tokens, and `23.986%` lower published API-rate cost in three fresh runs
+- output-budgeted commands
+- retrieval hygiene
+- session hygiene
+- retry breaker
+
+Conditional third-party reducers:
+
+- `Semble` for repeated file reads and bounded retrieval; `41.5%` published API-rate savings in the repeated fixture
+- `context-mode` for tool-output/input-context defense; `20.4%` savings, with visible output rising on average
+- `RTK (Rust Token Killer, rtk-ai/rtk)` for explicit shell-output compression; `18.2%` savings; global hooks require separate approval because it rewrites shell command execution; never install npm `rtk`, which is an unrelated package
+- `grepai` for path-constrained compact retrieval; `14.5%` savings
+- `Squeez` for explicit shell/log compression; `12.1%` savings
+
+Measurement-only tools:
+
+- `ccusage`
+- `ccstatusline`
+- Claude Code usage monitors or trackers
+
+Removed from default token-saving recommendations:
+
+- `claude-context`: increased published API-rate cost by `26.0%` in this fixture
+- `Probe`: increased published API-rate cost by `16.6%`
+- `Caveman` for Claude Code: reduced visible output but increased estimated/tool-output tokens and cost
+- `claude-rlm`: increased analyzer-estimated tokens and tool output in this medium-context fixture; root stdout cost was incomplete for sub-agent usage
+- `claude-token-efficient`: only `1.8%` repeated API-rate savings, too small for default install advice
+
+Generated copy must not blur output tokens and reasoning tokens. Output tokens are visible assistant text/tool calls. Reasoning tokens are hidden model work reported by some harnesses and should only be claimed when measured. Terse-response tools can reduce output tokens while still increasing full-session cost.
 
 Official Claude Code plugin allowlist:
 
@@ -108,6 +133,8 @@ Paid checkout and plugin install UX must require explicit acknowledgment before 
 > I understand that Agent Analyzer provides deterministic analysis and vetted setup recommendations, but any installation or code change is executed by Claude Code, my package manager, or third-party tools with my approval and at my own risk.
 
 The generated plugin also includes `WAIVER.md`. Claude-facing setup prompts must tell Claude to summarize the waiver, ask for acceptance, and ask again before each installation command.
+
+Receipt/support email copy is specified in `docs/remediation/receipt-email.md` so email delivery repeats the same analysis-first, benchmark-backed, no-unproven-tools message when that surface is used.
 
 ## Source Notes
 

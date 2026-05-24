@@ -1,0 +1,225 @@
+{
+  "schema_version": "2026-05-24",
+  "benchmark": "caveman-cross-harness-v3-noisy",
+  "fixed_commit": "b96b8a7f5cc57c4335bc7bc85ec726c836ed0996",
+  "task": "owner-breakdown Go benchmark, noisy v3 target",
+  "quality_gate": "go test ./...",
+  "source": "https://github.com/JuliusBrussee/caveman",
+  "note": "Claude run used isolated project/local settings and disallowed Agent to avoid global hook/subagent contamination. Codex run used prompt-level Caveman skill guidance because codex exec has no local --plugin-dir equivalent.",
+  "harnesses": [
+    {
+      "harness": "Claude Code -p",
+      "version": "2.1.148 (Claude Code)",
+      "intervention": "Local Caveman Claude plugin plus /caveman full guidance",
+      "quality": "0->0",
+      "baseline": {
+        "label": "baseline Claude Code -p",
+        "score": 63,
+        "estimated_tokens": 26992,
+        "tool_output_tokens": 21514,
+        "avoidable_waste_pct": {
+          "low": 18,
+          "high": 26
+        },
+        "rereads": 0,
+        "retry_depth_max": 1,
+        "context_growth_events": 1,
+        "failed_commands": 3
+      },
+      "optimized": {
+        "label": "plugin-assisted Claude Code -p",
+        "score": 51,
+        "estimated_tokens": 42006,
+        "tool_output_tokens": 35108,
+        "avoidable_waste_pct": {
+          "low": 24,
+          "high": 32
+        },
+        "rereads": 0,
+        "retry_depth_max": 2,
+        "context_growth_events": 2,
+        "failed_commands": 6
+      },
+      "delta": {
+        "estimated_tokens": 15014,
+        "tool_output_tokens": 13594,
+        "avoidable_waste_low_points": 6,
+        "avoidable_waste_high_points": 6,
+        "rereads": 0,
+        "context_growth_events": 1,
+        "failed_commands": 3,
+        "claude_total_cost_usd": -0.002103400000000033,
+        "claude_cache_creation_input_tokens": -4636,
+        "claude_cache_read_input_tokens": 70892,
+        "claude_output_tokens": -355
+      },
+      "native_usage": {
+        "baseline": {
+          "total_cost_usd": 0.23677735000000003,
+          "num_turns": 17,
+          "input_tokens": 12,
+          "cache_creation_input_tokens": 31929,
+          "cache_read_input_tokens": 235192,
+          "output_tokens": 3052
+        },
+        "optimized": {
+          "total_cost_usd": 0.23467395,
+          "num_turns": 17,
+          "input_tokens": 15,
+          "cache_creation_input_tokens": 27293,
+          "cache_read_input_tokens": 306084,
+          "output_tokens": 2697
+        }
+      },
+      "verdict": "negative_session_waste_despite_output_reduction",
+      "published_api_cost_estimate": {
+        "provider": "anthropic",
+        "pricing": {
+          "model": "claude-sonnet-4-6",
+          "source": "https://platform.claude.com/docs/en/about-claude/pricing",
+          "as_of": "2026-05-24",
+          "rates_usd_per_mtok": {
+            "input_tokens": 3.0,
+            "cache_creation_input_tokens_1h": 6.0,
+            "cache_read_input_tokens": 0.3,
+            "output_tokens": 15.0
+          },
+          "cache_creation_assumption": "Comparison JSON exposes cache_creation_input_tokens without the 5m/1h split; raw benchmark stdout for these runs used ephemeral_1h cache writes, so this estimate prices cache creation at the 1-hour cache-write rate."
+        },
+        "baseline_usd": 0.3079476,
+        "optimized_usd": 0.2960832,
+        "delta_usd": -0.0118644,
+        "baseline_breakdown": {
+          "input_usd": 3.6e-05,
+          "cache_creation_1h_usd": 0.191574,
+          "cache_read_usd": 0.0705576,
+          "output_usd": 0.04578,
+          "total_usd": 0.3079476
+        },
+        "optimized_breakdown": {
+          "input_usd": 4.5e-05,
+          "cache_creation_1h_usd": 0.163758,
+          "cache_read_usd": 0.0918252,
+          "output_usd": 0.040455,
+          "total_usd": 0.2960832
+        },
+        "delta_breakdown": {
+          "input_usd": 9e-06,
+          "cache_creation_1h_usd": -0.027816,
+          "cache_read_usd": 0.0212676,
+          "output_usd": -0.005325,
+          "total_usd": -0.0118644
+        }
+      }
+    },
+    {
+      "harness": "Codex exec --json",
+      "version": "codex-cli 0.128.0",
+      "intervention": "Caveman skill text guidance",
+      "quality": "0->0",
+      "baseline": {
+        "label": "baseline Codex exec",
+        "score": 64,
+        "estimated_tokens": 9150,
+        "tool_output_tokens": 8556,
+        "avoidable_waste_pct": {
+          "low": 18,
+          "high": 26
+        },
+        "rereads": 0,
+        "retry_depth_max": 2,
+        "context_growth_events": 0,
+        "failed_commands": 3
+      },
+      "optimized": {
+        "label": "guidance-assisted Codex exec",
+        "score": 68,
+        "estimated_tokens": 9140,
+        "tool_output_tokens": 8640,
+        "avoidable_waste_pct": {
+          "low": 16,
+          "high": 24
+        },
+        "rereads": 0,
+        "retry_depth_max": 1,
+        "context_growth_events": 0,
+        "failed_commands": 3
+      },
+      "delta": {
+        "estimated_tokens": -10,
+        "tool_output_tokens": 84,
+        "avoidable_waste_low_points": -2,
+        "avoidable_waste_high_points": -2,
+        "rereads": 0,
+        "context_growth_events": 0,
+        "failed_commands": 0,
+        "codex_input_tokens": 751,
+        "codex_cached_input_tokens": -31232,
+        "codex_output_tokens": -78,
+        "codex_reasoning_output_tokens": 24,
+        "codex_total_uncached_plus_output_tokens": 31905
+      },
+      "native_usage": {
+        "baseline": {
+          "input_tokens": 350403,
+          "cached_input_tokens": 311168,
+          "output_tokens": 2186,
+          "reasoning_output_tokens": 85,
+          "total_uncached_plus_output_tokens": 41421
+        },
+        "optimized": {
+          "input_tokens": 351154,
+          "cached_input_tokens": 279936,
+          "output_tokens": 2108,
+          "reasoning_output_tokens": 109,
+          "total_uncached_plus_output_tokens": 73326
+        }
+      },
+      "verdict": "negative_native_tokens_despite_output_reduction",
+      "published_api_cost_estimate": {
+        "provider": "openai",
+        "pricing": {
+          "model_assumption": "gpt-5.3-codex",
+          "source": "https://developers.openai.com/api/docs/pricing",
+          "token_category_source": "https://help.openai.com/en/articles/4936856-what-are-tokens-and-how-to-count-them",
+          "as_of": "2026-05-24",
+          "rates_usd_per_mtok": {
+            "input_tokens": 1.75,
+            "cached_input_tokens": 0.175,
+            "output_tokens": 14.0,
+            "reasoning_output_tokens": 14.0
+          },
+          "reasoning_pricing_note": "OpenAI reports reasoning tokens as usage metadata used for billing/tracking. Because the Codex JSON exposes reasoning_output_tokens separately, this estimate bills them at the output-token rate. If a future exporter includes reasoning inside output_tokens, do not add it twice."
+        },
+        "baseline_usd": 0.15490965,
+        "optimized_usd": 0.2046583,
+        "delta_usd": 0.04974865,
+        "baseline_breakdown": {
+          "uncached_input_usd": 0.06866125,
+          "cached_input_usd": 0.0544544,
+          "visible_output_usd": 0.030604,
+          "reasoning_output_usd": 0.00119,
+          "total_usd": 0.15490965,
+          "visible_output_only_total_usd": 0.15371965
+        },
+        "optimized_breakdown": {
+          "uncached_input_usd": 0.1246315,
+          "cached_input_usd": 0.0489888,
+          "visible_output_usd": 0.029512,
+          "reasoning_output_usd": 0.001526,
+          "total_usd": 0.2046583,
+          "visible_output_only_total_usd": 0.2031323
+        },
+        "delta_breakdown": {
+          "uncached_input_usd": 0.05597025,
+          "cached_input_usd": -0.0054656,
+          "visible_output_usd": -0.001092,
+          "reasoning_output_usd": 0.000336,
+          "total_usd": 0.04974865,
+          "visible_output_only_total_usd": 0.04941265
+        }
+      }
+    }
+  ],
+  "interpretation": "Caveman reduced native output tokens in both harnesses, but did not reduce full-session token usage on this coding benchmark. Claude session waste and failed commands increased; Codex uncached-plus-output tokens increased because cached input fell."
+}

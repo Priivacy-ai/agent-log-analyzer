@@ -213,12 +213,12 @@ var reportHTMLTemplate = template.Must(template.New("report").Funcs(template.Fun
           <div>
             <p class="eyebrow">generated remediation</p>
             <h2>Copy the quick fixes now. Use the plugin to make them stick. {{helpTip "Where do these fixes come from? Fixes are generated from deterministic finding IDs and bounded evidence, not from raw prompts or an LLM reading your transcript. The plugin packages those findings into Claude-facing operating guidance and vetted setup instructions."}}</h2>
-            <p>Add the relevant AGENTS.md lines now. The custom plugin packages the same report into operating guidance so future sessions spend more of your plan writing software and less on rereads, retries, dead context, and noisy tools.</p>
+            <p>Add the relevant AGENTS.md lines now. The custom plugin packages the same report into benchmark-backed operating guidance so future sessions spend more of your plan writing software and less on rereads, retries, dead context, and noisy tools.</p>
             <ul class="plugin-benefits">
               <li>Session hygiene nudges.</li>
-              <li>Retrieval recommendations.</li>
-              <li>CLAUDE.md cleanup.</li>
-              <li>MCP and skill bloat warnings.</li>
+              <li>Scoped retrieval recommendations.</li>
+              <li>Output-budgeted command habits.</li>
+              <li>No unproven reducer installs.</li>
             </ul>
             <a class="plugin-cta" href="#plugin-purchase">Get my optimization plugin</a>
           </div>
@@ -231,7 +231,7 @@ var reportHTMLTemplate = template.Must(template.New("report").Funcs(template.Fun
         {{if .Report.Recommendation}}
         <section id="recommendation-section" class="intel-section">
           <h2>Recommended tools to address waste {{helpTip "Why this recommendation? Ranking comes from public allowlisted tool metadata and deterministic signals such as tool-output bloat, retrieval friction, usage visibility, and MCP/skill utilization. Unknown private names are not echoed."}}</h2>
-          <p class="section-note">These are not random installs. They are vetted options matched to this report's waste signals. If you do not want to evaluate tooling manually, use the custom plugin to turn the report into setup instructions.</p>
+          <p class="section-note">These are not random installs. Telemetry tools are labeled as measurement only, and reducers are recommended only when our repeated runs showed savings for the matching waste signal. Use the custom plugin to turn the report into setup instructions.</p>
           <div class="recommendation-cta-row">
             <a class="plugin-cta" href="#plugin-purchase">Get custom plugin</a>
             <a class="recommendation-allowlist-link" href="/allowed-tools.html">Review vetted allowlist</a>
@@ -257,7 +257,7 @@ var reportHTMLTemplate = template.Must(template.New("report").Funcs(template.Fun
           <div class="upsell-copy">
           <p class="eyebrow">portable findings</p>
           <h2>Download the report pack for free</h2>
-          <p class="upsell-lede">The report pack shows where your agent sessions are burning tokens, includes a token-saving field guide PDF, and gives you a partner voucher. The generated plugin turns those findings into setup rules and workflow nudges so you can get more useful coding work from the same plan.</p>
+          <p class="upsell-lede">The report pack shows where your agent sessions are burning tokens, includes the benchmark methodology and results, and gives you a partner voucher. The generated plugin turns those findings into setup rules and workflow nudges using only the reducers that earned scoped recommendations.</p>
           <ul class="upsell-proof">
             <li>Raw transcripts stay local.</li>
             <li>No email required for the download.</li>
@@ -354,19 +354,23 @@ func recommendationProblem(rec analyzer.TokenSavingRecommendation) string {
 func recommendationPurpose(rec analyzer.TokenSavingRecommendation) string {
 	switch rec.PrimaryToolID {
 	case "ccusage":
-		return "ccusage reads Claude Code usage data so you can see token burn, cache behavior, and cost trends instead of guessing."
+		return "ccusage is measurement, not a reducer: it gives independent token, cache, and cost accounting so you can verify whether changes are working."
 	case "ccstatusline":
-		return "ccstatusline puts lightweight usage and session telemetry in your statusline so drift is visible while you work."
+		return "ccstatusline is awareness, not a reducer: keep it outside the prompt path so cost and context drift are visible without adding task overhead."
 	case "context_mode":
 		return "Context Mode compresses or externalizes noisy tool output before it pollutes future turns."
 	case "claude_context":
-		return "claude-context adds semantic retrieval so the agent can ask for targeted code context instead of repeatedly rereading files."
+		return "claude-context is not a default recommendation from our runs: it added overhead on the current fixture and needs a larger retrieval-amortization task before promotion."
 	case "claude_token_efficient":
-		return "claude-token-efficient reduces assistant verbosity so future context grows more slowly."
+		return "claude-token-efficient showed only a small, noisy saving in our 3x runs, so we treat it as manual verbosity hygiene rather than a default install."
 	case "claude_code_hooks_mastery":
 		return "Claude Code Hooks Mastery is a reference set for deterministic hooks that can enforce session hygiene."
 	case "rtk":
 		return "RTK is a high-risk shell-output reducer candidate. Only consider the linked rtk-ai/rtk project, not unrelated packages with the same name."
+	case "semble":
+		return "Semble earned a scoped retrieval recommendation in our 3x runs when path-limited search replaced broad repeated file reads."
+	case "squeez":
+		return "Squeez earned a scoped shell/log compression recommendation; use it explicitly for noisy command output, not as a general reasoning-token reducer."
 	}
 	for _, signal := range rec.SignalIDs {
 		switch signal {

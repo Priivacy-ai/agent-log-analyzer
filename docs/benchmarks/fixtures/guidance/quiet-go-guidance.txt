@@ -1,0 +1,11 @@
+Use a focused, low-output workflow.
+
+1. Do not ask an Agent/subagent for a repository overview.
+2. Do not run broad file discovery unless a focused search fails.
+3. Start with targeted tests for likely affected packages:
+   `go test ./internal/events ./internal/report`
+4. Inspect only the files named by failing tests or exact searches.
+5. During debugging, rerun only targeted package tests.
+6. For final verification, run the full suite quietly:
+   `go test ./... >/tmp/go-test.log && echo "go test ./... passed" || { grep -A3 -B2 -E "FAIL|--- FAIL" /tmp/go-test.log; exit 1; }`
+7. Preserve task quality over token reduction.

@@ -218,6 +218,7 @@ func createFullScanClientReportHandler(store app.APIStore, sender emailSender, e
 			writeError(w, http.StatusBadRequest, err.Error())
 			return
 		}
+		analyzer.AttachRecommendation(&report)
 		reportToken, err := newToken()
 		if err != nil {
 			writeError(w, http.StatusInternalServerError, "could not create report token")

@@ -10,6 +10,8 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"regexp"
 	"strings"
 	"testing"
@@ -89,6 +91,20 @@ func (f fakeStore) GetReport(id string) (analyzer.Report, error) {
 		return analyzer.Report{}, errors.New("not found")
 	}
 	return f.report, nil
+}
+
+func loadReportFixture(t *testing.T, name string) analyzer.Report {
+	t.Helper()
+	path := filepath.Join("..", "..", "testdata", "fixtures", "reports", name)
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("read report fixture %s: %v", name, err)
+	}
+	var report analyzer.Report
+	if err := json.Unmarshal(data, &report); err != nil {
+		t.Fatalf("decode report fixture %s: %v", name, err)
+	}
+	return report
 }
 
 func (f *usageFakeStore) AppendUsageEvent(event analytics.UsageEvent) error {
@@ -415,6 +431,61 @@ func TestGetExtendedReportDownloadsPackage(t *testing.T) {
 	}
 }
 
+func TestExtendedReportPackageUsesRealReportFixtures(t *testing.T) {
+	for _, name := range []string{
+		"agent-analyzer-full-scan-report.json",
+		"agent-analyzer-report.json",
+	} {
+		t.Run(name, func(t *testing.T) {
+			report := loadReportFixture(t, name)
+			analyzer.AttachRecommendation(&report)
+			report.JobID = "job-real-fixture"
+			store := fakeStore{
+				job: app.Job{
+					ID:              "job-real-fixture",
+					Status:          app.StatusCompleted,
+					ScanType:        app.ScanTypeSingle,
+					ReportTokenHash: tokenHash("report-token"),
+				},
+				report: report,
+			}
+			req := httptest.NewRequest(http.MethodGet, "/api/public-reports/job-real-fixture/report-token/download.zip", nil)
+			req.SetPathValue("id", "job-real-fixture")
+			req.SetPathValue("token", "report-token")
+			rec := httptest.NewRecorder()
+
+			getExtendedReportHandler(store).ServeHTTP(rec, req)
+
+			if rec.Code != http.StatusOK {
+				t.Fatalf("expected report package status 200, got %d: %s", rec.Code, rec.Body.String())
+			}
+			reader, err := zip.NewReader(bytes.NewReader(rec.Body.Bytes()), int64(rec.Body.Len()))
+			if err != nil {
+				t.Fatalf("expected zip package: %v", err)
+			}
+			for _, want := range []string{
+				"agent-token-saving-field-guide.pdf",
+				"personalized-agent-analyzer-report.pdf",
+				"agent-analyzer-report.json",
+				"plugin-preview.md",
+			} {
+				_ = mustZipEntry(t, reader, want)
+			}
+			reportJSON := mustZipEntry(t, reader, "agent-analyzer-report.json")
+			if !bytes.Contains(reportJSON, []byte(`"source_reports"`)) ||
+				!bytes.Contains(reportJSON, []byte(`"registry_version": "phase-a-2026-05-24-benchmark-narrowed"`)) ||
+				bytes.Contains(reportJSON, []byte("sk-ant-")) {
+				t.Fatalf("real fixture report JSON missing expected sanitized/current data")
+			}
+			preview := mustZipEntry(t, reader, "plugin-preview.md")
+			if !bytes.Contains(preview, []byte("semble")) ||
+				!bytes.Contains(preview, []byte("sanitized report JSON only")) {
+				t.Fatalf("plugin preview did not use benchmark-backed fixture recommendation:\n%s", string(preview))
+			}
+		})
+	}
+}
+
 func TestGetPublicArtifactReturnsPluginZipForEmailFullScan(t *testing.T) {
 	store := fakeStore{
 		job: app.Job{
@@ -629,6 +700,69 @@ func TestReportPageServerRendersCompletedReport(t *testing.T) {
 	}
 	if strings.Contains(body, "Find out what&#39;s wasting your Claude Code tokens") || strings.Contains(body, "Run the local analyzer") {
 		t.Fatalf("server-rendered report returned onboarding shell instead of report: %s", body)
+	}
+}
+
+func TestReportPageRendersRealReportFixtures(t *testing.T) {
+	for _, tc := range []struct {
+		name        string
+		wantLabels  []string
+		wantMissing []string
+	}{
+		{
+			name:        "agent-analyzer-full-scan-report.json",
+			wantLabels:  []string{"Agent Logs Analyzed", "Claude Code", "Codex", "OpenCode", "Recommended tools to address waste", "semble"},
+			wantMissing: []string{"claude-context adds semantic retrieval", "ccusage reads Claude Code usage data"},
+		},
+		{
+			name:        "agent-analyzer-report.json",
+			wantLabels:  []string{"Agent Logs Analyzed", "Claude Code", "Codex", "Kiro IDE", "OpenCode", "Recommended tools to address waste", "semble"},
+			wantMissing: []string{"claude-context adds semantic retrieval", "ccusage reads Claude Code usage data"},
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			report := loadReportFixture(t, tc.name)
+			analyzer.AttachRecommendation(&report)
+			store := fakeStore{
+				job: app.Job{
+					ID:               "job-real-fixture",
+					Status:           app.StatusCompleted,
+					ScanType:         app.ScanTypePaidBundle,
+					ReportTokenHash:  tokenHash("report-token"),
+					WaiverAcceptedAt: time.Now().UTC(),
+				},
+				report: report,
+			}
+			req := httptest.NewRequest(http.MethodGet, "/r/job-real-fixture/report-token", nil)
+			req.SetPathValue("id", "job-real-fixture")
+			req.SetPathValue("token", "report-token")
+			rec := httptest.NewRecorder()
+
+			reportPageHandler(store).ServeHTTP(rec, req)
+
+			if rec.Code != http.StatusOK {
+				t.Fatalf("expected status 200, got %d: %s", rec.Code, rec.Body.String())
+			}
+			body := rec.Body.String()
+			for _, want := range append(tc.wantLabels,
+				"Download report pack",
+				"Download custom plugin",
+				"Security Receipt",
+				"Raw log TTL: not uploaded",
+				"0 model tokens used to generate this report.",
+				"benchmark-backed operating guidance",
+				"No unproven reducer installs",
+			) {
+				if !strings.Contains(body, want) {
+					t.Fatalf("fixture-rendered report missing %q", want)
+				}
+			}
+			for _, forbidden := range append(tc.wantMissing, "sk-ant-") {
+				if strings.Contains(body, forbidden) {
+					t.Fatalf("fixture-rendered report contained forbidden text %q", forbidden)
+				}
+			}
+		})
 	}
 }
 
@@ -911,6 +1045,9 @@ func TestClientReportUploadStoresSanitizedReportOnly(t *testing.T) {
 	}
 	if stored.JobID != session.JobID || stored.SecurityReceipt.RawLogTTL != "not uploaded" {
 		t.Fatalf("stored report mismatch: %#v", stored)
+	}
+	if stored.Recommendation == nil || stored.Recommendation.EngineVersion != analyzer.EngineVersion() {
+		t.Fatalf("stored report did not receive current recommendation set: %#v", stored.Recommendation)
 	}
 	job, err := store.GetJob(session.JobID)
 	if err != nil {

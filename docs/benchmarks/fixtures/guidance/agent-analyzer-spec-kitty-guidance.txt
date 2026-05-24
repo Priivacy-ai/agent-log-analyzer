@@ -1,0 +1,12 @@
+Use Agent Analyzer-style token discipline for the Spec Kitty high-context fixture.
+
+Rules:
+- Preserve task completion quality over token reduction.
+- Do not use web search or live GitHub commands; the benchmark fixture is local and deterministic.
+- Before reading a file, state the specific fact you need from it.
+- Prefer `rg`, `wc`, `find`, `git diff --stat`, and narrow `sed -n` ranges over broad reads.
+- Start CI-log analysis with targeted searches for `Failure`, `Coverage`, `Quality Gate`, `Parsing report`, `Cannot resolve`, `exit code`, and `::error`.
+- Do not print full CI logs or large evidence logs. Use `wc -l -c`, `tail`, and targeted `rg -n` matches.
+- Inspect only the named source files unless a targeted search proves another file is required.
+- Keep final output in `benchmark-answer.md`; do not modify production source files.
+- No optional tool installation.

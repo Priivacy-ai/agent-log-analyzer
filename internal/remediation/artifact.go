@@ -42,6 +42,8 @@ const (
 	sourceCCUsage              = "https://github.com/ryoppippi/ccusage"
 	sourceGrepAI               = "https://github.com/yoanbernabeu/grepai"
 	sourceRTK                  = "https://github.com/rtk-ai/rtk"
+	sourceSemble               = "https://github.com/MinishLab/semble"
+	sourceSqueez               = "https://github.com/claudioemmanuel/squeez"
 	sourceUsageMonitor         = "https://github.com/Maciek-roboblog/Claude-Code-Usage-Monitor"
 	sourceGitHubPlugin         = "https://claude.com/plugins/github"
 	sourceLinearPlugin         = "https://claude.com/plugins/linear"
@@ -388,16 +390,9 @@ func toolingRecommendations(report analyzer.Report) []ToolRecommendation {
 	add(ToolRecommendation{
 		ID:             "ccusage",
 		Category:       "metrics_telemetry",
-		Why:            "Parse local Claude Code JSONL logs for independent token, cost, and burn-rate visibility before and after optimization.",
+		Why:            "Optional independent token, cost, and burn-rate accounting. This is measurement, not a direct token reducer.",
 		InstallCommand: "npx ccusage@latest",
 		Source:         sourceCCUsage,
-	})
-	add(ToolRecommendation{
-		ID:             "awesome-claude-code",
-		Category:       "ecosystem_index",
-		Why:            "Use as a monitored discovery source for Claude Code skills, hooks, plugins, statuslines, and orchestration tools; do not install from it directly.",
-		InstallCommand: "Review https://github.com/hesreallyhim/awesome-claude-code before adding any new third-party tool to the allowlist.",
-		Source:         sourceAwesomeClaudeCode,
 	})
 
 	if findingIDs["tool_output_bloat"] || findingIDs["context_growth_spikes"] {
@@ -418,15 +413,26 @@ func toolingRecommendations(report analyzer.Report) []ToolRecommendation {
 			Source:            sourceRTK,
 		})
 		add(ToolRecommendation{
-			ID:             "claude-token-efficient",
-			Category:       "claude_md_optimization",
-			Why:            "Reduce accumulated assistant verbosity, but only merge the smallest useful rules because persistent CLAUDE.md text adds input tokens.",
-			InstallCommand: "Ask Claude to review https://github.com/drona23/claude-token-efficient and propose a minimal CLAUDE.md diff; do not overwrite existing CLAUDE.md automatically.",
-			Source:         sourceClaudeTokenEfficient,
+			ID:                "squeez",
+			Category:          "explicit_shell_compression",
+			Why:               "Compress noisy shell or log output explicitly when large logs would otherwise enter the live context.",
+			InstallCommand:    "Review https://github.com/claudioemmanuel/squeez first, then use explicit squeez commands for noisy logs instead of global hooks.",
+			RequiredBinary:    "squeez",
+			BinaryInstallHint: "Use for shell/log compression only; it is not a general reasoning-token reducer.",
+			Source:            sourceSqueez,
 		})
 	}
 
 	if findingIDs["repeated_file_reads"] {
+		add(ToolRecommendation{
+			ID:                "semble",
+			Category:          "path_limited_semantic_retrieval",
+			Why:               "Use path-limited semantic retrieval to replace broad repeated reads when the target area is known.",
+			InstallCommand:    "Review https://github.com/MinishLab/semble and configure it with path limits before use.",
+			RequiredBinary:    "semble",
+			BinaryInstallHint: "Keep searches path-constrained; broad retrieval can add more context than it saves.",
+			Source:            sourceSemble,
+		})
 		add(ToolRecommendation{
 			ID:                "grepai",
 			Category:          "local_semantic_retrieval",
@@ -436,46 +442,7 @@ func toolingRecommendations(report analyzer.Report) []ToolRecommendation {
 			BinaryInstallHint: "Requires an embedding provider such as Ollama; install with curl script only after reviewing the GitHub source.",
 			Source:            sourceGrepAI,
 		})
-		add(ToolRecommendation{
-			ID:             "claude-context",
-			Category:       "semantic_retrieval_mcp",
-			Why:            "Add MCP semantic code retrieval for large repositories where brute-force file exploration causes repeated rereads.",
-			InstallCommand: "claude mcp add claude-context -e OPENAI_API_KEY=<openai-key> -e MILVUS_ADDRESS=<zilliz-endpoint> -e MILVUS_TOKEN=<zilliz-token> -- npx @zilliz/claude-context-mcp@latest",
-			Source:         sourceClaudeContext,
-		})
 	}
-
-	if findingIDs["retry_loop"] || findingIDs["context_growth_spikes"] {
-		add(ToolRecommendation{
-			ID:             "claude-code-hooks-mastery",
-			Category:       "implementation_reference",
-			Why:            "Use as a reference for SessionStart, PostToolUse, PreCompact, Stop, and UserPromptSubmit patterns when building workflow discipline.",
-			InstallCommand: "Review https://github.com/disler/claude-code-hooks-mastery before enabling any new hook behavior.",
-			Source:         sourceClaudeHooksMastery,
-		})
-	}
-
-	if findingIDs["tool_output_bloat"] || findingIDs["retry_loop"] || findingIDs["context_growth_spikes"] {
-		add(ToolRecommendation{
-			ID:                "ccstatusline",
-			Category:          "statusline_telemetry",
-			Why:               "Expose session state in the statusline so users notice cost, git state, and workflow drift without adding messages to context.",
-			InstallCommand:    "Review https://github.com/sirmalloc/ccstatusline and install only if it does not conflict with Context Mode or the user's existing statusline.",
-			RequiredBinary:    "ccstatusline",
-			BinaryInstallHint: "Prefer the repository's current release/install instructions over copied commands.",
-			Source:            sourceCCStatusline,
-		})
-	}
-
-	add(ToolRecommendation{
-		ID:                "claude-code-usage-monitor",
-		Category:          "burn_rate_monitoring",
-		Why:               "Optional live forecasting for users who care about session limits and burn-rate warnings outside Claude's context.",
-		InstallCommand:    "uv tool install claude-monitor\nclaude-monitor",
-		RequiredBinary:    "claude-monitor",
-		BinaryInstallHint: "Alternative: pip install claude-monitor.",
-		Source:            sourceUsageMonitor,
-	})
 
 	for _, manager := range report.Ecosystem.PackageManagers {
 		switch manager {
@@ -629,6 +596,8 @@ func recommendationRegistryID(id string) analyzer.ToolID {
 		return "claude_token_efficient"
 	case "claude-code-usage-monitor":
 		return "claude_code_usage_monitor"
+	case "squeez":
+		return "squeez"
 	default:
 		return analyzer.ToolID(strings.ReplaceAll(id, "-", "_"))
 	}
@@ -651,11 +620,11 @@ func remediationFailureModes(class analyzer.RecommendationClass) []string {
 
 func remediationFailureModesForCategory(category string) []string {
 	switch category {
-	case "code_intelligence", "local_semantic_retrieval", "semantic_retrieval_mcp":
+	case "code_intelligence", "local_semantic_retrieval", "path_limited_semantic_retrieval", "semantic_retrieval_mcp":
 		return []string{string(analyzer.FailureRepeatedNavigation)}
 	case "context_defense", "mcp_integration":
 		return []string{string(analyzer.FailureToolOutputFlooding)}
-	case "advanced_shell_compression":
+	case "advanced_shell_compression", "explicit_shell_compression":
 		return []string{string(analyzer.FailureNoisyTerminalLogs)}
 	case "claude_md_optimization":
 		return []string{string(analyzer.FailureBroadReadsOrVerbosity)}
@@ -668,11 +637,13 @@ func remediationInstallSurface(id analyzer.ToolID, category string) string {
 	switch id {
 	case "rtk":
 		return "local_binary_plus_claude_hook"
+	case "squeez":
+		return "local_binary_explicit_compression"
 	case "context_mode":
 		return "claude_plugin_plus_mcp"
 	case "claude_context":
 		return "mcp_plus_external_vector_store"
-	case "grepai":
+	case "grepai", "semble":
 		return "local_binary_plus_optional_embedding_provider"
 	case "ccusage", "ccstatusline", "claude_token_efficient":
 		return "local_cli_or_local_config"
@@ -687,13 +658,17 @@ func remediationInstallSurface(id analyzer.ToolID, category string) string {
 func remediationConflicts(id analyzer.ToolID) []string {
 	switch id {
 	case "rtk":
-		return []string{"leanctx", "headroom"}
+		return []string{"squeez", "leanctx", "headroom"}
+	case "squeez":
+		return []string{"rtk", "leanctx", "headroom"}
 	case "context_mode":
 		return []string{"token_optimizer_mcp", "headroom"}
 	case "claude_context":
 		return []string{"grepai", "serena", "codegraph", "semble"}
 	case "grepai":
 		return []string{"claude_context", "serena", "codegraph", "semble"}
+	case "semble":
+		return []string{"claude_context", "grepai", "serena", "codegraph"}
 	case "claude_token_efficient":
 		return []string{"caveman"}
 	default:
@@ -1003,17 +978,19 @@ Agent Analyzer uses official harness documentation for install surfaces:
 - Claude Desktop extensions: ` + sourceClaudeDesktopMCPB + `
 - Spec Kitty training voucher destination: ` + sourceSpecKittyTraining + `
 
-Third-party token-saving patterns reviewed for original adaptation:
+Third-party token-saving patterns reviewed against benchmark results:
 
-- Context Mode: ` + sourceContextMode + `
-- ccusage: ` + sourceCCUsage + `
-- claude-context: ` + sourceClaudeContext + `
-- Claude Code Hooks Mastery: ` + sourceClaudeHooksMastery + `
-- claude-token-efficient: ` + sourceClaudeTokenEfficient + `
-- ccstatusline: ` + sourceCCStatusline + `
-- awesome-claude-code: ` + sourceAwesomeClaudeCode + `
+- Context Mode: ` + sourceContextMode + ` — retained as a conditional MCP/tool-output reducer.
+- RTK: ` + sourceRTK + ` — retained as a high-risk, waiver-gated shell-output reducer.
+- grepai: ` + sourceGrepAI + ` — retained as a scoped local retrieval candidate.
+- Semble: ` + sourceSemble + ` — retained as a scoped, path-limited retrieval candidate.
+- Squeez: ` + sourceSqueez + ` — retained as an explicit shell/log compression candidate.
+- ccusage: ` + sourceCCUsage + ` — retained as optional measurement, not as a direct reducer.
+- ccstatusline: ` + sourceCCStatusline + ` — retained as optional awareness, not as a direct reducer.
+- claude-context: ` + sourceClaudeContext + ` — reviewed but not recommended by default after negative fixture results.
+- claude-token-efficient: ` + sourceClaudeTokenEfficient + ` — reviewed but not recommended by default after small/noisy fixture results.
 
-Patterns adapted, not copied: progressive-disclosure skills, short always-on rules, deterministic scripts for output shaping, explicit doctor/review commands, and optional telemetry/status guidance outside the main prompt.
+Patterns adapted, not copied: progressive-disclosure skills, short always-on rules, deterministic scripts for output shaping, path-limited retrieval, explicit shell/log compression, doctor/review commands, and optional telemetry outside the main prompt path.
 `
 }
 

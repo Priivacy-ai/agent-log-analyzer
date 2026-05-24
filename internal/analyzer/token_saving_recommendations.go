@@ -62,7 +62,6 @@ type ruleSpec struct {
 //     ClassContextHygiene, also empty in Phase A. The advisory carries
 //     Reason = ReasonAuditConfig.
 var rulePrecedence = []ruleSpec{
-	{FiringSignals: []Signal{SignalNoUsageVisibility}, Class: ClassUsageVisibility, PrimaryReason: ReasonAbsent},
 	{FiringSignals: []Signal{SignalMCPSkillBloat}, Class: ClassMCPSkillHygiene, PrimaryReason: ReasonPruneFirst},
 	{FiringSignals: []Signal{SignalMCPToolOutputBloat}, Class: ClassMCPOutputReducer, PrimaryReason: ReasonAbsent},
 	{FiringSignals: []Signal{SignalShellOutputBloat, SignalToolOutputBloat}, Class: ClassShellOutputReducer, PrimaryReason: ReasonAbsent},
@@ -70,6 +69,7 @@ var rulePrecedence = []ruleSpec{
 	{FiringSignals: []Signal{SignalUnchangedFileRereads}, Class: ClassRereadGuard, PrimaryReason: ReasonAbsent},
 	{FiringSignals: []Signal{SignalRetryLoop, SignalContextGrowthSpikes}, Class: ClassContextHygiene, PrimaryReason: ReasonAuditConfig},
 	{FiringSignals: []Signal{SignalOutputVerbosity}, Class: ClassOutputVerbosity, PrimaryReason: ReasonAbsent},
+	{FiringSignals: []Signal{SignalNoUsageVisibility}, Class: ClassUsageVisibility, PrimaryReason: ReasonAbsent},
 }
 
 // -----------------------------------------------------------------------------
@@ -351,11 +351,13 @@ func installSurfaceForTool(tool TokenSavingTool) string {
 	switch tool.ID {
 	case "rtk":
 		return "local_binary_plus_claude_hook"
+	case "squeez":
+		return "local_binary_explicit_compression"
 	case "context_mode":
 		return "claude_plugin_plus_mcp"
 	case "claude_context":
 		return "mcp_plus_external_vector_store"
-	case "grepai":
+	case "grepai", "semble":
 		return "local_binary_plus_optional_embedding_provider"
 	case "ccusage", "ccstatusline", "claude_token_efficient":
 		return "local_cli_or_local_config"
@@ -376,13 +378,17 @@ func installSurfaceForTool(tool TokenSavingTool) string {
 func conflictsForTool(id ToolID) []ToolID {
 	switch id {
 	case "rtk":
-		return []ToolID{"leanctx", "headroom"}
+		return []ToolID{"squeez", "leanctx", "headroom"}
+	case "squeez":
+		return []ToolID{"rtk", "leanctx", "headroom"}
 	case "context_mode":
 		return []ToolID{"token_optimizer_mcp", "headroom"}
 	case "claude_context":
 		return []ToolID{"grepai", "serena", "codegraph", "semble"}
 	case "grepai":
 		return []ToolID{"claude_context", "serena", "codegraph", "semble"}
+	case "semble":
+		return []ToolID{"claude_context", "grepai", "serena", "codegraph"}
 	case "claude_token_efficient":
 		return []ToolID{"caveman"}
 	default:

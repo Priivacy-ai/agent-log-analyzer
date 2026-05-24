@@ -1,0 +1,2231 @@
+{
+  "job_id": "local-full-scan",
+  "version": "0.1.0",
+  "score": 23,
+  "estimated_waste_pct": {
+    "low": 38,
+    "high": 65
+  },
+  "metrics": {
+    "turns": 361976,
+    "estimated_tokens": 1730524062,
+    "tool_output_tokens": 35835279,
+    "rereads": 1770,
+    "retry_depth_max": 11,
+    "context_growth_events": 1530,
+    "failed_commands": 8238,
+    "session_count": 273
+  },
+  "findings": [
+    {
+      "id": "repeated_file_reads",
+      "title": "Excessive repeated file reads",
+      "failure_mode": "repeated_codebase_navigation",
+      "severity": "high",
+      "cost_impact": "medium-high",
+      "evidence": {
+        "count": 1770,
+        "description": "Repeated reads across analyzed sessions"
+      },
+      "recommendation": "Prefer targeted searches and summarize file state before rereading the same files.",
+      "deterministic": true
+    },
+    {
+      "id": "retry_loop",
+      "title": "Retry-loop behavior",
+      "failure_mode": "cross_cutting_telemetry",
+      "severity": "high",
+      "cost_impact": "medium",
+      "evidence": {
+        "count": 11,
+        "description": "Maximum retry depth across analyzed sessions"
+      },
+      "recommendation": "Stop after repeated failures, inspect the invariant, and restart with a smaller debugging scope.",
+      "deterministic": true
+    },
+    {
+      "id": "context_growth_spikes",
+      "title": "Context growth spikes",
+      "failure_mode": "tool_output_flooding",
+      "severity": "high",
+      "cost_impact": "medium",
+      "evidence": {
+        "count": 1530,
+        "description": "Timeline windows exceeded growth threshold across analyzed sessions"
+      },
+      "recommendation": "Compact after task pivots and avoid combining architecture, debugging, and implementation in one long session.",
+      "deterministic": true
+    },
+    {
+      "id": "cache_invalidation_spike",
+      "title": "Cache prefix invalidation spike",
+      "severity": "high",
+      "cost_impact": "medium-high",
+      "evidence": {
+        "count": 1018,
+        "description": "Large cache-creation token event; cache miss ratio 0%"
+      },
+      "recommendation": "Treat cache-creation spikes as context-boundary events; compact or split the session after major tool-output or configuration changes.",
+      "deterministic": true
+    }
+  ],
+  "ecosystem": {
+    "client": "claude_code",
+    "coding_agents": [
+      "aider",
+      "claude_code",
+      "cline",
+      "codex",
+      "continue",
+      "copilot",
+      "cursor",
+      "gemini_cli",
+      "opencode",
+      "roo",
+      "windsurf"
+    ],
+    "operating_system": "wsl",
+    "shell": "zsh",
+    "workflow_frameworks": [
+      "agent_sessions",
+      "aider",
+      "bmad",
+      "ccusage",
+      "claude_code_hooks",
+      "codex_transcript_viewer",
+      "context_engineering",
+      "openspec",
+      "spec_kit",
+      "spec_kitty",
+      "superpowers"
+    ],
+    "mcp_servers_known": [
+      "brave_search",
+      "browser",
+      "context7",
+      "docker",
+      "fetch",
+      "figma",
+      "filesystem",
+      "git",
+      "github",
+      "gitlab",
+      "gmail",
+      "google_drive",
+      "jira",
+      "kubernetes",
+      "linear",
+      "memory",
+      "notion",
+      "playwright",
+      "postgres",
+      "puppeteer",
+      "sentry",
+      "sequential_thinking",
+      "slack",
+      "supabase"
+    ],
+    "unknown_mcp_server_count": 446,
+    "known_skills": [
+      "benchmark",
+      "design_review",
+      "investigate",
+      "plan_ceo_review",
+      "plan_eng_review",
+      "qa",
+      "review",
+      "ship"
+    ],
+    "unknown_skill_count": 532,
+    "known_plugins": [
+      "browser",
+      "canva",
+      "figma",
+      "github",
+      "gmail",
+      "google_calendar",
+      "google_drive",
+      "linear",
+      "notion",
+      "slack"
+    ],
+    "unknown_plugin_count": 0,
+    "package_managers": [
+      "bun",
+      "cargo",
+      "composer",
+      "go",
+      "npm",
+      "pip",
+      "pnpm",
+      "poetry",
+      "uv",
+      "yarn"
+    ],
+    "version_control": "git",
+    "tooling_utilization": {
+      "mcp": {
+        "known_server_ids": [],
+        "unknown_server_count": 1,
+        "server_count_bucket": "4-10",
+        "exposed_tool_count_bucket": "100+",
+        "context_token_bucket": "50k+",
+        "exposure_known": true,
+        "inference_source": "header",
+        "call_count": 16931,
+        "known_call_count": 1988,
+        "unknown_call_count": 14943,
+        "unique_known_called_ids": [
+          "context7",
+          "github",
+          "google_drive",
+          "notion",
+          "playwright",
+          "postgres",
+          "sentry"
+        ],
+        "unique_unknown_called_count": 426,
+        "utilization_ratio_pct": 100,
+        "context_efficiency_bucket": "well-utilized",
+        "warning_band": "normal"
+      },
+      "skill": {
+        "known_exposed_ids": [],
+        "unknown_exposed_count": 1,
+        "exposed_count_bucket": "1-3",
+        "context_token_bucket": "50k+",
+        "exposure_known": true,
+        "inference_source": "header",
+        "executed_count": 4431,
+        "known_executed_ids": [
+          "design_review",
+          "investigate",
+          "plan_ceo_review",
+          "plan_eng_review",
+          "qa",
+          "review",
+          "security",
+          "ship",
+          "spec_kitty"
+        ],
+        "unknown_executed_count": 532,
+        "utilization_ratio_pct": 100,
+        "context_efficiency_bucket": "well-utilized",
+        "warning_band": "normal"
+      }
+    },
+    "workflow_fingerprints": [
+      {
+        "id": "kiro",
+        "confidence": "high",
+        "sources": [
+          "command_name",
+          "config_dir"
+        ],
+        "evidence_count": 2
+      },
+      {
+        "id": "openspec",
+        "confidence": "high",
+        "sources": [
+          "cli_binary",
+          "command_name",
+          "config_dir"
+        ],
+        "evidence_count": 62,
+        "active": true,
+        "installed": true
+      },
+      {
+        "id": "spec_kitty",
+        "confidence": "high",
+        "sources": [
+          "cli_binary",
+          "cli_version_probe",
+          "command_name",
+          "config_dir",
+          "config_file",
+          "package_manifest",
+          "skill_name",
+          "slash_command"
+        ],
+        "evidence_count": 1690,
+        "active": true,
+        "installed": true,
+        "version_bucket": "3.2"
+      }
+    ]
+  },
+  "redactions": {
+    "anthropic_key": 30,
+    "api_key": 38,
+    "aws_access_key": 166,
+    "cookie": 64,
+    "database_url": 543,
+    "email": 3523,
+    "github_token": 160,
+    "google_api_key": 11,
+    "jwt": 77,
+    "npm_token": 23,
+    "openai_key": 37,
+    "private_key": 205,
+    "ssh_private_key": 59,
+    "url_credential": 414
+  },
+  "security_receipt": {
+    "raw_transcript_sent_to_llm": false,
+    "outbound_during_analysis": false,
+    "secrets_redacted": 5350,
+    "raw_log_ttl": "not uploaded"
+  },
+  "timeline": [],
+  "analysis_signals": {
+    "normalized_event_count": 408501,
+    "tool_call_count": 23402,
+    "tool_result_count": 23123,
+    "args_hashed_retry_loops": 0,
+    "cache_read_tokens": 3777582780,
+    "cache_creation_tokens": 49944106,
+    "input_tokens": 1709020230,
+    "output_tokens": 11521991,
+    "cache_miss_ratio_pct": 0,
+    "cache_invalidation_events": 1018,
+    "tool_output_bytes": 132793509,
+    "patch_lines_added": 0,
+    "patch_lines_removed": 0,
+    "sample_confidence": "high",
+    "sample_warnings": []
+  },
+  "immediate_fixes": [
+    "Prefer targeted searches and summarize file state before rereading the same files.",
+    "Stop after repeated failures, inspect the invariant, and restart with a smaller debugging scope.",
+    "Compact after task pivots and avoid combining architecture, debugging, and implementation in one long session.",
+    "Treat cache-creation spikes as context-boundary events; compact or split the session after major tool-output or configuration changes."
+  ],
+  "source_reports": [
+    {
+      "source_id": "claude_code",
+      "source_label": "Claude Code",
+      "log_count": 100,
+      "log_refs": [
+        {
+          "label": "Claude Code log 1",
+          "local_ref": "claude_code-5c9eacca54",
+          "size_bucket": "1-5 MB"
+        },
+        {
+          "label": "Claude Code log 2",
+          "local_ref": "claude_code-9cd34c3458",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Claude Code log 3",
+          "local_ref": "claude_code-769bcff362",
+          "size_bucket": "1-5 MB"
+        },
+        {
+          "label": "Claude Code log 4",
+          "local_ref": "claude_code-f3ef40ad09",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Claude Code log 5",
+          "local_ref": "claude_code-cb219742da",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Claude Code log 6",
+          "local_ref": "claude_code-371c4850b2",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Claude Code log 7",
+          "local_ref": "claude_code-3215d715b3",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Claude Code log 8",
+          "local_ref": "claude_code-8734f424cd",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Claude Code log 9",
+          "local_ref": "claude_code-d1003c4300",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Claude Code log 10",
+          "local_ref": "claude_code-9265529af4",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Claude Code log 11",
+          "local_ref": "claude_code-95681eb1f7",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Claude Code log 12",
+          "local_ref": "claude_code-c2580843b2",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Claude Code log 13",
+          "local_ref": "claude_code-03be4681ee",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Claude Code log 14",
+          "local_ref": "claude_code-b5b6a4a4fc",
+          "size_bucket": "1-5 MB"
+        },
+        {
+          "label": "Claude Code log 15",
+          "local_ref": "claude_code-91999db198",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Claude Code log 16",
+          "local_ref": "claude_code-1be1d0530c",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Claude Code log 17",
+          "local_ref": "claude_code-4f4f2d1f1a",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Claude Code log 18",
+          "local_ref": "claude_code-351700b967",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Claude Code log 19",
+          "local_ref": "claude_code-0419b77c12",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Claude Code log 20",
+          "local_ref": "claude_code-d205c472c5",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Claude Code log 21",
+          "local_ref": "claude_code-e7b000e7b3",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Claude Code log 22",
+          "local_ref": "claude_code-05ac09846d",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Claude Code log 23",
+          "local_ref": "claude_code-fa0979b3f0",
+          "size_bucket": "1-5 MB"
+        },
+        {
+          "label": "Claude Code log 24",
+          "local_ref": "claude_code-cf9f9669eb",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Claude Code log 25",
+          "local_ref": "claude_code-76103add32",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Claude Code log 26",
+          "local_ref": "claude_code-c652a1544c",
+          "size_bucket": "10-100 KB"
+        },
+        {
+          "label": "Claude Code log 27",
+          "local_ref": "claude_code-6f1805fea7",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Claude Code log 28",
+          "local_ref": "claude_code-0278b374da",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Claude Code log 29",
+          "local_ref": "claude_code-b0451a0936",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Claude Code log 30",
+          "local_ref": "claude_code-5fe2eecc37",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Claude Code log 31",
+          "local_ref": "claude_code-9eef8a0665",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Claude Code log 32",
+          "local_ref": "claude_code-d7e203ef73",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Claude Code log 33",
+          "local_ref": "claude_code-b2db844896",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Claude Code log 34",
+          "local_ref": "claude_code-bb86985ce1",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Claude Code log 35",
+          "local_ref": "claude_code-9c6bb7ec22",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Claude Code log 36",
+          "local_ref": "claude_code-57500fa38a",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Claude Code log 37",
+          "local_ref": "claude_code-199c149286",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Claude Code log 38",
+          "local_ref": "claude_code-5e6948d329",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Claude Code log 39",
+          "local_ref": "claude_code-522c9e6c68",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Claude Code log 40",
+          "local_ref": "claude_code-646f6b92ed",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Claude Code log 41",
+          "local_ref": "claude_code-94423db4f2",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Claude Code log 42",
+          "local_ref": "claude_code-dc9dd89c21",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Claude Code log 43",
+          "local_ref": "claude_code-f0854478d1",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Claude Code log 44",
+          "local_ref": "claude_code-8d3c43c707",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Claude Code log 45",
+          "local_ref": "claude_code-09cb7f9eaf",
+          "size_bucket": "10-100 KB"
+        },
+        {
+          "label": "Claude Code log 46",
+          "local_ref": "claude_code-4265c412dd",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Claude Code log 47",
+          "local_ref": "claude_code-74123a3fc0",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Claude Code log 48",
+          "local_ref": "claude_code-5ab8f8ef30",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Claude Code log 49",
+          "local_ref": "claude_code-9bc0e44333",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Claude Code log 50",
+          "local_ref": "claude_code-f143f7322a",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Claude Code log 51",
+          "local_ref": "claude_code-ae003b8d8f",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Claude Code log 52",
+          "local_ref": "claude_code-e30a19f3e5",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Claude Code log 53",
+          "local_ref": "claude_code-8222f3c48b",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Claude Code log 54",
+          "local_ref": "claude_code-7528a66e11",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Claude Code log 55",
+          "local_ref": "claude_code-c9e8a2fd78",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Claude Code log 56",
+          "local_ref": "claude_code-9c00629995",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Claude Code log 57",
+          "local_ref": "claude_code-751037cf39",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Claude Code log 58",
+          "local_ref": "claude_code-c64a95bf48",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Claude Code log 59",
+          "local_ref": "claude_code-d912a4d9a6",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Claude Code log 60",
+          "local_ref": "claude_code-363d963d87",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Claude Code log 61",
+          "local_ref": "claude_code-0eb252ed0e",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Claude Code log 62",
+          "local_ref": "claude_code-0ba77c9ddf",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Claude Code log 63",
+          "local_ref": "claude_code-5741c38c06",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Claude Code log 64",
+          "local_ref": "claude_code-fbe6767790",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Claude Code log 65",
+          "local_ref": "claude_code-ed4bcdc538",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Claude Code log 66",
+          "local_ref": "claude_code-06c6993f2b",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Claude Code log 67",
+          "local_ref": "claude_code-c5563ac28a",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Claude Code log 68",
+          "local_ref": "claude_code-58545eaa2e",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Claude Code log 69",
+          "local_ref": "claude_code-a6b1d5b641",
+          "size_bucket": "1-5 MB"
+        },
+        {
+          "label": "Claude Code log 70",
+          "local_ref": "claude_code-b17afbeec9",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Claude Code log 71",
+          "local_ref": "claude_code-893cbaf9fc",
+          "size_bucket": "10-100 KB"
+        },
+        {
+          "label": "Claude Code log 72",
+          "local_ref": "claude_code-8a270401a3",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Claude Code log 73",
+          "local_ref": "claude_code-631f9cd866",
+          "size_bucket": "10-100 KB"
+        },
+        {
+          "label": "Claude Code log 74",
+          "local_ref": "claude_code-646cd03cc9",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Claude Code log 75",
+          "local_ref": "claude_code-45150dc869",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Claude Code log 76",
+          "local_ref": "claude_code-0e4f179425",
+          "size_bucket": "10-100 KB"
+        },
+        {
+          "label": "Claude Code log 77",
+          "local_ref": "claude_code-5dae862272",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Claude Code log 78",
+          "local_ref": "claude_code-1a542941eb",
+          "size_bucket": "10-100 KB"
+        },
+        {
+          "label": "Claude Code log 79",
+          "local_ref": "claude_code-a9e8c13000",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Claude Code log 80",
+          "local_ref": "claude_code-673c11a1f6",
+          "size_bucket": "1-5 MB"
+        },
+        {
+          "label": "Claude Code log 81",
+          "local_ref": "claude_code-918650f9ac",
+          "size_bucket": "10-100 KB"
+        },
+        {
+          "label": "Claude Code log 82",
+          "local_ref": "claude_code-78ed499715",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Claude Code log 83",
+          "local_ref": "claude_code-7fa54c33cd",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Claude Code log 84",
+          "local_ref": "claude_code-64c3ea0a28",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Claude Code log 85",
+          "local_ref": "claude_code-bf6aa800ff",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Claude Code log 86",
+          "local_ref": "claude_code-d2c27ab517",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Claude Code log 87",
+          "local_ref": "claude_code-633eae8bcc",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Claude Code log 88",
+          "local_ref": "claude_code-15ebe9fa60",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Claude Code log 89",
+          "local_ref": "claude_code-52e6c2186a",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Claude Code log 90",
+          "local_ref": "claude_code-b95d7a0fb4",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Claude Code log 91",
+          "local_ref": "claude_code-ad5a6452ab",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Claude Code log 92",
+          "local_ref": "claude_code-dd830118bb",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Claude Code log 93",
+          "local_ref": "claude_code-bec2fac16a",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Claude Code log 94",
+          "local_ref": "claude_code-3927f1e31f",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Claude Code log 95",
+          "local_ref": "claude_code-af0d06fbcc",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Claude Code log 96",
+          "local_ref": "claude_code-4a71e76c2c",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Claude Code log 97",
+          "local_ref": "claude_code-92b14b45e4",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Claude Code log 98",
+          "local_ref": "claude_code-18c919755f",
+          "size_bucket": "1-5 MB"
+        },
+        {
+          "label": "Claude Code log 99",
+          "local_ref": "claude_code-342bf7a11c",
+          "size_bucket": "1-5 MB"
+        },
+        {
+          "label": "Claude Code log 100",
+          "local_ref": "claude_code-ce709abd74",
+          "size_bucket": "1-5 MB"
+        }
+      ],
+      "score": 0,
+      "estimated_waste_pct": {
+        "low": 50,
+        "high": 65
+      },
+      "metrics": {
+        "turns": 21689,
+        "estimated_tokens": 9320949,
+        "tool_output_tokens": 5796729,
+        "rereads": 715,
+        "retry_depth_max": 11,
+        "context_growth_events": 1119,
+        "failed_commands": 2129,
+        "session_count": 100
+      },
+      "findings": [
+        {
+          "id": "repeated_file_reads",
+          "title": "Excessive repeated file reads",
+          "failure_mode": "repeated_codebase_navigation",
+          "severity": "high",
+          "cost_impact": "medium-high",
+          "evidence": {
+            "count": 715,
+            "description": "Repeated reads across analyzed sessions"
+          },
+          "recommendation": "Prefer targeted searches and summarize file state before rereading the same files.",
+          "deterministic": true
+        },
+        {
+          "id": "tool_output_bloat",
+          "title": "Large shell/tool output overhead",
+          "failure_mode": "tool_output_flooding",
+          "severity": "high",
+          "cost_impact": "high",
+          "evidence": {
+            "token_share_pct": 62,
+            "description": "Tool output share across analyzed sessions"
+          },
+          "recommendation": "Cap command output and use narrower queries before pasting long terminal output into context.",
+          "deterministic": true
+        },
+        {
+          "id": "retry_loop",
+          "title": "Retry-loop behavior",
+          "failure_mode": "cross_cutting_telemetry",
+          "severity": "high",
+          "cost_impact": "medium",
+          "evidence": {
+            "count": 11,
+            "description": "Maximum retry depth across analyzed sessions"
+          },
+          "recommendation": "Stop after repeated failures, inspect the invariant, and restart with a smaller debugging scope.",
+          "deterministic": true
+        },
+        {
+          "id": "context_growth_spikes",
+          "title": "Context growth spikes",
+          "failure_mode": "tool_output_flooding",
+          "severity": "high",
+          "cost_impact": "medium",
+          "evidence": {
+            "count": 1119,
+            "description": "Timeline windows exceeded growth threshold across analyzed sessions"
+          },
+          "recommendation": "Compact after task pivots and avoid combining architecture, debugging, and implementation in one long session.",
+          "deterministic": true
+        },
+        {
+          "id": "cache_invalidation_spike",
+          "title": "Cache prefix invalidation spike",
+          "severity": "high",
+          "cost_impact": "medium-high",
+          "evidence": {
+            "count": 1018,
+            "description": "Large cache-creation token event; cache miss ratio 0%"
+          },
+          "recommendation": "Treat cache-creation spikes as context-boundary events; compact or split the session after major tool-output or configuration changes.",
+          "deterministic": true
+        }
+      ],
+      "timeline": [],
+      "analysis_signals": {
+        "normalized_event_count": 35417,
+        "tool_call_count": 6881,
+        "tool_result_count": 6847,
+        "args_hashed_retry_loops": 0,
+        "cache_read_tokens": 2131934524,
+        "cache_creation_tokens": 49944106,
+        "input_tokens": 62411,
+        "output_tokens": 7341538,
+        "cache_miss_ratio_pct": 0,
+        "cache_invalidation_events": 1018,
+        "tool_output_bytes": 12639047,
+        "patch_lines_added": 0,
+        "patch_lines_removed": 0,
+        "sample_confidence": "high",
+        "sample_warnings": []
+      },
+      "immediate_fixes": [
+        "Prefer targeted searches and summarize file state before rereading the same files.",
+        "Cap command output and use narrower queries before pasting long terminal output into context.",
+        "Stop after repeated failures, inspect the invariant, and restart with a smaller debugging scope.",
+        "Compact after task pivots and avoid combining architecture, debugging, and implementation in one long session.",
+        "Treat cache-creation spikes as context-boundary events; compact or split the session after major tool-output or configuration changes."
+      ]
+    },
+    {
+      "source_id": "codex",
+      "source_label": "Codex",
+      "log_count": 100,
+      "log_refs": [
+        {
+          "label": "Codex log 1",
+          "local_ref": "codex-a9a9d64d14",
+          "size_bucket": "\u003e5 MB"
+        },
+        {
+          "label": "Codex log 2",
+          "local_ref": "codex-b19e0ea5e0",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Codex log 3",
+          "local_ref": "codex-9f33ab7d6f",
+          "size_bucket": "\u003e5 MB"
+        },
+        {
+          "label": "Codex log 4",
+          "local_ref": "codex-0b030b871f",
+          "size_bucket": "1-5 MB"
+        },
+        {
+          "label": "Codex log 5",
+          "local_ref": "codex-7cf04e4629",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Codex log 6",
+          "local_ref": "codex-0fae85203c",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Codex log 7",
+          "local_ref": "codex-f7fee17ed7",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Codex log 8",
+          "local_ref": "codex-8329f126d8",
+          "size_bucket": "1-5 MB"
+        },
+        {
+          "label": "Codex log 9",
+          "local_ref": "codex-a0bfcbeb12",
+          "size_bucket": "1-5 MB"
+        },
+        {
+          "label": "Codex log 10",
+          "local_ref": "codex-bca05378f6",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Codex log 11",
+          "local_ref": "codex-d8625bd066",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Codex log 12",
+          "local_ref": "codex-eadbd8ebb3",
+          "size_bucket": "1-5 MB"
+        },
+        {
+          "label": "Codex log 13",
+          "local_ref": "codex-c6e4a115b7",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Codex log 14",
+          "local_ref": "codex-bc83670a50",
+          "size_bucket": "1-5 MB"
+        },
+        {
+          "label": "Codex log 15",
+          "local_ref": "codex-f7dbd3f4b5",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Codex log 16",
+          "local_ref": "codex-0d2fd0ee81",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Codex log 17",
+          "local_ref": "codex-11728eaa98",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Codex log 18",
+          "local_ref": "codex-eb1a552ebb",
+          "size_bucket": "1-5 MB"
+        },
+        {
+          "label": "Codex log 19",
+          "local_ref": "codex-5411d556e8",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Codex log 20",
+          "local_ref": "codex-348f0c93eb",
+          "size_bucket": "1-5 MB"
+        },
+        {
+          "label": "Codex log 21",
+          "local_ref": "codex-1c70dd80be",
+          "size_bucket": "1-5 MB"
+        },
+        {
+          "label": "Codex log 22",
+          "local_ref": "codex-99f5a6a994",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Codex log 23",
+          "local_ref": "codex-d8a30e72a0",
+          "size_bucket": "1-5 MB"
+        },
+        {
+          "label": "Codex log 24",
+          "local_ref": "codex-4c94f74fde",
+          "size_bucket": "1-5 MB"
+        },
+        {
+          "label": "Codex log 25",
+          "local_ref": "codex-e5a8520488",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Codex log 26",
+          "local_ref": "codex-f593aec07e",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Codex log 27",
+          "local_ref": "codex-f06124a646",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Codex log 28",
+          "local_ref": "codex-65474f4a00",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Codex log 29",
+          "local_ref": "codex-a65eb24f84",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Codex log 30",
+          "local_ref": "codex-3e0c0bafed",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Codex log 31",
+          "local_ref": "codex-afd98708dc",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Codex log 32",
+          "local_ref": "codex-6199601042",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Codex log 33",
+          "local_ref": "codex-cc50c73285",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Codex log 34",
+          "local_ref": "codex-015c93dc60",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Codex log 35",
+          "local_ref": "codex-d02d006374",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Codex log 36",
+          "local_ref": "codex-c289997557",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Codex log 37",
+          "local_ref": "codex-2dabdcad56",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Codex log 38",
+          "local_ref": "codex-3d805db6b6",
+          "size_bucket": "1-5 MB"
+        },
+        {
+          "label": "Codex log 39",
+          "local_ref": "codex-b329eea58c",
+          "size_bucket": "1-5 MB"
+        },
+        {
+          "label": "Codex log 40",
+          "local_ref": "codex-e242a9618d",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Codex log 41",
+          "local_ref": "codex-bc46841000",
+          "size_bucket": "\u003e5 MB"
+        },
+        {
+          "label": "Codex log 42",
+          "local_ref": "codex-8ff5259150",
+          "size_bucket": "1-5 MB"
+        },
+        {
+          "label": "Codex log 43",
+          "local_ref": "codex-d2f3fb968a",
+          "size_bucket": "1-5 MB"
+        },
+        {
+          "label": "Codex log 44",
+          "local_ref": "codex-30b6df3d94",
+          "size_bucket": "1-5 MB"
+        },
+        {
+          "label": "Codex log 45",
+          "local_ref": "codex-66722b4bf8",
+          "size_bucket": "1-5 MB"
+        },
+        {
+          "label": "Codex log 46",
+          "local_ref": "codex-0ec33e7119",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Codex log 47",
+          "local_ref": "codex-8e5a691d72",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Codex log 48",
+          "local_ref": "codex-c57707c960",
+          "size_bucket": "\u003e5 MB"
+        },
+        {
+          "label": "Codex log 49",
+          "local_ref": "codex-9ed3a2f1b4",
+          "size_bucket": "1-5 MB"
+        },
+        {
+          "label": "Codex log 50",
+          "local_ref": "codex-7ff336307f",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Codex log 51",
+          "local_ref": "codex-03c0e3a9f1",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Codex log 52",
+          "local_ref": "codex-08744e6cbd",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Codex log 53",
+          "local_ref": "codex-a264bd6cb5",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Codex log 54",
+          "local_ref": "codex-ed05bd0fd9",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Codex log 55",
+          "local_ref": "codex-79e4f0fdad",
+          "size_bucket": "1-5 MB"
+        },
+        {
+          "label": "Codex log 56",
+          "local_ref": "codex-777af4e547",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Codex log 57",
+          "local_ref": "codex-58f7552f52",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Codex log 58",
+          "local_ref": "codex-0710a516a6",
+          "size_bucket": "1-5 MB"
+        },
+        {
+          "label": "Codex log 59",
+          "local_ref": "codex-32136e2a7e",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Codex log 60",
+          "local_ref": "codex-6e216ba144",
+          "size_bucket": "1-5 MB"
+        },
+        {
+          "label": "Codex log 61",
+          "local_ref": "codex-2e7095ed3d",
+          "size_bucket": "1-5 MB"
+        },
+        {
+          "label": "Codex log 62",
+          "local_ref": "codex-21c55a4cd5",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Codex log 63",
+          "local_ref": "codex-150d8a2670",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Codex log 64",
+          "local_ref": "codex-b4d9825ad4",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Codex log 65",
+          "local_ref": "codex-c5f9335f90",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Codex log 66",
+          "local_ref": "codex-d73f7a9c47",
+          "size_bucket": "1-5 MB"
+        },
+        {
+          "label": "Codex log 67",
+          "local_ref": "codex-c70c7b8c91",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Codex log 68",
+          "local_ref": "codex-d4879c337a",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Codex log 69",
+          "local_ref": "codex-a217d7f19f",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Codex log 70",
+          "local_ref": "codex-3f0c0b3ca3",
+          "size_bucket": "1-5 MB"
+        },
+        {
+          "label": "Codex log 71",
+          "local_ref": "codex-a8ac9da7aa",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Codex log 72",
+          "local_ref": "codex-9fc2fa4df7",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Codex log 73",
+          "local_ref": "codex-ba9aa14993",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Codex log 74",
+          "local_ref": "codex-d4dfc90fcb",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Codex log 75",
+          "local_ref": "codex-eb259c01b0",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Codex log 76",
+          "local_ref": "codex-157afe72bd",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Codex log 77",
+          "local_ref": "codex-c2bf4815bf",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Codex log 78",
+          "local_ref": "codex-fad1d2b04c",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Codex log 79",
+          "local_ref": "codex-4c09aa028d",
+          "size_bucket": "10-100 KB"
+        },
+        {
+          "label": "Codex log 80",
+          "local_ref": "codex-99d3cccd18",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Codex log 81",
+          "local_ref": "codex-207656cc84",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Codex log 82",
+          "local_ref": "codex-2ec157ffc1",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Codex log 83",
+          "local_ref": "codex-8c973e06fb",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Codex log 84",
+          "local_ref": "codex-5561468ef2",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Codex log 85",
+          "local_ref": "codex-fe20f7b5ce",
+          "size_bucket": "1-5 MB"
+        },
+        {
+          "label": "Codex log 86",
+          "local_ref": "codex-79f9f86ace",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Codex log 87",
+          "local_ref": "codex-71a3ff335f",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Codex log 88",
+          "local_ref": "codex-cc95aa9a0b",
+          "size_bucket": "\u003e5 MB"
+        },
+        {
+          "label": "Codex log 89",
+          "local_ref": "codex-cf9b087880",
+          "size_bucket": "1-5 MB"
+        },
+        {
+          "label": "Codex log 90",
+          "local_ref": "codex-04909fe0c6",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Codex log 91",
+          "local_ref": "codex-3f6ae65b78",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Codex log 92",
+          "local_ref": "codex-9af221e530",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Codex log 93",
+          "local_ref": "codex-43a2096cb6",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Codex log 94",
+          "local_ref": "codex-8a56262d8b",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Codex log 95",
+          "local_ref": "codex-7fe02a3662",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Codex log 96",
+          "local_ref": "codex-de367f27f2",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Codex log 97",
+          "local_ref": "codex-bfa00829d3",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "Codex log 98",
+          "local_ref": "codex-db82fea515",
+          "size_bucket": "1-5 MB"
+        },
+        {
+          "label": "Codex log 99",
+          "local_ref": "codex-e0b53fdd92",
+          "size_bucket": "1-5 MB"
+        },
+        {
+          "label": "Codex log 100",
+          "local_ref": "codex-aae2a69016",
+          "size_bucket": "1-5 MB"
+        }
+      ],
+      "score": 26,
+      "estimated_waste_pct": {
+        "low": 37,
+        "high": 65
+      },
+      "metrics": {
+        "turns": 68080,
+        "estimated_tokens": 1713146325,
+        "tool_output_tokens": 21938959,
+        "rereads": 819,
+        "retry_depth_max": 8,
+        "context_growth_events": 222,
+        "failed_commands": 4268,
+        "session_count": 100
+      },
+      "findings": [
+        {
+          "id": "repeated_file_reads",
+          "title": "Excessive repeated file reads",
+          "failure_mode": "repeated_codebase_navigation",
+          "severity": "high",
+          "cost_impact": "medium-high",
+          "evidence": {
+            "count": 819,
+            "description": "Repeated reads across analyzed sessions"
+          },
+          "recommendation": "Prefer targeted searches and summarize file state before rereading the same files.",
+          "deterministic": true
+        },
+        {
+          "id": "retry_loop",
+          "title": "Retry-loop behavior",
+          "failure_mode": "cross_cutting_telemetry",
+          "severity": "high",
+          "cost_impact": "medium",
+          "evidence": {
+            "count": 8,
+            "description": "Maximum retry depth across analyzed sessions"
+          },
+          "recommendation": "Stop after repeated failures, inspect the invariant, and restart with a smaller debugging scope.",
+          "deterministic": true
+        },
+        {
+          "id": "context_growth_spikes",
+          "title": "Context growth spikes",
+          "failure_mode": "tool_output_flooding",
+          "severity": "high",
+          "cost_impact": "medium",
+          "evidence": {
+            "count": 222,
+            "description": "Timeline windows exceeded growth threshold across analyzed sessions"
+          },
+          "recommendation": "Compact after task pivots and avoid combining architecture, debugging, and implementation in one long session.",
+          "deterministic": true
+        }
+      ],
+      "timeline": [],
+      "analysis_signals": {
+        "normalized_event_count": 100877,
+        "tool_call_count": 16521,
+        "tool_result_count": 16276,
+        "args_hashed_retry_loops": 0,
+        "cache_read_tokens": 1645648256,
+        "cache_creation_tokens": 0,
+        "input_tokens": 1708957819,
+        "output_tokens": 4180453,
+        "cache_miss_ratio_pct": 3,
+        "cache_invalidation_events": 0,
+        "tool_output_bytes": 87755994,
+        "patch_lines_added": 0,
+        "patch_lines_removed": 0,
+        "sample_confidence": "high",
+        "sample_warnings": []
+      },
+      "immediate_fixes": [
+        "Prefer targeted searches and summarize file state before rereading the same files.",
+        "Stop after repeated failures, inspect the invariant, and restart with a smaller debugging scope.",
+        "Compact after task pivots and avoid combining architecture, debugging, and implementation in one long session."
+      ]
+    },
+    {
+      "source_id": "opencode",
+      "source_label": "OpenCode",
+      "log_count": 73,
+      "log_refs": [
+        {
+          "label": "OpenCode log 1",
+          "local_ref": "opencode-760534847e",
+          "size_bucket": "10-100 KB"
+        },
+        {
+          "label": "OpenCode log 2",
+          "local_ref": "opencode-2b24aea6ff",
+          "size_bucket": "10-100 KB"
+        },
+        {
+          "label": "OpenCode log 3",
+          "local_ref": "opencode-c50f6d76e6",
+          "size_bucket": "10-100 KB"
+        },
+        {
+          "label": "OpenCode log 4",
+          "local_ref": "opencode-ad116d0102",
+          "size_bucket": "\u003c10 KB"
+        },
+        {
+          "label": "OpenCode log 5",
+          "local_ref": "opencode-a35eaccadb",
+          "size_bucket": "\u003c10 KB"
+        },
+        {
+          "label": "OpenCode log 6",
+          "local_ref": "opencode-388e37ef31",
+          "size_bucket": "10-100 KB"
+        },
+        {
+          "label": "OpenCode log 7",
+          "local_ref": "opencode-0c7b144bb7",
+          "size_bucket": "10-100 KB"
+        },
+        {
+          "label": "OpenCode log 8",
+          "local_ref": "opencode-b6720f426a",
+          "size_bucket": "10-100 KB"
+        },
+        {
+          "label": "OpenCode log 9",
+          "local_ref": "opencode-9e035589ad",
+          "size_bucket": "10-100 KB"
+        },
+        {
+          "label": "OpenCode log 10",
+          "local_ref": "opencode-c15ea1f225",
+          "size_bucket": "10-100 KB"
+        },
+        {
+          "label": "OpenCode log 11",
+          "local_ref": "opencode-1569d8e20b",
+          "size_bucket": "10-100 KB"
+        },
+        {
+          "label": "OpenCode log 12",
+          "local_ref": "opencode-5047eeecb1",
+          "size_bucket": "10-100 KB"
+        },
+        {
+          "label": "OpenCode log 13",
+          "local_ref": "opencode-daad952d1c",
+          "size_bucket": "10-100 KB"
+        },
+        {
+          "label": "OpenCode log 14",
+          "local_ref": "opencode-469e28ff3e",
+          "size_bucket": "10-100 KB"
+        },
+        {
+          "label": "OpenCode log 15",
+          "local_ref": "opencode-b98a7f5489",
+          "size_bucket": "\u003c10 KB"
+        },
+        {
+          "label": "OpenCode log 16",
+          "local_ref": "opencode-d5aba36c4d",
+          "size_bucket": "\u003c10 KB"
+        },
+        {
+          "label": "OpenCode log 17",
+          "local_ref": "opencode-c48988c274",
+          "size_bucket": "\u003c10 KB"
+        },
+        {
+          "label": "OpenCode log 18",
+          "local_ref": "opencode-9b6194b04e",
+          "size_bucket": "\u003c10 KB"
+        },
+        {
+          "label": "OpenCode log 19",
+          "local_ref": "opencode-15abe28554",
+          "size_bucket": "10-100 KB"
+        },
+        {
+          "label": "OpenCode log 20",
+          "local_ref": "opencode-0fae43f385",
+          "size_bucket": "10-100 KB"
+        },
+        {
+          "label": "OpenCode log 21",
+          "local_ref": "opencode-eaf64194f6",
+          "size_bucket": "10-100 KB"
+        },
+        {
+          "label": "OpenCode log 22",
+          "local_ref": "opencode-29b54d87d1",
+          "size_bucket": "10-100 KB"
+        },
+        {
+          "label": "OpenCode log 23",
+          "local_ref": "opencode-14b1318063",
+          "size_bucket": "\u003c10 KB"
+        },
+        {
+          "label": "OpenCode log 24",
+          "local_ref": "opencode-9d4b0d3f9e",
+          "size_bucket": "\u003c10 KB"
+        },
+        {
+          "label": "OpenCode log 25",
+          "local_ref": "opencode-aa1cb1bee7",
+          "size_bucket": "10-100 KB"
+        },
+        {
+          "label": "OpenCode log 26",
+          "local_ref": "opencode-e40050d1be",
+          "size_bucket": "10-100 KB"
+        },
+        {
+          "label": "OpenCode log 27",
+          "local_ref": "opencode-be48b51f60",
+          "size_bucket": "10-100 KB"
+        },
+        {
+          "label": "OpenCode log 28",
+          "local_ref": "opencode-97446861a0",
+          "size_bucket": "1-5 MB"
+        },
+        {
+          "label": "OpenCode log 29",
+          "local_ref": "opencode-24db9b2582",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "OpenCode log 30",
+          "local_ref": "opencode-96d191958f",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "OpenCode log 31",
+          "local_ref": "opencode-b4558eda7f",
+          "size_bucket": "1-5 MB"
+        },
+        {
+          "label": "OpenCode log 32",
+          "local_ref": "opencode-3a3f0fbe4b",
+          "size_bucket": "1-5 MB"
+        },
+        {
+          "label": "OpenCode log 33",
+          "local_ref": "opencode-627c4590d3",
+          "size_bucket": "10-100 KB"
+        },
+        {
+          "label": "OpenCode log 34",
+          "local_ref": "opencode-4bfd36d3b0",
+          "size_bucket": "\u003c10 KB"
+        },
+        {
+          "label": "OpenCode log 35",
+          "local_ref": "opencode-7d5aaede2a",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "OpenCode log 36",
+          "local_ref": "opencode-0130924be0",
+          "size_bucket": "\u003c10 KB"
+        },
+        {
+          "label": "OpenCode log 37",
+          "local_ref": "opencode-9f9d3c2858",
+          "size_bucket": "\u003c10 KB"
+        },
+        {
+          "label": "OpenCode log 38",
+          "local_ref": "opencode-f87c36b09e",
+          "size_bucket": "\u003c10 KB"
+        },
+        {
+          "label": "OpenCode log 39",
+          "local_ref": "opencode-4f00a947df",
+          "size_bucket": "\u003c10 KB"
+        },
+        {
+          "label": "OpenCode log 40",
+          "local_ref": "opencode-a325502be8",
+          "size_bucket": "\u003c10 KB"
+        },
+        {
+          "label": "OpenCode log 41",
+          "local_ref": "opencode-d76ecc211a",
+          "size_bucket": "\u003c10 KB"
+        },
+        {
+          "label": "OpenCode log 42",
+          "local_ref": "opencode-0483a46123",
+          "size_bucket": "\u003c10 KB"
+        },
+        {
+          "label": "OpenCode log 43",
+          "local_ref": "opencode-e59b904b43",
+          "size_bucket": "\u003c10 KB"
+        },
+        {
+          "label": "OpenCode log 44",
+          "local_ref": "opencode-ee0383fb1e",
+          "size_bucket": "\u003c10 KB"
+        },
+        {
+          "label": "OpenCode log 45",
+          "local_ref": "opencode-bc31e991b9",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "OpenCode log 46",
+          "local_ref": "opencode-904e429f97",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "OpenCode log 47",
+          "local_ref": "opencode-283656a347",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "OpenCode log 48",
+          "local_ref": "opencode-fcd6206744",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "OpenCode log 49",
+          "local_ref": "opencode-b34ab70da5",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "OpenCode log 50",
+          "local_ref": "opencode-078641152c",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "OpenCode log 51",
+          "local_ref": "opencode-d2a3da613e",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "OpenCode log 52",
+          "local_ref": "opencode-0c860831af",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "OpenCode log 53",
+          "local_ref": "opencode-8da16a02ac",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "OpenCode log 54",
+          "local_ref": "opencode-7f4ebeb46e",
+          "size_bucket": "10-100 KB"
+        },
+        {
+          "label": "OpenCode log 55",
+          "local_ref": "opencode-fa4913b90f",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "OpenCode log 56",
+          "local_ref": "opencode-d80e41a8e1",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "OpenCode log 57",
+          "local_ref": "opencode-ce724e8560",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "OpenCode log 58",
+          "local_ref": "opencode-622478d7f5",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "OpenCode log 59",
+          "local_ref": "opencode-fec2ec565c",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "OpenCode log 60",
+          "local_ref": "opencode-6fa9ae45fb",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "OpenCode log 61",
+          "local_ref": "opencode-9fb301a521",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "OpenCode log 62",
+          "local_ref": "opencode-46978f8871",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "OpenCode log 63",
+          "local_ref": "opencode-eb9385bad5",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "OpenCode log 64",
+          "local_ref": "opencode-b6b1b1c4ba",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "OpenCode log 65",
+          "local_ref": "opencode-332dcf714c",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "OpenCode log 66",
+          "local_ref": "opencode-42bedcece4",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "OpenCode log 67",
+          "local_ref": "opencode-e690dbac91",
+          "size_bucket": "10-100 KB"
+        },
+        {
+          "label": "OpenCode log 68",
+          "local_ref": "opencode-cdd1dbfd1b",
+          "size_bucket": "\u003e5 MB"
+        },
+        {
+          "label": "OpenCode log 69",
+          "local_ref": "opencode-480bee68fb",
+          "size_bucket": "1-5 MB"
+        },
+        {
+          "label": "OpenCode log 70",
+          "local_ref": "opencode-125e328c62",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "OpenCode log 71",
+          "local_ref": "opencode-74101270be",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "OpenCode log 72",
+          "local_ref": "opencode-7bfc596084",
+          "size_bucket": "100 KB-1 MB"
+        },
+        {
+          "label": "OpenCode log 73",
+          "local_ref": "opencode-f157cc972b",
+          "size_bucket": "10-100 KB"
+        }
+      ],
+      "score": 13,
+      "estimated_waste_pct": {
+        "low": 43,
+        "high": 65
+      },
+      "metrics": {
+        "turns": 272207,
+        "estimated_tokens": 8056788,
+        "tool_output_tokens": 8099591,
+        "rereads": 236,
+        "retry_depth_max": 2,
+        "context_growth_events": 189,
+        "failed_commands": 1841,
+        "session_count": 73
+      },
+      "findings": [
+        {
+          "id": "repeated_file_reads",
+          "title": "Excessive repeated file reads",
+          "failure_mode": "repeated_codebase_navigation",
+          "severity": "high",
+          "cost_impact": "medium-high",
+          "evidence": {
+            "count": 236,
+            "description": "Repeated reads across analyzed sessions"
+          },
+          "recommendation": "Prefer targeted searches and summarize file state before rereading the same files.",
+          "deterministic": true
+        },
+        {
+          "id": "tool_output_bloat",
+          "title": "Large shell/tool output overhead",
+          "failure_mode": "tool_output_flooding",
+          "severity": "high",
+          "cost_impact": "high",
+          "evidence": {
+            "token_share_pct": 100,
+            "description": "Tool output share across analyzed sessions"
+          },
+          "recommendation": "Cap command output and use narrower queries before pasting long terminal output into context.",
+          "deterministic": true
+        },
+        {
+          "id": "context_growth_spikes",
+          "title": "Context growth spikes",
+          "failure_mode": "tool_output_flooding",
+          "severity": "high",
+          "cost_impact": "medium",
+          "evidence": {
+            "count": 189,
+            "description": "Timeline windows exceeded growth threshold across analyzed sessions"
+          },
+          "recommendation": "Compact after task pivots and avoid combining architecture, debugging, and implementation in one long session.",
+          "deterministic": true
+        }
+      ],
+      "timeline": [],
+      "analysis_signals": {
+        "normalized_event_count": 272207,
+        "tool_call_count": 0,
+        "tool_result_count": 0,
+        "args_hashed_retry_loops": 0,
+        "cache_read_tokens": 0,
+        "cache_creation_tokens": 0,
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "cache_miss_ratio_pct": 0,
+        "cache_invalidation_events": 0,
+        "tool_output_bytes": 32398468,
+        "patch_lines_added": 0,
+        "patch_lines_removed": 0,
+        "sample_confidence": "high",
+        "sample_warnings": []
+      },
+      "immediate_fixes": [
+        "Prefer targeted searches and summarize file state before rereading the same files.",
+        "Cap command output and use narrower queries before pasting long terminal output into context.",
+        "Compact after task pivots and avoid combining architecture, debugging, and implementation in one long session."
+      ]
+    }
+  ],
+  "aggregate_event": {
+    "event": "analysis_completed",
+    "parser_type": "full_scan_bundle",
+    "input_size_bucket": "52428800_plus",
+    "turn_bucket": "200_plus",
+    "score_bucket": "20_40",
+    "waste_bucket": "60_plus",
+    "findings": {
+      "cache_invalidation_spike": "high",
+      "context_growth_spikes": "high",
+      "repeated_file_reads": "high",
+      "retry_loop": "high"
+    },
+    "redactions": {
+      "anthropic_key": 30,
+      "api_key": 38,
+      "aws_access_key": 166,
+      "cookie": 64,
+      "database_url": 543,
+      "email": 3523,
+      "github_token": 160,
+      "google_api_key": 11,
+      "jwt": 77,
+      "npm_token": 23,
+      "openai_key": 37,
+      "private_key": 205,
+      "ssh_private_key": 59,
+      "url_credential": 414
+    },
+    "ecosystem": {
+      "client": "claude_code",
+      "coding_agents": [
+        "aider",
+        "claude_code",
+        "cline",
+        "codex",
+        "continue",
+        "copilot",
+        "cursor",
+        "gemini_cli",
+        "opencode",
+        "roo",
+        "windsurf"
+      ],
+      "operating_system": "wsl",
+      "shell": "zsh",
+      "workflow_frameworks": [
+        "agent_sessions",
+        "aider",
+        "bmad",
+        "ccusage",
+        "claude_code_hooks",
+        "codex_transcript_viewer",
+        "context_engineering",
+        "openspec",
+        "spec_kit",
+        "spec_kitty",
+        "superpowers"
+      ],
+      "mcp_servers_known": [
+        "brave_search",
+        "browser",
+        "context7",
+        "docker",
+        "fetch",
+        "figma",
+        "filesystem",
+        "git",
+        "github",
+        "gitlab",
+        "gmail",
+        "google_drive",
+        "jira",
+        "kubernetes",
+        "linear",
+        "memory",
+        "notion",
+        "playwright",
+        "postgres",
+        "puppeteer",
+        "sentry",
+        "sequential_thinking",
+        "slack",
+        "supabase"
+      ],
+      "unknown_mcp_server_count": 446,
+      "known_skills": [
+        "benchmark",
+        "design_review",
+        "investigate",
+        "plan_ceo_review",
+        "plan_eng_review",
+        "qa",
+        "review",
+        "ship"
+      ],
+      "unknown_skill_count": 532,
+      "known_plugins": [
+        "browser",
+        "canva",
+        "figma",
+        "github",
+        "gmail",
+        "google_calendar",
+        "google_drive",
+        "linear",
+        "notion",
+        "slack"
+      ],
+      "unknown_plugin_count": 0,
+      "package_managers": [
+        "bun",
+        "cargo",
+        "composer",
+        "go",
+        "npm",
+        "pip",
+        "pnpm",
+        "poetry",
+        "uv",
+        "yarn"
+      ],
+      "version_control": "git",
+      "tooling_utilization": {
+        "mcp": {
+          "known_server_ids": [],
+          "unknown_server_count": 1,
+          "server_count_bucket": "4-10",
+          "exposed_tool_count_bucket": "100+",
+          "context_token_bucket": "50k+",
+          "exposure_known": true,
+          "inference_source": "header",
+          "call_count": 16931,
+          "known_call_count": 1988,
+          "unknown_call_count": 14943,
+          "unique_known_called_ids": [
+            "context7",
+            "github",
+            "google_drive",
+            "notion",
+            "playwright",
+            "postgres",
+            "sentry"
+          ],
+          "unique_unknown_called_count": 426,
+          "utilization_ratio_pct": 100,
+          "context_efficiency_bucket": "well-utilized",
+          "warning_band": "normal"
+        },
+        "skill": {
+          "known_exposed_ids": [],
+          "unknown_exposed_count": 1,
+          "exposed_count_bucket": "1-3",
+          "context_token_bucket": "50k+",
+          "exposure_known": true,
+          "inference_source": "header",
+          "executed_count": 4431,
+          "known_executed_ids": [
+            "design_review",
+            "investigate",
+            "plan_ceo_review",
+            "plan_eng_review",
+            "qa",
+            "review",
+            "security",
+            "ship",
+            "spec_kitty"
+          ],
+          "unknown_executed_count": 532,
+          "utilization_ratio_pct": 100,
+          "context_efficiency_bucket": "well-utilized",
+          "warning_band": "normal"
+        }
+      },
+      "workflow_fingerprints": [
+        {
+          "id": "kiro",
+          "confidence": "high",
+          "sources": [
+            "command_name",
+            "config_dir"
+          ],
+          "evidence_count": 2
+        },
+        {
+          "id": "openspec",
+          "confidence": "high",
+          "sources": [
+            "cli_binary",
+            "command_name",
+            "config_dir"
+          ],
+          "evidence_count": 62,
+          "active": true,
+          "installed": true
+        },
+        {
+          "id": "spec_kitty",
+          "confidence": "high",
+          "sources": [
+            "cli_binary",
+            "cli_version_probe",
+            "command_name",
+            "config_dir",
+            "config_file",
+            "package_manifest",
+            "skill_name",
+            "slash_command"
+          ],
+          "evidence_count": 1690,
+          "active": true,
+          "installed": true,
+          "version_bucket": "3.2"
+        }
+      ]
+    }
+  },
+  "recommendation": {
+    "primary": {
+      "recommendation_id": "rec.usage_visibility.ccusage.no_usage_visibility",
+      "primary_tool_id": "ccusage",
+      "primary_tool_name": "ccusage",
+      "primary_tool_url": "https://github.com/ryoppippi/ccusage",
+      "failure_modes": [
+        "cross_cutting_telemetry"
+      ],
+      "reason": "absent",
+      "signal_ids": [
+        "no_usage_visibility"
+      ],
+      "confidence": "low",
+      "risk_level": "low",
+      "data_movement_risk": "low",
+      "install_policy": "recommend",
+      "install_surface": "local_cli_or_local_config",
+      "evidence_counts": {
+        "report_mention": 1
+      }
+    },
+    "secondary": {
+      "recommendation_id": "rec.retrieval.claude_context.repeated_file_reads",
+      "primary_tool_id": "claude_context",
+      "primary_tool_name": "claude-context",
+      "primary_tool_url": "https://github.com/zilliztech/claude-context",
+      "failure_modes": [
+        "repeated_codebase_navigation"
+      ],
+      "reason": "absent",
+      "signal_ids": [
+        "repeated_file_reads"
+      ],
+      "confidence": "low",
+      "risk_level": "high",
+      "data_movement_risk": "high",
+      "install_policy": "recommend",
+      "install_surface": "mcp_plus_external_vector_store",
+      "conflicts_with": [
+        "grepai",
+        "serena",
+        "codegraph",
+        "semble"
+      ],
+      "evidence_counts": {}
+    },
+    "registry_version": "phase-a-2026-05-20-tool-url-audit",
+    "engine_version": "v0.1-phase-a",
+    "signals": [
+      "context_growth_spikes",
+      "no_usage_visibility",
+      "repeated_file_reads",
+      "retry_loop"
+    ],
+    "unknown_id_count": 0
+  }
+}

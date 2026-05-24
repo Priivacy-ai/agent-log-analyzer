@@ -1,0 +1,20 @@
+{
+  "schema_version": "2026-05-24",
+  "run_name": "spec-kitty-agent-analyzer-guided",
+  "harness": "claude",
+  "required_repeats": 1,
+  "fresh_context_contract": "Each repeat invokes one full baseline/optimized harness run. The harness creates fresh detached git worktrees and launches separate Claude/Codex task sessions for baseline and optimized runs.",
+  "task_prompt_file": "<repo>/docs/benchmarks/fixtures/tasks/spec-kitty-high-context-ci.txt",
+  "analyzer_repo": "<repo>",
+  "environment": {
+    "SOURCE_REPO": "/private/tmp/agent-analyzer-spec-kitty-target",
+    "BASE_REF": "38abeebf6fab2215fb52a099bfad707a7a503ad7",
+    "QUALITY_COMMAND": "test -s benchmark-answer.md && rg -q 'src/charter/compiler.py' benchmark-answer.md && rg -q '_auth_doctor.py' benchmark-answer.md && rg -q 'SonarCloud Quality Gate|Quality Gate' benchmark-answer.md && rg -q '34|thirty-four' benchmark-answer.md && rg -q '3 coverage report|3 .*coverage report|three coverage report' benchmark-answer.md",
+    "BENCHMARK_SETUP_COMMAND": "mkdir -p .benchmark-fixtures/spec-kitty-ci && cp \"$ANALYZER_REPO/docs/benchmarks/fixtures/spec-kitty/ci-logs/\"*.txt .benchmark-fixtures/spec-kitty-ci/",
+    "OPTIMIZED_GUIDANCE_FILE": "<repo>/docs/benchmarks/fixtures/guidance/agent-analyzer-spec-kitty-guidance.txt",
+    "AGENT_PLUGIN_ENABLED": "1",
+    "TOOLING_REVIEW_ENABLED": "0",
+    "BASELINE_CLAUDE_ARGS": "--setting-sources project,local --strict-mcp-config --mcp-config {\"mcpServers\":{}} --settings {\"enabledPlugins\":{\"sentrux@sentrux-marketplace\":false},\"permissions\":{\"defaultMode\":\"bypassPermissions\"}} --permission-mode bypassPermissions --disallowedTools Agent --output-format json --model sonnet --max-budget-usd 20",
+    "OPTIMIZED_CLAUDE_ARGS": "--setting-sources project,local --strict-mcp-config --mcp-config {\"mcpServers\":{}} --settings {\"enabledPlugins\":{\"sentrux@sentrux-marketplace\":false},\"permissions\":{\"defaultMode\":\"bypassPermissions\"}} --permission-mode bypassPermissions --disallowedTools Agent --output-format json --model sonnet --max-budget-usd 20"
+  }
+}

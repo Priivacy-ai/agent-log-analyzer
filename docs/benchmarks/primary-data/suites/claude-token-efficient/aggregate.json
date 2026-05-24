@@ -1,0 +1,125 @@
+{
+  "schema_version": "2026-05-24",
+  "required_repeats": 3,
+  "completed_repeats": 3,
+  "failed_repeats": [],
+  "confidence_policy": "Recommendation verdicts should be promoted from first-pass to repeated only when at least three fresh baseline/optimized pairs complete and pass the same quality gate.",
+  "quality": [
+    {
+      "run": "run-01",
+      "baseline_quality_status": "0",
+      "optimized_quality_status": "0",
+      "baseline_exit_status": 0,
+      "optimized_exit_status": 0
+    },
+    {
+      "run": "run-02",
+      "baseline_quality_status": "0",
+      "optimized_quality_status": "0",
+      "baseline_exit_status": 0,
+      "optimized_exit_status": 0
+    },
+    {
+      "run": "run-03",
+      "baseline_quality_status": "0",
+      "optimized_quality_status": "0",
+      "baseline_exit_status": 0,
+      "optimized_exit_status": 0
+    }
+  ],
+  "delta_stats": {
+    "avoidable_waste_high_points": {
+      "n": 3,
+      "mean": 0.0,
+      "median": 0,
+      "min": -2,
+      "max": 2,
+      "stdev": 2.0
+    },
+    "avoidable_waste_low_points": {
+      "n": 3,
+      "mean": 0.0,
+      "median": 0,
+      "min": -2,
+      "max": 2,
+      "stdev": 2.0
+    },
+    "claude_cache_creation_input_tokens": {
+      "n": 3,
+      "mean": -122.33333333333333,
+      "median": 101,
+      "min": -2804,
+      "max": 2336,
+      "stdev": 2577.267609956974
+    },
+    "claude_cache_read_input_tokens": {
+      "n": 3,
+      "mean": -7638.666666666667,
+      "median": -28379,
+      "min": -31114,
+      "max": 36577,
+      "stdev": 38316.30123502702
+    },
+    "claude_output_tokens": {
+      "n": 3,
+      "mean": -78.66666666666667,
+      "median": -106,
+      "min": -275,
+      "max": 145,
+      "stdev": 211.329915850391
+    },
+    "claude_total_cost_usd": {
+      "n": 3,
+      "mean": -0.003828350000000008,
+      "median": -0.0037807000000000257,
+      "min": -0.017573199999999983,
+      "max": 0.009868849999999985,
+      "stdev": 0.013721087053965497
+    },
+    "context_growth_events": {
+      "n": 3,
+      "mean": 0.0,
+      "median": 0,
+      "min": -1,
+      "max": 1,
+      "stdev": 1.0
+    },
+    "estimated_tokens": {
+      "n": 3,
+      "mean": -391.0,
+      "median": -202,
+      "min": -3927,
+      "max": 2956,
+      "stdev": 3445.3901085363323
+    },
+    "failed_commands": {
+      "n": 3,
+      "mean": 0.3333333333333333,
+      "median": 0,
+      "min": 0,
+      "max": 1,
+      "stdev": 0.5773502691896257
+    },
+    "rereads": {
+      "n": 3,
+      "mean": 0.0,
+      "median": 0,
+      "min": 0,
+      "max": 0,
+      "stdev": 0.0
+    },
+    "tool_output_tokens": {
+      "n": 3,
+      "mean": -754.0,
+      "median": -398,
+      "min": -4770,
+      "max": 2906,
+      "stdev": 3850.3630997608525
+    }
+  },
+  "run_dirs": [
+    "run-01",
+    "run-02",
+    "run-03"
+  ]
+}

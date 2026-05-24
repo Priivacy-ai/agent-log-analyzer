@@ -1,0 +1,909 @@
+diff-coverage	UNKNOWN STEP	﻿2026-05-24T07:14:36.5385777Z Current runner version: '2.334.0'
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:36.5411217Z ##[group]Runner Image Provisioner
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:36.5412145Z Hosted Compute Agent
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:36.5412665Z Version: 20260213.493
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:36.5413287Z Commit: 5c115507f6dd24b8de37d8bbe0bb4509d0cc0fa3
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:36.5414014Z Build Date: 2026-02-13T00:28:41Z
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:36.5414733Z Worker ID: {cb14c2d9-4477-487c-a521-908cb8a5aa8b}
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:36.5415468Z Azure Region: westcentralus
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:36.5416038Z ##[endgroup]
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:36.5417383Z ##[group]Operating System
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:36.5417948Z Ubuntu
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:36.5418488Z 24.04.4
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:36.5418942Z LTS
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:36.5419463Z ##[endgroup]
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:36.5419915Z ##[group]Runner Image
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:36.5420546Z Image: ubuntu-24.04
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:36.5421482Z Version: 20260518.149.1
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:36.5422742Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20260518.149/images/ubuntu/Ubuntu2404-Readme.md
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:36.5424173Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20260518.149
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:36.5425111Z ##[endgroup]
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:36.5426165Z ##[group]GITHUB_TOKEN Permissions
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:36.5428070Z Contents: read
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:36.5428685Z Metadata: read
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:36.5429250Z ##[endgroup]
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:36.5431722Z Secret source: Actions
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:36.5432525Z Prepare workflow directory
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:36.5766544Z Prepare all required actions
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:36.5806231Z Getting action download info
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:37.0550242Z Download action repository 'actions/checkout@v6' (SHA:de0fac2e4500dabe0009e67214ff5f5447ce83dd)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:37.1796666Z Download action repository 'actions/setup-python@v6' (SHA:a309ff8b426b58ec0e2a45f0f869d46889d02405)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:37.3021989Z Download action repository 'actions/download-artifact@v8' (SHA:3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:38.1613166Z Complete job name: diff-coverage
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:38.2521519Z ##[group]Run actions/checkout@v6
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:38.2523005Z with:
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:38.2523769Z   fetch-depth: 0
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:38.2524626Z   repository: Priivacy-ai/spec-kitty
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:38.2526034Z   token: ***
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:38.2526812Z   ssh-strict: true
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:38.2527631Z   ssh-user: git
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:38.2528448Z   persist-credentials: true
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:38.2529366Z   clean: true
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:38.2530192Z   sparse-checkout-cone-mode: true
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:38.2531370Z   fetch-tags: false
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:38.2532219Z   show-progress: true
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:38.2533049Z   lfs: false
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:38.2533819Z   submodules: false
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:38.2534667Z   set-safe-directory: true
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:38.2535814Z ##[endgroup]
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:38.3585579Z Syncing repository: Priivacy-ai/spec-kitty
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:38.3588472Z ##[group]Getting Git version info
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:38.3589889Z Working directory is '/home/runner/work/spec-kitty/spec-kitty'
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:38.3592468Z [command]/usr/bin/git version
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:38.3631305Z git version 2.54.0
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:38.3688639Z ##[endgroup]
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:38.3705957Z Temporarily overriding HOME='/home/runner/work/_temp/a1078942-6fe6-48a4-9dc3-522424517dd8' before making global git config changes
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:38.3710245Z Adding repository directory to the temporary git global config as a safe directory
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:38.3714073Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/spec-kitty/spec-kitty
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:38.3765786Z Deleting the contents of '/home/runner/work/spec-kitty/spec-kitty'
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:38.3770477Z ##[group]Initializing the repository
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:38.3775943Z [command]/usr/bin/git init /home/runner/work/spec-kitty/spec-kitty
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:38.3897141Z hint: Using 'master' as the name for the initial branch. This default branch name
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:38.3899708Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:38.3903005Z hint: to use in all of your new repositories, which will suppress this warning,
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:38.3905467Z hint: call:
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:38.3906507Z hint:
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:38.3907760Z hint: 	git config --global init.defaultBranch <name>
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:38.3909034Z hint:
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:38.3910472Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:38.3913415Z hint: 'development'. The just-created branch can be renamed via this command:
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:38.3915224Z hint:
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:38.3916335Z hint: 	git branch -m <name>
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:38.3917663Z hint:
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:38.3919472Z hint: Disable this message with "git config set advice.defaultBranchName false"
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:38.3921887Z Initialized empty Git repository in /home/runner/work/spec-kitty/spec-kitty/.git/
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:38.3925755Z [command]/usr/bin/git remote add origin https://github.com/Priivacy-ai/spec-kitty
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:38.3965479Z ##[endgroup]
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:38.3967122Z ##[group]Disabling automatic garbage collection
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:38.3968863Z [command]/usr/bin/git config --local gc.auto 0
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:38.4001740Z ##[endgroup]
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:38.4003478Z ##[group]Setting up auth
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:38.4004532Z Removing SSH command configuration
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:38.4008291Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:38.4044248Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:38.4400588Z Removing HTTP extra header
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:38.4408024Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:38.4444422Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:38.4678430Z Removing includeIf entries pointing to credentials config files
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:38.4683670Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:38.4721693Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:38.4969803Z [command]/usr/bin/git config --file /home/runner/work/_temp/git-credentials-ad7314f3-792b-4964-9f7d-b26cfaaa7b21.config http.https://github.com/.extraheader AUTHORIZATION: basic ***
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:38.5011512Z [command]/usr/bin/git config --local includeIf.gitdir:/home/runner/work/spec-kitty/spec-kitty/.git.path /home/runner/work/_temp/git-credentials-ad7314f3-792b-4964-9f7d-b26cfaaa7b21.config
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:38.5052943Z [command]/usr/bin/git config --local includeIf.gitdir:/home/runner/work/spec-kitty/spec-kitty/.git/worktrees/*.path /home/runner/work/_temp/git-credentials-ad7314f3-792b-4964-9f7d-b26cfaaa7b21.config
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:38.5090151Z [command]/usr/bin/git config --local includeIf.gitdir:/github/workspace/.git.path /github/runner_temp/git-credentials-ad7314f3-792b-4964-9f7d-b26cfaaa7b21.config
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:38.5125466Z [command]/usr/bin/git config --local includeIf.gitdir:/github/workspace/.git/worktrees/*.path /github/runner_temp/git-credentials-ad7314f3-792b-4964-9f7d-b26cfaaa7b21.config
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:38.5158273Z ##[endgroup]
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:38.5161260Z ##[group]Fetching the repository
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:38.5170049Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules origin +refs/heads/*:refs/remotes/origin/* +refs/tags/*:refs/tags/* +77bbb31e151701da4cb3c06a07564630471d68f6:refs/remotes/pull/1294/merge
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1541363Z From https://github.com/Priivacy-ai/spec-kitty
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1542363Z  * [new branch]          1.x-maintenance           -> origin/1.x-maintenance
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1547863Z  * [new branch]          automation/all-contributors-sync -> origin/automation/all-contributors-sync
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1549504Z  * [new branch]          automation/sonar-security-20260423 -> origin/automation/sonar-security-20260423
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1550576Z  * [new branch]          automation/sonar-security-20260424 -> origin/automation/sonar-security-20260424
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1552021Z  * [new branch]          automation/sonar-security-20260424-dashboard -> origin/automation/sonar-security-20260424-dashboard
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1553170Z  * [new branch]          automation/sonar-security-20260425 -> origin/automation/sonar-security-20260425
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1554161Z  * [new branch]          automation/sonar-security-20260426 -> origin/automation/sonar-security-20260426
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1555339Z  * [new branch]          automation/sonar-security-20260512-urllib3-sri -> origin/automation/sonar-security-20260512-urllib3-sri
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1556597Z  * [new branch]          automation/sonar-security-20260514-core-paths -> origin/automation/sonar-security-20260514-core-paths
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1557397Z  * [new branch]          automation/sonar-security-20260516-regex-dos -> origin/automation/sonar-security-20260516-regex-dos
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1558291Z  * [new branch]          automation/sonar-security-20260517-nightly-followup -> origin/automation/sonar-security-20260517-nightly-followup
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1559286Z  * [new branch]          automation/sonar-security-followups-20260430-dashboard-xss -> origin/automation/sonar-security-followups-20260430-dashboard-xss
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1560193Z  * [new branch]          automation/sonar-security-tranche-a-20260429 -> origin/automation/sonar-security-tranche-a-20260429
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1561370Z  * [new branch]          automation/spec-kitty-sonarcloud-and-security-issues -> origin/automation/spec-kitty-sonarcloud-and-security-issues
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1562556Z  * [new branch]          automation/spec-kitty-sonarcloud-security-20260519 -> origin/automation/spec-kitty-sonarcloud-security-20260519
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1563447Z  * [new branch]          automation/spec-kitty-sonarcloud-security-20260523 -> origin/automation/spec-kitty-sonarcloud-security-20260523
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1564271Z  * [new branch]          automation/spec-kitty-sonarcloud-security-20260524 -> origin/automation/spec-kitty-sonarcloud-security-20260524
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1565112Z  * [new branch]          automation/spec-kitty-sonarcloud-security-issues -> origin/automation/spec-kitty-sonarcloud-security-issues
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1565734Z  * [new branch]          base/pre-075              -> origin/base/pre-075
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1566299Z  * [new branch]          beta-sync-remediation-adaptive-batching -> origin/beta-sync-remediation-adaptive-batching
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1567020Z  * [new branch]          codex/fix-dashboard-glossary-shell-1179 -> origin/codex/fix-dashboard-glossary-shell-1179
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1567706Z  * [new branch]          codex/fix-grep-absence-self-match-1147 -> origin/codex/fix-grep-absence-self-match-1147
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1568349Z  * [new branch]          codex/fix-legacy-path-audit-1134 -> origin/codex/fix-legacy-path-audit-1134
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1568987Z  * [new branch]          codex/fix-mission-081-review-findings -> origin/codex/fix-mission-081-review-findings
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1569639Z  * [new branch]          codex/improve-review-override-ux-1148 -> origin/codex/improve-review-override-ux-1148
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1570356Z  * [new branch]          codex/materialize-retrospective-events-1183 -> origin/codex/materialize-retrospective-events-1183
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1571303Z  * [new branch]          codex/spec-kitty-sonarcloud-security-20260519 -> origin/codex/spec-kitty-sonarcloud-security-20260519
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1571932Z  * [new branch]          docs-fixes-2026-04-10     -> origin/docs-fixes-2026-04-10
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1572609Z  * [new branch]          docs/branch-intent-governance-upgrade -> origin/docs/branch-intent-governance-upgrade
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1573527Z  * [new branch]          docs/prefer-pipx-installation-1012 -> origin/docs/prefer-pipx-installation-1012
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1574144Z  * [new branch]          docs/spec-kitty-host-skill-trace -> origin/docs/spec-kitty-host-skill-trace
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1574699Z  * [new branch]          feat/decision-moment-v1-cli -> origin/feat/decision-moment-v1-cli
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1575197Z  * [new branch]          feat/org-doctrine-layer   -> origin/feat/org-doctrine-layer
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1575813Z  * [new branch]          feat/phase-3-charter-synthesizer-pipeline -> origin/feat/phase-3-charter-synthesizer-pipeline
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1576419Z  * [new branch]          feature/711-mutant-slaying -> origin/feature/711-mutant-slaying
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1577004Z  * [new branch]          feature/metadata-state-type-hardening -> origin/feature/metadata-state-type-hardening
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1577777Z  * [new branch]          fix/1188-wp-status-changed-envelope-duplication -> origin/fix/1188-wp-status-changed-envelope-duplication
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1578777Z  * [new branch]          fix/1199-1202-mission-type-required-fields-and-error-renderer -> origin/fix/1199-1202-mission-type-required-fields-and-error-renderer
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1579739Z  * [new branch]          fix/1203-mask1-emit-wp-created-schema-alignment -> origin/fix/1203-mask1-emit-wp-created-schema-alignment
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1580430Z  * [new branch]          fix/charter-e2e-827-tranche-2 -> origin/fix/charter-e2e-827-tranche-2
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1581213Z  * [new branch]          fix/charter-p7-release-closure -> origin/fix/charter-p7-release-closure
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1581781Z  * [new branch]          fix/loosen-python-version -> origin/fix/loosen-python-version
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1582327Z  * [new branch]          fix/main-e2e-cross-cutting-ci -> origin/fix/main-e2e-cross-cutting-ci
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1582959Z  * [new branch]          fix/merge-lock-and-retry-safety -> origin/fix/merge-lock-and-retry-safety
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1583742Z  * [new branch]          fix/pr1205-post-merge-ci  -> origin/fix/pr1205-post-merge-ci
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1584270Z  * [new branch]          fix/readme-wall-of-text   -> origin/fix/readme-wall-of-text
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1585033Z  * [new branch]          fix/sync-now-strict-exit-test-respects-m7-recovery -> origin/fix/sync-now-strict-exit-test-respects-m7-recovery
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1585906Z  * [new branch]          fix/teamspace-historical-evidence-dry-run -> origin/fix/teamspace-historical-evidence-dry-run
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1586733Z  * [new branch]          fix/teamspace-mission-state-closeout-guards -> origin/fix/teamspace-mission-state-closeout-guards
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1587530Z  * [new branch]          fix/teamspace-mission-state-upgrade-gate -> origin/fix/teamspace-mission-state-upgrade-gate
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1588191Z  * [new branch]          fix/uv-sources-events     -> origin/fix/uv-sources-events
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1588754Z  * [new branch]          fixup/tech_debt_remediation -> origin/fixup/tech_debt_remediation
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1589561Z  * [new branch]          kitty/mission-canonical-producer-lint-01KS4XX4-clean -> origin/kitty/mission-canonical-producer-lint-01KS4XX4-clean
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1590899Z  * [new branch]          kitty/mission-cli-decision-moment-widen-mode-readiness-01KRC12S-lane-a -> origin/kitty/mission-cli-decision-moment-widen-mode-readiness-01KRC12S-lane-a
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1592087Z  * [new branch]          kitty/mission-identity-boundary-canary-ci-gate-01KS4XWV -> origin/kitty/mission-identity-boundary-canary-ci-gate-01KS4XWV
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1593218Z  * [new branch]          kitty/mission-identity-boundary-ci-gate-rerun-01KS51YK-lane-a -> origin/kitty/mission-identity-boundary-ci-gate-rerun-01KS51YK-lane-a
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1594404Z  * [new branch]          kitty/mission-logged-out-teamspace-cli-recovery-01KRC6CY-lane-a -> origin/kitty/mission-logged-out-teamspace-cli-recovery-01KRC6CY-lane-a
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1595569Z  * [new branch]          kitty/mission-migration-shim-ownership-rules-01KPDYDW -> origin/kitty/mission-migration-shim-ownership-rules-01KPDYDW
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1596875Z  * [new branch]          kitty/mission-mission-state-migration-determinism-cleanup-01KRC7JG -> origin/kitty/mission-mission-state-migration-determinism-cleanup-01KRC7JG
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1598234Z  * [new branch]          kitty/mission-mission-state-migration-determinism-cleanup-01KRC7JG-lane-b -> origin/kitty/mission-mission-state-migration-determinism-cleanup-01KRC7JG-lane-b
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1599509Z  * [new branch]          kitty/mission-offline-queue-enqueue-performance-01KRC4HN-lane-a -> origin/kitty/mission-offline-queue-enqueue-performance-01KRC4HN-lane-a
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1601119Z  * [new branch]          kitty/mission-sync-rejection-classification-and-queue-retry-hygiene-01KRC3TV-lane-a -> origin/kitty/mission-sync-rejection-classification-and-queue-retry-hygiene-01KRC3TV-lane-a
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1602458Z  * [new branch]          kitty/pr/release-320-workflow-reliability-01KQKV85-to-main -> origin/kitty/pr/release-320-workflow-reliability-01KQKV85-to-main
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1603575Z  * [new branch]          kitty/pr/unblock-sync-identity-boundary-canary-01KRZJ07-to-main -> origin/kitty/pr/unblock-sync-identity-boundary-canary-01KRZJ07-to-main
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1604346Z  * [new branch]          main                      -> origin/main
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1605021Z  * [new branch]          mission/identity-boundary-ci-gate-rerun -> origin/mission/identity-boundary-ci-gate-rerun
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1605616Z  * [new branch]          pr632-refresh             -> origin/pr632-refresh
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1606357Z  * [new branch]          refactor/quality-p4-doc-analysis-acceptance-packages -> origin/refactor/quality-p4-doc-analysis-acceptance-packages
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1607058Z  * [new branch]          release/3.1.7             -> origin/release/3.1.7
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1607529Z  * [new branch]          release/3.2.0a5-tranche-1 -> origin/release/3.2.0a5-tranche-1
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1608187Z  * [new branch]          release/3.2.0a6-tranche-2 -> origin/release/3.2.0a6-tranche-2
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1608659Z  * [new branch]          release/3.2.0rc23         -> origin/release/3.2.0rc23
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1609106Z  * [new branch]          release/v3.1.8            -> origin/release/v3.1.8
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1609644Z  * [new branch]          remove-saas-sync-rollout-gate -> origin/remove-saas-sync-rollout-gate
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1610319Z  * [new branch]          repair/teamspace-mission-state-history -> origin/repair/teamspace-mission-state-history
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1611246Z  * [new branch]          robert/1119-config-workflow-fixes -> origin/robert/1119-config-workflow-fixes
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1611983Z  * [new branch]          ship/charter-synthesizer-phase3-completion -> origin/ship/charter-synthesizer-phase3-completion
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1612668Z  * [new branch]          trim-obsolete-cli-commands -> origin/trim-obsolete-cli-commands
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1613262Z  * [new branch]          wp6-step-contract-executor-501 -> origin/wp6-step-contract-executor-501
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1613870Z  * [new tag]             crossrepo-bugfix-pack-2026-02-24 -> crossrepo-bugfix-pack-2026-02-24
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1614394Z  * [new tag]             saas-hardening-2026-02-24 -> saas-hardening-2026-02-24
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1614789Z  * [new tag]             v0.0.1                    -> v0.0.1
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1615127Z  * [new tag]             v0.0.10                   -> v0.0.10
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1615450Z  * [new tag]             v0.0.11                   -> v0.0.11
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1615798Z  * [new tag]             v0.0.12                   -> v0.0.12
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1616113Z  * [new tag]             v0.0.13                   -> v0.0.13
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1616422Z  * [new tag]             v0.0.14                   -> v0.0.14
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1616750Z  * [new tag]             v0.0.15                   -> v0.0.15
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1617074Z  * [new tag]             v0.0.16                   -> v0.0.16
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1617542Z  * [new tag]             v0.0.17                   -> v0.0.17
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1617857Z  * [new tag]             v0.0.18                   -> v0.0.18
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1618173Z  * [new tag]             v0.0.19                   -> v0.0.19
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1618496Z  * [new tag]             v0.0.2                    -> v0.0.2
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1618807Z  * [new tag]             v0.0.20                   -> v0.0.20
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1619117Z  * [new tag]             v0.0.21                   -> v0.0.21
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1619420Z  * [new tag]             v0.0.22                   -> v0.0.22
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1619729Z  * [new tag]             v0.0.23                   -> v0.0.23
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1620029Z  * [new tag]             v0.0.24                   -> v0.0.24
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1620340Z  * [new tag]             v0.0.25                   -> v0.0.25
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1620647Z  * [new tag]             v0.0.26                   -> v0.0.26
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1621078Z  * [new tag]             v0.0.27                   -> v0.0.27
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1621385Z  * [new tag]             v0.0.28                   -> v0.0.28
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1621693Z  * [new tag]             v0.0.29                   -> v0.0.29
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1622006Z  * [new tag]             v0.0.3                    -> v0.0.3
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1622320Z  * [new tag]             v0.0.30                   -> v0.0.30
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1622634Z  * [new tag]             v0.0.31                   -> v0.0.31
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1622946Z  * [new tag]             v0.0.32                   -> v0.0.32
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1623252Z  * [new tag]             v0.0.33                   -> v0.0.33
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1623564Z  * [new tag]             v0.0.34                   -> v0.0.34
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1623870Z  * [new tag]             v0.0.35                   -> v0.0.35
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1624184Z  * [new tag]             v0.0.36                   -> v0.0.36
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1624619Z  * [new tag]             v0.0.37                   -> v0.0.37
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1624935Z  * [new tag]             v0.0.38                   -> v0.0.38
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1625247Z  * [new tag]             v0.0.39                   -> v0.0.39
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1625553Z  * [new tag]             v0.0.4                    -> v0.0.4
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1625874Z  * [new tag]             v0.0.40                   -> v0.0.40
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1626179Z  * [new tag]             v0.0.41                   -> v0.0.41
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1626488Z  * [new tag]             v0.0.42                   -> v0.0.42
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1626792Z  * [new tag]             v0.0.43                   -> v0.0.43
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1627103Z  * [new tag]             v0.0.44                   -> v0.0.44
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1627422Z  * [new tag]             v0.0.45                   -> v0.0.45
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1627725Z  * [new tag]             v0.0.46                   -> v0.0.46
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1628041Z  * [new tag]             v0.0.47                   -> v0.0.47
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1628346Z  * [new tag]             v0.0.48                   -> v0.0.48
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1628656Z  * [new tag]             v0.0.49                   -> v0.0.49
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1628957Z  * [new tag]             v0.0.5                    -> v0.0.5
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1629322Z  * [new tag]             v0.0.50                   -> v0.0.50
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1703856Z  * [new tag]             v0.0.51                   -> v0.0.51
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1704260Z  * [new tag]             v0.0.52                   -> v0.0.52
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1704614Z  * [new tag]             v0.0.53                   -> v0.0.53
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1704966Z  * [new tag]             v0.0.54                   -> v0.0.54
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1705324Z  * [new tag]             v0.0.55                   -> v0.0.55
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1705674Z  * [new tag]             v0.0.56                   -> v0.0.56
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1706028Z  * [new tag]             v0.0.57                   -> v0.0.57
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1706607Z  * [new tag]             v0.0.58                   -> v0.0.58
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1706931Z  * [new tag]             v0.0.59                   -> v0.0.59
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1707265Z  * [new tag]             v0.0.6                    -> v0.0.6
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1707587Z  * [new tag]             v0.0.60                   -> v0.0.60
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1707900Z  * [new tag]             v0.0.61                   -> v0.0.61
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1708214Z  * [new tag]             v0.0.62                   -> v0.0.62
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1708516Z  * [new tag]             v0.0.63                   -> v0.0.63
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1708843Z  * [new tag]             v0.0.64                   -> v0.0.64
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1709181Z  * [new tag]             v0.0.65                   -> v0.0.65
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1709518Z  * [new tag]             v0.0.66                   -> v0.0.66
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1709838Z  * [new tag]             v0.0.67                   -> v0.0.67
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1710175Z  * [new tag]             v0.0.68                   -> v0.0.68
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1710502Z  * [new tag]             v0.0.69                   -> v0.0.69
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1711111Z  * [new tag]             v0.0.7                    -> v0.0.7
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1711447Z  * [new tag]             v0.0.70                   -> v0.0.70
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1711762Z  * [new tag]             v0.0.71                   -> v0.0.71
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1712088Z  * [new tag]             v0.0.72                   -> v0.0.72
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1712416Z  * [new tag]             v0.0.73                   -> v0.0.73
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1712749Z  * [new tag]             v0.0.74                   -> v0.0.74
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1713074Z  * [new tag]             v0.0.75                   -> v0.0.75
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1713381Z  * [new tag]             v0.0.76                   -> v0.0.76
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1713699Z  * [new tag]             v0.0.77                   -> v0.0.77
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1714171Z  * [new tag]             v0.0.78                   -> v0.0.78
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1714497Z  * [new tag]             v0.0.79                   -> v0.0.79
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1714821Z  * [new tag]             v0.0.8                    -> v0.0.8
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1715133Z  * [new tag]             v0.0.9                    -> v0.0.9
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1715462Z  * [new tag]             v0.10.10                  -> v0.10.10
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1715817Z  * [new tag]             v0.10.11                  -> v0.10.11
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1716141Z  * [new tag]             v0.10.12                  -> v0.10.12
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1716460Z  * [new tag]             v0.10.13                  -> v0.10.13
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1716785Z  * [new tag]             v0.10.8                   -> v0.10.8
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1717102Z  * [new tag]             v0.10.9                   -> v0.10.9
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1717411Z  * [new tag]             v0.11.0                   -> v0.11.0
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1717730Z  * [new tag]             v0.11.1                   -> v0.11.1
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1718044Z  * [new tag]             v0.12.0                   -> v0.12.0
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1718360Z  * [new tag]             v0.12.1                   -> v0.12.1
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1718669Z  * [new tag]             v0.13.1                   -> v0.13.1
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1718987Z  * [new tag]             v0.13.2                   -> v0.13.2
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1719305Z  * [new tag]             v0.13.20                  -> v0.13.20
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1719617Z  * [new tag]             v0.13.21                  -> v0.13.21
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1719938Z  * [new tag]             v0.13.22                  -> v0.13.22
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1720245Z  * [new tag]             v0.13.23                  -> v0.13.23
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1720560Z  * [new tag]             v0.13.24                  -> v0.13.24
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1721109Z  * [new tag]             v0.13.25                  -> v0.13.25
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1721433Z  * [new tag]             v0.13.27                  -> v0.13.27
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1721899Z  * [new tag]             v0.13.28                  -> v0.13.28
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1722240Z  * [new tag]             v0.13.3                   -> v0.13.3
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1722565Z  * [new tag]             v0.13.4                   -> v0.13.4
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1722888Z  * [new tag]             v0.13.5                   -> v0.13.5
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1723203Z  * [new tag]             v0.13.6                   -> v0.13.6
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1723511Z  * [new tag]             v0.13.7                   -> v0.13.7
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1723823Z  * [new tag]             v0.13.8                   -> v0.13.8
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1724133Z  * [new tag]             v0.13.9                   -> v0.13.9
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1724437Z  * [new tag]             v0.14.0                   -> v0.14.0
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1724748Z  * [new tag]             v0.14.1                   -> v0.14.1
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1725052Z  * [new tag]             v0.14.2                   -> v0.14.2
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1725372Z  * [new tag]             v0.15.0                   -> v0.15.0
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1725677Z  * [new tag]             v0.15.1                   -> v0.15.1
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1726027Z  * [new tag]             v0.15.2                   -> v0.15.2
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1726356Z  * [new tag]             v0.15.3                   -> v0.15.3
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1726679Z  * [new tag]             v0.16.0                   -> v0.16.0
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1726989Z  * [new tag]             v0.16.1                   -> v0.16.1
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1727306Z  * [new tag]             v0.16.2                   -> v0.16.2
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1727617Z  * [new tag]             v0.2.10                   -> v0.2.10
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1727934Z  * [new tag]             v0.2.11                   -> v0.2.11
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1728248Z  * [new tag]             v0.2.12                   -> v0.2.12
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1728554Z  * [new tag]             v0.2.13                   -> v0.2.13
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1729001Z  * [new tag]             v0.2.14                   -> v0.2.14
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1729307Z  * [new tag]             v0.2.15                   -> v0.2.15
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1729618Z  * [new tag]             v0.2.16                   -> v0.2.16
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1729920Z  * [new tag]             v0.2.17                   -> v0.2.17
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1730230Z  * [new tag]             v0.2.18                   -> v0.2.18
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1730539Z  * [new tag]             v0.2.19                   -> v0.2.19
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1730970Z  * [new tag]             v0.2.2                    -> v0.2.2
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1731287Z  * [new tag]             v0.2.20                   -> v0.2.20
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1731592Z  * [new tag]             v0.2.3                    -> v0.2.3
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1731901Z  * [new tag]             v0.2.4                    -> v0.2.4
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1732202Z  * [new tag]             v0.2.5                    -> v0.2.5
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1732519Z  * [new tag]             v0.2.6                    -> v0.2.6
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1732832Z  * [new tag]             v0.2.7                    -> v0.2.7
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1733130Z  * [new tag]             v0.2.8                    -> v0.2.8
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1733435Z  * [new tag]             v0.2.9                    -> v0.2.9
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1733736Z  * [new tag]             v0.3.0                    -> v0.3.0
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1734046Z  * [new tag]             v0.3.2                    -> v0.3.2
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1734347Z  * [new tag]             v0.4.10                   -> v0.4.10
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1734659Z  * [new tag]             v0.4.11                   -> v0.4.11
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1734968Z  * [new tag]             v0.4.12                   -> v0.4.12
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1735266Z  * [new tag]             v0.4.13                   -> v0.4.13
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1735575Z  * [new tag]             v0.4.3                    -> v0.4.3
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1735879Z  * [new tag]             v0.4.4                    -> v0.4.4
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1736322Z  * [new tag]             v0.4.5                    -> v0.4.5
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1736626Z  * [new tag]             v0.4.6                    -> v0.4.6
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1736933Z  * [new tag]             v0.4.7                    -> v0.4.7
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1737240Z  * [new tag]             v0.4.8                    -> v0.4.8
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1737538Z  * [new tag]             v0.4.9                    -> v0.4.9
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1737845Z  * [new tag]             v0.5.0                    -> v0.5.0
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1738147Z  * [new tag]             v0.5.1                    -> v0.5.1
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1738454Z  * [new tag]             v0.5.2                    -> v0.5.2
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1738750Z  * [new tag]             v0.5.3                    -> v0.5.3
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1739053Z  * [new tag]             v0.6.0                    -> v0.6.0
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1739360Z  * [new tag]             v0.6.2                    -> v0.6.2
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1739666Z  * [new tag]             v0.6.3                    -> v0.6.3
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1739976Z  * [new tag]             v0.6.4                    -> v0.6.4
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1740276Z  * [new tag]             v0.6.5                    -> v0.6.5
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1740583Z  * [new tag]             v0.6.6                    -> v0.6.6
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1741006Z  * [new tag]             v0.6.7                    -> v0.6.7
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1741315Z  * [new tag]             v0.7.0                    -> v0.7.0
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1741620Z  * [new tag]             v0.7.1                    -> v0.7.1
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1741922Z  * [new tag]             v0.7.2                    -> v0.7.2
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1742228Z  * [new tag]             v0.7.3                    -> v0.7.3
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1742528Z  * [new tag]             v0.8.0                    -> v0.8.0
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1742833Z  * [new tag]             v0.8.1                    -> v0.8.1
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1743272Z  * [new tag]             v0.8.2                    -> v0.8.2
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1743586Z  * [new tag]             v0.9.0                    -> v0.9.0
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1743887Z  * [new tag]             v0.9.1                    -> v0.9.1
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1744196Z  * [new tag]             v0.9.2                    -> v0.9.2
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1744502Z  * [new tag]             v0.9.3                    -> v0.9.3
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1744800Z  * [new tag]             v0.9.4                    -> v0.9.4
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1745113Z  * [new tag]             v1.0.0                    -> v1.0.0
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1745453Z  * [new tag]             v1.0.0a1                  -> v1.0.0a1
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1745777Z  * [new tag]             v1.0.1                    -> v1.0.1
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1746094Z  * [new tag]             v1.0.2                    -> v1.0.2
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1746396Z  * [new tag]             v1.0.3                    -> v1.0.3
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1746740Z  * [new tag]             v1b-complete              -> v1b-complete
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1747091Z  * [new tag]             v2.0.0                    -> v2.0.0
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1747510Z  * [new tag]             v2.0.1                    -> v2.0.1
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1747823Z  * [new tag]             v2.0.10                   -> v2.0.10
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1748136Z  * [new tag]             v2.0.11                   -> v2.0.11
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1748455Z  * [new tag]             v2.0.2                    -> v2.0.2
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1748764Z  * [new tag]             v2.0.3                    -> v2.0.3
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1749061Z  * [new tag]             v2.0.4                    -> v2.0.4
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1749365Z  * [new tag]             v2.0.5                    -> v2.0.5
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1749660Z  * [new tag]             v2.0.7                    -> v2.0.7
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1749964Z  * [new tag]             v2.0.8                    -> v2.0.8
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1750267Z  * [new tag]             v2.0.9                    -> v2.0.9
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1750921Z  * [new tag]             v2.1.0                    -> v2.1.0
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1751328Z  * [new tag]             v2.1.1                    -> v2.1.1
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1751628Z  * [new tag]             v2.1.2                    -> v2.1.2
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1751938Z  * [new tag]             v2.1.3                    -> v2.1.3
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1752238Z  * [new tag]             v3.0.0                    -> v3.0.0
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1752543Z  * [new tag]             v3.0.1                    -> v3.0.1
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1752837Z  * [new tag]             v3.0.2                    -> v3.0.2
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1753144Z  * [new tag]             v3.0.3                    -> v3.0.3
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1753446Z  * [new tag]             v3.1.0                    -> v3.1.0
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1753757Z  * [new tag]             v3.1.0a2                  -> v3.1.0a2
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1754075Z  * [new tag]             v3.1.0a3                  -> v3.1.0a3
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1754387Z  * [new tag]             v3.1.0a4                  -> v3.1.0a4
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1754703Z  * [new tag]             v3.1.0a5                  -> v3.1.0a5
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1755012Z  * [new tag]             v3.1.0a6                  -> v3.1.0a6
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1755326Z  * [new tag]             v3.1.0a7                  -> v3.1.0a7
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1755637Z  * [new tag]             v3.1.0a8                  -> v3.1.0a8
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1755941Z  * [new tag]             v3.1.1                    -> v3.1.1
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1756252Z  * [new tag]             v3.1.1a1                  -> v3.1.1a1
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1756557Z  * [new tag]             v3.1.1a2                  -> v3.1.1a2
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1756864Z  * [new tag]             v3.1.1a3                  -> v3.1.1a3
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1757170Z  * [new tag]             v3.1.2                    -> v3.1.2
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1757481Z  * [new tag]             v3.1.2a1                  -> v3.1.2a1
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1757970Z  * [new tag]             v3.1.2a2                  -> v3.1.2a2
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1758281Z  * [new tag]             v3.1.2a3                  -> v3.1.2a3
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1758593Z  * [new tag]             v3.1.3                    -> v3.1.3
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1758890Z  * [new tag]             v3.1.4                    -> v3.1.4
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1759196Z  * [new tag]             v3.1.5                    -> v3.1.5
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1759495Z  * [new tag]             v3.1.6                    -> v3.1.6
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1759799Z  * [new tag]             v3.1.7                    -> v3.1.7
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1760106Z  * [new tag]             v3.1.8                    -> v3.1.8
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1760403Z  * [new tag]             v3.1.9                    -> v3.1.9
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1760933Z  * [new tag]             v3.2.0a1                  -> v3.2.0a1
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1761271Z  * [new tag]             v3.2.0a10                 -> v3.2.0a10
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1761599Z  * [new tag]             v3.2.0a2                  -> v3.2.0a2
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1761915Z  * [new tag]             v3.2.0a3                  -> v3.2.0a3
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1762231Z  * [new tag]             v3.2.0a4                  -> v3.2.0a4
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1762538Z  * [new tag]             v3.2.0a5                  -> v3.2.0a5
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1762842Z  * [new tag]             v3.2.0a6                  -> v3.2.0a6
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1763157Z  * [new tag]             v3.2.0a7                  -> v3.2.0a7
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1763461Z  * [new tag]             v3.2.0a8                  -> v3.2.0a8
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1763769Z  * [new tag]             v3.2.0a9                  -> v3.2.0a9
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1764077Z  * [new tag]             v3.2.0rc1                 -> v3.2.0rc1
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1764412Z  * [new tag]             v3.2.0rc10                -> v3.2.0rc10
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1764750Z  * [new tag]             v3.2.0rc11                -> v3.2.0rc11
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1765083Z  * [new tag]             v3.2.0rc12                -> v3.2.0rc12
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1765598Z  * [new tag]             v3.2.0rc13                -> v3.2.0rc13
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1765919Z  * [new tag]             v3.2.0rc14                -> v3.2.0rc14
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1766244Z  * [new tag]             v3.2.0rc15                -> v3.2.0rc15
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1766561Z  * [new tag]             v3.2.0rc16                -> v3.2.0rc16
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1766883Z  * [new tag]             v3.2.0rc17                -> v3.2.0rc17
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1767199Z  * [new tag]             v3.2.0rc18                -> v3.2.0rc18
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1767512Z  * [new tag]             v3.2.0rc19                -> v3.2.0rc19
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1767831Z  * [new tag]             v3.2.0rc2                 -> v3.2.0rc2
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1768147Z  * [new tag]             v3.2.0rc20                -> v3.2.0rc20
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1768471Z  * [new tag]             v3.2.0rc21                -> v3.2.0rc21
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1768781Z  * [new tag]             v3.2.0rc22                -> v3.2.0rc22
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1769109Z  * [new tag]             v3.2.0rc23                -> v3.2.0rc23
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1769429Z  * [new tag]             v3.2.0rc24                -> v3.2.0rc24
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1769741Z  * [new tag]             v3.2.0rc25                -> v3.2.0rc25
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1770054Z  * [new tag]             v3.2.0rc3                 -> v3.2.0rc3
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1770363Z  * [new tag]             v3.2.0rc4                 -> v3.2.0rc4
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1770683Z  * [new tag]             v3.2.0rc5                 -> v3.2.0rc5
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1771121Z  * [new tag]             v3.2.0rc6                 -> v3.2.0rc6
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1771431Z  * [new tag]             v3.2.0rc7                 -> v3.2.0rc7
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1771745Z  * [new tag]             v3.2.0rc8                 -> v3.2.0rc8
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1772142Z  * [new ref]             77bbb31e151701da4cb3c06a07564630471d68f6 -> pull/1294/merge
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1933600Z ##[endgroup]
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1934478Z ##[group]Determining the checkout info
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1935101Z ##[endgroup]
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1942025Z [command]/usr/bin/git sparse-checkout disable
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.1996033Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.2026349Z ##[group]Checking out the ref
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.2030519Z [command]/usr/bin/git checkout --progress --force refs/remotes/pull/1294/merge
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.7914415Z Note: switching to 'refs/remotes/pull/1294/merge'.
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.7914833Z
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.7915130Z You are in 'detached HEAD' state. You can look around, make experimental
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.7915844Z changes and commit them, and you can discard any commits you make in this
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.7916530Z state without impacting any branches by switching back to a branch.
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.7916955Z
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.7917219Z If you want to create a new branch to retain commits you create, you may
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.7917721Z do so (now or later) by using -c with the switch command. Example:
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.7917979Z
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.7918079Z   git switch -c <new-branch-name>
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.7918235Z
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.7918475Z Or undo this operation with:
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.7918699Z
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.7918799Z   git switch -
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.7918945Z
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.7919232Z Turn off this advice by setting config variable advice.detachedHead to false
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.7919604Z
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.7920050Z HEAD is now at 77bbb31e1 Merge 2ce4f1dcfb8138bf866c8f1c96414ac9a66c454d into 1c6879ea1a7295eb3b568faf48888aa7626ee1bd
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.7946049Z ##[endgroup]
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.7995429Z [command]/usr/bin/git log -1 --format=%H
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.8023313Z 77bbb31e151701da4cb3c06a07564630471d68f6
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.8268618Z ##[group]Run actions/setup-python@v6
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.8268878Z with:
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.8269054Z   python-version: 3.12
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.8269257Z   cache: pip
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.8269430Z   check-latest: false
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.8270010Z   token: ***
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.8270195Z   update-environment: true
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.8270423Z   allow-prereleases: false
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.8270644Z   freethreaded: false
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.8271012Z ##[endgroup]
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.9601467Z ##[group]Installed versions
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.9693907Z Successfully set up CPython (3.12.13)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:42.9694600Z ##[endgroup]
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:44.2224046Z [command]/opt/hostedtoolcache/Python/3.12.13/x64/bin/pip cache dir
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:46.2463275Z /home/runner/.cache/pip
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:46.4820503Z Cache hit for: setup-python-Linux-x64-24.04-Ubuntu-python-3.12.13-pip-9230c5aebb331745cb6d53e59a1edc70c44f1a730d173a4db56b7e2ac3d996ec
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:47.7284152Z Received 33554432 of 284969720 (11.8%), 32.0 MBs/sec
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:48.7296578Z Received 192937984 of 284969720 (67.7%), 91.9 MBs/sec
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:49.3245755Z Received 284969720 of 284969720 (100.0%), 104.6 MBs/sec
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:49.3246284Z Cache Size: ~272 MB (284969720 B)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:49.3281565Z [command]/usr/bin/tar -xf /home/runner/work/_temp/2fabe7f9-fabb-475b-864a-58d987bb2a5c/cache.tzst -P -C /home/runner/work/spec-kitty/spec-kitty --use-compress-program unzstd
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:49.7901488Z Cache restored successfully
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:49.8038282Z Cache restored from key: setup-python-Linux-x64-24.04-Ubuntu-python-3.12.13-pip-9230c5aebb331745cb6d53e59a1edc70c44f1a730d173a4db56b7e2ac3d996ec
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:49.8272661Z ##[group]Run python -m pip install --upgrade pip
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:49.8273106Z ^[[36;1mpython -m pip install --upgrade pip^[[0m
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:49.8273418Z ^[[36;1mpip install -e .[test]^[[0m
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:49.8315706Z shell: /usr/bin/bash -e {0}
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:49.8315960Z env:
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:49.8316225Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.13/x64
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:49.8316671Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.13/x64/lib/pkgconfig
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:49.8317088Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.13/x64
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:49.8317467Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.13/x64
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:49.8317822Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.13/x64
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:49.8318183Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.13/x64/lib
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:49.8318487Z ##[endgroup]
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:51.0929262Z Requirement already satisfied: pip in /opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages (26.1.1)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:51.7308171Z Obtaining file:///home/runner/work/spec-kitty/spec-kitty
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:51.7345217Z   Installing build dependencies: started
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:52.4200459Z   Installing build dependencies: finished with status 'done'
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:52.4206537Z   Checking if build backend supports build_editable: started
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:52.4738790Z   Checking if build backend supports build_editable: finished with status 'done'
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:52.4746542Z   Getting requirements to build editable: started
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:52.6344906Z   Getting requirements to build editable: finished with status 'done'
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:52.6357356Z   Installing backend dependencies: started
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:53.1286897Z   Installing backend dependencies: finished with status 'done'
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:53.1294623Z   Preparing editable metadata (pyproject.toml): started
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:53.8135991Z   Preparing editable metadata (pyproject.toml): finished with status 'done'
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:54.0006667Z Collecting charset-normalizer<4,>=3.4 (from spec-kitty-cli==3.2.0rc25)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:54.0021890Z   Using cached charset_normalizer-3.4.7-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (40 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:54.1834333Z Collecting cryptography>=42.0 (from spec-kitty-cli==3.2.0rc25)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:54.1849731Z   Using cached cryptography-48.0.0-cp311-abi3-manylinux_2_34_x86_64.whl.metadata (4.3 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:54.2159715Z Collecting filelock>=3.13.0 (from spec-kitty-cli==3.2.0rc25)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:54.2171348Z   Using cached filelock-3.29.0-py3-none-any.whl.metadata (2.0 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:54.2796631Z Collecting google-re2>=1.1 (from spec-kitty-cli==3.2.0rc25)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:54.2810384Z   Using cached google_re2-1.1.20251105-1-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl.metadata (2.4 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:54.3092030Z Collecting httpx>=0.28.1 (from httpx[socks]>=0.28.1->spec-kitty-cli==3.2.0rc25)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:54.3104277Z   Using cached httpx-0.28.1-py3-none-any.whl.metadata (7.1 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:54.3445806Z Collecting jsonschema>=4.0 (from spec-kitty-cli==3.2.0rc25)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:54.3458108Z   Using cached jsonschema-4.26.0-py3-none-any.whl.metadata (7.6 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:54.3744553Z Collecting packaging>=23.0 (from spec-kitty-cli==3.2.0rc25)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:54.3756900Z   Using cached packaging-26.2-py3-none-any.whl.metadata (3.5 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:54.4041234Z Collecting platformdirs>=4.9.2 (from spec-kitty-cli==3.2.0rc25)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:54.4054509Z   Using cached platformdirs-4.9.6-py3-none-any.whl.metadata (4.7 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:54.4777008Z Collecting psutil>=5.9.0 (from spec-kitty-cli==3.2.0rc25)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:54.4791726Z   Using cached psutil-7.2.2-cp36-abi3-manylinux2010_x86_64.manylinux_2_12_x86_64.manylinux_2_28_x86_64.whl.metadata (22 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:54.5858714Z Collecting pydantic>=2.0 (from spec-kitty-cli==3.2.0rc25)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:54.5872840Z   Using cached pydantic-2.13.4-py3-none-any.whl.metadata (109 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:54.6201986Z Collecting pygments>=2.20.0 (from spec-kitty-cli==3.2.0rc25)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:54.6214839Z   Using cached pygments-2.20.0-py3-none-any.whl.metadata (2.5 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:54.6498903Z Collecting python-ulid>=3.0 (from spec-kitty-cli==3.2.0rc25)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:54.6525858Z   Using cached python_ulid-3.1.0-py3-none-any.whl.metadata (5.8 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:54.6988773Z Collecting pyyaml>=6.0 (from spec-kitty-cli==3.2.0rc25)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:54.7002726Z   Using cached pyyaml-6.0.3-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (2.4 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:54.7267658Z Collecting readchar>=4.2.1 (from spec-kitty-cli==3.2.0rc25)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:54.7280107Z   Using cached readchar-4.2.2-py3-none-any.whl.metadata (7.5 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:54.7606789Z Collecting requests>=2.33.0 (from spec-kitty-cli==3.2.0rc25)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:54.7619637Z   Using cached requests-2.34.2-py3-none-any.whl.metadata (4.8 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:54.8012307Z Collecting rich>=14.3.3 (from spec-kitty-cli==3.2.0rc25)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:54.8025337Z   Using cached rich-15.0.0-py3-none-any.whl.metadata (18 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:54.9197359Z Collecting ruamel-yaml>=0.18.0 (from spec-kitty-cli==3.2.0rc25)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:54.9214043Z   Using cached ruamel_yaml-0.19.1-py3-none-any.whl.metadata (16 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:54.9490296Z Collecting spec-kitty-events<6.0.0,>=5.2.0 (from spec-kitty-cli==3.2.0rc25)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:54.9502230Z   Using cached spec_kitty_events-5.2.0-py3-none-any.whl.metadata (12 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:54.9757023Z Collecting spec-kitty-tracker<0.5,>=0.4 (from spec-kitty-cli==3.2.0rc25)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:54.9768686Z   Using cached spec_kitty_tracker-0.4.3-py3-none-any.whl.metadata (11 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:55.0017523Z Collecting toml>=0.10.2 (from spec-kitty-cli==3.2.0rc25)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:55.0030467Z   Using cached toml-0.10.2-py2.py3-none-any.whl.metadata (7.1 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:55.0301779Z Collecting transitions>=0.9.2 (from spec-kitty-cli==3.2.0rc25)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:55.0313199Z   Using cached transitions-0.9.3-py2.py3-none-any.whl.metadata (97 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:55.0621305Z Collecting truststore>=0.10.4 (from spec-kitty-cli==3.2.0rc25)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:55.0633604Z   Using cached truststore-0.10.4-py3-none-any.whl.metadata (4.4 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:55.0924258Z Collecting typer>=0.24.1 (from spec-kitty-cli==3.2.0rc25)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:55.0937569Z   Using cached typer-0.25.1-py3-none-any.whl.metadata (15 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:55.1992471Z Collecting websockets>=12.0 (from spec-kitty-cli==3.2.0rc25)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:55.2007134Z   Using cached websockets-16.0-cp312-cp312-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl.metadata (6.8 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:55.2301577Z Collecting build>=1.0.0 (from spec-kitty-cli==3.2.0rc25)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:55.2313904Z   Using cached build-1.5.0-py3-none-any.whl.metadata (5.7 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:55.2697427Z Collecting chardet<6,>=3.0.4 (from spec-kitty-cli==3.2.0rc25)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:55.2710303Z   Using cached chardet-5.2.0-py3-none-any.whl.metadata (3.4 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:55.3048327Z Collecting diff-cover>=10.0.0 (from spec-kitty-cli==3.2.0rc25)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:55.3060860Z   Using cached diff_cover-10.2.1-py3-none-any.whl.metadata (19 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:55.3347753Z Collecting mutmut>=3.5.0 (from spec-kitty-cli==3.2.0rc25)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:55.3360084Z   Using cached mutmut-3.5.0-py3-none-any.whl.metadata (10 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:55.3665633Z Collecting pytest-asyncio>=0.21.0 (from spec-kitty-cli==3.2.0rc25)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:55.3678409Z   Using cached pytest_asyncio-1.3.0-py3-none-any.whl.metadata (4.1 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:55.3961151Z Collecting pytest-cov>=4.1.0 (from spec-kitty-cli==3.2.0rc25)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:55.3973998Z   Using cached pytest_cov-7.1.0-py3-none-any.whl.metadata (32 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:55.4243565Z Collecting pytest-timeout>=2.2.0 (from spec-kitty-cli==3.2.0rc25)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:55.4255404Z   Using cached pytest_timeout-2.4.0-py3-none-any.whl.metadata (20 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:55.4624851Z Collecting pytest>=9.0.3 (from spec-kitty-cli==3.2.0rc25)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:55.4638237Z   Using cached pytest-9.0.3-py3-none-any.whl.metadata (7.6 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:55.4920086Z Collecting pytestarch>=4.0.0 (from spec-kitty-cli==3.2.0rc25)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:55.4932216Z   Using cached pytestarch-4.0.1-py3-none-any.whl.metadata (3.0 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:55.5211317Z Collecting respx>=0.21.1 (from spec-kitty-cli==3.2.0rc25)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:55.5225327Z   Using cached respx-0.23.1-py2.py3-none-any.whl.metadata (4.3 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:55.5541795Z Collecting annotated-types>=0.6.0 (from pydantic>=2.0->spec-kitty-cli==3.2.0rc25)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:55.5555011Z   Using cached annotated_types-0.7.0-py3-none-any.whl.metadata (15 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:56.1650291Z Collecting pydantic-core==2.46.4 (from pydantic>=2.0->spec-kitty-cli==3.2.0rc25)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:56.1664513Z   Using cached pydantic_core-2.46.4-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (6.6 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:56.1940462Z Collecting typing-extensions>=4.14.1 (from pydantic>=2.0->spec-kitty-cli==3.2.0rc25)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:56.1952608Z   Using cached typing_extensions-4.15.0-py3-none-any.whl.metadata (3.3 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:56.2190374Z Collecting typing-inspection>=0.4.2 (from pydantic>=2.0->spec-kitty-cli==3.2.0rc25)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:56.2202993Z   Using cached typing_inspection-0.4.2-py3-none-any.whl.metadata (2.6 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:56.2525194Z Collecting anyio (from httpx>=0.28.1->httpx[socks]>=0.28.1->spec-kitty-cli==3.2.0rc25)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:56.2537408Z   Using cached anyio-4.13.0-py3-none-any.whl.metadata (4.5 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:56.2844392Z Collecting certifi (from httpx>=0.28.1->httpx[socks]>=0.28.1->spec-kitty-cli==3.2.0rc25)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:56.2856930Z   Using cached certifi-2026.5.20-py3-none-any.whl.metadata (2.5 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:56.3138319Z Collecting httpcore==1.* (from httpx>=0.28.1->httpx[socks]>=0.28.1->spec-kitty-cli==3.2.0rc25)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:56.3151096Z   Using cached httpcore-1.0.9-py3-none-any.whl.metadata (21 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:56.3442697Z Collecting idna (from httpx>=0.28.1->httpx[socks]>=0.28.1->spec-kitty-cli==3.2.0rc25)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:56.3455395Z   Using cached idna-3.16-py3-none-any.whl.metadata (6.4 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:56.3728585Z Collecting h11>=0.16 (from httpcore==1.*->httpx>=0.28.1->httpx[socks]>=0.28.1->spec-kitty-cli==3.2.0rc25)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:56.3741157Z   Using cached h11-0.16.0-py3-none-any.whl.metadata (8.3 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:56.4001891Z Collecting pyproject_hooks (from build>=1.0.0->spec-kitty-cli==3.2.0rc25)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:56.4014522Z   Using cached pyproject_hooks-1.2.0-py3-none-any.whl.metadata (1.3 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:56.5012668Z Collecting cffi>=2.0.0 (from cryptography>=42.0->spec-kitty-cli==3.2.0rc25)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:56.5027151Z   Using cached cffi-2.0.0-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (2.6 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:56.5277446Z Collecting pycparser (from cffi>=2.0.0->cryptography>=42.0->spec-kitty-cli==3.2.0rc25)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:56.5288867Z   Using cached pycparser-3.0-py3-none-any.whl.metadata (8.2 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:56.5571034Z Collecting Jinja2>=2.7.1 (from diff-cover>=10.0.0->spec-kitty-cli==3.2.0rc25)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:56.5582343Z   Using cached jinja2-3.1.6-py3-none-any.whl.metadata (2.9 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:56.5851371Z Collecting pluggy<2,>=0.13.1 (from diff-cover>=10.0.0->spec-kitty-cli==3.2.0rc25)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:56.5862640Z   Using cached pluggy-1.6.0-py3-none-any.whl.metadata (4.8 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:56.6149449Z Collecting socksio==1.* (from httpx[socks]>=0.28.1->spec-kitty-cli==3.2.0rc25)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:56.6160657Z   Using cached socksio-1.0.0-py3-none-any.whl.metadata (6.1 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:56.6738189Z Collecting MarkupSafe>=2.0 (from Jinja2>=2.7.1->diff-cover>=10.0.0->spec-kitty-cli==3.2.0rc25)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:56.6751787Z   Using cached markupsafe-3.0.3-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (2.7 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:56.7018878Z Collecting attrs>=22.2.0 (from jsonschema>=4.0->spec-kitty-cli==3.2.0rc25)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:56.7030495Z   Using cached attrs-26.1.0-py3-none-any.whl.metadata (8.8 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:56.7282273Z Collecting jsonschema-specifications>=2023.03.6 (from jsonschema>=4.0->spec-kitty-cli==3.2.0rc25)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:56.7294456Z   Using cached jsonschema_specifications-2025.9.1-py3-none-any.whl.metadata (2.9 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:56.7606718Z Collecting referencing>=0.28.4 (from jsonschema>=4.0->spec-kitty-cli==3.2.0rc25)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:56.7618842Z   Using cached referencing-0.37.0-py3-none-any.whl.metadata (2.8 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:56.9875249Z Collecting rpds-py>=0.25.0 (from jsonschema>=4.0->spec-kitty-cli==3.2.0rc25)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:56.9889693Z   Using cached rpds_py-0.30.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (4.1 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:57.0210054Z Collecting click>=8.0.0 (from mutmut>=3.5.0->spec-kitty-cli==3.2.0rc25)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:57.0222554Z   Using cached click-8.4.1-py3-none-any.whl.metadata (2.6 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:57.3841463Z Collecting coverage>=7.3.0 (from mutmut>=3.5.0->spec-kitty-cli==3.2.0rc25)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:57.3856061Z   Using cached coverage-7.14.0-cp312-cp312-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl.metadata (8.5 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:57.4521013Z Collecting libcst>=1.8.5 (from mutmut>=3.5.0->spec-kitty-cli==3.2.0rc25)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:57.4534552Z   Using cached libcst-1.8.6-cp312-cp312-manylinux_2_28_x86_64.whl.metadata (15 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:57.5100299Z Collecting setproctitle>=1.1.0 (from mutmut>=3.5.0->spec-kitty-cli==3.2.0rc25)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:57.5114655Z   Using cached setproctitle-1.3.7-cp312-cp312-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl.metadata (10 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:57.5552376Z Collecting textual>=1.0.0 (from mutmut>=3.5.0->spec-kitty-cli==3.2.0rc25)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:57.5565960Z   Using cached textual-8.2.7-py3-none-any.whl.metadata (9.1 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:57.5874641Z Collecting iniconfig>=1.0.1 (from pytest>=9.0.3->spec-kitty-cli==3.2.0rc25)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:57.5885981Z   Using cached iniconfig-2.3.0-py3-none-any.whl.metadata (2.5 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:57.6337314Z Collecting networkx>=3.2 (from pytestarch>=4.0.0->spec-kitty-cli==3.2.0rc25)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:57.6349681Z   Using cached networkx-3.6.1-py3-none-any.whl.metadata (6.8 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:57.6785864Z Collecting urllib3<3,>=1.26 (from requests>=2.33.0->spec-kitty-cli==3.2.0rc25)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:57.6798481Z   Using cached urllib3-2.7.0-py3-none-any.whl.metadata (6.9 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:57.7116974Z Collecting markdown-it-py>=2.2.0 (from rich>=14.3.3->spec-kitty-cli==3.2.0rc25)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:57.7129152Z   Using cached markdown_it_py-4.2.0-py3-none-any.whl.metadata (7.4 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:57.7409092Z Collecting mdurl~=0.1 (from markdown-it-py>=2.2.0->rich>=14.3.3->spec-kitty-cli==3.2.0rc25)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:57.7420247Z   Using cached mdurl-0.1.2-py3-none-any.whl.metadata (1.6 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:57.7713826Z Collecting mdit-py-plugins (from textual>=1.0.0->mutmut>=3.5.0->spec-kitty-cli==3.2.0rc25)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:57.7725105Z   Using cached mdit_py_plugins-0.6.1-py3-none-any.whl.metadata (2.9 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:57.8028642Z Collecting linkify-it-py<3,>=1 (from markdown-it-py[linkify]>=2.1.0->textual>=1.0.0->mutmut>=3.5.0->spec-kitty-cli==3.2.0rc25)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:57.8041661Z   Using cached linkify_it_py-2.1.0-py3-none-any.whl.metadata (8.5 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:57.8294349Z Collecting uc-micro-py (from linkify-it-py<3,>=1->markdown-it-py[linkify]>=2.1.0->textual>=1.0.0->mutmut>=3.5.0->spec-kitty-cli==3.2.0rc25)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:57.8305420Z   Using cached uc_micro_py-2.0.0-py3-none-any.whl.metadata (2.2 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:57.8573506Z Collecting six (from transitions>=0.9.2->spec-kitty-cli==3.2.0rc25)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:57.8585071Z   Using cached six-1.17.0-py2.py3-none-any.whl.metadata (1.7 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:57.8869798Z Collecting shellingham>=1.3.0 (from typer>=0.24.1->spec-kitty-cli==3.2.0rc25)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:57.8881043Z   Using cached shellingham-1.5.4-py2.py3-none-any.whl.metadata (3.5 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:57.9144975Z Collecting annotated-doc>=0.0.2 (from typer>=0.24.1->spec-kitty-cli==3.2.0rc25)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:57.9156456Z   Using cached annotated_doc-0.0.4-py3-none-any.whl.metadata (6.6 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:57.9289414Z Using cached chardet-5.2.0-py3-none-any.whl (199 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:57.9301739Z Using cached charset_normalizer-3.4.7-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (216 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:57.9313440Z Using cached spec_kitty_events-5.2.0-py3-none-any.whl (372 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:57.9325681Z Using cached pydantic-2.13.4-py3-none-any.whl (472 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:57.9338476Z Using cached pydantic_core-2.46.4-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (2.1 MB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:57.9356087Z Using cached spec_kitty_tracker-0.4.3-py3-none-any.whl (66 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:57.9366990Z Using cached httpx-0.28.1-py3-none-any.whl (73 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:57.9377411Z Using cached httpcore-1.0.9-py3-none-any.whl (78 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:57.9388280Z Using cached annotated_types-0.7.0-py3-none-any.whl (13 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:57.9399282Z Using cached build-1.5.0-py3-none-any.whl (26 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:57.9410096Z Using cached cryptography-48.0.0-cp311-abi3-manylinux_2_34_x86_64.whl (4.7 MB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:57.9437069Z Using cached cffi-2.0.0-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (219 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:57.9448274Z Using cached diff_cover-10.2.1-py3-none-any.whl (56 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:57.9458907Z Using cached pluggy-1.6.0-py3-none-any.whl (20 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:57.9469530Z Using cached pygments-2.20.0-py3-none-any.whl (1.2 MB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:57.9484331Z Using cached filelock-3.29.0-py3-none-any.whl (39 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:57.9495849Z Using cached google_re2-1.1.20251105-1-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl (591 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:57.9508317Z Using cached h11-0.16.0-py3-none-any.whl (37 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:57.9519852Z Using cached socksio-1.0.0-py3-none-any.whl (12 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:57.9530895Z Using cached jinja2-3.1.6-py3-none-any.whl (134 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:57.9542170Z Using cached jsonschema-4.26.0-py3-none-any.whl (90 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:57.9553248Z Using cached attrs-26.1.0-py3-none-any.whl (67 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:57.9564525Z Using cached jsonschema_specifications-2025.9.1-py3-none-any.whl (18 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:57.9575867Z Using cached markupsafe-3.0.3-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (22 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:57.9586524Z Using cached mutmut-3.5.0-py3-none-any.whl (34 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:57.9597564Z Using cached click-8.4.1-py3-none-any.whl (116 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:57.9609413Z Using cached coverage-7.14.0-cp312-cp312-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl (254 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:57.9621148Z Using cached libcst-1.8.6-cp312-cp312-manylinux_2_28_x86_64.whl (2.3 MB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:57.9639706Z Using cached packaging-26.2-py3-none-any.whl (100 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:57.9651021Z Using cached platformdirs-4.9.6-py3-none-any.whl (21 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:57.9662607Z Using cached psutil-7.2.2-cp36-abi3-manylinux2010_x86_64.manylinux_2_12_x86_64.manylinux_2_28_x86_64.whl (155 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:57.9673778Z Using cached pytest-9.0.3-py3-none-any.whl (375 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:57.9686060Z Using cached iniconfig-2.3.0-py3-none-any.whl (7.5 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:57.9697049Z Using cached pytest_asyncio-1.3.0-py3-none-any.whl (15 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:57.9707929Z Using cached pytest_cov-7.1.0-py3-none-any.whl (22 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:57.9718700Z Using cached pytest_timeout-2.4.0-py3-none-any.whl (14 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:57.9729518Z Using cached pytestarch-4.0.1-py3-none-any.whl (61 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:57.9756930Z Using cached networkx-3.6.1-py3-none-any.whl (2.1 MB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:57.9765965Z Using cached python_ulid-3.1.0-py3-none-any.whl (11 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:57.9778216Z Using cached pyyaml-6.0.3-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (807 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:57.9792246Z Using cached readchar-4.2.2-py3-none-any.whl (9.4 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:57.9803013Z Using cached referencing-0.37.0-py3-none-any.whl (26 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:57.9814247Z Using cached requests-2.34.2-py3-none-any.whl (73 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:57.9825373Z Using cached idna-3.16-py3-none-any.whl (74 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:57.9836651Z Using cached urllib3-2.7.0-py3-none-any.whl (131 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:57.9848116Z Using cached certifi-2026.5.20-py3-none-any.whl (134 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:57.9859201Z Using cached respx-0.23.1-py2.py3-none-any.whl (25 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:57.9869736Z Using cached rich-15.0.0-py3-none-any.whl (310 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:57.9882478Z Using cached markdown_it_py-4.2.0-py3-none-any.whl (91 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:57.9893950Z Using cached mdurl-0.1.2-py3-none-any.whl (10.0 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:57.9905290Z Using cached rpds_py-0.30.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (394 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:57.9917461Z Using cached ruamel_yaml-0.19.1-py3-none-any.whl (118 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:57.9929330Z Using cached setproctitle-1.3.7-cp312-cp312-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl (32 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:57.9940108Z Using cached textual-8.2.7-py3-none-any.whl (731 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:57.9953978Z Using cached typing_extensions-4.15.0-py3-none-any.whl (44 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:57.9965151Z Using cached linkify_it_py-2.1.0-py3-none-any.whl (19 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:57.9976073Z Using cached toml-0.10.2-py2.py3-none-any.whl (16 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:57.9986997Z Using cached transitions-0.9.3-py2.py3-none-any.whl (112 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:57.9998143Z Using cached truststore-0.10.4-py3-none-any.whl (18 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:58.0009129Z Using cached typer-0.25.1-py3-none-any.whl (58 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:58.0020275Z Using cached annotated_doc-0.0.4-py3-none-any.whl (5.3 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:58.0031291Z Using cached shellingham-1.5.4-py2.py3-none-any.whl (9.8 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:58.0042386Z Using cached typing_inspection-0.4.2-py3-none-any.whl (14 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:58.0053741Z Using cached websockets-16.0-cp312-cp312-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl (184 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:58.0065043Z Using cached anyio-4.13.0-py3-none-any.whl (114 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:58.0076714Z Using cached mdit_py_plugins-0.6.1-py3-none-any.whl (66 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:58.0087791Z Using cached pycparser-3.0-py3-none-any.whl (48 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:58.0098834Z Using cached pyproject_hooks-1.2.0-py3-none-any.whl (10 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:58.0110171Z Using cached six-1.17.0-py2.py3-none-any.whl (11 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:58.0121379Z Using cached uc_micro_py-2.0.0-py3-none-any.whl (6.4 kB)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:58.0814257Z Building wheels for collected packages: spec-kitty-cli
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:58.0822604Z   Building editable for spec-kitty-cli (pyproject.toml): started
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:58.1215361Z   Building editable for spec-kitty-cli (pyproject.toml): finished with status 'done'
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:58.1221130Z   Created wheel for spec-kitty-cli: filename=spec_kitty_cli-3.2.0rc25-py3-none-any.whl size=7171 sha256=2be6e8dc43b44cf775db9db74d6e6bdaf24a66f23eda86a415bb9f738d7a4836
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:58.1222771Z   Stored in directory: /tmp/pip-ephem-wheel-cache-ezlrcgu7/wheels/f9/31/49/9e7e9c4d1430c7ff707e6d02f195f65b419f17dc5e698873f1
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:58.1250152Z Successfully built spec-kitty-cli
+diff-coverage	UNKNOWN STEP	2026-05-24T07:14:58.2363113Z Installing collected packages: websockets, urllib3, uc-micro-py, typing-extensions, truststore, toml, socksio, six, shellingham, setproctitle, ruamel-yaml, rpds-py, readchar, pyyaml, python-ulid, pyproject_hooks, pygments, pycparser, psutil, pluggy, platformdirs, packaging, networkx, mdurl, MarkupSafe, iniconfig, idna, h11, google-re2, filelock, coverage, click, charset-normalizer, chardet, certifi, attrs, annotated-types, annotated-doc, typing-inspection, transitions, requests, referencing, pytestarch, pytest, pydantic-core, markdown-it-py, linkify-it-py, libcst, Jinja2, httpcore, cffi, build, anyio, rich, pytest-timeout, pytest-cov, pytest-asyncio, pydantic, mdit-py-plugins, jsonschema-specifications, httpx, diff-cover, cryptography, typer, textual, spec-kitty-tracker, spec-kitty-events, respx, jsonschema, spec-kitty-cli, mutmut
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:05.4369973Z
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:05.4427246Z Successfully installed Jinja2-3.1.6 MarkupSafe-3.0.3 annotated-doc-0.0.4 annotated-types-0.7.0 anyio-4.13.0 attrs-26.1.0 build-1.5.0 certifi-2026.5.20 cffi-2.0.0 chardet-5.2.0 charset-normalizer-3.4.7 click-8.4.1 coverage-7.14.0 cryptography-48.0.0 diff-cover-10.2.1 filelock-3.29.0 google-re2-1.1.20251105 h11-0.16.0 httpcore-1.0.9 httpx-0.28.1 idna-3.16 iniconfig-2.3.0 jsonschema-4.26.0 jsonschema-specifications-2025.9.1 libcst-1.8.6 linkify-it-py-2.1.0 markdown-it-py-4.2.0 mdit-py-plugins-0.6.1 mdurl-0.1.2 mutmut-3.5.0 networkx-3.6.1 packaging-26.2 platformdirs-4.9.6 pluggy-1.6.0 psutil-7.2.2 pycparser-3.0 pydantic-2.13.4 pydantic-core-2.46.4 pygments-2.20.0 pyproject_hooks-1.2.0 pytest-9.0.3 pytest-asyncio-1.3.0 pytest-cov-7.1.0 pytest-timeout-2.4.0 pytestarch-4.0.1 python-ulid-3.1.0 pyyaml-6.0.3 readchar-4.2.2 referencing-0.37.0 requests-2.34.2 respx-0.23.1 rich-15.0.0 rpds-py-0.30.0 ruamel-yaml-0.19.1 setproctitle-1.3.7 shellingham-1.5.4 six-1.17.0 socksio-1.0.0 spec-kitty-cli-3.2.0rc25 spec-kitty-events-5.2.0 spec-kitty-tracker-0.4.3 textual-8.2.7 toml-0.10.2 transitions-0.9.3 truststore-0.10.4 typer-0.25.1 typing-extensions-4.15.0 typing-inspection-0.4.2 uc-micro-py-2.0.0 urllib3-2.7.0 websockets-16.0
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:05.6999732Z ##[group]Run actions/download-artifact@v8
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:05.7000019Z with:
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:05.7000201Z   pattern: *-reports
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:05.7000424Z   path: out/reports/artifacts
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:05.7000657Z   merge-multiple: false
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:05.7001062Z   repository: Priivacy-ai/spec-kitty
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:05.7001301Z   run-id: 26354749577
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:05.7001510Z   skip-decompress: false
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:05.7001725Z   digest-mismatch: error
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:05.7001913Z env:
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:05.7002159Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.13/x64
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:05.7002574Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.13/x64/lib/pkgconfig
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:05.7002979Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.13/x64
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:05.7003326Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.13/x64
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:05.7003675Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.13/x64
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:05.7004057Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.13/x64/lib
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:05.7004350Z ##[endgroup]
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:06.0614268Z Found 6 artifact(s)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:06.0615384Z Filtering artifacts by pattern '*-reports'
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:06.0633493Z Preparing to download the following artifacts:
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:06.0634694Z - fast-test-charter-reports (ID: 7183166314, Size: 14977, Expected Digest: sha256:3533694f05ff859433b0e9b846cab4a793b2b0166a374be494f3dede59fc5245)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:06.0636000Z - integration-test-cli-reports (ID: 7183133040, Size: 43225, Expected Digest: sha256:3df449285168c4e7adbe5ac59aa5fc61dddc21781a97c2462cbc90aea070c51b)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:06.0636928Z - fast-test-cli-reports (ID: 7183125417, Size: 43322, Expected Digest: sha256:65ddbc9870b605761105add8ed766d4fba1e3ce287f326ae180aec743a726f2b)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:06.0637767Z - lint-reports (ID: 7183122626, Size: 7851, Expected Digest: sha256:f13f0a422b69f73fe3c82797183e883d2dbb31efbeccbe53c70b1faed9872cfc)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:06.4553748Z Redirecting to blob download url: https://productionresultssa19.blob.core.windows.net/actions-results/9e2aec83-b07d-4f3e-83c4-3c59fdd5db63/workflow-job-run-17ecf251-b1e4-56a3-a910-f99b3d46f038/artifacts/499a8b342770bc83b71a052f7720a4128a0ea94ab5ed69fb3acb57e867e851a9.zip
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:06.4556021Z Starting download of artifact to: /home/runner/work/spec-kitty/spec-kitty/out/reports/artifacts/fast-test-cli-reports
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:06.4579733Z Redirecting to blob download url: https://productionresultssa19.blob.core.windows.net/actions-results/9e2aec83-b07d-4f3e-83c4-3c59fdd5db63/workflow-job-run-b661ffe0-28b1-5675-8566-0367d903db3b/artifacts/a7a31c089d9f5caa20d7b4c06eb436cd0b0f84b19f1273d7a70ddd649fe44c1d.zip
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:06.4582279Z Starting download of artifact to: /home/runner/work/spec-kitty/spec-kitty/out/reports/artifacts/lint-reports
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:06.4595655Z Redirecting to blob download url: https://productionresultssa19.blob.core.windows.net/actions-results/9e2aec83-b07d-4f3e-83c4-3c59fdd5db63/workflow-job-run-a3f421ea-d274-5b57-ad81-91b9fc193795/artifacts/01137a72fcf0058eb80ad20fa6f7d4e6e195a114ccff485756eef65cfa4d5d70.zip
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:06.4598135Z Starting download of artifact to: /home/runner/work/spec-kitty/spec-kitty/out/reports/artifacts/integration-test-cli-reports
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:06.4895121Z Redirecting to blob download url: https://productionresultssa19.blob.core.windows.net/actions-results/9e2aec83-b07d-4f3e-83c4-3c59fdd5db63/workflow-job-run-142e0982-e6c6-5912-a800-479d5a2a8f17/artifacts/612136ce38af1ec421473963282e0088e58f7757c685e414f2d8a04995a5ed4f.zip
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:06.4897308Z Starting download of artifact to: /home/runner/work/spec-kitty/spec-kitty/out/reports/artifacts/fast-test-charter-reports
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:06.6616760Z (node:2455) [DEP0005] DeprecationWarning: Buffer() is deprecated due to security and usability issues. Please use the Buffer.alloc(), Buffer.allocUnsafe(), or Buffer.from() methods instead.
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:06.6618191Z (Use `node --trace-deprecation ...` to show where the warning was created)
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:06.6694976Z SHA256 digest of downloaded artifact is f13f0a422b69f73fe3c82797183e883d2dbb31efbeccbe53c70b1faed9872cfc
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:06.6695961Z Artifact download completed successfully.
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:06.6921141Z SHA256 digest of downloaded artifact is 3533694f05ff859433b0e9b846cab4a793b2b0166a374be494f3dede59fc5245
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:06.6921740Z Artifact download completed successfully.
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:06.7131045Z SHA256 digest of downloaded artifact is 65ddbc9870b605761105add8ed766d4fba1e3ce287f326ae180aec743a726f2b
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:06.7131745Z Artifact download completed successfully.
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:06.7240978Z SHA256 digest of downloaded artifact is 3df449285168c4e7adbe5ac59aa5fc61dddc21781a97c2462cbc90aea070c51b
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:06.7241876Z Artifact download completed successfully.
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:06.7242375Z Total of 4 artifact(s) downloaded
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:06.7246606Z Download artifact has finished successfully
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:06.7380394Z ##[group]Run # actions/checkout@v6 already performs a full fetch here. Only
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:06.7381262Z ^[[36;1m# actions/checkout@v6 already performs a full fetch here. Only^[[0m
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:06.7381927Z ^[[36;1m# hydrate the remote-tracking base ref when it is missing, and do^[[0m
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:06.7382389Z ^[[36;1m# that fetch with the workflow token so PR jobs do not fail on an^[[0m
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:06.7382763Z ^[[36;1m# unauthenticated HTTPS remote.^[[0m
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:06.7383167Z ^[[36;1mif ! git show-ref --verify --quiet "refs/remotes/origin/main"; then^[[0m
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:06.7384123Z ^[[36;1m  git -c http.extraheader="AUTHORIZATION: bearer ***" \^[[0m
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:06.7384498Z ^[[36;1m    fetch origin \^[[0m
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:06.7384783Z ^[[36;1m    "main:refs/remotes/origin/main"^[[0m
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:06.7385069Z ^[[36;1mfi^[[0m
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:06.7385278Z ^[[36;1m^[[0m
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:06.7385477Z ^[[36;1mcritical_paths=(^[[0m
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:06.7385762Z ^[[36;1m  'src/kernel/*'^[[0m
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:06.7386000Z ^[[36;1m  'src/doctrine/*'^[[0m
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:06.7386248Z ^[[36;1m  'src/charter/*'^[[0m
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:06.7386517Z ^[[36;1m  'src/specify_cli/status/*'^[[0m
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:06.7386853Z ^[[36;1m  'src/specify_cli/core/mission_detection.py'^[[0m
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:06.7387202Z ^[[36;1m  'src/specify_cli/dashboard/handlers/*'^[[0m
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:06.7387528Z ^[[36;1m  'src/specify_cli/dashboard/scanner.py'^[[0m
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:06.7387835Z ^[[36;1m  'src/specify_cli/merge/*'^[[0m
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:06.7388115Z ^[[36;1m  'src/specify_cli/next/*'^[[0m
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:06.7388372Z ^[[36;1m)^[[0m
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:06.7388568Z ^[[36;1m^[[0m
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:06.7388781Z ^[[36;1mcoverage_reports=()^[[0m
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:06.7389052Z ^[[36;1mwhile IFS= read -r -d '' f; do^[[0m
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:06.7389390Z ^[[36;1m  coverage_reports+=("$f")^[[0m
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:06.7389818Z ^[[36;1mdone < <(find out/reports/artifacts -name 'coverage-*.xml' -print0 2>/dev/null)^[[0m
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:06.7390237Z ^[[36;1m^[[0m
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:06.7390523Z ^[[36;1mecho "Found ${#coverage_reports[@]} coverage report(s):"^[[0m
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:06.7391164Z ^[[36;1mprintf '  %s\n' "${coverage_reports[@]}"^[[0m
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:06.7391463Z ^[[36;1m^[[0m
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:06.7391711Z ^[[36;1mif [ ${#coverage_reports[@]} -eq 0 ]; then^[[0m
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:06.7392173Z ^[[36;1m  critical_diff=$(git diff --name-only "origin/main...HEAD" -- "${critical_paths[@]}")^[[0m
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:06.7392632Z ^[[36;1m  if [ -z "$critical_diff" ]; then^[[0m
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:06.7393159Z ^[[36;1m    echo "No coverage reports found, but this PR does not touch critical-path files. Skipping diff coverage."^[[0m
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:06.7393666Z ^[[36;1m    exit 0^[[0m
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:06.7393889Z ^[[36;1m  fi^[[0m
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:06.7394094Z ^[[36;1m^[[0m
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:06.7394392Z ^[[36;1m  echo "::error::No coverage reports found for diff coverage."^[[0m
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:06.7394812Z ^[[36;1m  echo "::error::Critical-path changes detected:"^[[0m
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:06.7395151Z ^[[36;1m  printf '  %s\n' "$critical_diff"^[[0m
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:06.7395426Z ^[[36;1m  exit 1^[[0m
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:06.7395637Z ^[[36;1mfi^[[0m
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:06.7395826Z ^[[36;1m^[[0m
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:06.7396061Z ^[[36;1mdiff-cover "${coverage_reports[@]}" \^[[0m
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:06.7396396Z ^[[36;1m  --compare-branch=origin/main \^[[0m
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:06.7396698Z ^[[36;1m  --fail-under=90 \^[[0m
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:06.7396977Z ^[[36;1m  --include "${critical_paths[@]}"^[[0m
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:06.7433899Z shell: /usr/bin/bash -e {0}
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:06.7434174Z env:
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:06.7434461Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.13/x64
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:06.7434911Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.13/x64/lib/pkgconfig
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:06.7435344Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.13/x64
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:06.7435738Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.13/x64
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:06.7436125Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.13/x64
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:06.7436729Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.13/x64/lib
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:06.7437074Z ##[endgroup]
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:06.7535790Z Found 3 coverage report(s):
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:06.7536716Z   out/reports/artifacts/fast-test-cli-reports/coverage/coverage-fast-cli.xml
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:06.7537629Z   out/reports/artifacts/fast-test-charter-reports/coverage/coverage-fast-charter.xml
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:06.7538601Z   out/reports/artifacts/integration-test-cli-reports/coverage/coverage-integration-cli.xml
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:07.3671251Z Failure. Coverage is below 90%.
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:07.3671761Z -------------
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:07.3672048Z Diff Coverage
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:07.3672346Z Diff: origin/main...HEAD, staged and unstaged changes
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:07.3672676Z -------------
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:07.3672938Z src/charter/compiler.py (0.0%): Missing lines 505
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:07.3673240Z -------------
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:07.3673438Z Total:   1 line
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:07.3673647Z Missing: 1 line
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:07.3673885Z Coverage: 0%
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:07.3674082Z -------------
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:07.3674200Z
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:07.3904380Z ##[error]Process completed with exit code 1.
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:07.3953317Z ##[group]Run coverage_reports=()
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:07.3953672Z ^[[36;1mcoverage_reports=()^[[0m
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:07.3953975Z ^[[36;1mwhile IFS= read -r -d '' f; do^[[0m
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:07.3954275Z ^[[36;1m  coverage_reports+=("$f")^[[0m
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:07.3954709Z ^[[36;1mdone < <(find out/reports/artifacts -name 'coverage-*.xml' -print0 2>/dev/null)^[[0m
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:07.3955137Z ^[[36;1m^[[0m
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:07.3955393Z ^[[36;1mif [ ${#coverage_reports[@]} -gt 0 ]; then^[[0m
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:07.3955737Z ^[[36;1m  diff-cover "${coverage_reports[@]}" \^[[0m
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:07.3956073Z ^[[36;1m    --compare-branch=origin/main || true^[[0m
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:07.3956369Z ^[[36;1mfi^[[0m
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:07.3992459Z shell: /usr/bin/bash -e {0}
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:07.3992723Z env:
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:07.3993014Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.13/x64
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:07.3993466Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.13/x64/lib/pkgconfig
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:07.3993936Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.13/x64
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:07.3994323Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.13/x64
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:07.3994698Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.13/x64
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:07.3995087Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.13/x64/lib
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:07.3995411Z ##[endgroup]
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:07.8931431Z -------------
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:07.8931847Z Diff Coverage
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:07.8932286Z Diff: origin/main...HEAD, staged and unstaged changes
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:07.8932740Z -------------
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:07.8933018Z src/charter/compiler.py (0.0%): Missing lines 505
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:07.8933441Z src/specify_cli/cli/commands/_auth_doctor.py (0.0%): Missing lines 236
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:07.8933803Z -------------
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:07.8934007Z Total:   2 lines
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:07.8934226Z Missing: 2 lines
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:07.8934429Z Coverage: 0%
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:07.8934628Z -------------
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:07.8934750Z
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:07.9230130Z Post job cleanup.
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:08.0146072Z [command]/usr/bin/git version
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:08.0216551Z git version 2.54.0
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:08.0254948Z Temporarily overriding HOME='/home/runner/work/_temp/b965d1b9-deff-4436-825d-f19dd6723a8c' before making global git config changes
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:08.0255873Z Adding repository directory to the temporary git global config as a safe directory
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:08.0260530Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/spec-kitty/spec-kitty
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:08.0295412Z Removing SSH command configuration
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:08.0301929Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:08.0338730Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:08.0598350Z Removing HTTP extra header
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:08.0604001Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:08.0639937Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:08.0892796Z Removing includeIf entries pointing to credentials config files
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:08.0900486Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:08.0931596Z includeif.gitdir:/home/runner/work/spec-kitty/spec-kitty/.git.path
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:08.0932454Z includeif.gitdir:/home/runner/work/spec-kitty/spec-kitty/.git/worktrees/*.path
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:08.0933154Z includeif.gitdir:/github/workspace/.git.path
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:08.0933728Z includeif.gitdir:/github/workspace/.git/worktrees/*.path
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:08.0941358Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/home/runner/work/spec-kitty/spec-kitty/.git.path
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:08.0966408Z /home/runner/work/_temp/git-credentials-ad7314f3-792b-4964-9f7d-b26cfaaa7b21.config
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:08.0977585Z [command]/usr/bin/git config --local --unset includeif.gitdir:/home/runner/work/spec-kitty/spec-kitty/.git.path /home/runner/work/_temp/git-credentials-ad7314f3-792b-4964-9f7d-b26cfaaa7b21.config
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:08.1015651Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/home/runner/work/spec-kitty/spec-kitty/.git/worktrees/*.path
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:08.1039223Z /home/runner/work/_temp/git-credentials-ad7314f3-792b-4964-9f7d-b26cfaaa7b21.config
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:08.1049071Z [command]/usr/bin/git config --local --unset includeif.gitdir:/home/runner/work/spec-kitty/spec-kitty/.git/worktrees/*.path /home/runner/work/_temp/git-credentials-ad7314f3-792b-4964-9f7d-b26cfaaa7b21.config
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:08.1083070Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/github/workspace/.git.path
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:08.1105750Z /github/runner_temp/git-credentials-ad7314f3-792b-4964-9f7d-b26cfaaa7b21.config
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:08.1113709Z [command]/usr/bin/git config --local --unset includeif.gitdir:/github/workspace/.git.path /github/runner_temp/git-credentials-ad7314f3-792b-4964-9f7d-b26cfaaa7b21.config
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:08.1145951Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/github/workspace/.git/worktrees/*.path
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:08.1167439Z /github/runner_temp/git-credentials-ad7314f3-792b-4964-9f7d-b26cfaaa7b21.config
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:08.1176400Z [command]/usr/bin/git config --local --unset includeif.gitdir:/github/workspace/.git/worktrees/*.path /github/runner_temp/git-credentials-ad7314f3-792b-4964-9f7d-b26cfaaa7b21.config
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:08.1212465Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:08.1484664Z Removing credentials config '/home/runner/work/_temp/git-credentials-ad7314f3-792b-4964-9f7d-b26cfaaa7b21.config'
+diff-coverage	UNKNOWN STEP	2026-05-24T07:15:08.1649582Z Cleaning up orphan processes

@@ -1,0 +1,14 @@
+Use Semble as the only broad code-location mechanism.
+
+Rules:
+- Preserve task completion quality over token reduction.
+- Do not use broad Glob, find, tree, or repository-overview agents.
+- Use Semble in small searches before reading files:
+  `uvx --from semble semble search "CSV parser owner normalization blank owner unassigned" internal/events --top-k 5`
+  `uvx --from semble semble search "owner breakdown aggregation markdown owners table" internal/report --top-k 5`
+- Read only files returned by Semble, using narrow ranges when possible.
+- During debugging, rerun targeted package tests first:
+  `go test ./internal/events ./internal/report`
+- For final verification, run the full suite quietly:
+  `go test ./... >/tmp/go-test.log && echo "go test ./... passed" || { grep -A3 -B2 -E "FAIL|--- FAIL" /tmp/go-test.log; exit 1; }`
+- Do not use web search.

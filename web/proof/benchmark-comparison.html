@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>External Benchmark Comparison | Claude Analyzer</title>
+    <link rel="icon" href="../favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="../styles.css" />
+  </head>
+  <body>
+    <main class="shell doc-page proof-page">
+      <p class="trust-links">
+        <a href="index.html">Proof</a>
+        <a href="methodology.html">Methodology</a>
+        <a href="results.html">Results</a>
+        <a href="../index.html">Home</a>
+      </p>
+
+      <section class="proof-hero">
+        <p class="eyebrow">benchmark landscape</p>
+        <h1>Other benchmarks agree on one thing: method matters.</h1>
+        <p class="subhead">Public token-saving claims use very different protocols. Some replay transcripts through compressors, some run live A/B calls, some test CLAUDE.md profiles, and some measure tool or MCP overhead. We compare those methods before borrowing their conclusions.</p>
+      </section>
+
+      <section class="panel proof-callout">
+        <p class="eyebrow">research finding</p>
+        <h2>There is no single universal “token reduction” benchmark.</h2>
+        <p>The strongest external evidence supports specific mechanisms: prompt caching for cached input, smaller tool schemas and quieter shell output for input/context, compact profile guidance for input and visible output, and search/navigation that prevents duplicate reads. The weakest evidence comes from installing broad retrieval or MCP tooling without proving Claude actually uses it to avoid context. Most public studies do not separately report reasoning tokens.</p>
+      </section>
+
+      <section class="result-grid proof-summary-grid">
+        <article class="metric">
+          <strong>live A/B</strong>
+          <span>best for proving task quality, but expensive and workload-sensitive</span>
+        </article>
+        <article class="metric">
+          <strong>fixture replay</strong>
+          <span>best for reproducible compression estimates, but not task completion</span>
+        </article>
+        <article class="metric">
+          <strong>MCP/tool tests</strong>
+          <span>useful only when they measure overhead and actual use, not installation alone</span>
+        </article>
+      </section>
+
+      <section class="panel">
+        <h2>External Benchmark Comparison</h2>
+        <table class="comparison-table results-table">
+          <thead>
+            <tr>
+              <th>Source</th>
+              <th>Methodology</th>
+              <th>Reported result</th>
+              <th>Token category</th>
+              <th>What it proves</th>
+              <th>How we use it</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><a class="text-link" href="https://code.claude.com/docs/en/costs">Anthropic Claude Code cost guidance</a></td>
+              <td>Official guidance, not an A/B benchmark. Recommends usage tracking, clearing stale context, compaction, fewer MCP servers, CLI tools where possible, and hooks that filter noisy test output.</td>
+              <td>No single headline percentage; it defines the vendor-endorsed cost-control mechanisms.</td>
+              <td>Input/context, tool-output, telemetry</td>
+              <td>Context size, MCP/tool overhead, and noisy tool output are first-order cost drivers.</td>
+              <td>We treat these as mechanism candidates, then require local task benchmarks before product claims.</td>
+            </tr>
+            <tr>
+              <td><a class="text-link" href="https://www.anthropic.com/news/token-saving-updates">Anthropic token-saving updates</a></td>
+              <td>Platform-level API benchmarks for prompt caching and token-efficient tool use.</td>
+              <td>Prompt caching can reduce cost up to 90% and latency up to 85%; token-efficient tool use reduces output tokens up to 70%, with 14% average reduction among early users.</td>
+              <td>Cached input, output</td>
+              <td>Repeated prompt prefixes and tool-use output can be reduced substantially at the platform layer.</td>
+              <td>We separate platform savings from Claude Code plugin workflow savings.</td>
+            </tr>
+            <tr>
+              <td><a class="text-link" href="https://thedistillery.dev/blog/claude-code-cost-optimization-guide/">The Distillery</a></td>
+              <td>Replay of eight realistic multi-turn Claude Code fixture sessions through an optimization pipeline, using chars/4 token estimation.</td>
+              <td>20% reproducible reduction on 124,580 raw tokens; 30-60% in heavier real sessions depending on pattern.</td>
+              <td>Transcript input/context estimate</td>
+              <td>Transcript compression, deduplication, and output filtering can reduce fixed session payloads.</td>
+              <td>Useful benchmark shape for future replay tests, but not a substitute for fresh task A/B runs.</td>
+            </tr>
+            <tr>
+              <td><a class="text-link" href="https://www.tamp.computer/blog/tamp-v080-whitepaper">Tamp v0.8.0 whitepaper</a></td>
+              <td>216 live A/B calls: 12 scenarios across 18 configurations routed through OpenRouter, judged by Claude Sonnet Haiku 4.5.</td>
+              <td>L5 balanced default reports 47.56% token savings with 216/216 quality retention.</td>
+              <td>Task total, category split unclear</td>
+              <td>Compression can preserve judged task quality across a controlled scenario grid.</td>
+              <td>We borrow the A/B + quality-retention framing while using repository tests for our own quality gate.</td>
+            </tr>
+            <tr>
+              <td><a class="text-link" href="https://techloom.it/blog/claudemd-benchmark-results.html">TechLoom CLAUDE.md benchmark</a></td>
+              <td>1,188 total runs across three models, 12 coding tasks, and 10 instruction profiles. Scores tests, lint, complexity, and LLM judgment.</td>
+              <td>CLAUDE.md compression saved only 5-13% actual API tokens; compressed profiles hurt Haiku/Sonnet in several cases; an empty profile won overall on generic tasks.</td>
+              <td>Input/context instructions and task total</td>
+              <td>Instruction compression can save input tokens but still damage quality or create unnecessary overhead.</td>
+              <td>Supports our conservative stance on claude-token-efficient: small diffs, no blanket overwrites.</td>
+            </tr>
+            <tr>
+              <td><a class="text-link" href="https://www.getboarder.ai/blog/mcp-token-costs-benchmark">Boarder copy/paste MCP benchmark</a></td>
+              <td>Five baseline and five MCP runs in isolated containers on a 700-line Express monolith split into 11 modules.</td>
+              <td>Baseline averaged 70.9K tokens and $1.22; MCP averaged 81.0K tokens and $1.34, roughly 10% higher cost.</td>
+              <td>Task total and MCP input/context overhead</td>
+              <td>Adding a tool or MCP abstraction can increase cost when it is not used consistently enough to replace broad context.</td>
+              <td>Matches our mixed local results: claude-context and Probe added cost here, while Semble, RTK, and Squeez only earned scoped recommendations after 3x task runs.</td>
+            </tr>
+            <tr>
+              <td><a class="text-link" href="https://www.tokensavior.dev/docs/benchmarks/">Token Savior</a></td>
+              <td>Vendor benchmark on 96 real coding tasks with Claude Opus 4.7, emphasizing structural navigation and memory.</td>
+              <td>Claims active tokens per task fell from 17,221 to 3,395, an 80% reduction, and wall time fell 83%.</td>
+              <td>Active context/task total</td>
+              <td>Symbol-level navigation and memory may be large wins when the agent reliably uses them.</td>
+              <td>Good candidate mechanism for future reproduction, but currently external vendor evidence.</td>
+            </tr>
+            <tr>
+              <td><a class="text-link" href="https://computingforgeeks.com/claude-code-token-optimization-tools-tested/">ComputingForGeeks tested-tool roundup</a></td>
+              <td>Practical tool tests across a small 52-file benchmark plus vendor data comparisons.</td>
+              <td>Reports code-review-graph savings around 5% on a small repo and notes RTK showed 0% on their bash task but is useful on noisy output.</td>
+              <td>Tool-output and task total</td>
+              <td>Small-repo overhead can erase benefits, and output compression depends on workload shape.</td>
+              <td>Reinforces our conditional verdicts for RTK and search tools.</td>
+            </tr>
+            <tr>
+              <td><a class="text-link" href="https://arxiv.org/abs/2510.16424">Local-Splitter paper</a></td>
+              <td>Open-source shim across MCP and OpenAI-compatible HTTP. Evaluates seven tactics across edit-heavy, explanation-heavy, chat, and RAG-heavy workloads.</td>
+              <td>Local routing plus prompt compression saves 45-79% cloud tokens on edit/explanation workloads; full tactic set saves 51% on RAG-heavy workloads.</td>
+              <td>Cloud input/output total by workload</td>
+              <td>Workload-specific routing and compression can outperform any one universal technique.</td>
+              <td>Supports adding separate benchmark families for edit, explanation, RAG, and long-session work.</td>
+            </tr>
+            <tr>
+              <td><a class="text-link" href="https://www.stackone.com/blog/4-ways-to-reduce-mcp-token-usage-and-costs">StackOne MCP optimization comparison</a></td>
+              <td>Compares schema compression, search-first discovery, response filtering, and code-mode execution for MCP token use.</td>
+              <td>Reports approach-level ranges, including 70-97% schema compression in relevant MCP scenarios.</td>
+              <td>MCP schema/response input context</td>
+              <td>MCP savings often come from reducing tool definitions and responses before they enter context.</td>
+              <td>Guides future MCP benchmark design; it is not direct evidence for our plugin by itself.</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="panel">
+        <h2>Where Our Benchmark Is Stricter</h2>
+        <ul class="artifact-list">
+          <li><strong>Fresh task execution:</strong> baseline and optimized runs are independent Claude Code <code>-p</code> sessions, not only replayed transcript compression.</li>
+          <li><strong>Same starting point:</strong> every comparison starts from the same fixed commit, task prompt, and quality command.</li>
+          <li><strong>External quality gate:</strong> token savings are not counted unless the repository verification command passes on both sides.</li>
+          <li><strong>Negative findings stay visible:</strong> tools that added searches, duplicate reads, or turns are labeled negative or conditional instead of folded into a blended claim.</li>
+        </ul>
+      </section>
+
+      <section class="panel">
+        <h2>What We Still Need To Benchmark</h2>
+        <p>The public literature suggests that one Go task is not enough to make universal claims. The next benchmark families should cover long multi-hour sessions, monorepo navigation, MCP-heavy workflows, noisy UI test logs, and CLAUDE.md/profile changes. Those are separate mechanisms and should get separate proof.</p>
+      </section>
+
+      <section class="panel">
+        <h2>Product Rule</h2>
+        <p>Claude Analyzer should say exactly what kind of evidence backs each recommendation. Local A/B results can support product proof. External benchmarks can identify promising mechanisms. Vendor claims require reproduction before they become default install advice.</p>
+      </section>
+    </main>
+  </body>
+</html>

@@ -881,6 +881,7 @@ const FAILURE_MODE_LABEL = {
 
 const INSTALL_SURFACE_LABEL = {
   local_binary_plus_claude_hook: "Local binary + Claude hook",
+  local_binary_explicit_compression: "Local binary + explicit compression",
   claude_plugin_plus_mcp: "Claude plugin + MCP",
   mcp_plus_external_vector_store: "MCP + external vector store",
   local_binary_plus_optional_embedding_provider: "Local binary + optional embeddings",
@@ -893,13 +894,15 @@ const INSTALL_SURFACE_LABEL = {
 };
 
 const TOOL_PURPOSE = {
-  ccusage: "ccusage reads Claude Code usage data so you can see token burn, cache behavior, and cost trends instead of guessing.",
-  ccstatusline: "ccstatusline puts lightweight usage and session telemetry in your statusline so drift is visible while you work.",
+  ccusage: "ccusage is measurement, not a reducer: it gives independent token, cache, and cost accounting so you can verify whether changes are working.",
+  ccstatusline: "ccstatusline is awareness, not a reducer: keep it outside the prompt path so cost and context drift are visible without adding task overhead.",
   context_mode: "Context Mode compresses or externalizes noisy tool output before it pollutes future turns.",
-  claude_context: "claude-context adds semantic retrieval so the agent can ask for targeted code context instead of repeatedly rereading files.",
-  claude_token_efficient: "claude-token-efficient reduces assistant verbosity so future context grows more slowly.",
+  claude_context: "claude-context is not a default recommendation from our runs: it added overhead on the current fixture and needs a larger retrieval-amortization task before promotion.",
+  claude_token_efficient: "claude-token-efficient showed only a small, noisy saving in our 3x runs, so we treat it as manual verbosity hygiene rather than a default install.",
   claude_code_hooks_mastery: "Claude Code Hooks Mastery is a reference set for deterministic hooks that can enforce session hygiene.",
   rtk: "RTK is a high-risk shell-output reducer candidate. Only consider the linked rtk-ai/rtk project, not unrelated packages with the same name.",
+  semble: "Semble earned a scoped retrieval recommendation in our 3x runs when path-limited search replaced broad repeated file reads.",
+  squeez: "Squeez earned a scoped shell/log compression recommendation; use it explicitly for noisy command output, not as a general reasoning-token reducer.",
 };
 
 function savingsBucket(report) {

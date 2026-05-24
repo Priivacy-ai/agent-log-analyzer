@@ -1,0 +1,21 @@
+{
+  "schema_version": "2026-05-24",
+  "run_name": "claude-context-limit3",
+  "harness": "claude",
+  "required_repeats": 3,
+  "fresh_context_contract": "Each repeat invokes one full baseline/optimized harness run. The harness creates fresh detached git worktrees and launches separate Claude/Codex task sessions for baseline and optimized runs.",
+  "task_prompt_file": "<repo>/docs/benchmarks/fixtures/tasks/owner-breakdown-v3-noisy.txt",
+  "analyzer_repo": "<repo>",
+  "environment": {
+    "SOURCE_REPO": "/private/tmp/agent-analyzer-benchmark-target-v3",
+    "BASE_REF": "b96b8a7f5cc57c4335bc7bc85ec726c836ed0996",
+    "QUALITY_COMMAND": "go test ./...",
+    "OPTIMIZED_GUIDANCE_FILE": "<repo>/docs/benchmarks/fixtures/guidance/claude-context-limit3-guidance.txt",
+    "OPTIMIZED_MCP_CONFIG_FILE": "<repo>/docs/benchmarks/fixtures/mcp/claude-context-local.json",
+    "OPTIMIZED_PRE_TASK_PROMPT_FILE": "<repo>/docs/benchmarks/fixtures/guidance/claude-context-pre-task.txt",
+    "AGENT_PLUGIN_ENABLED": "0",
+    "TOOLING_REVIEW_ENABLED": "0",
+    "BASELINE_CLAUDE_ARGS": "--setting-sources project,local --strict-mcp-config --mcp-config {\"mcpServers\":{}} --settings {\"enabledPlugins\":{\"sentrux@sentrux-marketplace\":false},\"permissions\":{\"defaultMode\":\"bypassPermissions\"}} --permission-mode bypassPermissions --disallowedTools Agent --output-format json --model sonnet --max-budget-usd 15",
+    "OPTIMIZED_CLAUDE_ARGS": "--setting-sources project,local --strict-mcp-config --mcp-config {\"mcpServers\":{}} --settings {\"enabledPlugins\":{\"sentrux@sentrux-marketplace\":false},\"permissions\":{\"defaultMode\":\"bypassPermissions\"}} --permission-mode bypassPermissions --disallowedTools Agent --output-format json --model sonnet --max-budget-usd 15"
+  }
+}

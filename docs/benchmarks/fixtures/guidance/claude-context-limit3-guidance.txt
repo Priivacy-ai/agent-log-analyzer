@@ -1,0 +1,8 @@
+Use the claude-context MCP as the only broad discovery mechanism for this repository.
+
+1. Confirm this worktree is indexed.
+2. Search with limit 3 for: "CSV parser owner normalization blank owner unassigned".
+3. Search with limit 3 for: "owner breakdown aggregation markdown owners table".
+4. Read only files returned by those searches, using narrow ranges when possible.
+5. Do not use broad directory listing, broad file discovery, or unrelated optional tools.
+6. Run `go test ./...` before finishing.

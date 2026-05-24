@@ -1,0 +1,25 @@
+Diagnose the Spec Kitty high-context fixture and write the answer to benchmark-answer.md.
+
+Use the full repository, not just the first matching file. The task is intentionally context-heavy:
+- Inspect the CI logs copied into .benchmark-fixtures/spec-kitty-ci/.
+- Cross-reference the CI workflow at .github/workflows/ci-quality.yml.
+- Cross-reference the changed PR files implied by the failed diff-coverage log:
+  src/charter/compiler.py
+  src/specify_cli/cli/commands/_auth_doctor.py
+  src/specify_cli/acceptance/__init__.py
+  src/specify_cli/compat/cache.py
+  src/specify_cli/readiness/upgrade_ux.py
+  src/specify_cli/retrospective/generator.py
+- Inspect the large in-repo evidence logs:
+  kitty-specs/unblock-sync-identity-boundary-canary-01KRZJ07/canary-evidence/full-pytest.txt
+  kitty-specs/charter-contract-cleanup-tranche-1-01KQATS4/research/_artifacts/test-gate-5-ruff.txt
+- Use the mission/spec corpus under kitty-specs only when it helps explain why this repo is high-context.
+
+Write benchmark-answer.md with these sections:
+1. Fixture scale: summarize why this is high-context, including file counts or evidence-log sizes if you measured them.
+2. PR diff-coverage failure: identify the failing job, the exact number of coverage reports found by the enforced step, the missing files/lines, and the likely smallest fix. Do not say there were no coverage reports if the local log shows reports.
+3. Scheduled SonarCloud failure: identify the failing job, the 34 artifact coverage fan-in, and the root signal from the quality gate.
+4. Token-saving implications: name which tool classes should help here, separating input/context reduction from tool-output/log compression and from visible output terseness.
+5. Recommended next benchmark: say whether this fixture should test retrieval amortization, noisy log compression, MCP overhead, or all three.
+
+Do not modify production source files. Only create benchmark-answer.md. Run no network commands unless the local fixture is missing.

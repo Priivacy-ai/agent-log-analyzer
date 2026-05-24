@@ -1,24 +1,5 @@
 {
   "primary": {
-    "recommendation_id": "rec.usage_visibility.ccusage.no_usage_visibility",
-    "primary_tool_id": "ccusage",
-    "primary_tool_name": "ccusage",
-    "primary_tool_url": "https://github.com/ryoppippi/ccusage",
-    "failure_modes": [
-      "cross_cutting_telemetry"
-    ],
-    "reason": "absent",
-    "signal_ids": [
-      "no_usage_visibility"
-    ],
-    "confidence": "low",
-    "risk_level": "low",
-    "data_movement_risk": "low",
-    "install_policy": "recommend",
-    "install_surface": "local_cli_or_local_config",
-    "evidence_counts": {}
-  },
-  "secondary": {
     "recommendation_id": "rec.mcp_skill_hygiene.none.mcp_skill_bloat",
     "primary_tool_id": "",
     "failure_modes": [
@@ -34,8 +15,33 @@
     "install_surface": "prune_or_lazy_load_existing_mcp_and_skills",
     "evidence_counts": {}
   },
-  "registry_version": "phase-a-2026-05-20-tool-url-audit",
-  "engine_version": "v0.1-phase-a",
+  "secondary": {
+    "recommendation_id": "rec.shell_output_reducer.rtk.tool_output_bloat",
+    "primary_tool_id": "rtk",
+    "primary_tool_name": "RTK (Rust Token Killer, rtk-ai/rtk)",
+    "primary_tool_url": "https://github.com/rtk-ai/rtk",
+    "failure_modes": [
+      "noisy_terminal_logs"
+    ],
+    "reason": "absent",
+    "signal_ids": [
+      "tool_output_bloat"
+    ],
+    "confidence": "low",
+    "risk_level": "high",
+    "data_movement_risk": "high",
+    "install_policy": "recommend_with_waiver",
+    "install_surface": "local_binary_plus_claude_hook",
+    "conflicts_with": [
+      "squeez",
+      "leanctx",
+      "headroom"
+    ],
+    "ambiguity_warning": "RTK means github.com/rtk-ai/rtk. Do not install or recommend the unrelated npm package named rtk.",
+    "evidence_counts": {}
+  },
+  "registry_version": "phase-a-2026-05-24-benchmark-narrowed",
+  "engine_version": "v0.2-benchmark-narrowed",
   "signals": [
     "mcp_skill_bloat",
     "no_usage_visibility",

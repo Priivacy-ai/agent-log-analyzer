@@ -1,0 +1,96 @@
+{
+  "schema_version": "2026-05-24",
+  "description": "Permanent Spec Kitty high-context benchmark fixture suite for large-repo navigation, noisy CI logs, and retrieval amortization.",
+  "target": {
+    "source_repo_default": "/tmp/agent-analyzer-spec-kitty-target",
+    "fixed_commit": "38abeebf6fab2215fb52a099bfad707a7a503ad7",
+    "task_prompt_file": "docs/benchmarks/fixtures/tasks/spec-kitty-high-context-ci.txt",
+    "quality_command": "test -s benchmark-answer.md && rg -q 'src/charter/compiler.py' benchmark-answer.md && rg -q '_auth_doctor.py' benchmark-answer.md && rg -q 'SonarCloud Quality Gate|Quality Gate' benchmark-answer.md && rg -q '34|thirty-four' benchmark-answer.md && rg -q 'Coverage reports found|3 coverage report|found 3|found three' benchmark-answer.md",
+    "setup_command": "mkdir -p .benchmark-fixtures/spec-kitty-ci && cp \"$ANALYZER_REPO/docs/benchmarks/fixtures/spec-kitty/ci-logs/\"*.txt .benchmark-fixtures/spec-kitty-ci/"
+  },
+  "default_repeats": 3,
+  "suites": [
+    {
+      "id": "spec-kitty-agent-analyzer-guided",
+      "tool": "Agent Analyzer guidance",
+      "harness": "claude",
+      "guidance_file": "docs/benchmarks/fixtures/guidance/agent-analyzer-spec-kitty-guidance.txt",
+      "env": {
+        "AGENT_PLUGIN_ENABLED": "1",
+        "TOOLING_REVIEW_ENABLED": "0",
+        "BASELINE_CLAUDE_ARGS": "--setting-sources project,local --strict-mcp-config --mcp-config {\"mcpServers\":{}} --settings {\"enabledPlugins\":{\"sentrux@sentrux-marketplace\":false},\"permissions\":{\"defaultMode\":\"bypassPermissions\"}} --permission-mode bypassPermissions --disallowedTools Agent --output-format json --model sonnet --max-budget-usd 20",
+        "OPTIMIZED_CLAUDE_ARGS": "--setting-sources project,local --strict-mcp-config --mcp-config {\"mcpServers\":{}} --settings {\"enabledPlugins\":{\"sentrux@sentrux-marketplace\":false},\"permissions\":{\"defaultMode\":\"bypassPermissions\"}} --permission-mode bypassPermissions --disallowedTools Agent --output-format json --model sonnet --max-budget-usd 20"
+      }
+    },
+    {
+      "id": "spec-kitty-rtk-explicit",
+      "tool": "RTK",
+      "harness": "claude",
+      "guidance_file": "docs/benchmarks/fixtures/guidance/rtk-explicit-guidance.txt",
+      "requires": [
+        "rtk"
+      ],
+      "env": {
+        "AGENT_PLUGIN_ENABLED": "0",
+        "TOOLING_REVIEW_ENABLED": "0",
+        "BASELINE_CLAUDE_ARGS": "--setting-sources project,local --strict-mcp-config --mcp-config {\"mcpServers\":{}} --settings {\"enabledPlugins\":{\"sentrux@sentrux-marketplace\":false},\"permissions\":{\"defaultMode\":\"bypassPermissions\"}} --permission-mode bypassPermissions --disallowedTools Agent --output-format json --model sonnet --max-budget-usd 20",
+        "OPTIMIZED_CLAUDE_ARGS": "--setting-sources project,local --strict-mcp-config --mcp-config {\"mcpServers\":{}} --settings {\"enabledPlugins\":{\"sentrux@sentrux-marketplace\":false},\"permissions\":{\"defaultMode\":\"bypassPermissions\"}} --permission-mode bypassPermissions --disallowedTools Agent --output-format json --model sonnet --max-budget-usd 20"
+      }
+    },
+    {
+      "id": "spec-kitty-claude-context-limit3",
+      "tool": "claude-context",
+      "harness": "claude",
+      "guidance_file": "docs/benchmarks/fixtures/guidance/claude-context-limit3-guidance.txt",
+      "pre_task_prompt_file": "docs/benchmarks/fixtures/guidance/claude-context-pre-task.txt",
+      "mcp_config_file": "docs/benchmarks/fixtures/mcp/claude-context-local.json",
+      "requires": [
+        "ollama:nomic-embed-text",
+        "milvus:127.0.0.1:19530",
+        "claude-context-mcp"
+      ],
+      "env": {
+        "AGENT_PLUGIN_ENABLED": "0",
+        "TOOLING_REVIEW_ENABLED": "0",
+        "BASELINE_CLAUDE_ARGS": "--setting-sources project,local --strict-mcp-config --mcp-config {\"mcpServers\":{}} --settings {\"enabledPlugins\":{\"sentrux@sentrux-marketplace\":false},\"permissions\":{\"defaultMode\":\"bypassPermissions\"}} --permission-mode bypassPermissions --disallowedTools Agent --output-format json --model sonnet --max-budget-usd 20",
+        "OPTIMIZED_CLAUDE_ARGS": "--setting-sources project,local --strict-mcp-config --mcp-config {\"mcpServers\":{}} --settings {\"enabledPlugins\":{\"sentrux@sentrux-marketplace\":false},\"permissions\":{\"defaultMode\":\"bypassPermissions\"}} --permission-mode bypassPermissions --disallowedTools Agent --output-format json --model sonnet --max-budget-usd 20"
+      }
+    },
+    {
+      "id": "spec-kitty-grepai-path-constrained",
+      "tool": "grepai",
+      "harness": "claude",
+      "guidance_file": "docs/benchmarks/fixtures/guidance/grepai-path-constrained-guidance.txt",
+      "requires": [
+        "grepai"
+      ],
+      "env": {
+        "AGENT_PLUGIN_ENABLED": "0",
+        "TOOLING_REVIEW_ENABLED": "0",
+        "BASELINE_CLAUDE_ARGS": "--setting-sources project,local --strict-mcp-config --mcp-config {\"mcpServers\":{}} --settings {\"enabledPlugins\":{\"sentrux@sentrux-marketplace\":false},\"permissions\":{\"defaultMode\":\"bypassPermissions\"}} --permission-mode bypassPermissions --disallowedTools Agent --output-format json --model sonnet --max-budget-usd 20",
+        "OPTIMIZED_CLAUDE_ARGS": "--setting-sources project,local --strict-mcp-config --mcp-config {\"mcpServers\":{}} --settings {\"enabledPlugins\":{\"sentrux@sentrux-marketplace\":false},\"permissions\":{\"defaultMode\":\"bypassPermissions\"}} --permission-mode bypassPermissions --disallowedTools Agent --output-format json --model sonnet --max-budget-usd 20"
+      }
+    },
+    {
+      "id": "spec-kitty-squeez",
+      "tool": "Squeez",
+      "harness": "claude",
+      "guidance_file": "docs/benchmarks/fixtures/guidance/squeez-guidance.txt",
+      "requires": [
+        "npx"
+      ],
+      "env": {
+        "AGENT_PLUGIN_ENABLED": "0",
+        "TOOLING_REVIEW_ENABLED": "0",
+        "BASELINE_CLAUDE_ARGS": "--setting-sources project,local --strict-mcp-config --mcp-config {\"mcpServers\":{}} --settings {\"enabledPlugins\":{\"sentrux@sentrux-marketplace\":false},\"permissions\":{\"defaultMode\":\"bypassPermissions\"}} --permission-mode bypassPermissions --disallowedTools Agent --output-format json --model sonnet --max-budget-usd 20",
+        "OPTIMIZED_CLAUDE_ARGS": "--setting-sources project,local --strict-mcp-config --mcp-config {\"mcpServers\":{}} --settings {\"enabledPlugins\":{\"sentrux@sentrux-marketplace\":false},\"permissions\":{\"defaultMode\":\"bypassPermissions\"}} --permission-mode bypassPermissions --disallowedTools Agent --output-format json --model sonnet --max-budget-usd 20"
+      }
+    },
+    {
+      "id": "spec-kitty-codex-guided",
+      "tool": "Agent Analyzer guidance for Codex",
+      "harness": "codex",
+      "guidance_file": "docs/benchmarks/fixtures/guidance/agent-analyzer-codex-guidance.txt"
+    }
+  ]
+}

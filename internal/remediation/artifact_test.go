@@ -163,7 +163,7 @@ func TestGenerateCreatesClaudePluginArtifact(t *testing.T) {
 	if !containsCustomization(artifact, "retrieval-hygiene") || !containsCustomization(artifact, "output-budget") || !containsCustomization(artifact, "retry-breaker") {
 		t.Fatalf("missing expected customizations: %#v", artifact.Customizations)
 	}
-	for _, want := range []string{"ccusage", "context-mode", "grepai", "claude-context", "typescript-lsp", "github"} {
+	for _, want := range []string{"ccusage", "context-mode", "grepai", "semble", "squeez", "typescript-lsp", "github"} {
 		if !containsRecommendation(artifact, want) {
 			t.Fatalf("missing vetted recommendation %s: %#v", want, artifact.VettedRecommendations)
 		}

@@ -1,0 +1,110 @@
+{
+  "schema_version": "2026-05-23",
+  "fixed_commit": "b96b8a7f5cc57c4335bc7bc85ec726c836ed0996",
+  "claude_version": "2.1.148 (Claude Code)",
+  "baseline_claude_args": "--strict-mcp-config --settings {\"enabledPlugins\":{\"sentrux@sentrux-marketplace\":false,\"context-mode@context-mode\":false},\"permissions\":{\"defaultMode\":\"bypassPermissions\"}} --permission-mode bypassPermissions --output-format json --model sonnet --max-budget-usd 15",
+  "optimized_claude_args": "--strict-mcp-config --settings {\"enabledPlugins\":{\"sentrux@sentrux-marketplace\":false,\"context-mode@context-mode\":false},\"permissions\":{\"defaultMode\":\"bypassPermissions\"}} --permission-mode bypassPermissions --output-format json --model sonnet --max-budget-usd 15",
+  "baseline_exit_status": 0,
+  "optimized_exit_status": 0,
+  "baseline_quality_status": "0",
+  "optimized_quality_status": "0",
+  "baseline": {
+    "label": "baseline Claude Code -p",
+    "score": 63,
+    "estimated_tokens": 19898,
+    "tool_output_tokens": 14738,
+    "avoidable_waste_pct": {
+      "low": 18,
+      "high": 26
+    },
+    "rereads": 0,
+    "retry_depth_max": 1,
+    "context_growth_events": 1,
+    "failed_commands": 5
+  },
+  "optimized": {
+    "label": "plugin-assisted Claude Code -p",
+    "score": 64,
+    "estimated_tokens": 22652,
+    "tool_output_tokens": 15680,
+    "avoidable_waste_pct": {
+      "low": 18,
+      "high": 26
+    },
+    "rereads": 0,
+    "retry_depth_max": 2,
+    "context_growth_events": 0,
+    "failed_commands": 7
+  },
+  "baseline_claude_usage": {
+    "total_cost_usd": 0.24712895000000001,
+    "num_turns": 10,
+    "input_tokens": 10,
+    "cache_creation_input_tokens": 16941,
+    "cache_read_input_tokens": 142219,
+    "output_tokens": 2050
+  },
+  "optimized_claude_usage": {
+    "total_cost_usd": 0.20119965,
+    "num_turns": 19,
+    "input_tokens": 16,
+    "cache_creation_input_tokens": 16143,
+    "cache_read_input_tokens": 337468,
+    "output_tokens": 2625
+  },
+  "delta": {
+    "estimated_tokens": 2754,
+    "tool_output_tokens": 942,
+    "avoidable_waste_low_points": 0,
+    "avoidable_waste_high_points": 0,
+    "rereads": 0,
+    "context_growth_events": -1,
+    "failed_commands": 2,
+    "claude_total_cost_usd": -0.045929300000000006,
+    "claude_cache_creation_input_tokens": -798,
+    "claude_cache_read_input_tokens": 195249,
+    "claude_output_tokens": 575
+  },
+  "privacy_boundary": "Publish sanitized reports and comparison JSON only. Do not publish raw Claude Code logs, raw prompts, secrets, private paths, or unknown private tool names.",
+  "published_api_cost_estimate": {
+    "provider": "anthropic",
+    "pricing": {
+      "model": "claude-sonnet-4-6",
+      "source": "https://platform.claude.com/docs/en/about-claude/pricing",
+      "as_of": "2026-05-24",
+      "rates_usd_per_mtok": {
+        "input_tokens": 3.0,
+        "cache_creation_input_tokens_1h": 6.0,
+        "cache_read_input_tokens": 0.3,
+        "output_tokens": 15.0
+      },
+      "cache_creation_assumption": "Comparison JSON exposes cache_creation_input_tokens without the 5m/1h split; raw benchmark stdout for these runs used ephemeral_1h cache writes, so this estimate prices cache creation at the 1-hour cache-write rate."
+    },
+    "baseline_usd": 0.1750917,
+    "optimized_usd": 0.2375214,
+    "delta_usd": 0.0624297,
+    "baseline_breakdown": {
+      "input_usd": 3e-05,
+      "cache_creation_1h_usd": 0.101646,
+      "cache_read_usd": 0.0426657,
+      "output_usd": 0.03075,
+      "total_usd": 0.1750917
+    },
+    "optimized_breakdown": {
+      "input_usd": 4.8e-05,
+      "cache_creation_1h_usd": 0.096858,
+      "cache_read_usd": 0.1012404,
+      "output_usd": 0.039375,
+      "total_usd": 0.2375214
+    },
+    "delta_breakdown": {
+      "input_usd": 1.8e-05,
+      "cache_creation_1h_usd": -0.004788,
+      "cache_read_usd": 0.0585747,
+      "output_usd": 0.008625,
+      "total_usd": 0.0624297
+    },
+    "native_harness_cost_delta_usd": -0.045929300000000006,
+    "note": "Published API-rate estimate for exposed Claude Sonnet token categories. Claude Code reported total_cost_usd can differ because Claude Code may route or account for additional internal model usage."
+  }
+}

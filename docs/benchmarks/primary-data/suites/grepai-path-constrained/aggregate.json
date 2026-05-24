@@ -1,0 +1,125 @@
+{
+  "schema_version": "2026-05-24",
+  "required_repeats": 3,
+  "completed_repeats": 3,
+  "failed_repeats": [],
+  "confidence_policy": "Recommendation verdicts should be promoted from first-pass to repeated only when at least three fresh baseline/optimized pairs complete and pass the same quality gate.",
+  "quality": [
+    {
+      "run": "run-01",
+      "baseline_quality_status": "0",
+      "optimized_quality_status": "0",
+      "baseline_exit_status": 0,
+      "optimized_exit_status": 0
+    },
+    {
+      "run": "run-02",
+      "baseline_quality_status": "0",
+      "optimized_quality_status": "0",
+      "baseline_exit_status": 0,
+      "optimized_exit_status": 0
+    },
+    {
+      "run": "run-03",
+      "baseline_quality_status": "0",
+      "optimized_quality_status": "0",
+      "baseline_exit_status": 0,
+      "optimized_exit_status": 0
+    }
+  ],
+  "delta_stats": {
+    "avoidable_waste_high_points": {
+      "n": 3,
+      "mean": 0.0,
+      "median": 0,
+      "min": 0,
+      "max": 0,
+      "stdev": 0.0
+    },
+    "avoidable_waste_low_points": {
+      "n": 3,
+      "mean": 0.0,
+      "median": 0,
+      "min": 0,
+      "max": 0,
+      "stdev": 0.0
+    },
+    "claude_cache_creation_input_tokens": {
+      "n": 3,
+      "mean": -8790.666666666666,
+      "median": -11281,
+      "min": -11790,
+      "max": -3301,
+      "stdev": 4760.997829587127
+    },
+    "claude_cache_read_input_tokens": {
+      "n": 3,
+      "mean": 28107.0,
+      "median": 62092,
+      "min": -67594,
+      "max": 89823,
+      "stdev": 84031.32238040766
+    },
+    "claude_output_tokens": {
+      "n": 3,
+      "mean": 443.0,
+      "median": 570,
+      "min": -324,
+      "max": 1083,
+      "stdev": 712.0456446043329
+    },
+    "claude_total_cost_usd": {
+      "n": 3,
+      "mean": -0.017597899999999972,
+      "median": -0.006508849999999983,
+      "min": -0.06906569999999998,
+      "max": 0.022780850000000047,
+      "stdev": 0.04691665439001913
+    },
+    "context_growth_events": {
+      "n": 3,
+      "mean": -1.0,
+      "median": -1,
+      "min": -1,
+      "max": -1,
+      "stdev": 0.0
+    },
+    "estimated_tokens": {
+      "n": 3,
+      "mean": -14566.666666666666,
+      "median": -16098,
+      "min": -23212,
+      "max": -4390,
+      "stdev": 9503.981130733233
+    },
+    "failed_commands": {
+      "n": 3,
+      "mean": 1.6666666666666667,
+      "median": 2,
+      "min": 1,
+      "max": 2,
+      "stdev": 0.5773502691896257
+    },
+    "rereads": {
+      "n": 3,
+      "mean": 0.0,
+      "median": 0,
+      "min": 0,
+      "max": 0,
+      "stdev": 0.0
+    },
+    "tool_output_tokens": {
+      "n": 3,
+      "mean": -15571.333333333334,
+      "median": -17364,
+      "min": -23136,
+      "max": -6214,
+      "stdev": 8602.253270703748
+    }
+  },
+  "run_dirs": [
+    "run-01",
+    "run-02",
+    "run-03"
+  ]
+}

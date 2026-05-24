@@ -320,7 +320,7 @@ type RecommendationSet struct {
 // engineVersionString is bumped on every change to rule precedence,
 // conflict resolution, or recommendation-ID composition. It is
 // exposed only via EngineVersion().
-const engineVersionString = "v0.1-phase-a"
+const engineVersionString = "v0.2-benchmark-narrowed"
 
 // EngineVersion returns the engine's policy version. Pure; safe to
 // call concurrently.

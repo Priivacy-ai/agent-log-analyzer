@@ -1,0 +1,15 @@
+Use grepai only as a narrow code locator, not as a repository overview.
+
+Rules:
+- Preserve task completion quality over token reduction.
+- Do not run broad file discovery (`find`, `tree`, broad `ls`, broad `Glob`) unless the grepai searches below fail.
+- Start with these exact compact searches:
+  `grepai search "CSV parser owner normalization blank owner unassigned" --path internal/events --toon --compact -n 3`
+  `grepai search "owner breakdown aggregation markdown owners table" --path internal/report --toon --compact -n 3`
+- Read only the files returned by those searches, using narrow ranges when possible.
+- During debugging, rerun only targeted package tests first:
+  `go test ./internal/events ./internal/report`
+- For final verification, run the full suite quietly:
+  `go test ./... >/tmp/go-test.log && echo "go test ./... passed" || { grep -A3 -B2 -E "FAIL|--- FAIL" /tmp/go-test.log; exit 1; }`
+- Do not install optional tools.
+- Do not use web search.

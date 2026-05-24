@@ -39,16 +39,13 @@ var canonicalToolID = regexp.MustCompile(`^[a-z][a-z0-9_]*$`)
 // Registry entries beyond this list are permitted only if their
 // InstallPolicy is "reference_only" or "research_only" — i.e. the
 // matrix-doc additions must not silently promote a tool to "recommend".
-//
-// Note: ccstatusline is included here because research.md promotes it
-// to "recommend" alongside the brief's usage_visibility tools; the
-// non-brief-promotion guard below would otherwise flag it.
 var briefAllowlist = []ToolID{
 	"ccusage",
 	"tokenusage",
 	"claude_meter",
 	"ccstatusline",
 	"rtk",
+	"squeez",
 	"leanctx",
 	"headroom",
 	"context_mode",
@@ -225,7 +222,7 @@ func TestRegistryAllowlistCoverage(t *testing.T) {
 }
 
 func TestRegistryVersionConstant(t *testing.T) {
-	if got, want := RegistryVersion(), "phase-a-2026-05-20-tool-url-audit"; got != want {
+	if got, want := RegistryVersion(), "phase-a-2026-05-24-benchmark-narrowed"; got != want {
 		t.Errorf("RegistryVersion() = %q, want %q", got, want)
 	}
 }

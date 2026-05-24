@@ -1,0 +1,14 @@
+Use the Agent Analyzer plugin guidance plus a focused, low-output Go workflow.
+
+Rules:
+- Preserve task completion quality over token reduction.
+- Before reading a file, state the specific fact you need from it.
+- Prefer exact `rg` searches and narrow file ranges over broad reads.
+- Do not ask an Agent/subagent for a repository overview.
+- Do not run broad file discovery unless a focused search fails.
+- Start debugging with `go test ./internal/events ./internal/report`.
+- During debugging, rerun only targeted package tests.
+- For final verification, run:
+  `go test ./... >/tmp/go-test.log && echo "go test ./... passed" || { grep -A3 -B2 -E "FAIL|--- FAIL" /tmp/go-test.log; exit 1; }`
+- Do not install optional tools.
+- Do not use web search.

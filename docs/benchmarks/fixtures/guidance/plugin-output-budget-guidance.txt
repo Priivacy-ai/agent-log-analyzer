@@ -1,0 +1,7 @@
+Use the Agent Analyzer plugin for this optimized benchmark run.
+
+1. Apply its output-budget guidance before running tests or shell commands.
+2. Apply its session/retrieval hygiene guidance before reading files.
+3. Preserve task completion quality over token reduction.
+4. Do not install optional tools.
+5. Do not use web search.

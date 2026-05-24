@@ -9,42 +9,51 @@
   </head>
   <body>
     <main class="shell doc-page">
-      <h1>Allowed Tool Recommendations</h1>
+      <h1>Benchmark-Narrowed Tool Recommendations</h1>
       <section class="panel">
         <p class="command-note">
-          Agent Analyzer recommends only public, URL-backed tools from this allowlist. Private MCP names, private skills,
-          raw paths, prompts, and transcript text are not used as recommendation labels.
+          Agent Analyzer no longer treats a public tool list as proof of token savings. Recommendations now come from
+          the repeated benchmark matrix and only apply when your report shows the matching waste signal. Private MCP
+          names, private skills, raw paths, prompts, and transcript text are not used as recommendation labels.
         </p>
+        <p><a class="text-link" href="/proof/results.html">Read the full repeated benchmark results</a></p>
       </section>
       <section class="panel">
-        <h2>Free Report Candidates</h2>
+        <h2>Default Pack</h2>
         <ul class="proof">
-          <li><a href="https://github.com/ryoppippi/ccusage">ccusage</a> - Claude Code usage accounting and burn-rate visibility.</li>
-          <li><a href="https://github.com/sirmalloc/ccstatusline">ccstatusline</a> - statusline telemetry for context/cost awareness.</li>
-          <li><a href="https://github.com/mksglu/context-mode">Context Mode</a> - context compression, telemetry, and output hygiene.</li>
-          <li><a href="https://github.com/disler/claude-code-hooks-mastery">Claude Code Hooks Mastery</a> - vetted hook patterns for session hygiene.</li>
-          <li><a href="https://github.com/zilliztech/claude-context">claude-context</a> - MCP semantic retrieval for large repositories.</li>
-          <li><a href="https://github.com/drona23/claude-token-efficient">claude-token-efficient</a> - response terseness guidance for smaller future context.</li>
+          <li>Agent Analyzer workflow guidance: 3/3 quality, 23.986% lower published API-rate cost.</li>
+          <li>Output-budgeted commands for tool-output bloat.</li>
+          <li>Scoped retrieval hygiene for repeated file reads.</li>
+          <li>Session hygiene and retry breakers for context pivots and repeated failures.</li>
         </ul>
       </section>
       <section class="panel">
-        <h2>Review-Only / Research Candidates</h2>
+        <h2>Conditional Reducers</h2>
         <p class="command-note">
-          These may appear in internal analysis or paid-pack research, but should not be presented as a one-click install
-          unless the registry marks them allowed and the source URL matches the recommendation.
+          These reduced cost in the noisy benchmark, but only target specific token categories. The generated plugin
+          should recommend them only when the report evidence matches.
         </p>
         <ul class="proof">
-          <li><a href="https://github.com/hesreallyhim/awesome-claude-code">awesome-claude-code</a> - ecosystem index for monitoring new tools.</li>
-          <li><a href="https://github.com/Maciek-roboblog/Claude-Code-Usage-Monitor">Claude Code Usage Monitor</a> - burn-rate monitoring and forecasting.</li>
-          <li><a href="https://github.com/LyndonWangWork/Claude-Code-Usage-Tracker">Claude Code Usage Tracker</a> - lightweight usage telemetry.</li>
+          <li><a href="https://github.com/MinishLab/semble">Semble</a>: path-limited semantic retrieval, 41.5% API-rate savings here.</li>
+          <li><a href="https://github.com/mksglu/context-mode">context-mode</a>: tool-output/input-context batching, 20.4% API-rate savings here.</li>
+          <li><a href="https://github.com/rtk-ai/rtk">RTK</a>: explicit shell-output compression, 18.2% API-rate savings here; global hooks require separate approval.</li>
+          <li><a href="https://github.com/yoanbernabeu/grepai">grepai</a>: path-constrained compact retrieval, 14.5% API-rate savings here.</li>
+          <li><a href="https://github.com/claudioemmanuel/squeez">Squeez</a>: explicit shell/log compression, 12.1% API-rate savings here.</li>
         </ul>
       </section>
       <section class="panel">
-        <h2>Explicit Exclusions</h2>
+        <h2>Measurement, Not Reduction</h2>
+        <ul class="proof">
+          <li><a href="https://github.com/ryoppippi/ccusage">ccusage</a>: useful independent accounting; not a direct token reducer.</li>
+          <li><a href="https://github.com/sirmalloc/ccstatusline">ccstatusline</a>: useful awareness outside the prompt path; not a direct token reducer.</li>
+        </ul>
+      </section>
+      <section class="panel">
+        <h2>Removed From Default Recommendations</h2>
         <p class="command-note">
-          We do not currently recommend npm packages or GitHub repos whose public identity does not match the claimed
-          token-saving behavior. For example, the public npm package named <code>rtk</code> is not a shell-output reducer,
-          so it must not be recommended as one.
+          claude-context, Probe, Caveman for Claude Code, claude-rlm, claude-token-efficient, and broad ecosystem lists
+          are not default token-saving recommendations because the repeated benchmark was negative, too small, incomplete,
+          or not a reducer.
         </p>
       </section>
     </main>

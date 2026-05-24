@@ -1,0 +1,33 @@
+Use the claude-rlm Recursive Language Model skill as the only broad discovery mechanism.
+
+Rules:
+- Preserve task completion quality over token reduction.
+- The benchmark setup has copied the skill to `.benchmark-tools/rlm-skill`.
+- Start by delegating one read-only discovery pass through RLM:
+  ```sh
+  export PATH="$PWD/.benchmark-tools/rlm-skill/scripts:$PATH"
+  mkdir -p .rlm/owner-breakdown
+  cat > .rlm/owner-breakdown/task.md <<'PROMPT'
+You are a read-only discovery sub-agent for a Go repository.
+Find the likely files and root causes for the owner-breakdown task below.
+Do not edit files. Do not run broad repository overviews unless needed.
+Prefer targeted reads of internal/events and internal/report.
+Return:
+- likely files
+- likely defects
+- smallest tests to run
+- exact edit plan
+
+Task: CSV parsing should normalize owner names the same way service names are normalized; blank owners become "unassigned". Report aggregation should group owners by event owner, not by service. Markdown rendering should include an "Owners" table with the same numeric columns as the services table.
+PROMPT
+  RLM_MAX_PARALLEL=2 rlm-query .rlm/owner-breakdown/task.md .rlm/owner-breakdown/result.out --task owner-breakdown --model sonnet --max-depth 1 --timeout 600
+  sed -n '1,220p' .rlm/owner-breakdown/result.out
+  ```
+- After the RLM discovery pass, make the code changes yourself in the current worktree.
+- During debugging, rerun targeted package tests first:
+  `go test ./internal/events ./internal/report`
+- For final verification, run the full suite quietly:
+  `go test ./... >/tmp/go-test.log && echo "go test ./... passed" || { grep -A3 -B2 -E "FAIL|--- FAIL" /tmp/go-test.log; exit 1; }`
+- Do not use web search.
+
+Task prompt, unchanged from baseline:

@@ -1,0 +1,1001 @@
+{
+  "schema_version": "2026-05-24",
+  "benchmark_program": "claude-code-token-reduction-research",
+  "status": "repeated_benchmark_complete",
+  "claim": "Three fresh baseline/optimized pairs are published for every benchmarked recommendation. Agent Analyzer guidance reduced estimated tokens, tool-output tokens, visible output, native Claude cost, and published API-rate estimated cost while preserving the quality gate. The paid plugin now recommends only the core workflow plus conditional reducers that worked, and removes telemetry-only or negative tools from token-saving advice.",
+  "token_category_definitions": {
+    "input_context_tokens": "Prompt text, project instructions, tool schemas, file reads, tool results, and prior conversation context sent back to the model.",
+    "tool_output_tokens": "The subset of input/context tokens produced by shell, MCP, file, and search outputs.",
+    "output_tokens": "Visible assistant text and tool-call JSON emitted by the model.",
+    "reasoning_tokens": "Hidden model reasoning budget reported by some harnesses. Not directly reduced by telemetry or terse final prose unless measured.",
+    "cached_input_tokens": "Reused context that may be billed or quota-weighted differently from fresh input.",
+    "telemetry_only": "Usage visibility, cost accounting, statuslines, and dashboards. These do not directly reduce tokens."
+  },
+  "claude_version": "2.1.148 (Claude Code)",
+  "model": "sonnet",
+  "quality_gate": "Each published comparison required both baseline and optimized runs to complete the same task and pass go test ./...",
+  "methodology": {
+    "same_prompt": true,
+    "same_starting_commit": true,
+    "isolated_worktrees": true,
+    "mode": "Claude Code -p",
+    "measurement_tool": "Claude Analyzer",
+    "privacy_boundary": "Only sanitized Agent Analyzer reports and aggregate comparison metrics are published. Raw Claude Code logs, raw prompts, secrets, private paths, and unknown private tool names are excluded."
+  },
+  "headline_results": {
+    "agent_analyzer_guided_v2_mean_estimated_token_delta": -3204,
+    "agent_analyzer_guided_v2_mean_tool_output_delta": -2957,
+    "agent_analyzer_guided_v3_estimated_token_delta": -1764,
+    "agent_analyzer_guided_v3_tool_output_delta": -2298,
+    "quiet_go_noisy_repo_estimated_token_delta": -3516,
+    "rtk_explicit_noisy_repo_tool_output_delta": -1325,
+    "grepai_path_constrained_noisy_repo_tool_output_delta": -4576,
+    "claude_token_efficient_v2_estimated_token_delta": -1751,
+    "codex_guided_v3_estimated_token_delta": -12544,
+    "codex_guided_v3_tool_output_delta": -12612,
+    "codex_guided_v3_uncached_plus_output_token_delta": 17949,
+    "codex_guided_v3_reasoning_token_delta": 26,
+    "caveman_claude_v3_output_token_delta": -355,
+    "caveman_claude_v3_estimated_token_delta": 15014,
+    "caveman_codex_v3_output_token_delta": -78,
+    "caveman_codex_v3_reasoning_token_delta": 24,
+    "caveman_codex_v3_uncached_plus_output_token_delta": 31905,
+    "agent_analyzer_guided_v3_published_api_cost_delta_usd": 0.000402,
+    "codex_guided_v3_published_api_cost_delta_usd": 0.0386813,
+    "caveman_claude_v3_published_api_cost_delta_usd": -0.0118644,
+    "caveman_codex_v3_published_api_cost_delta_usd": 0.04974865,
+    "claude_context_published_api_cost_delta_usd": 0.0906729,
+    "context_mode_published_api_cost_delta_usd": 0.0366897,
+    "grepai_published_api_cost_delta_usd": 0.0791034,
+    "claude_token_efficient_published_api_cost_delta_usd": 0.0056826,
+    "RTK_published_api_cost_delta_usd": -0.0046353,
+    "agent_analyzer_guided_v3_repeated_estimated_token_delta_mean": -12370.333333333334,
+    "agent_analyzer_guided_v3_repeated_tool_output_delta_mean": -12697.666666666666,
+    "agent_analyzer_guided_v3_repeated_native_cost_delta_mean_usd": -0.04421946666666666,
+    "agent_analyzer_guided_v3_repeated_published_api_cost_delta_mean_usd": -0.05920730000000001,
+    "codex_guided_v3_repeated_estimated_token_delta_mean": -14520.333333333334,
+    "codex_guided_v3_repeated_tool_output_delta_mean": -14526.666666666666,
+    "codex_guided_v3_repeated_uncached_plus_output_delta_mean": -24368.666666666668,
+    "codex_guided_v3_repeated_reasoning_delta_mean": -44.666666666666664,
+    "codex_guided_v3_repeated_published_api_cost_delta_mean_usd": -0.062392399999999994,
+    "claude_context_repeated_estimated_token_delta_mean": 7327.0,
+    "claude_context_repeated_tool_output_delta_mean": 4169.666666666667,
+    "claude_context_repeated_published_api_cost_delta_mean_usd": 0.0580381,
+    "semble_repeated_estimated_token_delta_mean": -16300.666666666666,
+    "semble_repeated_tool_output_delta_mean": -16060.333333333334,
+    "claude_rlm_discovery_estimated_token_delta_mean": 19476.666666666668,
+    "claude_rlm_discovery_tool_output_delta_mean": 6020.333333333333,
+    "claude_rlm_discovery_root_native_cost_delta_mean_usd": -0.07532203333333334,
+    "agent_analyzer_guided_v3_repeated_published_api_cost_savings_percent": 23.986415315706576,
+    "agent_analyzer_guided_v3_monthly_savings_on_5000_usd": 1199.3207657853288,
+    "semble_repeated_published_api_cost_savings_percent": 41.46494678255211,
+    "rtk_repeated_published_api_cost_savings_percent": 18.153839473492326,
+    "context_mode_repeated_published_api_cost_savings_percent": 20.44835228575404,
+    "grepai_repeated_published_api_cost_savings_percent": 14.513454764088776,
+    "squeez_repeated_published_api_cost_savings_percent": 12.135861589457791
+  },
+  "recommendation_trials": [
+    {
+      "recommendation": "ccusage",
+      "source": "https://github.com/ryoppippi/ccusage",
+      "evidence_type": "visibility_validation",
+      "primary_token_category": "telemetry_only",
+      "does_not_directly_reduce": [
+        "input_context_tokens",
+        "tool_output_tokens",
+        "output_tokens",
+        "reasoning_tokens"
+      ],
+      "quality": "not_applicable",
+      "estimated_token_delta": null,
+      "tool_output_token_delta": null,
+      "cost_delta_usd": null,
+      "observed_result": "Parsed local Claude Code usage JSON for independent accounting; not a task intervention.",
+      "verdict": "telemetry",
+      "replication_status": "telemetry_only"
+    },
+    {
+      "recommendation": "claude-context",
+      "source": "https://github.com/zilliztech/claude-context",
+      "evidence_type": "controlled_ab_indexed_mcp_limit3",
+      "primary_token_category": "input_context_tokens_via_retrieval",
+      "does_not_directly_reduce": [
+        "output_tokens",
+        "reasoning_tokens"
+      ],
+      "quality": "passed in 3/3 repeats",
+      "estimated_token_delta": 7327,
+      "tool_output_token_delta": 4170,
+      "cost_delta_usd": 0.048434,
+      "turn_delta": 10,
+      "verdict": "negative_as_used",
+      "published_api_cost_delta_usd": 0.058038,
+      "published_api_cost_model": "claude-sonnet-4-6",
+      "published_api_cost_note": "Delta repriced from Claude comparison token deltas at published Claude Sonnet 4.6 rates, assuming 1-hour cache-write pricing for cache_creation_input_tokens.",
+      "replication_status": "repeated_ab",
+      "aggregate_artifact": "reports/aggregate-claude-context-limit3.json",
+      "observed_result": "Repeated claude-context limit-3 MCP runs passed quality but increased estimated tokens, tool-output tokens, visible output tokens, native cost, and published-rate estimated cost on this fixture."
+    },
+    {
+      "recommendation": "context-mode",
+      "source": "https://github.com/mksglu/context-mode",
+      "evidence_type": "install_doctor_plus_controlled_ab",
+      "primary_token_category": "tool_output_and_input_context_tokens",
+      "does_not_directly_reduce": [
+        "output_tokens",
+        "reasoning_tokens"
+      ],
+      "quality": "passed in 3/3 repeats",
+      "estimated_token_delta": -12359,
+      "tool_output_token_delta": -13257,
+      "cost_delta_usd": -0.03639,
+      "turn_delta": 8,
+      "observed_result": "Repeated context-mode runs reduced estimated and tool-output tokens plus native/API-estimated cost, but visible output tokens were noisy and rose on average.",
+      "verdict": "conditional_positive",
+      "published_api_cost_delta_usd": -0.052175,
+      "published_api_cost_model": "claude-sonnet-4-6",
+      "published_api_cost_note": "Delta repriced from Claude comparison token deltas at published Claude Sonnet 4.6 rates, assuming 1-hour cache-write pricing for cache_creation_input_tokens.",
+      "replication_status": "repeated_ab",
+      "aggregate_artifact": "reports/aggregate-context-mode-batch.json"
+    },
+    {
+      "recommendation": "grepai",
+      "source": "https://github.com/yoanbernabeu/grepai",
+      "evidence_type": "controlled_ab_path_constrained_compact_search",
+      "primary_token_category": "input_context_tokens_via_compact_retrieval",
+      "does_not_directly_reduce": [
+        "output_tokens",
+        "reasoning_tokens"
+      ],
+      "quality": "passed in 3/3 repeats",
+      "estimated_token_delta": -14567,
+      "tool_output_token_delta": -15571,
+      "cost_delta_usd": -0.017598,
+      "turn_delta": 10,
+      "verdict": "conditional_positive",
+      "published_api_cost_delta_usd": -0.037657,
+      "published_api_cost_model": "claude-sonnet-4-6",
+      "published_api_cost_note": "Delta repriced from Claude comparison token deltas at published Claude Sonnet 4.6 rates, assuming 1-hour cache-write pricing for cache_creation_input_tokens.",
+      "replication_status": "repeated_ab",
+      "aggregate_artifact": "reports/aggregate-grepai-path-constrained.json",
+      "observed_result": "Repeated path-constrained grepai runs reduced estimated and tool-output tokens and cost, but visible output tokens rose on average."
+    },
+    {
+      "recommendation": "ccstatusline",
+      "source": "https://github.com/sirmalloc/ccstatusline",
+      "evidence_type": "visibility_validation",
+      "primary_token_category": "telemetry_only",
+      "does_not_directly_reduce": [
+        "input_context_tokens",
+        "tool_output_tokens",
+        "output_tokens",
+        "reasoning_tokens"
+      ],
+      "quality": "not_applicable",
+      "estimated_token_delta": null,
+      "tool_output_token_delta": null,
+      "cost_delta_usd": null,
+      "observed_result": "Statusline telemetry is outside the task prompt path; no direct task token reduction claimed.",
+      "verdict": "telemetry",
+      "replication_status": "telemetry_only"
+    },
+    {
+      "recommendation": "claude-token-efficient",
+      "source": "https://github.com/drona23/claude-token-efficient",
+      "evidence_type": "controlled_ab_minimal_guidance",
+      "primary_token_category": "output_tokens_with_input_context_overhead",
+      "does_not_directly_reduce": [
+        "tool_output_tokens",
+        "reasoning_tokens"
+      ],
+      "quality": "passed in 3/3 repeats",
+      "estimated_token_delta": -391,
+      "tool_output_token_delta": -754,
+      "cost_delta_usd": -0.003828,
+      "turn_delta": -1,
+      "verdict": "modest_conditional_positive",
+      "published_api_cost_delta_usd": -0.004208,
+      "published_api_cost_model": "claude-sonnet-4-6",
+      "published_api_cost_note": "Delta repriced from Claude comparison token deltas at published Claude Sonnet 4.6 rates, assuming 1-hour cache-write pricing for cache_creation_input_tokens.",
+      "replication_status": "repeated_ab",
+      "aggregate_artifact": "reports/aggregate-claude-token-efficient.json",
+      "observed_result": "Repeated minimal CLAUDE.md guidance produced small, noisy savings; useful as light verbosity hygiene, not as a major reducer."
+    },
+    {
+      "recommendation": "Caveman",
+      "source": "https://github.com/JuliusBrussee/caveman",
+      "evidence_type": "controlled_ab_claude_plugin_and_codex_skill_guidance",
+      "primary_token_category": "output_tokens_only",
+      "does_not_directly_reduce": [
+        "input_context_tokens",
+        "tool_output_tokens",
+        "cached_input_tokens",
+        "reasoning_tokens"
+      ],
+      "quality": "passed in 3/3 Claude repeats and 3/3 Codex repeats",
+      "estimated_token_delta": 4355,
+      "tool_output_token_delta": 4868,
+      "cost_delta_usd": 0.009919,
+      "observed_result": "Claude caveman reduced visible output but increased estimated/tool-output tokens and cost; Codex caveman reduced uncached-plus-output and reasoning tokens on average. Treat as harness-specific output pressure, not default plugin guidance.",
+      "verdict": "mixed_harness_specific",
+      "published_api_cost_delta_usd": 0.009211,
+      "published_api_cost_model": "claude-sonnet-4-6",
+      "replication_status": "repeated_ab",
+      "codex_uncached_plus_output_delta_mean": -4739,
+      "codex_reasoning_delta_mean": -2,
+      "codex_published_api_cost_delta_usd": -0.033986,
+      "aggregate_artifacts": [
+        "reports/aggregate-caveman-claude.json",
+        "reports/aggregate-caveman-codex.json"
+      ]
+    },
+    {
+      "recommendation": "RTK",
+      "source": "https://github.com/rtk-ai/rtk",
+      "evidence_type": "controlled_ab_plus_direct_output_compression_smoke",
+      "primary_token_category": "tool_output_and_input_context_tokens",
+      "does_not_directly_reduce": [
+        "output_tokens",
+        "reasoning_tokens"
+      ],
+      "quality": "passed in 3/3 repeats",
+      "estimated_token_delta": -12446,
+      "tool_output_token_delta": -12716,
+      "cost_delta_usd": -0.031479,
+      "turn_delta": -3,
+      "observed_result": "Repeated explicit RTK guidance reduced estimated/tool-output tokens and cost on average; use explicit commands before global hooks.",
+      "verdict": "conditional_positive",
+      "published_api_cost_delta_usd": -0.044316,
+      "published_api_cost_model": "claude-sonnet-4-6",
+      "published_api_cost_note": "Delta repriced from Claude comparison token deltas at published Claude Sonnet 4.6 rates, assuming 1-hour cache-write pricing for cache_creation_input_tokens.",
+      "replication_status": "repeated_ab",
+      "aggregate_artifact": "reports/aggregate-rtk-explicit.json"
+    },
+    {
+      "recommendation": "Probe",
+      "source": "https://github.com/probelabs/probe",
+      "evidence_type": "controlled_ab_bounded_ast_bm25_search",
+      "primary_token_category": "input_context_tokens_via_compact_retrieval",
+      "does_not_directly_reduce": [
+        "output_tokens",
+        "reasoning_tokens"
+      ],
+      "quality": "passed in 3/3 repeats",
+      "estimated_token_delta": 874,
+      "tool_output_token_delta": -745,
+      "cost_delta_usd": 0.038069,
+      "turn_delta": 9,
+      "observed_result": "Repeated Probe runs reduced tool-output slightly on average but increased estimated tokens, output tokens, native cost, and published-rate estimated cost.",
+      "verdict": "negative_as_used",
+      "published_api_cost_delta_usd": 0.03834,
+      "published_api_cost_model": "claude-sonnet-4-6",
+      "replication_status": "repeated_ab",
+      "aggregate_artifact": "reports/aggregate-probe.json"
+    },
+    {
+      "recommendation": "Semble",
+      "source": "https://github.com/MinishLab/semble",
+      "evidence_type": "controlled_ab_path_limited_code_search",
+      "primary_token_category": "input_context_tokens_via_compact_retrieval",
+      "does_not_directly_reduce": [
+        "output_tokens",
+        "reasoning_tokens"
+      ],
+      "quality": "passed in 3/3 repeats",
+      "estimated_token_delta": -16301,
+      "tool_output_token_delta": -16060,
+      "cost_delta_usd": -0.089147,
+      "turn_delta": 6,
+      "observed_result": "Repeated Semble runs reduced estimated tokens, tool-output tokens, visible output tokens, native cost, and published-rate estimated cost.",
+      "verdict": "positive_on_fixture",
+      "published_api_cost_delta_usd": -0.114194,
+      "published_api_cost_model": "claude-sonnet-4-6",
+      "replication_status": "repeated_ab",
+      "aggregate_artifact": "reports/aggregate-semble.json"
+    },
+    {
+      "recommendation": "Squeez",
+      "source": "https://github.com/claudioemmanuel/squeez",
+      "evidence_type": "controlled_ab_plus_direct_output_compression_smoke",
+      "primary_token_category": "tool_output_and_input_context_tokens",
+      "does_not_directly_reduce": [
+        "output_tokens",
+        "reasoning_tokens"
+      ],
+      "quality": "passed in 3/3 repeats",
+      "estimated_token_delta": -8471,
+      "tool_output_token_delta": -8917,
+      "cost_delta_usd": -0.014049,
+      "turn_delta": 9,
+      "observed_result": "Repeated Squeez guidance reduced estimated/tool-output tokens and cost on average; visible output stayed noisy, so frame it as tool-output compression.",
+      "verdict": "conditional_positive",
+      "published_api_cost_delta_usd": -0.028224,
+      "published_api_cost_model": "claude-sonnet-4-6",
+      "replication_status": "repeated_ab",
+      "aggregate_artifact": "reports/aggregate-squeez.json"
+    },
+    {
+      "recommendation": "claude-rlm",
+      "source": "https://github.com/Tenobrus/claude-rlm",
+      "evidence_type": "repeated_ab_recursive_subagent_discovery",
+      "primary_token_category": "high_context_recursive_decomposition",
+      "does_not_directly_reduce": [
+        "output_tokens",
+        "reasoning_tokens"
+      ],
+      "quality": "passed in 3/3 repeats",
+      "estimated_token_delta": 19477,
+      "tool_output_token_delta": 6020,
+      "cost_delta_usd": -0.075322,
+      "published_api_cost_delta_usd": null,
+      "observed_result": "Repeated medium-context runs passed quality but increased estimated tokens, tool-output tokens, avoidable waste, and failed commands. Optimized runs used two Claude sessions per repeat, so root stdout cost is not a full cost surface.",
+      "verdict": "negative_on_medium_context_fixture",
+      "replication_status": "repeated_ab",
+      "aggregate_artifact": "reports/aggregate-claude-rlm-discovery.json"
+    }
+  ],
+  "representative_trials": [
+    {
+      "id": "agent-analyzer-guided-v3-noisy",
+      "quality": "passed in 3/3 repeats",
+      "estimated_token_delta_mean": -12370.333333333334,
+      "tool_output_token_delta_mean": -12697.666666666666,
+      "native_cost_delta_mean_usd": -0.04421946666666666,
+      "published_api_cost_delta_mean_usd": -0.05920730000000001,
+      "verdict": "positive",
+      "replication_status": "repeated_ab",
+      "aggregate_artifact": "reports/aggregate-agent-analyzer-guided-v3.json"
+    },
+    {
+      "id": "claude-context-limit3-v3-noisy",
+      "quality": "passed in 3/3 repeats",
+      "estimated_token_delta_mean": 7327.0,
+      "tool_output_token_delta_mean": 4169.666666666667,
+      "native_cost_delta_mean_usd": 0.048434183333333346,
+      "published_api_cost_delta_mean_usd": 0.0580381,
+      "verdict": "negative_as_used",
+      "replication_status": "repeated_ab",
+      "aggregate_artifact": "reports/aggregate-claude-context-limit3.json"
+    },
+    {
+      "id": "semble-v3-noisy",
+      "quality": "passed in 3/3 repeats",
+      "estimated_token_delta_mean": -16300.666666666666,
+      "tool_output_token_delta_mean": -16060.333333333334,
+      "native_cost_delta_mean_usd": -0.08914713333333334,
+      "published_api_cost_delta_mean_usd": -0.1141938,
+      "verdict": "positive_on_fixture",
+      "replication_status": "repeated_ab",
+      "aggregate_artifact": "reports/aggregate-semble.json"
+    }
+  ],
+  "cross_harness_trials": [
+    {
+      "harness": "Claude Code -p",
+      "intervention": "Generated Agent Analyzer plugin",
+      "quality": "passed in 3/3 repeats",
+      "estimated_token_delta_mean": -12370.333333333334,
+      "tool_output_token_delta_mean": -12697.666666666666,
+      "native_signal": "total_cost_usd mean -0.044219; output tokens mean -503.7",
+      "verdict": "positive",
+      "replication_status": "repeated_ab",
+      "aggregate_artifact": "reports/aggregate-agent-analyzer-guided-v3.json"
+    },
+    {
+      "harness": "Codex exec --json",
+      "intervention": "Agent Analyzer text guidance",
+      "quality": "passed in 3/3 repeats",
+      "estimated_token_delta_mean": -14520.333333333334,
+      "tool_output_token_delta_mean": -14526.666666666666,
+      "native_signal": "uncached_plus_output_tokens mean -24368.7; reasoning tokens mean -44.7",
+      "verdict": "positive_on_repeated_fixture",
+      "replication_status": "repeated_ab",
+      "aggregate_artifact": "reports/aggregate-codex-guided.json"
+    }
+  ],
+  "recommendation_verdicts": [
+    {
+      "recommendation": "Agent Analyzer generated guidance",
+      "verdict": "positive repeated",
+      "product_action": "Keep as the core plugin behavior; it reduced estimated, tool-output, output, native cost, and published-rate cost in 3x runs."
+    },
+    {
+      "recommendation": "ccusage",
+      "source": "https://github.com/ryoppippi/ccusage",
+      "verdict": "measurement only",
+      "product_action": "Keep as optional measurement only; do not include in the paid reducer pack or call it a direct saver."
+    },
+    {
+      "recommendation": "ccstatusline",
+      "source": "https://github.com/sirmalloc/ccstatusline",
+      "verdict": "visibility only",
+      "product_action": "Keep as optional awareness only; do not include in the paid reducer pack or call it a direct saver."
+    },
+    {
+      "recommendation": "claude-context",
+      "source": "https://github.com/zilliztech/claude-context",
+      "verdict": "removed from default advice",
+      "product_action": "Do not recommend for this workflow; repeated runs increased estimated tokens and published API-rate cost by 26.0%."
+    },
+    {
+      "recommendation": "Context Mode",
+      "source": "https://github.com/mksglu/context-mode",
+      "verdict": "conditional repeated positive",
+      "product_action": "Conditionally recommend for tool-output/input-context batching when matching bloat exists; repeated API-rate savings were 20.4%, but visible output rose on average."
+    },
+    {
+      "recommendation": "grepai",
+      "source": "https://github.com/yoanbernabeu/grepai",
+      "verdict": "conditional repeated positive",
+      "product_action": "Conditionally recommend only with compact output, low result limits, and path filters; repeated API-rate savings were 14.5%."
+    },
+    {
+      "recommendation": "claude-token-efficient",
+      "source": "https://github.com/drona23/claude-token-efficient",
+      "verdict": "removed from default advice",
+      "product_action": "Do not include in the default pack; repeated API-rate savings were only 1.8%, so treat it as manual verbosity hygiene if requested."
+    },
+    {
+      "recommendation": "RTK",
+      "source": "https://github.com/rtk-ai/rtk",
+      "verdict": "conditional repeated positive",
+      "product_action": "Conditionally recommend explicit commands first; repeated API-rate savings were 18.2%, but global hooks require separate approval."
+    },
+    {
+      "recommendation": "Probe",
+      "source": "https://github.com/probelabs/probe",
+      "verdict": "removed from default advice",
+      "product_action": "Do not recommend as a reducer; repeated runs increased published API-rate cost by 16.6%."
+    },
+    {
+      "recommendation": "Semble",
+      "source": "https://github.com/MinishLab/semble",
+      "verdict": "positive on this fixture",
+      "product_action": "Conditionally recommend for bounded retrieval when repeated reads exist; repeated API-rate savings were 41.5%."
+    },
+    {
+      "recommendation": "Squeez",
+      "source": "https://github.com/claudioemmanuel/squeez",
+      "verdict": "conditional repeated positive",
+      "product_action": "Conditionally recommend for explicit shell/log compression; repeated API-rate savings were 12.1%."
+    },
+    {
+      "recommendation": "Caveman",
+      "source": "https://github.com/JuliusBrussee/caveman",
+      "verdict": "removed from default Claude advice",
+      "product_action": "Keep out of default Claude plugin guidance; Codex benefited here, but Claude Code got more expensive."
+    },
+    {
+      "recommendation": "claude-rlm",
+      "source": "https://github.com/Tenobrus/claude-rlm",
+      "verdict": "removed from default advice",
+      "product_action": "Do not recommend from this benchmark; it added analyzer-estimated tokens and tool output, and root stdout cost omits sub-agent usage."
+    }
+  ],
+  "artifacts": {
+    "representative_baseline_report": "/proof/reports/baseline-report.json",
+    "representative_optimized_report": "/proof/reports/optimized-report.json",
+    "representative_comparison": "/proof/reports/comparison-aa-guided-v3.json",
+    "probe_candidate_comparison": "/proof/reports/comparison-probe-run30-v3.json",
+    "semble_candidate_comparison": "/proof/reports/comparison-semble-run31-v3.json",
+    "squeez_candidate_comparison": "/proof/reports/comparison-squeez-run32-v3.json",
+    "codex_candidate_comparison": "/proof/reports/comparison-codex-run33-v3.json",
+    "cross_harness_codex_claude_comparison": "/proof/reports/comparison-cross-harness-codex-claude-v3.json",
+    "caveman_claude_comparison": "/proof/reports/comparison-caveman-claude-run36-v3.json",
+    "caveman_codex_comparison": "/proof/reports/comparison-caveman-codex-run37-v3.json",
+    "caveman_cross_harness_comparison": "/proof/reports/comparison-caveman-cross-harness-v3.json",
+    "external_benchmark_comparison_page": "/proof/benchmark-comparison.html",
+    "external_benchmark_research_note": "/docs/benchmarks/external-token-benchmark-comparison.md"
+  },
+  "published_api_pricing": {
+    "claude_sonnet_4_6": {
+      "model": "claude-sonnet-4-6",
+      "source": "https://platform.claude.com/docs/en/about-claude/pricing",
+      "as_of": "2026-05-24",
+      "rates_usd_per_mtok": {
+        "input_tokens": 3.0,
+        "cache_creation_input_tokens_1h": 6.0,
+        "cache_read_input_tokens": 0.3,
+        "output_tokens": 15.0
+      },
+      "cache_creation_assumption": "Comparison JSON exposes cache_creation_input_tokens without the 5m/1h split; raw benchmark stdout for these runs used ephemeral_1h cache writes, so this estimate prices cache creation at the 1-hour cache-write rate."
+    },
+    "gpt_5_3_codex": {
+      "model_assumption": "gpt-5.3-codex",
+      "source": "https://developers.openai.com/api/docs/pricing",
+      "token_category_source": "https://help.openai.com/en/articles/20001106-codex-rate-card",
+      "as_of": "2026-05-24",
+      "rates_usd_per_mtok": {
+        "input_tokens": 1.75,
+        "cached_input_tokens": 0.175,
+        "output_tokens": 14.0,
+        "reasoning_output_tokens": 14.0
+      },
+      "reasoning_pricing_note": "OpenAI reports reasoning tokens as usage metadata used for billing/tracking. Because the Codex JSON exposes reasoning_output_tokens separately, this estimate bills them at the output-token rate. If a future exporter includes reasoning inside output_tokens, do not add it twice."
+    }
+  },
+  "published_api_cost_estimates": {
+    "agent_analyzer_guided_v3": {
+      "provider": "anthropic",
+      "model": "claude-sonnet-4-6",
+      "baseline_usd": 0.1884207,
+      "optimized_usd": 0.1888227,
+      "delta_usd": 0.000402,
+      "delta_breakdown": {
+        "input_usd": 3e-06,
+        "cache_creation_1h_usd": -0.009318,
+        "cache_read_usd": 0.007977,
+        "output_usd": 0.00174,
+        "total_usd": 0.000402
+      },
+      "note": "Published API-rate estimate for exposed Claude Sonnet token categories. Claude Code reported total_cost_usd can differ because Claude Code may route or account for additional internal model usage."
+    },
+    "caveman_claude_v3": {
+      "provider": "anthropic",
+      "model": "claude-sonnet-4-6",
+      "baseline_usd": 0.3079476,
+      "optimized_usd": 0.2960832,
+      "delta_usd": -0.0118644,
+      "delta_breakdown": {
+        "input_usd": 9e-06,
+        "cache_creation_1h_usd": -0.027816,
+        "cache_read_usd": 0.0212676,
+        "output_usd": -0.005325,
+        "total_usd": -0.0118644
+      },
+      "note": "Published API-rate estimate for exposed Claude Sonnet token categories. Claude Code reported total_cost_usd can differ because Claude Code may route or account for additional internal model usage."
+    },
+    "codex_guided_v3": {
+      "provider": "openai",
+      "model": "gpt-5.3-codex",
+      "baseline_usd": 0.14492625,
+      "optimized_usd": 0.18360755,
+      "delta_usd": 0.0386813,
+      "delta_breakdown": {
+        "uncached_input_usd": 0.0311185,
+        "cached_input_usd": 0.0048608,
+        "visible_output_usd": 0.002338,
+        "reasoning_output_usd": 0.000364,
+        "total_usd": 0.0386813,
+        "visible_output_only_total_usd": 0.0383173
+      },
+      "note": "API-rate estimate under the gpt-5.3-codex Standard pricing assumption. The saved Codex harness did not record an explicit model name."
+    },
+    "caveman_codex_v3": {
+      "provider": "openai",
+      "model": "gpt-5.3-codex",
+      "baseline_usd": 0.15490965,
+      "optimized_usd": 0.2046583,
+      "delta_usd": 0.04974865,
+      "delta_breakdown": {
+        "uncached_input_usd": 0.05597025,
+        "cached_input_usd": -0.0054656,
+        "visible_output_usd": -0.001092,
+        "reasoning_output_usd": 0.000336,
+        "total_usd": 0.04974865,
+        "visible_output_only_total_usd": 0.04941265
+      },
+      "note": "API-rate estimate under the gpt-5.3-codex Standard pricing assumption. The saved Codex harness did not record an explicit model name."
+    },
+    "probe_v3": {
+      "provider": "anthropic",
+      "model": "claude-sonnet-4-6",
+      "baseline_usd": 0.1755015,
+      "optimized_usd": 0.2689899,
+      "delta_usd": 0.0934884,
+      "delta_breakdown": {
+        "input_usd": 3e-06,
+        "cache_creation_1h_usd": 0.031416,
+        "cache_read_usd": 0.0325794,
+        "output_usd": 0.02949,
+        "total_usd": 0.0934884
+      },
+      "note": "Published API-rate estimate for exposed Claude Sonnet token categories. Claude Code reported total_cost_usd can differ because Claude Code may route or account for additional internal model usage."
+    },
+    "semble_v3": {
+      "provider": "anthropic",
+      "model": "claude-sonnet-4-6",
+      "baseline_usd": 0.1556958,
+      "optimized_usd": 0.2128899,
+      "delta_usd": 0.0571941,
+      "delta_breakdown": {
+        "input_usd": 6e-06,
+        "cache_creation_1h_usd": 0.009588,
+        "cache_read_usd": 0.0329001,
+        "output_usd": 0.0147,
+        "total_usd": 0.0571941
+      },
+      "note": "Published API-rate estimate for exposed Claude Sonnet token categories. Claude Code reported total_cost_usd can differ because Claude Code may route or account for additional internal model usage."
+    },
+    "squeez_v3": {
+      "provider": "anthropic",
+      "model": "claude-sonnet-4-6",
+      "baseline_usd": 0.1750917,
+      "optimized_usd": 0.2375214,
+      "delta_usd": 0.0624297,
+      "delta_breakdown": {
+        "input_usd": 1.8e-05,
+        "cache_creation_1h_usd": -0.004788,
+        "cache_read_usd": 0.0585747,
+        "output_usd": 0.008625,
+        "total_usd": 0.0624297
+      },
+      "note": "Published API-rate estimate for exposed Claude Sonnet token categories. Claude Code reported total_cost_usd can differ because Claude Code may route or account for additional internal model usage."
+    }
+  },
+  "replication_policy": {
+    "minimum_repeats_for_strong_claim": 3,
+    "fresh_context_required": true,
+    "runner": "scripts/benchmark-repeat.sh",
+    "status_note": "All named tool recommendations in the proof suite now have at least three fresh baseline/optimized pairs with passing quality gates. Strong claims still remain scoped to the tested fixture, harness, and token category.",
+    "published_aggregate_count": 13,
+    "diagnostic_aggregate_count": 1
+  },
+  "repeated_suite_artifacts": {
+    "agent-analyzer-guided-v3": {
+      "artifact": "reports/aggregate-agent-analyzer-guided-v3.json",
+      "quality_passed": true,
+      "completed_repeats": 3,
+      "required_repeats": 3,
+      "estimated_token_delta_mean": -12370.333333333334,
+      "tool_output_token_delta_mean": -12697.666666666666,
+      "native_cost_delta_mean": -0.04421946666666666,
+      "codex_uncached_plus_output_delta_mean": null,
+      "codex_reasoning_delta_mean": null,
+      "published_api_cost_delta_mean": -0.05920730000000001,
+      "published_api_cost_savings_percent": 23.986415315706576,
+      "published_api_cost_scaled_examples": {
+        "savings_rate": 0.23986415315706577,
+        "savings_percent": 23.986415315706576,
+        "weekly_100_usd": 23.986415315706576,
+        "weekly_500_usd": 119.93207657853289,
+        "monthly_2000_usd": 479.72830631413154,
+        "monthly_5000_usd": 1199.3207657853288,
+        "monthly_10000_usd": 2398.6415315706577,
+        "basis": "Scaled linearly from the suite's optimized-vs-baseline published API-rate delta: savings = comparable baseline spend * savings_percent."
+      }
+    },
+    "caveman-claude": {
+      "artifact": "reports/aggregate-caveman-claude.json",
+      "quality_passed": true,
+      "completed_repeats": 3,
+      "required_repeats": 3,
+      "estimated_token_delta_mean": 4355.333333333333,
+      "tool_output_token_delta_mean": 4867.666666666667,
+      "native_cost_delta_mean": 0.009918916666666675,
+      "codex_uncached_plus_output_delta_mean": null,
+      "codex_reasoning_delta_mean": null,
+      "published_api_cost_delta_mean": 0.009211000000000006,
+      "published_api_cost_savings_percent": -3.890181251784393,
+      "published_api_cost_scaled_examples": {
+        "savings_rate": -0.03890181251784393,
+        "savings_percent": -3.890181251784393,
+        "weekly_100_usd": -3.890181251784393,
+        "weekly_500_usd": -19.450906258921965,
+        "monthly_2000_usd": -77.80362503568786,
+        "monthly_5000_usd": -194.50906258921964,
+        "monthly_10000_usd": -389.0181251784393,
+        "basis": "Scaled linearly from the suite's optimized-vs-baseline published API-rate delta: savings = comparable baseline spend * savings_percent."
+      }
+    },
+    "caveman-codex": {
+      "artifact": "reports/aggregate-caveman-codex.json",
+      "quality_passed": true,
+      "completed_repeats": 3,
+      "required_repeats": 3,
+      "estimated_token_delta_mean": -9210.333333333334,
+      "tool_output_token_delta_mean": -9109.333333333334,
+      "native_cost_delta_mean": null,
+      "codex_uncached_plus_output_delta_mean": -4739.0,
+      "codex_reasoning_delta_mean": -2.0,
+      "published_api_cost_delta_mean": -0.03398558333333332,
+      "published_api_cost_savings_percent": 18.25562449081907,
+      "published_api_cost_scaled_examples": {
+        "savings_rate": 0.1825562449081907,
+        "savings_percent": 18.25562449081907,
+        "weekly_100_usd": 18.25562449081907,
+        "weekly_500_usd": 91.27812245409535,
+        "monthly_2000_usd": 365.1124898163814,
+        "monthly_5000_usd": 912.7812245409535,
+        "monthly_10000_usd": 1825.562449081907,
+        "basis": "Scaled linearly from the suite's optimized-vs-baseline published API-rate delta: savings = comparable baseline spend * savings_percent."
+      }
+    },
+    "claude-context-limit3": {
+      "artifact": "reports/aggregate-claude-context-limit3.json",
+      "quality_passed": true,
+      "completed_repeats": 3,
+      "required_repeats": 3,
+      "estimated_token_delta_mean": 7327.0,
+      "tool_output_token_delta_mean": 4169.666666666667,
+      "native_cost_delta_mean": 0.048434183333333346,
+      "codex_uncached_plus_output_delta_mean": null,
+      "codex_reasoning_delta_mean": null,
+      "published_api_cost_delta_mean": 0.0580381,
+      "published_api_cost_savings_percent": -26.031832177994673,
+      "published_api_cost_scaled_examples": {
+        "savings_rate": -0.26031832177994674,
+        "savings_percent": -26.031832177994673,
+        "weekly_100_usd": -26.031832177994673,
+        "weekly_500_usd": -130.15916088997338,
+        "monthly_2000_usd": -520.6366435598935,
+        "monthly_5000_usd": -1301.5916088997337,
+        "monthly_10000_usd": -2603.1832177994675,
+        "basis": "Scaled linearly from the suite's optimized-vs-baseline published API-rate delta: savings = comparable baseline spend * savings_percent."
+      }
+    },
+    "claude-rlm-discovery": {
+      "artifact": "reports/aggregate-claude-rlm-discovery.json",
+      "quality_passed": true,
+      "completed_repeats": 3,
+      "required_repeats": 3,
+      "estimated_token_delta_mean": 19476.666666666668,
+      "tool_output_token_delta_mean": 6020.333333333333,
+      "native_cost_delta_mean": -0.07532203333333334,
+      "codex_uncached_plus_output_delta_mean": null,
+      "codex_reasoning_delta_mean": null,
+      "published_api_cost_delta_mean": null,
+      "published_api_cost_savings_percent": null,
+      "published_api_cost_scaled_examples": null
+    },
+    "claude-token-efficient": {
+      "artifact": "reports/aggregate-claude-token-efficient.json",
+      "quality_passed": true,
+      "completed_repeats": 3,
+      "required_repeats": 3,
+      "estimated_token_delta_mean": -391.0,
+      "tool_output_token_delta_mean": -754.0,
+      "native_cost_delta_mean": -0.003828350000000008,
+      "codex_uncached_plus_output_delta_mean": null,
+      "codex_reasoning_delta_mean": null,
+      "published_api_cost_delta_mean": -0.004207599999999978,
+      "published_api_cost_savings_percent": 1.8278154095838144,
+      "published_api_cost_scaled_examples": {
+        "savings_rate": 0.018278154095838144,
+        "savings_percent": 1.8278154095838144,
+        "weekly_100_usd": 1.8278154095838144,
+        "weekly_500_usd": 9.139077047919072,
+        "monthly_2000_usd": 36.55630819167629,
+        "monthly_5000_usd": 91.39077047919072,
+        "monthly_10000_usd": 182.78154095838144,
+        "basis": "Scaled linearly from the suite's optimized-vs-baseline published API-rate delta: savings = comparable baseline spend * savings_percent."
+      }
+    },
+    "codex-guided": {
+      "artifact": "reports/aggregate-codex-guided.json",
+      "quality_passed": true,
+      "completed_repeats": 3,
+      "required_repeats": 3,
+      "estimated_token_delta_mean": -14520.333333333334,
+      "tool_output_token_delta_mean": -14526.666666666666,
+      "native_cost_delta_mean": null,
+      "codex_uncached_plus_output_delta_mean": -24368.666666666668,
+      "codex_reasoning_delta_mean": -44.666666666666664,
+      "published_api_cost_delta_mean": -0.062392399999999994,
+      "published_api_cost_savings_percent": 31.82315865640947,
+      "published_api_cost_scaled_examples": {
+        "savings_rate": 0.31823158656409467,
+        "savings_percent": 31.82315865640947,
+        "weekly_100_usd": 31.82315865640947,
+        "weekly_500_usd": 159.11579328204735,
+        "monthly_2000_usd": 636.4631731281894,
+        "monthly_5000_usd": 1591.1579328204734,
+        "monthly_10000_usd": 3182.315865640947,
+        "basis": "Scaled linearly from the suite's optimized-vs-baseline published API-rate delta: savings = comparable baseline spend * savings_percent."
+      }
+    },
+    "context-mode-batch": {
+      "artifact": "reports/aggregate-context-mode-batch.json",
+      "quality_passed": true,
+      "completed_repeats": 3,
+      "required_repeats": 3,
+      "estimated_token_delta_mean": -12359.333333333334,
+      "tool_output_token_delta_mean": -13257.333333333334,
+      "native_cost_delta_mean": -0.03638980000000003,
+      "codex_uncached_plus_output_delta_mean": null,
+      "codex_reasoning_delta_mean": null,
+      "published_api_cost_delta_mean": -0.05217530000000001,
+      "published_api_cost_savings_percent": 20.44835228575404,
+      "published_api_cost_scaled_examples": {
+        "savings_rate": 0.2044835228575404,
+        "savings_percent": 20.44835228575404,
+        "weekly_100_usd": 20.44835228575404,
+        "weekly_500_usd": 102.2417614287702,
+        "monthly_2000_usd": 408.9670457150808,
+        "monthly_5000_usd": 1022.417614287702,
+        "monthly_10000_usd": 2044.835228575404,
+        "basis": "Scaled linearly from the suite's optimized-vs-baseline published API-rate delta: savings = comparable baseline spend * savings_percent."
+      }
+    },
+    "grepai-path-constrained": {
+      "artifact": "reports/aggregate-grepai-path-constrained.json",
+      "quality_passed": true,
+      "completed_repeats": 3,
+      "required_repeats": 3,
+      "estimated_token_delta_mean": -14566.666666666666,
+      "tool_output_token_delta_mean": -15571.333333333334,
+      "native_cost_delta_mean": -0.017597899999999972,
+      "codex_uncached_plus_output_delta_mean": null,
+      "codex_reasoning_delta_mean": null,
+      "published_api_cost_delta_mean": -0.03765690000000003,
+      "published_api_cost_savings_percent": 14.513454764088776,
+      "published_api_cost_scaled_examples": {
+        "savings_rate": 0.14513454764088776,
+        "savings_percent": 14.513454764088776,
+        "weekly_100_usd": 14.513454764088776,
+        "weekly_500_usd": 72.56727382044389,
+        "monthly_2000_usd": 290.26909528177555,
+        "monthly_5000_usd": 725.6727382044388,
+        "monthly_10000_usd": 1451.3454764088776,
+        "basis": "Scaled linearly from the suite's optimized-vs-baseline published API-rate delta: savings = comparable baseline spend * savings_percent."
+      }
+    },
+    "probe": {
+      "artifact": "reports/aggregate-probe.json",
+      "quality_passed": true,
+      "completed_repeats": 3,
+      "required_repeats": 3,
+      "estimated_token_delta_mean": 873.6666666666666,
+      "tool_output_token_delta_mean": -744.6666666666666,
+      "native_cost_delta_mean": 0.038069033333333314,
+      "codex_uncached_plus_output_delta_mean": null,
+      "codex_reasoning_delta_mean": null,
+      "published_api_cost_delta_mean": 0.03833970000000001,
+      "published_api_cost_savings_percent": -16.62176644718018,
+      "published_api_cost_scaled_examples": {
+        "savings_rate": -0.16621766447180178,
+        "savings_percent": -16.62176644718018,
+        "weekly_100_usd": -16.62176644718018,
+        "weekly_500_usd": -83.10883223590089,
+        "monthly_2000_usd": -332.43532894360357,
+        "monthly_5000_usd": -831.0883223590089,
+        "monthly_10000_usd": -1662.1766447180178,
+        "basis": "Scaled linearly from the suite's optimized-vs-baseline published API-rate delta: savings = comparable baseline spend * savings_percent."
+      }
+    },
+    "rtk-explicit": {
+      "artifact": "reports/aggregate-rtk-explicit.json",
+      "quality_passed": true,
+      "completed_repeats": 3,
+      "required_repeats": 3,
+      "estimated_token_delta_mean": -12446.0,
+      "tool_output_token_delta_mean": -12715.666666666666,
+      "native_cost_delta_mean": -0.031478600000000016,
+      "codex_uncached_plus_output_delta_mean": null,
+      "codex_reasoning_delta_mean": null,
+      "published_api_cost_delta_mean": -0.0443161,
+      "published_api_cost_savings_percent": 18.153839473492326,
+      "published_api_cost_scaled_examples": {
+        "savings_rate": 0.18153839473492325,
+        "savings_percent": 18.153839473492326,
+        "weekly_100_usd": 18.153839473492326,
+        "weekly_500_usd": 90.76919736746163,
+        "monthly_2000_usd": 363.0767894698465,
+        "monthly_5000_usd": 907.6919736746163,
+        "monthly_10000_usd": 1815.3839473492326,
+        "basis": "Scaled linearly from the suite's optimized-vs-baseline published API-rate delta: savings = comparable baseline spend * savings_percent."
+      }
+    },
+    "semble": {
+      "artifact": "reports/aggregate-semble.json",
+      "quality_passed": true,
+      "completed_repeats": 3,
+      "required_repeats": 3,
+      "estimated_token_delta_mean": -16300.666666666666,
+      "tool_output_token_delta_mean": -16060.333333333334,
+      "native_cost_delta_mean": -0.08914713333333334,
+      "codex_uncached_plus_output_delta_mean": null,
+      "codex_reasoning_delta_mean": null,
+      "published_api_cost_delta_mean": -0.1141938,
+      "published_api_cost_savings_percent": 41.46494678255211,
+      "published_api_cost_scaled_examples": {
+        "savings_rate": 0.41464946782552115,
+        "savings_percent": 41.46494678255211,
+        "weekly_100_usd": 41.46494678255211,
+        "weekly_500_usd": 207.32473391276056,
+        "monthly_2000_usd": 829.2989356510423,
+        "monthly_5000_usd": 2073.2473391276058,
+        "monthly_10000_usd": 4146.4946782552115,
+        "basis": "Scaled linearly from the suite's optimized-vs-baseline published API-rate delta: savings = comparable baseline spend * savings_percent."
+      }
+    },
+    "squeez": {
+      "artifact": "reports/aggregate-squeez.json",
+      "quality_passed": true,
+      "completed_repeats": 3,
+      "required_repeats": 3,
+      "estimated_token_delta_mean": -8470.666666666666,
+      "tool_output_token_delta_mean": -8917.333333333334,
+      "native_cost_delta_mean": -0.014049233333333308,
+      "codex_uncached_plus_output_delta_mean": null,
+      "codex_reasoning_delta_mean": null,
+      "published_api_cost_delta_mean": -0.028223899999999996,
+      "published_api_cost_savings_percent": 12.135861589457791,
+      "published_api_cost_scaled_examples": {
+        "savings_rate": 0.12135861589457791,
+        "savings_percent": 12.135861589457791,
+        "weekly_100_usd": 12.135861589457791,
+        "weekly_500_usd": 60.679307947288954,
+        "monthly_2000_usd": 242.71723178915582,
+        "monthly_5000_usd": 606.7930794728895,
+        "monthly_10000_usd": 1213.586158945779,
+        "basis": "Scaled linearly from the suite's optimized-vs-baseline published API-rate delta: savings = comparable baseline spend * savings_percent."
+      }
+    }
+  },
+  "cost_scale_claim": {
+    "suite": "agent-analyzer-guided-v3",
+    "baseline_mean_usd": 0.2468368,
+    "optimized_mean_usd": 0.1876295,
+    "delta_mean_usd": -0.0592073,
+    "savings_percent": 23.986415315706576,
+    "examples": {
+      "weekly_100_usd": 23.986415315706576,
+      "weekly_500_usd": 119.93207657853289,
+      "monthly_2000_usd": 479.7283063141315,
+      "monthly_5000_usd": 1199.3207657853288,
+      "monthly_10000_usd": 2398.6415315706577
+    },
+    "basis": "savings = comparable baseline spend * 0.23986415315706576; based on published Claude Sonnet 4.6 API-rate estimate for three fresh noisy-repo pairs."
+  },
+  "recommendation_policy": {
+    "default_pack": [
+      "agent-analyzer-workflow",
+      "output-budgeted-commands",
+      "retrieval-hygiene",
+      "session-hygiene",
+      "retry-breaker"
+    ],
+    "conditional_reducers": [
+      "semble",
+      "context-mode",
+      "rtk-explicit",
+      "grepai-path-constrained",
+      "squeez"
+    ],
+    "telemetry_only": [
+      "ccusage",
+      "ccstatusline",
+      "claude-code-usage-monitor",
+      "claude-code-usage-tracker"
+    ],
+    "removed_from_default_reducer_advice": [
+      "claude-context",
+      "probe",
+      "caveman-claude",
+      "claude-rlm",
+      "claude-token-efficient"
+    ],
+    "rule": "Recommend a third-party reducer only when it reduced the target token/cost category in repeated runs and the user report contains the matching waste pattern."
+  },
+  "primary_data": {
+    "directory": "docs/benchmarks/primary-data",
+    "manifest": "docs/benchmarks/primary-data/index.json",
+    "privacy_boundary": "Sanitized aggregate/comparison recordings are committed; raw logs, raw transcript stdout/stderr, plugin zips, and copied worktrees are excluded."
+  },
+  "diagnostic_suite_artifacts": {
+    "spec-kitty-agent-analyzer-guided": {
+      "artifact": "reports/aggregate-spec-kitty-agent-analyzer-guided.json",
+      "quality_passed": false,
+      "completed_repeats": 1,
+      "required_repeats": 1,
+      "estimated_token_delta_mean": -76237.0,
+      "tool_output_token_delta_mean": -79663.0,
+      "native_cost_delta_mean": -0.2766874999999998,
+      "codex_uncached_plus_output_delta_mean": null,
+      "codex_reasoning_delta_mean": null,
+      "published_api_cost_delta_mean": -0.4115565,
+      "published_api_cost_savings_percent": 40.45839010493161,
+      "published_api_cost_scaled_examples": {
+        "savings_rate": 0.4045839010493161,
+        "savings_percent": 40.45839010493161,
+        "weekly_100_usd": 40.45839010493161,
+        "weekly_500_usd": 202.29195052465803,
+        "monthly_2000_usd": 809.1678020986321,
+        "monthly_5000_usd": 2022.9195052465805,
+        "monthly_10000_usd": 4045.839010493161,
+        "basis": "Scaled linearly from the suite's optimized-vs-baseline published API-rate delta: savings = comparable baseline spend * savings_percent."
+      }
+    }
+  }
+}

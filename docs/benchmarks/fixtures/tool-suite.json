@@ -1,0 +1,174 @@
+{
+  "schema_version": "2026-05-24",
+  "description": "Permanent three-repeat benchmark fixture suite for Claude Analyzer token/cost recommendations.",
+  "target": {
+    "source_repo_default": "/tmp/agent-analyzer-benchmark-target-v3",
+    "fixed_commit": "b96b8a7f5cc57c4335bc7bc85ec726c836ed0996",
+    "task_prompt_file": "docs/benchmarks/fixtures/tasks/owner-breakdown-v3-noisy.txt",
+    "quality_command": "go test ./..."
+  },
+  "default_repeats": 3,
+  "suites": [
+    {
+      "id": "agent-analyzer-guided-v3",
+      "tool": "Agent Analyzer guidance",
+      "harness": "claude",
+      "guidance_file": "docs/benchmarks/fixtures/guidance/aa-plus-quiet-go-guidance.txt",
+      "env": {
+        "AGENT_PLUGIN_ENABLED": "1",
+        "TOOLING_REVIEW_ENABLED": "0"
+      }
+    },
+    {
+      "id": "claude-context-limit3",
+      "tool": "claude-context",
+      "harness": "claude",
+      "guidance_file": "docs/benchmarks/fixtures/guidance/claude-context-limit3-guidance.txt",
+      "pre_task_prompt_file": "docs/benchmarks/fixtures/guidance/claude-context-pre-task.txt",
+      "mcp_config_file": "docs/benchmarks/fixtures/mcp/claude-context-local.json",
+      "env": {
+        "AGENT_PLUGIN_ENABLED": "0",
+        "TOOLING_REVIEW_ENABLED": "0",
+        "BASELINE_CLAUDE_ARGS": "--setting-sources project,local --strict-mcp-config --mcp-config {\"mcpServers\":{}} --settings {\"enabledPlugins\":{\"sentrux@sentrux-marketplace\":false},\"permissions\":{\"defaultMode\":\"bypassPermissions\"}} --permission-mode bypassPermissions --disallowedTools Agent --output-format json --model sonnet --max-budget-usd 15",
+        "OPTIMIZED_CLAUDE_ARGS": "--setting-sources project,local --strict-mcp-config --mcp-config {\"mcpServers\":{}} --settings {\"enabledPlugins\":{\"sentrux@sentrux-marketplace\":false},\"permissions\":{\"defaultMode\":\"bypassPermissions\"}} --permission-mode bypassPermissions --disallowedTools Agent --output-format json --model sonnet --max-budget-usd 15"
+      },
+      "requires": [
+        "ollama:nomic-embed-text",
+        "milvus:127.0.0.1:19530",
+        "claude-context-mcp"
+      ]
+    },
+    {
+      "id": "context-mode-batch",
+      "tool": "context-mode",
+      "harness": "claude",
+      "guidance_file": "docs/benchmarks/fixtures/guidance/context-mode-batch-guidance.txt",
+      "env": {
+        "AGENT_PLUGIN_ENABLED": "0",
+        "TOOLING_REVIEW_ENABLED": "0",
+        "BASELINE_CLAUDE_ARGS": "--setting-sources project,local --strict-mcp-config --mcp-config {\"mcpServers\":{}} --settings {\"enabledPlugins\":{\"sentrux@sentrux-marketplace\":false},\"permissions\":{\"defaultMode\":\"bypassPermissions\"}} --permission-mode bypassPermissions --disallowedTools Agent --output-format json --model sonnet --max-budget-usd 15",
+        "OPTIMIZED_CLAUDE_ARGS": "--setting-sources project,local --strict-mcp-config --mcp-config {\"mcpServers\":{}} --settings {\"enabledPlugins\":{\"sentrux@sentrux-marketplace\":false},\"permissions\":{\"defaultMode\":\"bypassPermissions\"}} --permission-mode bypassPermissions --disallowedTools Agent --output-format json --model sonnet --max-budget-usd 15"
+      },
+      "extra_plugin_dirs": [
+        "~/.claude/plugins/cache/context-mode/context-mode"
+      ]
+    },
+    {
+      "id": "grepai-path-constrained",
+      "tool": "grepai",
+      "harness": "claude",
+      "guidance_file": "docs/benchmarks/fixtures/guidance/grepai-path-constrained-guidance.txt",
+      "env": {
+        "AGENT_PLUGIN_ENABLED": "0",
+        "TOOLING_REVIEW_ENABLED": "0",
+        "BASELINE_CLAUDE_ARGS": "--setting-sources project,local --strict-mcp-config --mcp-config {\"mcpServers\":{}} --settings {\"enabledPlugins\":{\"sentrux@sentrux-marketplace\":false},\"permissions\":{\"defaultMode\":\"bypassPermissions\"}} --permission-mode bypassPermissions --disallowedTools Agent --output-format json --model sonnet --max-budget-usd 15",
+        "OPTIMIZED_CLAUDE_ARGS": "--setting-sources project,local --strict-mcp-config --mcp-config {\"mcpServers\":{}} --settings {\"enabledPlugins\":{\"sentrux@sentrux-marketplace\":false},\"permissions\":{\"defaultMode\":\"bypassPermissions\"}} --permission-mode bypassPermissions --disallowedTools Agent --output-format json --model sonnet --max-budget-usd 15"
+      },
+      "requires": [
+        "grepai"
+      ]
+    },
+    {
+      "id": "claude-token-efficient",
+      "tool": "claude-token-efficient",
+      "harness": "claude",
+      "guidance_file": "docs/benchmarks/fixtures/guidance/agent-analyzer-token-efficient-guidance.txt",
+      "env": {
+        "AGENT_PLUGIN_ENABLED": "0",
+        "TOOLING_REVIEW_ENABLED": "0",
+        "OPTIMIZED_SETUP_COMMAND": "cp \"$ANALYZER_REPO/docs/benchmarks/fixtures/guidance/claude-token-efficient-profile.md\" CLAUDE.md"
+      }
+    },
+    {
+      "id": "claude-rlm-discovery",
+      "tool": "claude-rlm",
+      "harness": "claude",
+      "guidance_file": "docs/benchmarks/fixtures/guidance/claude-rlm-guidance.txt",
+      "requires": [
+        "tmux"
+      ],
+      "env": {
+        "AGENT_PLUGIN_ENABLED": "0",
+        "TOOLING_REVIEW_ENABLED": "0",
+        "ANALYZE_ALL_CLAUDE_LOGS": "1",
+        "OPTIMIZED_SETUP_COMMAND": "RLM_SOURCE=\"${RLM_SKILL_SOURCE:-$ANALYZER_REPO/.data/benchmarks/external-tools/claude-rlm/rlm-skill}\"; test -d \"$RLM_SOURCE\" || { echo \"Missing claude-rlm skill. Clone https://github.com/Tenobrus/claude-rlm to $ANALYZER_REPO/.data/benchmarks/external-tools/claude-rlm or set RLM_SKILL_SOURCE.\"; exit 2; }; mkdir -p .benchmark-tools; rm -rf .benchmark-tools/rlm-skill; cp -R \"$RLM_SOURCE\" .benchmark-tools/rlm-skill"
+      }
+    },
+    {
+      "id": "rtk-explicit",
+      "tool": "RTK",
+      "harness": "claude",
+      "guidance_file": "docs/benchmarks/fixtures/guidance/rtk-explicit-guidance.txt",
+      "env": {
+        "AGENT_PLUGIN_ENABLED": "0",
+        "TOOLING_REVIEW_ENABLED": "0"
+      },
+      "requires": [
+        "rtk"
+      ]
+    },
+    {
+      "id": "probe",
+      "tool": "Probe",
+      "harness": "claude",
+      "guidance_file": "docs/benchmarks/fixtures/guidance/probe-guidance.txt",
+      "env": {
+        "AGENT_PLUGIN_ENABLED": "0",
+        "TOOLING_REVIEW_ENABLED": "0"
+      },
+      "requires": [
+        "npx"
+      ]
+    },
+    {
+      "id": "semble",
+      "tool": "Semble",
+      "harness": "claude",
+      "guidance_file": "docs/benchmarks/fixtures/guidance/semble-guidance.txt",
+      "env": {
+        "AGENT_PLUGIN_ENABLED": "0",
+        "TOOLING_REVIEW_ENABLED": "0"
+      },
+      "requires": [
+        "uvx"
+      ]
+    },
+    {
+      "id": "squeez",
+      "tool": "Squeez",
+      "harness": "claude",
+      "guidance_file": "docs/benchmarks/fixtures/guidance/squeez-guidance.txt",
+      "env": {
+        "AGENT_PLUGIN_ENABLED": "0",
+        "TOOLING_REVIEW_ENABLED": "0"
+      },
+      "requires": [
+        "npx"
+      ]
+    },
+    {
+      "id": "caveman-claude",
+      "tool": "Caveman",
+      "harness": "claude",
+      "guidance_file": "docs/benchmarks/fixtures/guidance/caveman-guidance.txt",
+      "env": {
+        "AGENT_PLUGIN_ENABLED": "0",
+        "TOOLING_REVIEW_ENABLED": "0",
+        "BASELINE_CLAUDE_ARGS": "--setting-sources project,local --strict-mcp-config --mcp-config {\"mcpServers\":{}} --settings {\"enabledPlugins\":{\"sentrux@sentrux-marketplace\":false},\"permissions\":{\"defaultMode\":\"bypassPermissions\"}} --permission-mode bypassPermissions --disallowedTools Agent --output-format json --model sonnet --max-budget-usd 10",
+        "OPTIMIZED_CLAUDE_ARGS": "--setting-sources project,local --strict-mcp-config --mcp-config {\"mcpServers\":{}} --settings {\"enabledPlugins\":{\"sentrux@sentrux-marketplace\":false},\"permissions\":{\"defaultMode\":\"bypassPermissions\"}} --permission-mode bypassPermissions --disallowedTools Agent --output-format json --model sonnet --max-budget-usd 10"
+      }
+    },
+    {
+      "id": "codex-guided",
+      "tool": "Agent Analyzer guidance for Codex",
+      "harness": "codex",
+      "guidance_file": "docs/benchmarks/fixtures/guidance/agent-analyzer-codex-guidance.txt"
+    },
+    {
+      "id": "caveman-codex",
+      "tool": "Caveman for Codex",
+      "harness": "codex",
+      "guidance_file": "docs/benchmarks/fixtures/guidance/caveman-guidance.txt"
+    }
+  ]
+}

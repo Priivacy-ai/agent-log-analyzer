@@ -1,0 +1,223 @@
+{
+  "schema_version": "2026-05-24",
+  "benchmark": "cross-harness-codex-vs-claude-v3-noisy",
+  "fixed_commit": "b96b8a7f5cc57c4335bc7bc85ec726c836ed0996",
+  "task": "owner-breakdown Go benchmark, noisy v3 target",
+  "quality_gate": "go test ./...",
+  "harnesses": [
+    {
+      "harness": "Claude Code -p",
+      "version": "2.1.148 (Claude Code)",
+      "intervention": "Generated Agent Analyzer plugin",
+      "quality": "0->0",
+      "baseline": {
+        "label": "baseline Claude Code -p",
+        "score": 63,
+        "estimated_tokens": 20462,
+        "tool_output_tokens": 14584,
+        "avoidable_waste_pct": {
+          "low": 18,
+          "high": 26
+        },
+        "rereads": 0,
+        "retry_depth_max": 1,
+        "context_growth_events": 1,
+        "failed_commands": 3
+      },
+      "optimized": {
+        "label": "plugin-assisted Claude Code -p",
+        "score": 63,
+        "estimated_tokens": 18698,
+        "tool_output_tokens": 12286,
+        "avoidable_waste_pct": {
+          "low": 18,
+          "high": 26
+        },
+        "rereads": 0,
+        "retry_depth_max": 1,
+        "context_growth_events": 1,
+        "failed_commands": 2
+      },
+      "delta": {
+        "estimated_tokens": -1764,
+        "tool_output_tokens": -2298,
+        "avoidable_waste_low_points": 0,
+        "avoidable_waste_high_points": 0,
+        "rereads": 0,
+        "context_growth_events": 0,
+        "failed_commands": -1,
+        "claude_total_cost_usd": -0.018464000000000036,
+        "claude_cache_creation_input_tokens": -1553,
+        "claude_cache_read_input_tokens": 26590,
+        "claude_output_tokens": 116
+      },
+      "native_usage": {
+        "baseline": {
+          "total_cost_usd": 0.2922749,
+          "num_turns": 10,
+          "input_tokens": 12,
+          "cache_creation_input_tokens": 16789,
+          "cache_read_input_tokens": 186969,
+          "output_tokens": 2104
+        },
+        "optimized": {
+          "total_cost_usd": 0.27381089999999997,
+          "num_turns": 11,
+          "input_tokens": 13,
+          "cache_creation_input_tokens": 15236,
+          "cache_read_input_tokens": 213559,
+          "output_tokens": 2220
+        }
+      },
+      "verdict": "positive",
+      "published_api_cost_estimate": {
+        "provider": "anthropic",
+        "pricing": {
+          "model": "claude-sonnet-4-6",
+          "source": "https://platform.claude.com/docs/en/about-claude/pricing",
+          "as_of": "2026-05-24",
+          "rates_usd_per_mtok": {
+            "input_tokens": 3.0,
+            "cache_creation_input_tokens_1h": 6.0,
+            "cache_read_input_tokens": 0.3,
+            "output_tokens": 15.0
+          },
+          "cache_creation_assumption": "Comparison JSON exposes cache_creation_input_tokens without the 5m/1h split; raw benchmark stdout for these runs used ephemeral_1h cache writes, so this estimate prices cache creation at the 1-hour cache-write rate."
+        },
+        "baseline_usd": 0.1884207,
+        "optimized_usd": 0.1888227,
+        "delta_usd": 0.000402,
+        "baseline_breakdown": {
+          "input_usd": 3.6e-05,
+          "cache_creation_1h_usd": 0.100734,
+          "cache_read_usd": 0.0560907,
+          "output_usd": 0.03156,
+          "total_usd": 0.1884207
+        },
+        "optimized_breakdown": {
+          "input_usd": 3.9e-05,
+          "cache_creation_1h_usd": 0.091416,
+          "cache_read_usd": 0.0640677,
+          "output_usd": 0.0333,
+          "total_usd": 0.1888227
+        },
+        "delta_breakdown": {
+          "input_usd": 3e-06,
+          "cache_creation_1h_usd": -0.009318,
+          "cache_read_usd": 0.007977,
+          "output_usd": 0.00174,
+          "total_usd": 0.000402
+        }
+      }
+    },
+    {
+      "harness": "Codex exec --json",
+      "version": "codex-cli 0.128.0",
+      "intervention": "Agent Analyzer text guidance",
+      "quality": "0->0",
+      "baseline": {
+        "label": "baseline Codex exec",
+        "score": 68,
+        "estimated_tokens": 16950,
+        "tool_output_tokens": 16402,
+        "avoidable_waste_pct": {
+          "low": 16,
+          "high": 24
+        },
+        "rereads": 0,
+        "retry_depth_max": 1,
+        "context_growth_events": 0,
+        "failed_commands": 3
+      },
+      "optimized": {
+        "label": "guidance-assisted Codex exec",
+        "score": 68,
+        "estimated_tokens": 4406,
+        "tool_output_tokens": 3790,
+        "avoidable_waste_pct": {
+          "low": 16,
+          "high": 24
+        },
+        "rereads": 0,
+        "retry_depth_max": 1,
+        "context_growth_events": 0,
+        "failed_commands": 3
+      },
+      "delta": {
+        "estimated_tokens": -12544,
+        "tool_output_tokens": -12612,
+        "avoidable_waste_low_points": 0,
+        "avoidable_waste_high_points": 0,
+        "rereads": 0,
+        "context_growth_events": 0,
+        "failed_commands": 0,
+        "codex_input_tokens": 45558,
+        "codex_cached_input_tokens": 27776,
+        "codex_output_tokens": 167,
+        "codex_reasoning_output_tokens": 26,
+        "codex_total_uncached_plus_output_tokens": 17949
+      },
+      "native_usage": {
+        "baseline": {
+          "input_tokens": 276839,
+          "cached_input_tokens": 231680,
+          "output_tokens": 1766,
+          "reasoning_output_tokens": 45,
+          "total_uncached_plus_output_tokens": 46925
+        },
+        "optimized": {
+          "input_tokens": 322397,
+          "cached_input_tokens": 259456,
+          "output_tokens": 1933,
+          "reasoning_output_tokens": 71,
+          "total_uncached_plus_output_tokens": 64874
+        }
+      },
+      "verdict": "mixed",
+      "published_api_cost_estimate": {
+        "provider": "openai",
+        "pricing": {
+          "model_assumption": "gpt-5.3-codex",
+          "source": "https://developers.openai.com/api/docs/pricing",
+          "token_category_source": "https://help.openai.com/en/articles/4936856-what-are-tokens-and-how-to-count-them",
+          "as_of": "2026-05-24",
+          "rates_usd_per_mtok": {
+            "input_tokens": 1.75,
+            "cached_input_tokens": 0.175,
+            "output_tokens": 14.0,
+            "reasoning_output_tokens": 14.0
+          },
+          "reasoning_pricing_note": "OpenAI reports reasoning tokens as usage metadata used for billing/tracking. Because the Codex JSON exposes reasoning_output_tokens separately, this estimate bills them at the output-token rate. If a future exporter includes reasoning inside output_tokens, do not add it twice."
+        },
+        "baseline_usd": 0.14492625,
+        "optimized_usd": 0.18360755,
+        "delta_usd": 0.0386813,
+        "baseline_breakdown": {
+          "uncached_input_usd": 0.07902825,
+          "cached_input_usd": 0.040544,
+          "visible_output_usd": 0.024724,
+          "reasoning_output_usd": 0.00063,
+          "total_usd": 0.14492625,
+          "visible_output_only_total_usd": 0.14429625
+        },
+        "optimized_breakdown": {
+          "uncached_input_usd": 0.11014675,
+          "cached_input_usd": 0.0454048,
+          "visible_output_usd": 0.027062,
+          "reasoning_output_usd": 0.000994,
+          "total_usd": 0.18360755,
+          "visible_output_only_total_usd": 0.18261355
+        },
+        "delta_breakdown": {
+          "uncached_input_usd": 0.0311185,
+          "cached_input_usd": 0.0048608,
+          "visible_output_usd": 0.002338,
+          "reasoning_output_usd": 0.000364,
+          "total_usd": 0.0386813,
+          "visible_output_only_total_usd": 0.0383173
+        }
+      }
+    }
+  ],
+  "interpretation": "Agent Analyzer guidance reduced Codex event-stream tool output, but Codex native uncached-plus-output tokens increased in this run. Claude Code plugin-assisted run reduced analyzer-estimated tokens, tool output, and total_cost_usd on the same fixed task."
+}

@@ -1,0 +1,9 @@
+Use the Agent Analyzer plugin guidance for this optimized benchmark run.
+
+Rules:
+- Preserve task completion quality over token reduction.
+- Before reading a file, state the specific fact you need from it.
+- Prefer rg and narrow file ranges over broad reads.
+- Cap command output with targeted tests or narrow filters before running broad verification.
+- Do not install optional tools.
+- Do not use web search.

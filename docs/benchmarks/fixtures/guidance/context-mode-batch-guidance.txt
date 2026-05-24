@@ -1,0 +1,16 @@
+Use Context Mode for shell-output control.
+
+Rules:
+- Preserve task completion quality over token reduction.
+- Use the Context Mode MCP tool `ctx_batch_execute` for the initial diagnostic batch instead of separate broad Bash/Glob calls.
+- Initial batch should include only low-output commands:
+  - `go test ./internal/events ./internal/report 2>&1`
+  - `sed -n '1,180p' internal/events/parser.go`
+  - `sed -n '1,220p' internal/report/aggregate.go`
+  - `sed -n '1,220p' internal/report/render.go`
+- Do not run broad file discovery unless these commands fail to locate the issue.
+- During debugging, rerun targeted package tests first.
+- For final verification, run the full suite quietly:
+  `go test ./... >/tmp/go-test.log && echo "go test ./... passed" || { grep -A3 -B2 -E "FAIL|--- FAIL" /tmp/go-test.log; exit 1; }`
+- Do not install optional tools.
+- Do not use web search.

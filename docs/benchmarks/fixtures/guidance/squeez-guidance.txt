@@ -1,0 +1,14 @@
+Use Squeez for noisy broad shell output.
+
+Rules:
+- Preserve task completion quality over token reduction.
+- Do not install global hooks.
+- Start with targeted package tests:
+  `go test ./internal/events ./internal/report`
+- If a broad test run is needed while tests are still failing, use:
+  `npx -y squeez wrap go test ./...`
+- Read only files named by failing tests or exact searches, using narrow ranges when possible.
+- During debugging, rerun targeted package tests first.
+- For final verification, run the full suite quietly:
+  `go test ./... >/tmp/go-test.log && echo "go test ./... passed" || { grep -A3 -B2 -E "FAIL|--- FAIL" /tmp/go-test.log; exit 1; }`
+- Do not use web search.

@@ -1,0 +1,171 @@
+{
+  "schema_version": "2026-05-24",
+  "suite_id": "claude-rlm-discovery",
+  "source": "scripts/benchmark-repeat.sh aggregate.json",
+  "required_repeats": 3,
+  "completed_repeats": 3,
+  "quality_passed": true,
+  "failed_repeats": [],
+  "delta_stats": {
+    "avoidable_waste_high_points": {
+      "n": 3,
+      "mean": 11.0,
+      "median": 9,
+      "min": 8,
+      "max": 16,
+      "stdev": 4.358898943540674
+    },
+    "avoidable_waste_low_points": {
+      "n": 3,
+      "mean": 8.333333333333334,
+      "median": 6,
+      "min": 6,
+      "max": 13,
+      "stdev": 4.041451884327381
+    },
+    "claude_cache_creation_input_tokens": {
+      "n": 3,
+      "mean": -3567.3333333333335,
+      "median": -5472,
+      "min": -6258,
+      "max": 1028,
+      "stdev": 3999.033049792579
+    },
+    "claude_cache_read_input_tokens": {
+      "n": 3,
+      "mean": -148304.0,
+      "median": -177182,
+      "min": -199555,
+      "max": -68175,
+      "stdev": 70289.61703551955
+    },
+    "claude_output_tokens": {
+      "n": 3,
+      "mean": -1197.3333333333333,
+      "median": -1240,
+      "min": -1298,
+      "max": -1054,
+      "stdev": 127.47287293119793
+    },
+    "claude_total_cost_usd": {
+      "n": 3,
+      "mean": -0.07532203333333334,
+      "median": -0.06460660000000001,
+      "min": -0.10143200000000005,
+      "max": -0.05992749999999997,
+      "stdev": 0.022732603539923336
+    },
+    "context_growth_events": {
+      "n": 3,
+      "mean": -1.0,
+      "median": -1,
+      "min": -1,
+      "max": -1,
+      "stdev": 0.0
+    },
+    "estimated_tokens": {
+      "n": 3,
+      "mean": 19476.666666666668,
+      "median": 22706,
+      "min": 12939,
+      "max": 22785,
+      "stdev": 5661.923200939177
+    },
+    "failed_commands": {
+      "n": 3,
+      "mean": 6.666666666666667,
+      "median": 6,
+      "min": 5,
+      "max": 9,
+      "stdev": 2.0816659994661326
+    },
+    "rereads": {
+      "n": 3,
+      "mean": 0.6666666666666666,
+      "median": 1,
+      "min": 0,
+      "max": 1,
+      "stdev": 0.5773502691896257
+    },
+    "tool_output_tokens": {
+      "n": 3,
+      "mean": 6020.333333333333,
+      "median": 8818,
+      "min": -170,
+      "max": 9413,
+      "stdev": 5369.234240870232
+    }
+  },
+  "run_dirs": [
+    "run-01",
+    "run-02",
+    "run-03"
+  ],
+  "published_api_cost_estimate": {
+    "harness": "claude",
+    "complete_cost_surface": false,
+    "multi_session_runs_not_in_stdout_usage": [
+      {
+        "run": "run-01",
+        "label": "optimized",
+        "session_count": 2
+      },
+      {
+        "run": "run-02",
+        "label": "optimized",
+        "session_count": 2
+      },
+      {
+        "run": "run-03",
+        "label": "optimized",
+        "session_count": 2
+      }
+    ],
+    "rates": {
+      "model_assumption": "Claude Sonnet 4.6",
+      "input_tokens_per_mtok_usd": 3.0,
+      "cache_creation_input_tokens_per_mtok_usd": 6.0,
+      "cache_read_input_tokens_per_mtok_usd": 0.3,
+      "output_tokens_per_mtok_usd": 15.0
+    },
+    "baseline_mean_usd": 0.23628989999999997,
+    "optimized_mean_usd": 0.1524187,
+    "delta_mean_usd": -0.08387119999999999,
+    "savings_rate": 0.3549504231877876,
+    "savings_percent": 35.49504231877876,
+    "scaled_examples": {
+      "savings_rate": 0.3549504231877876,
+      "savings_percent": 35.49504231877876,
+      "weekly_100_usd": 35.49504231877876,
+      "weekly_500_usd": 177.4752115938938,
+      "monthly_2000_usd": 709.9008463755752,
+      "monthly_5000_usd": 1774.752115938938,
+      "monthly_10000_usd": 3549.504231877876,
+      "basis": "Scaled linearly from the suite's optimized-vs-baseline published API-rate delta: savings = comparable baseline spend * savings_percent."
+    },
+    "delta_min_usd": -0.11603850000000002,
+    "delta_max_usd": -0.06281459999999997,
+    "runs": [
+      {
+        "run": "run-01",
+        "baseline_usd": 0.2443158,
+        "optimized_usd": 0.1715553,
+        "delta_usd": -0.0727605
+      },
+      {
+        "run": "run-02",
+        "baseline_usd": 0.20507159999999997,
+        "optimized_usd": 0.142257,
+        "delta_usd": -0.06281459999999997
+      },
+      {
+        "run": "run-03",
+        "baseline_usd": 0.2594823,
+        "optimized_usd": 0.14344379999999998,
+        "delta_usd": -0.11603850000000002
+      }
+    ],
+    "note": "Uses exposed Claude Code aggregate usage fields repriced at published Claude Sonnet 4.6 API rates. Claude Code native billing can differ because raw runs also report internal model usage. This suite used additional Claude sessions whose usage is not included in the root stdout usage fields, so this API estimate is root-session-only and must not be used as a full cost claim."
+  },
+  "privacy_boundary": "Raw Claude/Codex logs, raw prompts, local paths, and secrets are not included in public aggregate artifacts."
+}

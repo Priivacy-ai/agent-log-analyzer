@@ -1,0 +1,17 @@
+{
+  "mcpServers": {
+    "claude-context": {
+      "command": "claude-context-mcp",
+      "env": {
+        "EMBEDDING_PROVIDER": "Ollama",
+        "EMBEDDING_MODEL": "nomic-embed-text",
+        "OLLAMA_HOST": "http://127.0.0.1:11434",
+        "EMBEDDING_DIMENSION": "768",
+        "MILVUS_ADDRESS": "127.0.0.1:19530",
+        "CLAUDE_CONTEXT_BACKGROUND_SYNC": "false",
+        "CLAUDE_CONTEXT_TRIGGER_WATCHER": "false",
+        "CODE_CHUNKS_COLLECTION_NAME_OVERRIDE": "agent_analyzer_bench_run27"
+      }
+    }
+  }
+}

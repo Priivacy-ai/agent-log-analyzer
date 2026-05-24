@@ -1,0 +1,109 @@
+{
+  "schema_version": "2026-05-24",
+  "required_repeats": 1,
+  "completed_repeats": 1,
+  "failed_repeats": [],
+  "confidence_policy": "Recommendation verdicts should be promoted from first-pass to repeated only when at least three fresh baseline/optimized pairs complete and pass the same quality gate.",
+  "quality": [
+    {
+      "run": "run-01",
+      "baseline_quality_status": "0",
+      "optimized_quality_status": "1",
+      "baseline_exit_status": 0,
+      "optimized_exit_status": 0
+    }
+  ],
+  "delta_stats": {
+    "avoidable_waste_high_points": {
+      "n": 1,
+      "mean": -10.0,
+      "median": -10,
+      "min": -10,
+      "max": -10,
+      "stdev": 0
+    },
+    "avoidable_waste_low_points": {
+      "n": 1,
+      "mean": -10.0,
+      "median": -10,
+      "min": -10,
+      "max": -10,
+      "stdev": 0
+    },
+    "claude_cache_creation_input_tokens": {
+      "n": 1,
+      "mean": -59844.0,
+      "median": -59844,
+      "min": -59844,
+      "max": -59844,
+      "stdev": 0
+    },
+    "claude_cache_read_input_tokens": {
+      "n": 1,
+      "mean": -261745.0,
+      "median": -261745,
+      "min": -261745,
+      "max": -261745,
+      "stdev": 0
+    },
+    "claude_output_tokens": {
+      "n": 1,
+      "mean": 1735.0,
+      "median": 1735,
+      "min": 1735,
+      "max": 1735,
+      "stdev": 0
+    },
+    "claude_total_cost_usd": {
+      "n": 1,
+      "mean": -0.2766874999999998,
+      "median": -0.2766874999999998,
+      "min": -0.2766874999999998,
+      "max": -0.2766874999999998,
+      "stdev": 0
+    },
+    "context_growth_events": {
+      "n": 1,
+      "mean": -1.0,
+      "median": -1,
+      "min": -1,
+      "max": -1,
+      "stdev": 0
+    },
+    "estimated_tokens": {
+      "n": 1,
+      "mean": -76237.0,
+      "median": -76237,
+      "min": -76237,
+      "max": -76237,
+      "stdev": 0
+    },
+    "failed_commands": {
+      "n": 1,
+      "mean": 4.0,
+      "median": 4,
+      "min": 4,
+      "max": 4,
+      "stdev": 0
+    },
+    "rereads": {
+      "n": 1,
+      "mean": -4.0,
+      "median": -4,
+      "min": -4,
+      "max": -4,
+      "stdev": 0
+    },
+    "tool_output_tokens": {
+      "n": 1,
+      "mean": -79663.0,
+      "median": -79663,
+      "min": -79663,
+      "max": -79663,
+      "stdev": 0
+    }
+  },
+  "run_dirs": [
+    "run-01"
+  ]
+}

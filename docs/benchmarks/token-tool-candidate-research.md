@@ -1,0 +1,50 @@
+# Token Tool Candidate Research
+
+Research date: 2026-05-24
+
+This note records the additional tools and approaches added after the first benchmark pass. Each candidate is evaluated by token category and by a three-repeat task benchmark.
+
+## Candidate Mechanisms
+
+| Candidate | Mechanism | Intended token category | Product interpretation |
+| --- | --- | --- | --- |
+| Probe | Local AST-aware/BM25 code search with bounded output | Input/context through compact retrieval | Negative here: tool output dipped, but total/cost rose. |
+| Semble | Local code-aware chunks with semantic and BM25 retrieval | Input/context through compact retrieval | Positive here: repeated task runs saved estimated, tool-output, output, and cost. |
+| Squeez | Explicit shell-output compression via `squeez wrap` | Tool-output/input-context | Conditional: repeated task runs saved tool-output/cost, but visible output stayed noisy. |
+| RTK | Explicit shell-output compression via `rtk` | Tool-output/input-context | Conditional: useful for noisy shell output; keep global hooks waiver-gated. |
+
+## Smoke Results
+
+Smoke tests remain useful only as mechanism checks:
+
+- Probe returned relevant snippets under bounded `--max-tokens` searches.
+- Semble returned relevant parser, aggregate, render, sort, and test files from path-limited searches.
+- Squeez compressed noisy failing Go test output from 7,088 bytes to 1,603 bytes while preserving failure details.
+- RTK compressed the same noisy failing Go test output from 7,088 bytes to 963 bytes.
+
+Smoke success did not automatically predict task-level savings. The repeated task benchmark below is the product evidence.
+
+## Final 3x Task Results
+
+All rows passed `go test ./...` in all three repeats.
+
+| Candidate | Quality | Estimated tokens | Tool-output tokens | Output signal | Cost signal | Verdict |
+| --- | --- | ---: | ---: | --- | --- | --- |
+| Probe | 3/3 | `+874` | `-745` | Claude output `+548` | native `+$0.038069`; API estimate `+$0.038340` | Negative here |
+| Semble | 3/3 | `-16,301` | `-16,060` | Claude output `-480` | native `-$0.089147`; API estimate `-$0.114194` | Positive here |
+| Squeez | 3/3 | `-8,471` | `-8,917` | Claude output `+73` | native `-$0.014049`; API estimate `-$0.028224` | Conditional |
+| RTK | 3/3 | `-12,446` | `-12,716` | Claude output `+114` | native `-$0.031479`; API estimate `-$0.044316` | Conditional |
+
+## Product Actions
+
+- Add Semble as a positive but fixture-scoped candidate.
+- Keep RTK and Squeez as explicit shell-output compression recommendations, not global hook defaults.
+- Do not add Probe as a default recommendation for this task family.
+- Keep smoke-test claims separate from task benchmark claims.
+
+## Artifacts
+
+- `web/proof/reports/aggregate-probe.json`
+- `web/proof/reports/aggregate-semble.json`
+- `web/proof/reports/aggregate-squeez.json`
+- `web/proof/reports/aggregate-rtk-explicit.json`

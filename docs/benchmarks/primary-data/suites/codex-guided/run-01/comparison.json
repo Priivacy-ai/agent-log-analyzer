@@ -1,0 +1,86 @@
+{
+  "schema_version": "2026-05-24",
+  "benchmark_harness": "codex-exec",
+  "fixed_commit": "b96b8a7f5cc57c4335bc7bc85ec726c836ed0996",
+  "codex_version": "codex-cli 0.128.0",
+  "baseline_codex_args": "-s danger-full-access -a never",
+  "optimized_codex_args": "-s danger-full-access -a never",
+  "baseline_codex_exec_args": "--ignore-rules --ignore-user-config",
+  "optimized_codex_exec_args": "--ignore-rules --ignore-user-config",
+  "baseline_exit_status": 0,
+  "optimized_exit_status": 0,
+  "baseline_quality_status": "0",
+  "optimized_quality_status": "0",
+  "baseline": {
+    "label": "baseline Codex exec",
+    "score": 68,
+    "estimated_tokens": 22386,
+    "tool_output_tokens": 21745,
+    "avoidable_waste_pct": {
+      "low": 16,
+      "high": 24
+    },
+    "rereads": 0,
+    "retry_depth_max": 1,
+    "context_growth_events": 0,
+    "failed_commands": 4
+  },
+  "optimized": {
+    "label": "guidance-assisted Codex exec",
+    "score": 64,
+    "estimated_tokens": 3987,
+    "tool_output_tokens": 3329,
+    "avoidable_waste_pct": {
+      "low": 18,
+      "high": 26
+    },
+    "rereads": 0,
+    "retry_depth_max": 2,
+    "context_growth_events": 0,
+    "failed_commands": 4
+  },
+  "baseline_codex_usage": {
+    "input_tokens": 382756,
+    "cached_input_tokens": 332800,
+    "output_tokens": 2262,
+    "reasoning_output_tokens": 153,
+    "total_uncached_plus_output_tokens": 52218
+  },
+  "optimized_codex_usage": {
+    "input_tokens": 355941,
+    "cached_input_tokens": 324352,
+    "output_tokens": 1608,
+    "reasoning_output_tokens": 131,
+    "total_uncached_plus_output_tokens": 33197
+  },
+  "stderr_summary": {
+    "baseline": {
+      "line_count": 113,
+      "skill_load_errors": 5,
+      "mcp_auth_errors": 0,
+      "icon_warnings": 108
+    },
+    "optimized": {
+      "line_count": 137,
+      "skill_load_errors": 5,
+      "mcp_auth_errors": 0,
+      "icon_warnings": 132
+    }
+  },
+  "delta": {
+    "estimated_tokens": -18399,
+    "tool_output_tokens": -18416,
+    "avoidable_waste_low_points": 2,
+    "avoidable_waste_high_points": 2,
+    "rereads": 0,
+    "context_growth_events": 0,
+    "failed_commands": 0,
+    "codex_input_tokens": -26815,
+    "codex_cached_input_tokens": -8448,
+    "codex_output_tokens": -654,
+    "codex_reasoning_output_tokens": -22,
+    "codex_total_uncached_plus_output_tokens": -19021
+  },
+  "privacy_boundary": "Publish sanitized reports, filtered Codex event JSONL, and comparison JSON only. Do not publish raw private prompts, secrets, or unredacted local paths.",
+  "comparability_note": "Codex exec exposes token usage but not the same Claude Code total_cost_usd field. Compare quality, event-stream analyzer metrics, and token counts separately from Claude Code dollar cost."
+}

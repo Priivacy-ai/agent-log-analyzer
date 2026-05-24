@@ -1,0 +1,163 @@
+{
+  "schema_version": "2026-05-24",
+  "suite_id": "caveman-codex",
+  "source": "scripts/benchmark-repeat.sh aggregate.json",
+  "required_repeats": 3,
+  "completed_repeats": 3,
+  "quality_passed": true,
+  "failed_repeats": [],
+  "delta_stats": {
+    "avoidable_waste_high_points": {
+      "n": 3,
+      "mean": -2.0,
+      "median": -2,
+      "min": -4,
+      "max": 0,
+      "stdev": 2.0
+    },
+    "avoidable_waste_low_points": {
+      "n": 3,
+      "mean": -2.0,
+      "median": -2,
+      "min": -4,
+      "max": 0,
+      "stdev": 2.0
+    },
+    "codex_cached_input_tokens": {
+      "n": 3,
+      "mean": -134613.33333333334,
+      "median": -156800,
+      "min": -227968,
+      "max": -19072,
+      "stdev": 106200.61599319155
+    },
+    "codex_input_tokens": {
+      "n": 3,
+      "mean": -139180.33333333334,
+      "median": -160383,
+      "min": -229463,
+      "max": -27695,
+      "stdev": 102541.43680158442
+    },
+    "codex_output_tokens": {
+      "n": 3,
+      "mean": -172.0,
+      "median": -195,
+      "min": -523,
+      "max": 202,
+      "stdev": 363.0468289353317
+    },
+    "codex_reasoning_output_tokens": {
+      "n": 3,
+      "mean": -2.0,
+      "median": 5,
+      "min": -22,
+      "max": 11,
+      "stdev": 17.578395831246947
+    },
+    "codex_total_uncached_plus_output_tokens": {
+      "n": 3,
+      "mean": -4739.0,
+      "median": -4106,
+      "min": -8421,
+      "max": -1690,
+      "stdev": 3409.854395718386
+    },
+    "context_growth_events": {
+      "n": 3,
+      "mean": 0.0,
+      "median": 0,
+      "min": 0,
+      "max": 0,
+      "stdev": 0.0
+    },
+    "estimated_tokens": {
+      "n": 3,
+      "mean": -9210.333333333334,
+      "median": -11121,
+      "min": -14642,
+      "max": -1868,
+      "stdev": 6597.859829773086
+    },
+    "failed_commands": {
+      "n": 3,
+      "mean": -1.3333333333333333,
+      "median": -1,
+      "min": -2,
+      "max": -1,
+      "stdev": 0.5773502691896257
+    },
+    "rereads": {
+      "n": 3,
+      "mean": -1.0,
+      "median": 0,
+      "min": -3,
+      "max": 0,
+      "stdev": 1.7320508075688772
+    },
+    "tool_output_tokens": {
+      "n": 3,
+      "mean": -9109.333333333334,
+      "median": -11039,
+      "min": -14447,
+      "max": -1842,
+      "stdev": 6520.292657031073
+    }
+  },
+  "run_dirs": [
+    "run-01",
+    "run-02",
+    "run-03"
+  ],
+  "published_api_cost_estimate": {
+    "harness": "codex",
+    "complete_cost_surface": true,
+    "multi_session_runs_not_in_stdout_usage": [],
+    "rates": {
+      "model_assumption": "GPT-5.3-Codex Standard",
+      "input_tokens_per_mtok_usd": 1.75,
+      "cached_input_tokens_per_mtok_usd": 0.175,
+      "output_tokens_per_mtok_usd": 14.0,
+      "reasoning_output_tokens_per_mtok_usd": 14.0
+    },
+    "baseline_mean_usd": 0.186165,
+    "optimized_mean_usd": 0.15217941666666668,
+    "delta_mean_usd": -0.03398558333333332,
+    "savings_rate": 0.1825562449081907,
+    "savings_percent": 18.25562449081907,
+    "scaled_examples": {
+      "savings_rate": 0.1825562449081907,
+      "savings_percent": 18.25562449081907,
+      "weekly_100_usd": 18.25562449081907,
+      "weekly_500_usd": 91.27812245409535,
+      "monthly_2000_usd": 365.1124898163814,
+      "monthly_5000_usd": 912.7812245409535,
+      "monthly_10000_usd": 1825.562449081907,
+      "basis": "Scaled linearly from the suite's optimized-vs-baseline published API-rate delta: savings = comparable baseline spend * savings_percent."
+    },
+    "delta_min_usd": -0.04554864999999997,
+    "delta_max_usd": -0.015445849999999983,
+    "runs": [
+      {
+        "run": "run-01",
+        "baseline_usd": 0.21095759999999997,
+        "optimized_usd": 0.16540895,
+        "delta_usd": -0.04554864999999997
+      },
+      {
+        "run": "run-02",
+        "baseline_usd": 0.1842484,
+        "optimized_usd": 0.14328615,
+        "delta_usd": -0.040962250000000006
+      },
+      {
+        "run": "run-03",
+        "baseline_usd": 0.163289,
+        "optimized_usd": 0.14784315,
+        "delta_usd": -0.015445849999999983
+      }
+    ],
+    "note": "Uses Codex JSON usage fields repriced at published GPT-5.3-Codex Standard API rates. Reasoning tokens are billed at the output-token rate in this estimate."
+  },
+  "privacy_boundary": "Raw Claude/Codex logs, raw prompts, local paths, and secrets are not included in public aggregate artifacts."
+}

@@ -49,8 +49,9 @@ constants live in `internal/analyzer/token_saving_recommendations.go`.
 
 **`usage_visibility`** — Independent visibility into token, request, and
 quota usage. Responds to `no_usage_visibility`: the user has no out-of-band
-view of what Claude Code is spending. Anchored by `ccusage` (rank 1) with
-`ccstatusline` and the two reference-only usage monitors trailing.
+view of what Claude Code is spending. Anchored by `ccusage` (rank 1).
+`ccstatusline` and usage monitors are reference-only. Benchmark framing:
+telemetry can verify savings, but it is not itself a direct token reducer.
 
 **`mcp_skill_hygiene`** — Pruning, lazy-loading, and scoping for MCP servers
 and skills. Responds to `mcp_skill_bloat`. This class is structural: the
@@ -64,14 +65,17 @@ Responds to `mcp_tool_output_bloat`. Anchored by `context_mode` (rank 1)
 with `distill` and `token_optimizer_mcp` as research-only candidates.
 
 **`shell_output_reducer`** — Compressing or proxying shell command output.
-Responds to `shell_output_bloat`. Anchored by `RTK (Rust Token Killer, rtk-ai/rtk)` (rank 1, waiver-gated)
-with `leanctx` and `headroom` as research-only entries.
+Responds to `shell_output_bloat`. Anchored by `RTK (Rust Token Killer,
+rtk-ai/rtk)` (rank 1, waiver-gated) and `Squeez` (rank 2) for explicit
+shell/log compression, with `leanctx` and `headroom` as research-only
+entries.
 
 **`retrieval`** — Code-aware retrieval that replaces broad file reads.
-Responds to `repeated_file_reads` and `broad_repo_exploration`. Includes
-`serena`, `claude_context`, `grepai`, and the graph-style entries
-(`codegraph`, `codebase_memory_mcp`, and similar). Stacking is forbidden
-unless waste persists in a different retrieval mode.
+Responds to `repeated_file_reads` and `broad_repo_exploration`. The
+benchmark-narrowed defaults promote `Semble` and `grepai` for scoped local
+retrieval. `claude_context` remains research-only after adding overhead in
+the current fixture. Stacking is forbidden unless waste persists in a
+different retrieval mode.
 
 **`reread_guard`** — Session-scoped read deduplication and per-file memory.
 Responds to `unchanged_file_rereads`. Includes `read_once`, `openwolf`, and
@@ -82,8 +86,9 @@ loops and growth spikes. Responds to `retry_loop` and `context_growth_spikes`.
 Phase A keeps this class small; entries are added as Phase B research lands.
 
 **`output_verbosity`** — Diff-level changes to CLAUDE.md and output style.
-Responds to `output_verbosity`. Anchored by `claude_token_efficient`
-(rank 1) with `caveman` as opt-in only.
+Responds to `output_verbosity`. The benchmark-narrowed policy treats this
+as an advisory workflow recommendation. `claude_token_efficient` showed only
+small/noisy savings and `caveman` remains opt-in only.
 
 ## Allowlist policy
 
@@ -106,8 +111,8 @@ recommendations leave them empty.
 
 Adding, removing, or modifying any registry entry must bump
 `RegistryVersion()` — a CI test compares the live value to a checked-in
-golden constant and fails fast otherwise. The version string is itself an
-allowlisted enum string (e.g. `"phase-a-2026-05-20-tool-url-audit"`); see NFR-005.
+golden constant and fails fast otherwise. The current benchmark-narrowed
+registry is `"phase-a-2026-05-24-benchmark-narrowed"`; see NFR-005.
 
 For URL verification, see `research.md` §"Per-tool research notes". The
 short version: Phase A does **not** invent or guess source URLs. Every
@@ -156,19 +161,20 @@ the conflict-resolution pass on each call.
 The engine evaluates a **fixed 8-step rule list** (research.md §3) in this
 exact order:
 
-1. `no_usage_visibility` → class `usage_visibility`
-2. `mcp_skill_bloat` → class `mcp_skill_hygiene` (prune-first; never adds an MCP)
-3. `mcp_tool_output_bloat` → class `mcp_output_reducer`
-4. `shell_output_bloat` → class `shell_output_reducer`
-5. `repeated_file_reads` / `broad_repo_exploration` → class `retrieval`
-6. `unchanged_file_rereads` → class `reread_guard`
-7. `retry_loop` / `context_growth_spikes` → class `context_hygiene`
-8. `output_verbosity` → class `output_verbosity`
+1. `mcp_skill_bloat` → class `mcp_skill_hygiene` (prune-first; never adds an MCP)
+2. `mcp_tool_output_bloat` → class `mcp_output_reducer`
+3. `shell_output_bloat` → class `shell_output_reducer`
+4. `repeated_file_reads` / `broad_repo_exploration` → class `retrieval`
+5. `unchanged_file_rereads` → class `reread_guard`
+6. `retry_loop` / `context_growth_spikes` → class `context_hygiene`
+7. `output_verbosity` → class `output_verbosity`
+8. `no_usage_visibility` → class `usage_visibility`
 
-Input/context-token reductions sit ahead of output-style tweaks because
-that ordering matches FR-016: a smaller context dominates a tersely-worded
-context. `mcp_skill_bloat` is placed above the other reducers so the
-engine removes noise before recommending another tool.
+Input/context-token reductions sit ahead of output-style tweaks and
+telemetry because that ordering matches the benchmark results: reducers
+change token flow, while accounting tools verify it. `mcp_skill_bloat` is
+placed above the other reducers so the engine removes noise before
+recommending another tool.
 
 ### The ≤ 1 + ≤ 1 invariant
 

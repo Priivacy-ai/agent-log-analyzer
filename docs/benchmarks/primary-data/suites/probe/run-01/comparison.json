@@ -1,0 +1,77 @@
+{
+  "schema_version": "2026-05-23",
+  "fixed_commit": "b96b8a7f5cc57c4335bc7bc85ec726c836ed0996",
+  "claude_version": "2.1.148 (Claude Code)",
+  "baseline_claude_args": "--setting-sources project,local --strict-mcp-config --mcp-config {\"mcpServers\":{}} --settings {\"enabledPlugins\":{\"sentrux@sentrux-marketplace\":false},\"permissions\":{\"defaultMode\":\"bypassPermissions\"}} --permission-mode bypassPermissions --disallowedTools Agent --output-format json --model sonnet --max-budget-usd 15",
+  "optimized_claude_args": "--setting-sources project,local --strict-mcp-config --mcp-config {\"mcpServers\":{}} --settings {\"enabledPlugins\":{\"sentrux@sentrux-marketplace\":false},\"permissions\":{\"defaultMode\":\"bypassPermissions\"}} --permission-mode bypassPermissions --disallowedTools Agent --output-format json --model sonnet --max-budget-usd 15",
+  "baseline_exit_status": 0,
+  "optimized_exit_status": 0,
+  "baseline_quality_status": "0",
+  "optimized_quality_status": "0",
+  "baseline": {
+    "label": "baseline Claude Code -p",
+    "score": 63,
+    "estimated_tokens": 35073,
+    "tool_output_tokens": 28028,
+    "avoidable_waste_pct": {
+      "low": 18,
+      "high": 26
+    },
+    "rereads": 0,
+    "retry_depth_max": 1,
+    "context_growth_events": 1,
+    "failed_commands": 4
+  },
+  "optimized": {
+    "label": "plugin-assisted Claude Code -p",
+    "score": 59,
+    "estimated_tokens": 32429,
+    "tool_output_tokens": 24416,
+    "avoidable_waste_pct": {
+      "low": 20,
+      "high": 28
+    },
+    "rereads": 0,
+    "retry_depth_max": 2,
+    "context_growth_events": 1,
+    "failed_commands": 8
+  },
+  "baseline_claude_usage": {
+    "total_cost_usd": 0.20124555,
+    "num_turns": 16,
+    "input_tokens": 8,
+    "cache_creation_input_tokens": 26753,
+    "cache_read_input_tokens": 193026,
+    "output_tokens": 2723,
+    "models_used": [
+      "claude-haiku-4-5-20251001",
+      "claude-sonnet-4-6"
+    ]
+  },
+  "optimized_claude_usage": {
+    "total_cost_usd": 0.2337672,
+    "num_turns": 20,
+    "input_tokens": 12,
+    "cache_creation_input_tokens": 24846,
+    "cache_read_input_tokens": 300219,
+    "output_tokens": 3200,
+    "models_used": [
+      "claude-haiku-4-5-20251001",
+      "claude-sonnet-4-6"
+    ]
+  },
+  "delta": {
+    "estimated_tokens": -2644,
+    "tool_output_tokens": -3612,
+    "avoidable_waste_low_points": 2,
+    "avoidable_waste_high_points": 2,
+    "rereads": 0,
+    "context_growth_events": 0,
+    "failed_commands": 4,
+    "claude_total_cost_usd": 0.03252165000000001,
+    "claude_cache_creation_input_tokens": -1907,
+    "claude_cache_read_input_tokens": 107193,
+    "claude_output_tokens": 477
+  },
+  "privacy_boundary": "Publish sanitized reports and comparison JSON only. Do not publish raw Claude Code logs, raw prompts, secrets, private paths, or unknown private tool names."
+}

@@ -1,0 +1,133 @@
+{
+  "schema_version": "2026-05-24",
+  "required_repeats": 3,
+  "completed_repeats": 3,
+  "failed_repeats": [],
+  "confidence_policy": "Recommendation verdicts should be promoted from first-pass to repeated only when at least three fresh baseline/optimized pairs complete and pass the same quality gate.",
+  "quality": [
+    {
+      "run": "run-01",
+      "baseline_quality_status": "0",
+      "optimized_quality_status": "0",
+      "baseline_exit_status": 0,
+      "optimized_exit_status": 0
+    },
+    {
+      "run": "run-02",
+      "baseline_quality_status": "0",
+      "optimized_quality_status": "0",
+      "baseline_exit_status": 0,
+      "optimized_exit_status": 0
+    },
+    {
+      "run": "run-03",
+      "baseline_quality_status": "0",
+      "optimized_quality_status": "0",
+      "baseline_exit_status": 0,
+      "optimized_exit_status": 0
+    }
+  ],
+  "delta_stats": {
+    "avoidable_waste_high_points": {
+      "n": 3,
+      "mean": -1.3333333333333333,
+      "median": 0,
+      "min": -6,
+      "max": 2,
+      "stdev": 4.163331998932265
+    },
+    "avoidable_waste_low_points": {
+      "n": 3,
+      "mean": -1.3333333333333333,
+      "median": 0,
+      "min": -6,
+      "max": 2,
+      "stdev": 4.163331998932265
+    },
+    "codex_cached_input_tokens": {
+      "n": 3,
+      "mean": -75434.66666666667,
+      "median": -69632,
+      "min": -148224,
+      "max": -8448,
+      "stdev": 70068.4361844428
+    },
+    "codex_input_tokens": {
+      "n": 3,
+      "mean": -99320.0,
+      "median": -80685,
+      "min": -190460,
+      "max": -26815,
+      "stdev": 83398.85445855957
+    },
+    "codex_output_tokens": {
+      "n": 3,
+      "mean": -483.3333333333333,
+      "median": -571,
+      "min": -654,
+      "max": -225,
+      "stdev": 227.53974011880504
+    },
+    "codex_reasoning_output_tokens": {
+      "n": 3,
+      "mean": -44.666666666666664,
+      "median": -22,
+      "min": -96,
+      "max": -16,
+      "stdev": 44.55707949735186
+    },
+    "codex_total_uncached_plus_output_tokens": {
+      "n": 3,
+      "mean": -24368.666666666668,
+      "median": -19021,
+      "min": -42807,
+      "max": -11278,
+      "stdev": 16430.691231148292
+    },
+    "context_growth_events": {
+      "n": 3,
+      "mean": 0.0,
+      "median": 0,
+      "min": 0,
+      "max": 0,
+      "stdev": 0.0
+    },
+    "estimated_tokens": {
+      "n": 3,
+      "mean": -14520.333333333334,
+      "median": -15547,
+      "min": -18399,
+      "max": -9615,
+      "stdev": 4481.093318971759
+    },
+    "failed_commands": {
+      "n": 3,
+      "mean": 0.3333333333333333,
+      "median": 0,
+      "min": 0,
+      "max": 1,
+      "stdev": 0.5773502691896257
+    },
+    "rereads": {
+      "n": 3,
+      "mean": -1.0,
+      "median": 0,
+      "min": -3,
+      "max": 0,
+      "stdev": 1.7320508075688772
+    },
+    "tool_output_tokens": {
+      "n": 3,
+      "mean": -14526.666666666666,
+      "median": -15541,
+      "min": -18416,
+      "max": -9623,
+      "stdev": 4483.3989710189
+    }
+  },
+  "run_dirs": [
+    "run-01",
+    "run-02",
+    "run-03"
+  ]
+}

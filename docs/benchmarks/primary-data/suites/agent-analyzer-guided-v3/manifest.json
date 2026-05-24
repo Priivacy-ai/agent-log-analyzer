@@ -1,0 +1,17 @@
+{
+  "schema_version": "2026-05-24",
+  "run_name": "agent-analyzer-guided-v3",
+  "harness": "claude",
+  "required_repeats": 3,
+  "fresh_context_contract": "Each repeat invokes one full baseline/optimized harness run. The harness creates fresh detached git worktrees and launches separate Claude/Codex task sessions for baseline and optimized runs.",
+  "task_prompt_file": "<repo>/docs/benchmarks/fixtures/tasks/owner-breakdown-v3-noisy.txt",
+  "analyzer_repo": "<repo>",
+  "environment": {
+    "SOURCE_REPO": "/private/tmp/agent-analyzer-benchmark-target-v3",
+    "BASE_REF": "b96b8a7f5cc57c4335bc7bc85ec726c836ed0996",
+    "QUALITY_COMMAND": "go test ./...",
+    "OPTIMIZED_GUIDANCE_FILE": "<repo>/docs/benchmarks/fixtures/guidance/aa-plus-quiet-go-guidance.txt",
+    "AGENT_PLUGIN_ENABLED": "1",
+    "TOOLING_REVIEW_ENABLED": "0"
+  }
+}

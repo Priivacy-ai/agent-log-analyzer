@@ -320,10 +320,10 @@ func TestRecommend_AcceptanceScenarios(t *testing.T) {
 				State:   ToolStateActiveHigh,
 				Sources: map[EvidenceSource]int{EvidenceLogActiveCommand: 2},
 			}),
-			// Only rtk is recommend-eligible in shell_output_reducer
-			// (leanctx, headroom are research_only); after skip → no primary.
+			// Squeez is the benchmark-backed fallback after active RTK.
 			want: acceptanceExpectation{
-				primaryNil: true,
+				primary:       "squeez",
+				primaryReason: ReasonAbsent,
 				skipped: []SkipNote{
 					{ToolID: "rtk", Reason: ReasonActivePersistent, ForSignal: SignalShellOutputBloat},
 				},
@@ -338,7 +338,8 @@ func TestRecommend_AcceptanceScenarios(t *testing.T) {
 				Sources: map[EvidenceSource]int{EvidenceFailureOrRejection: 1},
 			}),
 			want: acceptanceExpectation{
-				primaryNil: true,
+				primary:       "squeez",
+				primaryReason: ReasonAbsent,
 				skipped: []SkipNote{
 					{ToolID: "rtk", Reason: ReasonRejectedAlternative, ForSignal: SignalShellOutputBloat},
 				},
@@ -392,10 +393,9 @@ func TestRecommend_AcceptanceScenarios(t *testing.T) {
 				Sources: map[EvidenceSource]int{EvidenceMCPConfigured: 1},
 			}),
 			// serena is research_only and never enters the candidate set,
-			// so the engine emits the first eligible retrieval tool
-			// (claude_context, class_rank 1 after filtering).
+			// so the engine emits the first eligible benchmark-backed retrieval tool.
 			want: acceptanceExpectation{
-				primary:       "claude_context",
+				primary:       "semble",
 				primaryReason: ReasonAbsent,
 			},
 		},
@@ -414,7 +414,7 @@ func TestRecommend_AcceptanceScenarios(t *testing.T) {
 			signals: []Signal{SignalOutputVerbosity},
 			state:   buildState(),
 			want: acceptanceExpectation{
-				primary:       "claude_token_efficient",
+				primary:       "",
 				primaryReason: ReasonAbsent,
 			},
 		},
@@ -425,7 +425,6 @@ func TestRecommend_AcceptanceScenarios(t *testing.T) {
 			want: acceptanceExpectation{
 				primary:       "rtk",
 				primaryReason: ReasonAbsent,
-				secondary:     "claude_token_efficient",
 			},
 		},
 	}
@@ -594,14 +593,9 @@ func TestRecommendSkipsActiveTool(t *testing.T) {
 // FR-013 / AS-11: when mcp_skill_bloat is among the input signals, the
 // Primary MUST NOT be in the mcp_output_reducer or retrieval class —
 // "do not add another MCP" by default for skill bloat. Because rule
-// precedence puts mcp_skill_hygiene (rule 2) ahead of mcp_output_reducer
-// (rule 3) and retrieval (rule 5), an MCP-stacking primary is structurally
+// precedence puts mcp_skill_hygiene ahead of mcp_output_reducer
+// and retrieval, so an MCP-stacking primary is structurally
 // impossible while skill bloat is present.
-//
-// Note: usage_visibility (rule 1) outranks mcp_skill_hygiene, so when
-// no_usage_visibility is also present the Primary may legitimately be
-// in the usage_visibility class. The invariant is only the negative one:
-// no MCP-adding primary.
 func TestRecommendMCPSkillBloatNeverAddsMCP(t *testing.T) {
 	for _, s := range allSignals() {
 		set := Recommend([]Signal{SignalMCPSkillBloat, s}, ToolStateMap{})

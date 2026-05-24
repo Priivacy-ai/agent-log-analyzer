@@ -116,6 +116,7 @@ func createClientReportHandler(store app.APIStore, expiresIn time.Duration) http
 			writeError(w, http.StatusBadRequest, err.Error())
 			return
 		}
+		analyzer.AttachRecommendation(&report)
 		reportToken, err := newToken()
 		if err != nil {
 			writeError(w, http.StatusInternalServerError, "could not create report token")
@@ -182,6 +183,7 @@ func createPaidClientReportHandler(store app.APIStore, expiresIn time.Duration) 
 			writeError(w, http.StatusBadRequest, err.Error())
 			return
 		}
+		analyzer.AttachRecommendation(&report)
 		reportToken, err := newToken()
 		if err != nil {
 			writeError(w, http.StatusInternalServerError, "could not create report token")

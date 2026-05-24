@@ -1,0 +1,146 @@
+{
+  "job_id": "local",
+  "version": "0.1.0",
+  "score": 63,
+  "estimated_waste_pct": {
+    "low": 18,
+    "high": 26
+  },
+  "metrics": {
+    "turns": 50,
+    "estimated_tokens": 18698,
+    "tool_output_tokens": 12286,
+    "rereads": 0,
+    "retry_depth_max": 1,
+    "context_growth_events": 1,
+    "failed_commands": 2
+  },
+  "findings": [
+    {
+      "id": "tool_output_bloat",
+      "title": "Large shell/tool output overhead",
+      "severity": "high",
+      "cost_impact": "high",
+      "evidence": {
+        "token_share_pct": 65
+      },
+      "recommendation": "Cap command output and use narrower queries before pasting long terminal output into context.",
+      "deterministic": true
+    }
+  ],
+  "ecosystem": {
+    "client": "claude_code",
+    "coding_agents": [
+      "claude_code",
+      "codex"
+    ],
+    "operating_system": "unknown",
+    "shell": "bash",
+    "workflow_frameworks": [
+      "claude_code_hooks",
+      "spec_kitty"
+    ],
+    "mcp_servers_known": [
+      "browser",
+      "git",
+      "memory"
+    ],
+    "unknown_mcp_server_count": 0,
+    "known_skills": [],
+    "unknown_skill_count": 4,
+    "known_plugins": [],
+    "unknown_plugin_count": 0,
+    "package_managers": [
+      "go",
+      "npm"
+    ],
+    "version_control": "unknown"
+  },
+  "redactions": {},
+  "security_receipt": {
+    "raw_transcript_sent_to_llm": false,
+    "outbound_during_analysis": false,
+    "secrets_redacted": 0,
+    "raw_log_ttl": "not uploaded"
+  },
+  "timeline": [
+    {
+      "turn": 10,
+      "estimated_tokens": 4579,
+      "tool_tokens": 439,
+      "rereads": 0,
+      "retries": 0
+    },
+    {
+      "turn": 20,
+      "estimated_tokens": 11557,
+      "tool_tokens": 6660,
+      "rereads": 0,
+      "retries": 1
+    },
+    {
+      "turn": 30,
+      "estimated_tokens": 14671,
+      "tool_tokens": 9453,
+      "rereads": 0,
+      "retries": 2
+    },
+    {
+      "turn": 40,
+      "estimated_tokens": 16751,
+      "tool_tokens": 11092,
+      "rereads": 0,
+      "retries": 2
+    },
+    {
+      "turn": 50,
+      "estimated_tokens": 18698,
+      "tool_tokens": 12286,
+      "rereads": 0,
+      "retries": 2
+    }
+  ],
+  "immediate_fixes": [
+    "Cap command output and use narrower queries before pasting long terminal output into context."
+  ],
+  "aggregate_event": {
+    "event": "analysis_completed",
+    "parser_type": "jsonl",
+    "input_size_bucket": "1024_1048576",
+    "turn_bucket": "50_100",
+    "score_bucket": "60_80",
+    "waste_bucket": "20_40",
+    "findings": {
+      "tool_output_bloat": "high"
+    },
+    "redactions": {},
+    "ecosystem": {
+      "client": "claude_code",
+      "coding_agents": [
+        "claude_code",
+        "codex"
+      ],
+      "operating_system": "unknown",
+      "shell": "bash",
+      "workflow_frameworks": [
+        "claude_code_hooks",
+        "spec_kitty"
+      ],
+      "mcp_servers_known": [
+        "browser",
+        "git",
+        "memory"
+      ],
+      "unknown_mcp_server_count": 0,
+      "known_skills": [],
+      "unknown_skill_count": 4,
+      "known_plugins": [],
+      "unknown_plugin_count": 0,
+      "package_managers": [
+        "go",
+        "npm"
+      ],
+      "version_control": "unknown"
+    }
+  }
+}
