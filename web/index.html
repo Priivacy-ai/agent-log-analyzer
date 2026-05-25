@@ -195,7 +195,7 @@
             <button id="copy-prompt" class="cta-copy-button" data-copy-prompt type="button">Copy command</button>
           </div>
           <pre id="claude-prompt" data-run-command>npx --yes agent-analyzer@latest run</pre>
-          <p class="command-note">Runs on your machine first, asks before upload, and sends only the sanitized report JSON. <button type="button" class="help-tip" data-tippy-content="This command uses the published npm package. It discovers supported local agent logs, parses and redacts locally, writes a report file, asks for confirmation, then uploads only that report JSON." aria-label="More information">?</button></p>
+          <p class="command-note">Read-only local scan: no hooks, settings changes, or repo edits. It asks before uploading only the sanitized report JSON. <button type="button" class="help-tip" data-tippy-content="This command uses the published npm package. It discovers supported local agent logs, parses and redacts locally, writes a reviewable report file, asks for confirmation, then uploads only that report JSON. NPX does not install Agent Analyzer globally." aria-label="More information">?</button></p>
         </section>
 
         <section class="trust-stack" aria-labelledby="install-trust-heading">
@@ -219,12 +219,6 @@
             <a href="/privacy/">Privacy terms</a>
             <a href="https://github.com/Priivacy-ai/agent-log-analyzer/releases" rel="noopener noreferrer">Manual download</a>
             <a href="/proof/">Benchmark proof</a>
-          </div>
-
-          <div class="read-only-note">
-            <h2>Read-only scan</h2>
-            <p>The free scan does not install hooks, change Claude settings, modify repos, or run remediation. It reads logs, writes a local report file, and waits for your upload approval. NPX does not install the analyzer globally.</p>
-            <pre>npm uninstall -g agent-analyzer</pre>
           </div>
         </section>
 

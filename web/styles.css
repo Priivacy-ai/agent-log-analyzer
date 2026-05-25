@@ -510,7 +510,6 @@ pre {
   font-size: 12px;
 }
 
-.read-only-note p,
 .outcome-preview p {
   margin: 0;
   color: var(--muted);
@@ -571,10 +570,6 @@ pre {
   border-color: var(--green);
   background: rgba(126, 231, 135, 0.1);
   box-shadow: 0 0 18px rgba(126, 231, 135, 0.12);
-}
-
-.read-only-note pre {
-  margin-top: 12px;
 }
 
 .outcome-preview {
