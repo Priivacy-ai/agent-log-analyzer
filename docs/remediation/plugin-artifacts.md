@@ -1,6 +1,6 @@
-# Paid Claude Plugin Artifacts
+# Generated Plugin Artifacts
 
-The launch product is one local scan, a free report pack, and an optional generated Claude Code plugin/remediation artifact. Stripe checkout is still the intended paid gate for the plugin.
+The launch product is one local scan, a free report pack, and a free generated Claude Code plugin/remediation artifact delivered after the email gate.
 
 The plugin should optimize Claude Code's harness, not nag on shell commands. The primary value is turning the analysis into a benchmark-backed setup plan: lean CLAUDE.md hierarchy, scoped skills, output-budgeted commands, retrieval hygiene, session/retry breaks, official code-intelligence plugins, and only the conditional reducers that worked in repeated runs.
 
@@ -12,14 +12,16 @@ Public scan:
 - shows deterministic problems, evidence, and generic fixes
 - offers a free report pack from the same sanitized report
 
-Plugin purchase:
+Email-gated plugin delivery:
 
 - reuses the same sanitized report from the public scan
 - generates a customized Claude Code plugin archive from that report
 - shows copyable install commands and a Claude-native install prompt
+- records the email address and marketing opt-in flag before showing download links
+- emails both download links plus the Spec Kitty training voucher reminder
 
 The public flow must not ask users to tar, gzip, or upload raw Claude Code JSONL
-logs. Any raw-log paid bundle or email/full-scan endpoint is legacy/internal
+logs. Any raw-log bundle or email/full-scan endpoint is legacy/internal
 smoke coverage only and must require an explicit internal request path.
 
 ## Plugin Shape
@@ -31,7 +33,7 @@ Claude Code plugins use a root directory with:
 - `commands/*.md`
 - optional supporting files such as `WAIVER.md`
 
-The generator follows that structure so the paid artifact can be loaded as a Claude Code plugin archive. The default command uses Claude Code's session-scoped plugin loading:
+The generator follows that structure so the generated artifact can be loaded as a Claude Code plugin archive. The default command uses Claude Code's session-scoped plugin loading:
 
 ```sh
 PLUGIN_URL="<private-plugin-zip-url>"
@@ -49,6 +51,7 @@ Always generated:
 - `.claude-plugin/plugin.json`
 - `README.md`
 - `WAIVER.md`
+- `TOOL-CATALOG.json`
 - `commands/agent-analyzer-status.md`
 - `commands/agent-analyzer-tooling.md`
 - `skills/codebase-navigation/SKILL.md`
@@ -62,7 +65,7 @@ Conditionally generated from deterministic findings:
 - `skills/retry-breaker/SKILL.md` for retry-loop behavior
 - session hygiene guidance is tuned for context growth spikes
 
-Never generate a Bash nag hook as the primary paid value. Pre-command hooks may be revisited later only for quiet telemetry or deterministic safety checks that do not interrupt normal Claude Code work.
+Never generate a Bash nag hook as the primary product value. Pre-command hooks may be revisited later only for quiet telemetry or deterministic safety checks that do not interrupt normal Claude Code work.
 
 ## Vetted Tooling Recommendations
 
@@ -126,9 +129,27 @@ Official Claude Code plugin allowlist:
 
 Third-party MCPs, skills, plugins, and shell tools are research candidates until separately reviewed. Unknown private tool names from user logs remain count-only and must not be copied into generated artifacts.
 
+## Machine-Readable Install Catalog
+
+Live install testing showed that prose-only setup guidance made agents infer too much: slash commands were mistaken for shell commands, marketplace CLI setup had to be discovered manually, and verification steps were inconsistent. Every generated plugin now includes `TOOL-CATALOG.json` so agents can execute a deterministic detect -> install -> verify loop.
+
+The catalog contains:
+
+- `install_order`: explicit phases: waiver, platform detection, binary checks, marketplace setup, plugin install, reload/restart, verification.
+- `install_interactive`: Claude Code slash-command form for a human inside the interactive UI.
+- `install_cli`: Bash-safe `claude plugin install ...` form for agents and scripts.
+- `marketplace_cli`: Bash-safe `claude plugin marketplace add ...` form when a third-party marketplace is required.
+- `binary`: `name`, `check`, `expect_pattern`, `install`, and `verify_after` fields for language-server and local binary prerequisites.
+- `post_install`: restart/reload requirements and CLI or interactive verification commands.
+- `platform_installs`: OS-specific install hints, with Linux falling back to source review when we do not have a verified package-manager command.
+- `idempotent`: whether the command is safe to rerun without pre-checking.
+- `conflicts_with`: overlap declarations so agents avoid installing redundant reducers for the same failure mode.
+
+Human-facing skills and commands must tell agents to prefer `install_cli` from Bash. `install_interactive` exists for the Claude Code slash-command UI only.
+
 ## Liability Gate
 
-Paid checkout and plugin install UX must require explicit acknowledgment before presenting install commands:
+Plugin install UX must require explicit acknowledgment before presenting install commands:
 
 > I understand that Agent Analyzer provides deterministic analysis and vetted setup recommendations, but any installation or code change is executed by Claude Code, my package manager, or third-party tools with my approval and at my own risk.
 
@@ -175,12 +196,12 @@ API route tests also cover the local-first trust boundary:
 
 - the public report can download a report pack and tokenized plugin zip from
   the same private report token
-- the default paid session response does not mint a raw upload token or expose
+- the default email-gated report/plugin response does not mint a raw upload token or expose
   `/api/paid-uploads/`, tar/gzip commands, or raw bundle copy
 - `POST /api/paid-client-reports` accepts only waiver-gated sanitized aggregate
-  reports and creates a paid report job without storing an upload path
+  reports and creates a private report job without storing an upload path
 - tokenized plugin zip generation works from that sanitized aggregate report
-- the legacy raw paid bundle command is available only through
+- the legacy raw bundle command is available only through
   `/api/paid-sessions?legacy_raw_bundle=1` for internal smoke compatibility
 
 ## Implementation
@@ -189,17 +210,16 @@ The first implementation lives in `internal/remediation`.
 
 The package produces an in-memory `Artifact` and can write it as a zip archive. Tokenized plugin zip download is implemented for Docker end-to-end testing. Plugin artifacts are generated on demand from the sanitized report and are scoped by the private report token.
 
-The legacy raw paid bundle upload route remains only for internal Docker smoke
-coverage while the CLI paid aggregate command is integrated. It is not the
+The legacy raw bundle upload route remains only for internal Docker smoke
+coverage while the CLI aggregate command is integrated. It is not the
 default `/api/paid-sessions` response and must not be linked from public launch
-UX. Stripe success handling and any future persisted artifact storage are
-tracked separately in GitHub issues #27-#31.
+UX. Any future persisted artifact storage is tracked separately.
 
 ## Token-saving recommendation embedding (Phase A, additive)
 
 Phase A of the token-saving recommendation engine introduces a `TokenSavingRecommendation` contract object (see `docs/remediation/token-saving-recommendation-engine.md` for the canonical schema and rule precedence). This object captures at most one primary and at most one secondary tool suggestion per analyzed session, plus the signals and dedupe state that justified each suggestion.
 
-The recommendation object is **optional** in paid plugin artifacts. Generators may attach it to the existing artifact payload without altering the established artifact shape, and the current generator tests (plugin structure, deterministic output for identical sanitized inputs, leak checks, zip archive creation, unsafe-archive-path rejection) continue to hold because none of them require the field to be present or absent. New tests covering the embedded recommendation are introduced alongside the engine and are gated on the field actually being populated.
+The recommendation object is **optional** in generated plugin artifacts. Generators may attach it to the existing artifact payload without altering the established artifact shape, and the current generator tests (plugin structure, deterministic output for identical sanitized inputs, leak checks, zip archive creation, unsafe-archive-path rejection) continue to hold because none of them require the field to be present or absent. New tests covering the embedded recommendation are introduced alongside the engine and are gated on the field actually being populated.
 
 Refer to `docs/remediation/token-saving-recommendation-engine.md` for the full Phase A contract: input signals, dedupe-aware emission rules, `active_high` skip behavior, and the precise field layout that downstream artifacts may serialize.
 
