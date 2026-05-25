@@ -105,6 +105,11 @@ func TestAnalyzeForSource_DesktopAgentSpecificSignals(t *testing.T) {
 		input  string
 	}{
 		{
+			name:   "claude desktop local session",
+			source: "claude_desktop",
+			input:  `{"sessionId":"session-secret","initialMessage":"fix private@example.com","enabledMcpTools":{"local:Claude Code:Bash":true},"history":[{"hook_event_name":"PreToolUse","tool_name":"Bash","tool_input":{"command":"cat /Users/private/repo/.env"}},{"hook_event_name":"PostToolUse","tool_name":"Bash","tool_response":"oauth-refresh-token"}]}`,
+		},
+		{
 			name:   "claude desktop mcp json rpc",
 			source: "claude_desktop_mcp",
 			input: strings.Join([]string{
@@ -168,7 +173,7 @@ func TestAnalyzeForSource_ClaudeDesktopMCPOnlyCountsToolResultsForToolRequests(t
 }
 
 func TestNewDesktopSourceIDsAreRegisteredCodingAgents(t *testing.T) {
-	for _, id := range []string{"claude_desktop_mcp", "codex", "cursor", "kiro_cli", "kiro_ide", "antigravity"} {
+	for _, id := range []string{"claude_desktop", "claude_desktop_mcp", "codex", "cursor", "kiro_cli", "kiro_ide", "antigravity"} {
 		if !ValidEcosystemID("coding_agent", id) {
 			t.Fatalf("coding agent source ID %q is not registered", id)
 		}

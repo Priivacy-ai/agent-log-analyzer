@@ -1,6 +1,7 @@
 [
   {"id":"aider","patterns":["(?i)\\baider\\b"]},
   {"id":"claude_code","patterns":["(?i)\\bClaude Code\\b","(?i)\\.claude/"]},
+  {"id":"claude_desktop","patterns":["(?i)\\bClaude Desktop\\b","(?i)local-agent-mode-sessions","(?i)claude-code-sessions"]},
   {"id":"claude_desktop_mcp","patterns":["(?i)\\bClaude Desktop\\b","(?i)Claude[/\\\\]mcp","(?i)mcp-server-"]},
   {"id":"cline","patterns":["\\bCline\\b","(?i)\\.cline/"]},
   {"id":"codex","patterns":["(?i)\\bCodex CLI\\b","(?i)codex"]},

@@ -71,7 +71,7 @@ func normalizeJSONObject(source string, obj map[string]any, turn int) []normaliz
 	if source == "codex" {
 		return normalizeCodexJSONObject(source, obj, turn)
 	}
-	if source == "claude_desktop_mcp" || source == "cursor" || source == "kiro_cli" || source == "kiro_ide" || source == "antigravity" {
+	if source == "claude_desktop" || source == "claude_desktop_mcp" || source == "cursor" || source == "kiro_cli" || source == "kiro_ide" || source == "antigravity" {
 		if events := normalizeDesktopAgentJSONObject(source, obj, turn); len(events) > 0 {
 			return events
 		}
@@ -142,6 +142,8 @@ func normalizeDesktopAgentJSONObject(source string, obj map[string]any, turn int
 	applyUsage(&base, obj)
 	applyPatchStats(&base, obj)
 	switch source {
+	case "claude_desktop":
+		return normalizeClaudeDesktopJSONObject(obj, base)
 	case "claude_desktop_mcp":
 		return normalizeMCPLogJSONObject(obj, base)
 	case "cursor":
@@ -153,6 +155,46 @@ func normalizeDesktopAgentJSONObject(source string, obj map[string]any, turn int
 	default:
 		return nil
 	}
+}
+
+func normalizeClaudeDesktopJSONObject(obj map[string]any, base normalizedEvent) []normalizedEvent {
+	if method := firstPresentString(obj, "method"); method != "" || firstJSONValueByKey(obj, "result") != nil {
+		return normalizeMCPLogJSONObject(obj, base)
+	}
+	if event, ok := normalizeKiroToolObject(obj, base); ok {
+		return []normalizedEvent{event}
+	}
+	var events []normalizedEvent
+	if firstPresentString(obj, "initialMessage", "title", "processName") != "" || firstJSONValueByKey(obj, "enabledMcpTools") != nil {
+		event := base
+		event.Kind = "message"
+		events = append(events, event)
+	}
+	var walk func(any, bool)
+	walk = func(value any, root bool) {
+		switch typed := value.(type) {
+		case []any:
+			for _, item := range typed {
+				walk(item, false)
+			}
+		case map[string]any:
+			if !root {
+				if event, ok := normalizeKiroToolObject(typed, base); ok {
+					events = append(events, event)
+					return
+				}
+				if method := firstPresentString(typed, "method"); method != "" || firstJSONValueByKey(typed, "result") != nil {
+					events = append(events, normalizeMCPLogJSONObject(typed, base)...)
+					return
+				}
+			}
+			for _, item := range typed {
+				walk(item, false)
+			}
+		}
+	}
+	walk(obj, true)
+	return events
 }
 
 func normalizeMCPLogJSONObject(obj map[string]any, base normalizedEvent) []normalizedEvent {
@@ -324,7 +366,7 @@ func normalizeAntigravityJSONObject(obj map[string]any, base normalizedEvent) []
 
 func normalizeRawEventLine(source string, raw []byte) []byte {
 	switch source {
-	case "claude_desktop_mcp", "kiro_cli", "kiro_ide":
+	case "claude_desktop", "claude_desktop_mcp", "kiro_cli", "kiro_ide":
 		trimmed := bytes.TrimSpace(raw)
 		if len(trimmed) == 0 || trimmed[0] == '{' {
 			return raw

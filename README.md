@@ -33,7 +33,7 @@ For users who do not want npm/NPX, versioned GitHub Release archives with
 There is intentionally no browser upload form. Agent logs live in hidden tool-specific directories, which are awkward for Finder/browser upload flows. The public launch path is local-first:
 
 1. `npx --yes agent-analyzer@latest run` starts the local native analyzer.
-2. The analyzer selects recent logs per supported source, currently Claude Code, Codex, OpenCode, Claude Desktop MCP, Cursor, Kiro, and Google Antigravity, targeting roughly 5 MB total per source, parses and redacts them locally, and writes `agent-analyzer-report.json`.
+2. The analyzer selects recent logs per supported source, currently Claude Code, Claude Desktop, Codex, OpenCode, Claude Desktop MCP, Cursor, Kiro, and Google Antigravity, targeting roughly 5 MB total per source, parses and redacts them locally, and writes `agent-analyzer-report.json`.
 3. The CLI prints the upload boundary and asks for confirmation.
 4. After confirmation, it sends only the sanitized report to `POST /api/client-reports`.
 5. The private report opens at `/r/{job_id}/{report_token}` and remains available for later review.
@@ -55,11 +55,14 @@ agent-analyzer analyze ~/.claude/projects/some-session.jsonl --out ./report.json
 
 # explicit --log form:
 agent-analyzer analyze --log ~/.claude/projects/some-session.jsonl --out ./report.json
+
+# force a source-specific parser for an explicit path:
+agent-analyzer analyze --source claude_desktop --log ~/Library/Application\ Support/Claude/audit.jsonl --out ./report.json
 ```
 
 If neither form is supplied, the CLI auto-discovers target-sized recent logs per supported source. It aims for roughly 5 MB total per source, combines up to five small logs when that gets closer to the target, and falls back to a single huge log when only oversized sessions are available.
 
-VS Code-style SQLite state extraction for Cursor, Kiro, and Google Antigravity is included in automatic discovery. The CLI opens readable `state.vscdb` stores in SQLite read-only mode, extracts only bounded known conversation keys, and does not write database snapshots or modify source stores.
+SQLite extraction is included in automatic discovery for Cursor, Kiro, Google Antigravity, and bounded Codex diagnostic logs. The CLI opens readable stores in SQLite read-only mode, extracts only bounded known rows, and does not write database snapshots or modify source stores.
 
 ```bash
 docker compose up --build
