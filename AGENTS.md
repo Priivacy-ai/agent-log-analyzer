@@ -11,6 +11,12 @@
 - For all completed work, agents must commit their changes and push to `origin/main`.
 - Do not leave completed work only in the local working tree or on a feature branch unless the user explicitly requested that.
 
+## Web Page Preview Rule
+
+- Do not show or hand off a local or deployed web page to the user until you have loaded it yourself with Playwright.
+- For local static pages, serve the relevant directory over HTTP before checking the page so root-relative CSS, JavaScript, and image assets load correctly.
+- Verify the requested page renders with its CSS and images before giving the user the URL.
+
 ## AWS Deployment Profile
 
 - Use the `claude-analyzer-prod` AWS profile for production infrastructure work.
