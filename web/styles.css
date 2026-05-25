@@ -574,17 +574,30 @@ pre {
 
 .outcome-preview {
   display: grid;
-  grid-template-columns: minmax(0, 0.82fr) minmax(320px, 1.18fr);
-  gap: 18px;
+  grid-template-columns: minmax(0, 0.62fr) minmax(360px, 1.38fr);
+  gap: 22px;
   align-items: center;
   margin-top: 16px;
 }
 
 .preview-frame {
   display: grid;
-  grid-template-columns: 1fr 0.72fr;
-  gap: 12px;
-  min-height: 220px;
+  grid-template-columns: minmax(0, 1.35fr) minmax(170px, 0.65fr);
+  gap: 14px;
+  min-height: 292px;
+}
+
+.preview-title {
+  grid-column: 1 / -1;
+  align-self: end;
+  margin: 0;
+  color: var(--green);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0;
+  text-transform: uppercase;
+  text-shadow: 0 0 16px rgba(126, 231, 135, 0.28);
 }
 
 .preview-terminal,
@@ -598,11 +611,12 @@ pre {
 .preview-terminal {
   display: grid;
   align-content: center;
-  gap: 9px;
-  padding: 18px;
+  gap: 13px;
+  padding: 28px 26px;
   color: var(--muted);
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
-  font-size: 12px;
+  font-size: 15px;
+  line-height: 1.25;
 }
 
 .preview-terminal span:first-child,
