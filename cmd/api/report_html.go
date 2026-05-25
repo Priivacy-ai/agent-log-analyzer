@@ -261,7 +261,7 @@ var reportHTMLTemplate = template.Must(template.New("report").Funcs(template.Fun
           <p class="upsell-lede">The report pack shows where your agent sessions are burning tokens, includes the benchmark methodology and results, and gives you a partner voucher. The generated plugin turns those findings into setup rules and workflow nudges using only the reducers that earned scoped recommendations.</p>
           <ul class="upsell-proof">
             <li>Raw transcripts stay local.</li>
-            <li>Enter your email once to unlock both downloads and receive the links.</li>
+            <li>Email required: enter it once to unlock both downloads and receive the links.</li>
             <li><a href="/proof/methodology.html">Benchmark methodology and primary data</a>.</li>
           </ul>
           </div>

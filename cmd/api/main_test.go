@@ -681,7 +681,7 @@ func TestReportPageServerRendersCompletedReport(t *testing.T) {
 		"Get my optimization plugin",
 		"Download report pack",
 		"Download the report pack for free",
-		"Enter your email once to unlock both downloads and receive the links.",
+		"Email required: enter it once to unlock both downloads and receive the links.",
 		"Email for report pack + generated plugin",
 		"upcoming Spec Kitty Teamspace launch",
 		"Unlock downloads",
