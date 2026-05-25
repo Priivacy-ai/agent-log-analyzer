@@ -50,6 +50,27 @@ body {
   padding: 56px 0;
 }
 
+.home-shell {
+  position: relative;
+}
+
+.landing-corner-image {
+  position: absolute;
+  top: 26px;
+  right: 0;
+  z-index: 0;
+  width: clamp(170px, 24vw, 286px);
+  max-width: 28%;
+  pointer-events: none;
+}
+
+.landing-corner-image img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 8px;
+}
+
 .doc-page {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
@@ -62,8 +83,10 @@ body {
 }
 
 .hero {
+  position: relative;
+  z-index: 1;
   width: 100%;
-  max-width: 940px;
+  max-width: min(940px, calc(100% - 250px));
   margin-bottom: 32px;
 }
 
@@ -2103,6 +2126,19 @@ pre {
 
   .panel-heading {
     display: grid;
+  }
+
+  .landing-corner-image {
+    position: relative;
+    top: auto;
+    right: auto;
+    width: min(220px, 58vw);
+    max-width: 100%;
+    margin: 0 0 18px auto;
+  }
+
+  .hero {
+    max-width: 100%;
   }
 
   .trust-stack,
