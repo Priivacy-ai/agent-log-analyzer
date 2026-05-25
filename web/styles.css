@@ -378,6 +378,42 @@ button:disabled {
   padding: 24px;
 }
 
+.command-panel-primary {
+  position: relative;
+  border-color: rgba(126, 231, 135, 0.78);
+  background:
+    linear-gradient(180deg, rgba(126, 231, 135, 0.1), rgba(126, 231, 135, 0.025) 42%, rgba(17, 24, 32, 0.9)),
+    var(--panel);
+  box-shadow:
+    0 0 0 1px rgba(126, 231, 135, 0.16),
+    0 0 34px rgba(126, 231, 135, 0.18),
+    0 24px 60px rgba(0, 0, 0, 0.46),
+    inset 0 1px 0 rgba(230, 237, 243, 0.08);
+}
+
+.command-panel-primary::before {
+  content: "";
+  position: absolute;
+  inset: -2px 22px auto;
+  height: 3px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, transparent, rgba(126, 231, 135, 0.95), transparent);
+  box-shadow: 0 0 20px rgba(126, 231, 135, 0.58);
+}
+
+.command-panel-primary .eyebrow,
+.command-panel-primary h2 {
+  text-shadow: 0 0 18px rgba(126, 231, 135, 0.22);
+}
+
+.command-panel-primary pre {
+  border-color: rgba(126, 231, 135, 0.58);
+  background: rgba(8, 11, 16, 0.94);
+  box-shadow:
+    inset 0 0 0 1px rgba(126, 231, 135, 0.08),
+    0 0 24px rgba(126, 231, 135, 0.12);
+}
+
 .command-panel .panel-heading {
   margin-bottom: 14px;
 }
