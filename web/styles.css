@@ -57,7 +57,7 @@ body {
 .landing-corner-image {
   display: block;
   position: absolute;
-  top: 38px;
+  top: 69px;
   right: 0;
   z-index: 0;
   width: clamp(118px, 15vw, 176px);
@@ -99,7 +99,6 @@ body {
   }
 
   .landing-corner-image {
-    top: 92px;
     width: min(96px, 24vw);
     max-width: 26%;
   }
