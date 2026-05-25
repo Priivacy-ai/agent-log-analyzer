@@ -510,25 +510,6 @@ pre {
   font-size: 12px;
 }
 
-.path-rail {
-  display: grid;
-  gap: 8px;
-  margin-bottom: 12px;
-}
-
-.path-rail span {
-  position: relative;
-  display: block;
-  padding: 9px 10px;
-  border: 1px solid rgba(121, 192, 255, 0.22);
-  border-radius: 6px;
-  background: #080b10;
-  color: var(--text);
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
-  font-size: 12px;
-}
-
-.data-path p,
 .read-only-note p,
 .outcome-preview p {
   margin: 0;
@@ -537,33 +518,59 @@ pre {
 }
 
 .proof-links {
+  position: relative;
   align-content: start;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  border-color: rgba(126, 231, 135, 0.72);
+  background:
+    radial-gradient(circle at 20% 0%, rgba(126, 231, 135, 0.16), transparent 42%),
+    rgba(17, 24, 32, 0.82);
+  box-shadow:
+    0 0 0 1px rgba(126, 231, 135, 0.12),
+    0 0 30px rgba(126, 231, 135, 0.14),
+    inset 0 1px 0 rgba(230, 237, 243, 0.07);
+}
+
+.proof-links::before {
+  content: "";
+  position: absolute;
+  inset: -1px 18px auto;
+  height: 2px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, transparent, rgba(126, 231, 135, 0.9), transparent);
+  box-shadow: 0 0 16px rgba(126, 231, 135, 0.48);
 }
 
 .proof-links h2 {
   grid-column: 1 / -1;
+  color: var(--text);
+  text-shadow: 0 0 18px rgba(126, 231, 135, 0.22);
 }
 
 .proof-links a {
   display: inline-flex;
   align-items: center;
-  min-height: 38px;
-  padding: 8px 10px;
-  border: 1px solid rgba(126, 231, 135, 0.28);
+  justify-content: center;
+  min-height: 48px;
+  padding: 10px 12px;
+  border: 1px solid rgba(126, 231, 135, 0.42);
   border-radius: 6px;
+  background: rgba(8, 11, 16, 0.7);
   color: var(--green);
   text-decoration: none;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
-  font-size: 12px;
+  font-size: 13px;
+  font-weight: 700;
+  text-align: center;
 }
 
 .proof-links a:hover,
 .proof-links a:focus {
   border-color: var(--green);
-  background: rgba(126, 231, 135, 0.08);
+  background: rgba(126, 231, 135, 0.1);
+  box-shadow: 0 0 18px rgba(126, 231, 135, 0.12);
 }
 
 .read-only-note pre {
