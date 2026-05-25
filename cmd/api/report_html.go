@@ -261,18 +261,24 @@ var reportHTMLTemplate = template.Must(template.New("report").Funcs(template.Fun
           <p class="upsell-lede">The report pack shows where your agent sessions are burning tokens, includes the benchmark methodology and results, and gives you a partner voucher. The generated plugin turns those findings into setup rules and workflow nudges using only the reducers that earned scoped recommendations.</p>
           <ul class="upsell-proof">
             <li>Raw transcripts stay local.</li>
-            <li>No email required for the download.</li>
+            <li>Enter your email once to unlock both downloads and receive the links.</li>
             <li><a href="/proof/methodology.html">Benchmark methodology and primary data</a>.</li>
           </ul>
           </div>
           <div class="upsell-action" id="plugin-purchase">
-          <p><a class="plugin-cta" href="{{.ExtendedReportURL}}">Download report pack</a></p>
-          {{if .ArtifactURL}}
-          <p class="command-note">Custom optimization plugin: $10 / €10 target price. Checkout enforcement is not active in this test build; this link generates the plugin from this report.</p>
-          <p><a class="plugin-cta" href="{{.ArtifactURL}}">Download custom plugin</a></p>
-          {{else}}
-          <p class="command-note">Custom optimization plugin: $10 / €10. Payment checkout is the remaining step before public sales.</p>
-          {{end}}
+          <form class="email-unlock-form" action="/api/report-deliveries" method="post">
+            <input type="hidden" name="source_report_job_id" value="{{.Job.ID}}" />
+            <input type="hidden" name="source_report_token" value="{{.ReportToken}}" />
+            <label>Email for report pack + custom plugin
+              <input type="email" name="email" placeholder="you@example.com" required />
+            </label>
+            <label class="checkbox-row">
+              <input type="checkbox" name="marketing_opt_in" value="1" />
+              <span>Send me occasional updates about the upcoming Spec Kitty Teamspace launch and agentic coding training.</span>
+            </label>
+            <button class="plugin-cta" type="submit">Unlock downloads</button>
+            <p class="command-note">After submit, this page shows the report pack and custom plugin download buttons. We also email the links, the Spec Kitty training voucher reminder, and the Spec Kitty GitHub repo. Raw transcripts are not attached or uploaded.</p>
+          </form>
           </div>
         </div>
         {{else}}

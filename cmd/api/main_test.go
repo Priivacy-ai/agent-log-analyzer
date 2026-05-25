@@ -193,6 +193,10 @@ func TestReportDeliveryEmailsReportPackAndPluginAttachments(t *testing.T) {
 	if err := json.Unmarshal(rec.Body.Bytes(), &response); err != nil {
 		t.Fatalf("response is not valid JSON: %v", err)
 	}
+	if response.ReportURL != "http://example.test/api/public-reports/job-source-1234/source-token/download.zip" ||
+		response.PluginURL != "http://example.test/api/public-artifacts/job-source-1234/source-token/plugin.zip" {
+		t.Fatalf("unexpected download URLs in response: %#v", response)
+	}
 	unlock, err := store.GetEmailUnlock(response.DeliveryID)
 	if err != nil {
 		t.Fatal(err)
@@ -205,6 +209,10 @@ func TestReportDeliveryEmailsReportPackAndPluginAttachments(t *testing.T) {
 	}
 	message := sender.messages[0]
 	if message.To != "dev@example.com" ||
+		!strings.Contains(message.Body, "Report pack: http://example.test/api/public-reports/job-source-1234/source-token/download.zip") ||
+		!strings.Contains(message.Body, "Custom optimization plugin: http://example.test/api/public-artifacts/job-source-1234/source-token/plugin.zip") ||
+		!strings.Contains(message.Body, "Spec Kitty training voucher") ||
+		!strings.Contains(message.Body, "https://github.com/Priivacy-ai/spec-kitty") ||
 		!strings.Contains(message.Body, "Choose your harness") ||
 		!strings.Contains(message.Body, "claude --plugin-dir") ||
 		!strings.Contains(message.Body, "harnesses/codex/AGENTS-snippet.md") ||
@@ -673,8 +681,10 @@ func TestReportPageServerRendersCompletedReport(t *testing.T) {
 		"Get my optimization plugin",
 		"Download report pack",
 		"Download the report pack for free",
-		"No email required for the download.",
-		"Download custom plugin",
+		"Enter your email once to unlock both downloads and receive the links.",
+		"Email for report pack + custom plugin",
+		"upcoming Spec Kitty Teamspace launch",
+		"Unlock downloads",
 		"0 model tokens used to generate this report.",
 		"Model tokens for report",
 		"Copy line",
@@ -746,7 +756,8 @@ func TestReportPageRendersRealReportFixtures(t *testing.T) {
 			body := rec.Body.String()
 			for _, want := range append(tc.wantLabels,
 				"Download report pack",
-				"Download custom plugin",
+				"Email for report pack + custom plugin",
+				"Unlock downloads",
 				"Security Receipt",
 				"Raw log TTL: not uploaded",
 				"0 model tokens used to generate this report.",

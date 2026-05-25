@@ -302,6 +302,13 @@ h2 {
   font-size: 14px;
 }
 
+.download-button-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 20px 0;
+}
+
 .button-link {
   display: inline-flex;
   align-items: center;
