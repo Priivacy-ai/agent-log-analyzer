@@ -2477,8 +2477,8 @@ pre {
 }
 
 .proof-page {
-  width: min(1560px, calc(100vw - 32px));
-  max-width: 1560px;
+  width: min(1440px, calc(100vw - 96px));
+  max-width: 1440px;
 }
 
 .proof-page.doc-page h1,
@@ -2769,6 +2769,10 @@ pre {
 }
 
 @media (max-width: 900px) {
+  .proof-page {
+    width: min(100%, calc(100vw - 32px));
+  }
+
   .proof-summary-grid,
   .proof-steps,
   .proof-nav {
