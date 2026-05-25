@@ -101,7 +101,7 @@ func TestEcosystemRegistryDetectsKnownPublicTools(t *testing.T) {
 	input := []byte(strings.Join([]string{
 		`{"type":"user","message":"Claude Code, Cursor IDE, OpenCode, BMAD, OpenSpec, Spec Kit, Spec Kitty, ccusage"}`,
 		`{"type":"tool","name":"mcp__context7__resolve-library-id","message":"mcp__playwright__browser_navigate mcp__sentry__find_issues mcp__google-drive__search"}`,
-		`{"type":"assistant","message":"Using @notion plugin, @github plugin, /plan-eng-review, /gstack-qa, pnpm-lock.yaml, uv.lock"}`,
+		`{"type":"assistant","message":"Using @notion plugin, @github plugin, /plan-eng-review, /gstack-qa, /spec-kitty-runtime-next, $spec-kitty-setup-doctor, pnpm-lock.yaml, uv.lock"}`,
 	}, "\n"))
 	report, err := Analyze("job-test", input)
 	if err != nil {
@@ -127,9 +127,14 @@ func TestEcosystemRegistryDetectsKnownPublicTools(t *testing.T) {
 			t.Fatalf("expected plugin %s in %#v", want, report.Ecosystem.KnownPlugins)
 		}
 	}
-	for _, want := range []string{"plan_eng_review", "qa"} {
+	for _, want := range []string{"plan_eng_review", "qa", "spec_kitty_runtime_next", "spec_kitty_setup_doctor"} {
 		if !contains(report.Ecosystem.KnownSkills, want) {
 			t.Fatalf("expected skill %s in %#v", want, report.Ecosystem.KnownSkills)
+		}
+	}
+	for _, want := range []string{"plan_eng_review", "qa", "spec_kitty_runtime_next"} {
+		if !contains(report.Ecosystem.ToolingUtilization.Skill.KnownExecutedIDs, want) {
+			t.Fatalf("expected executed skill %s in %#v", want, report.Ecosystem.ToolingUtilization.Skill.KnownExecutedIDs)
 		}
 	}
 	for _, want := range []string{"pnpm", "uv"} {
@@ -139,6 +144,9 @@ func TestEcosystemRegistryDetectsKnownPublicTools(t *testing.T) {
 	}
 	if report.Ecosystem.UnknownMCPServerCount != 0 {
 		t.Fatalf("expected known MCPs not to count as unknown: %#v", report.Ecosystem)
+	}
+	if report.Ecosystem.UnknownSkillCount != 0 || report.Ecosystem.ToolingUtilization.Skill.UnknownExecutedCount != 0 {
+		t.Fatalf("expected known skills not to count as unknown: %#v", report.Ecosystem)
 	}
 }
 

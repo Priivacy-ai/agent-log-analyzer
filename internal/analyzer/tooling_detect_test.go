@@ -19,6 +19,42 @@ var privateLeakStrings = []string{
 	"acme_secret",
 }
 
+var specKittyDoctrineSkillIDs = []string{
+	"ad_hoc_profile_load",
+	"debugger_debbie",
+	"spec_kitty_bulk_edit_classification",
+	"spec_kitty_charter_doctrine",
+	"spec_kitty_git_workflow",
+	"spec_kitty_glossary_context",
+	"spec_kitty_implement_review",
+	"spec_kitty_mission_review",
+	"spec_kitty_mission_system",
+	"spec_kitty_orchestrator_api_operator",
+	"spec_kitty_program_orchestrate",
+	"spec_kitty_runtime_next",
+	"spec_kitty_runtime_review",
+	"spec_kitty_setup_doctor",
+	"spec_kitty_spdd_reasons",
+}
+
+var specKittyDoctrineSkillNames = []string{
+	"ad-hoc-profile-load",
+	"debugger-debbie",
+	"spec-kitty-bulk-edit-classification",
+	"spec-kitty-charter-doctrine",
+	"spec-kitty-git-workflow",
+	"spec-kitty-glossary-context",
+	"spec-kitty-implement-review",
+	"spec-kitty-mission-review",
+	"spec-kitty-mission-system",
+	"spec-kitty-orchestrator-api-operator",
+	"spec-kitty-program-orchestrate",
+	"spec-kitty-runtime-next",
+	"spec-kitty-runtime-review",
+	"spec-kitty-setup-doctor",
+	"spec-kitty-spdd-reasons",
+}
+
 func assertNoLeak(t *testing.T, label string, value any) {
 	t.Helper()
 	blob, err := json.Marshal(value)
@@ -157,6 +193,20 @@ func TestDetectSkillExposureFromHeaders(t *testing.T) {
 			t.Fatalf("KnownIDs = %v, want %v", out.KnownIDs, want)
 		}
 		assertNoLeak(t, "skill mixed", out)
+	})
+
+	t.Run("spec kitty doctrine inventory is known", func(t *testing.T) {
+		input := []byte("The following skills are available:\n- " + strings.Join(specKittyDoctrineSkillNames, "\n- ") + "\n\n")
+		out := detectSkillExposureFromHeaders(input, registry)
+		if out.InferenceSource != InferenceSourceHeader {
+			t.Fatalf("expected header inference, got %q", out.InferenceSource)
+		}
+		if out.UnknownCount != 0 {
+			t.Fatalf("UnknownCount = %d, want 0 for public Spec Kitty skills: %#v", out.UnknownCount, out)
+		}
+		if !reflect.DeepEqual(out.KnownIDs, specKittyDoctrineSkillIDs) {
+			t.Fatalf("KnownIDs = %v, want %v", out.KnownIDs, specKittyDoctrineSkillIDs)
+		}
 	})
 }
 
@@ -328,6 +378,23 @@ func TestDetectSkillExecutionsFromLines(t *testing.T) {
 		}
 		if !reflect.DeepEqual(out.KnownExecutedIDs, []string{"review"}) {
 			t.Fatalf("KnownExecutedIDs = %v, want [review]", out.KnownExecutedIDs)
+		}
+	})
+
+	t.Run("spec kitty doctrine slash skills are known", func(t *testing.T) {
+		lines := make([]parsedLine, 0, len(specKittyDoctrineSkillNames))
+		for _, name := range specKittyDoctrineSkillNames {
+			lines = append(lines, parsedLine{Text: "Use /" + name + " for this workflow."})
+		}
+		out := detectSkillExecutionsFromLines(lines, registry)
+		if out.ExecutedCount != len(specKittyDoctrineSkillNames) {
+			t.Fatalf("ExecutedCount = %d, want %d", out.ExecutedCount, len(specKittyDoctrineSkillNames))
+		}
+		if out.UnknownExecuted != 0 {
+			t.Fatalf("UnknownExecuted = %d, want 0 for public Spec Kitty skills: %#v", out.UnknownExecuted, out)
+		}
+		if !reflect.DeepEqual(out.KnownExecutedIDs, specKittyDoctrineSkillIDs) {
+			t.Fatalf("KnownExecutedIDs = %v, want %v", out.KnownExecutedIDs, specKittyDoctrineSkillIDs)
 		}
 	})
 }

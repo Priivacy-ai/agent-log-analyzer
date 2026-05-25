@@ -1,12 +1,26 @@
 [
+  {"id":"ad_hoc_profile_load","patterns":["(?i)(^|[\\s`$\"'(:/])ad-hoc-profile-load\\b"]},
   {"id":"benchmark","patterns":["(?i)(^|\\s)/(benchmark|gstack-benchmark)\\b"]},
   {"id":"design_review","patterns":["(?i)(^|\\s)/(design-review|gstack-design-review)\\b"]},
+  {"id":"debugger_debbie","patterns":["(?i)(^|[\\s`$\"'(:/])debugger-debbie\\b"]},
   {"id":"investigate","patterns":["(?i)(^|\\s)/(investigate|gstack-investigate)\\b"]},
   {"id":"plan_ceo_review","patterns":["(?i)(^|\\s)/(plan-ceo-review|gstack-plan-ceo-review)\\b"]},
   {"id":"plan_eng_review","patterns":["(?i)(^|\\s)/(plan-eng-review|gstack-plan-eng-review)\\b"]},
   {"id":"qa","patterns":["(?i)(^|\\s)/(qa|gstack-qa)\\b","(?i)\\bskill.?qa\\b"]},
   {"id":"review","patterns":["(?i)(^|\\s)/(review|gstack-review)\\b","(?i)\\bskill.?review\\b"]},
   {"id":"security","patterns":["(?i)(^|\\s)/(security|security-review|cso|gstack-cso)\\b"]},
-  {"id":"ship","patterns":["(?i)(^|\\s)/(ship|gstack-ship)\\b","(?i)\\bskill.?ship\\b"]}
+  {"id":"ship","patterns":["(?i)(^|\\s)/(ship|gstack-ship)\\b","(?i)\\bskill.?ship\\b"]},
+  {"id":"spec_kitty_bulk_edit_classification","patterns":["(?i)(^|[\\s`$\"'(:/])spec-kitty-bulk-edit-classification\\b"]},
+  {"id":"spec_kitty_charter_doctrine","patterns":["(?i)(^|[\\s`$\"'(:/])spec-kitty-charter-doctrine\\b"]},
+  {"id":"spec_kitty_git_workflow","patterns":["(?i)(^|[\\s`$\"'(:/])spec-kitty-git-workflow\\b"]},
+  {"id":"spec_kitty_glossary_context","patterns":["(?i)(^|[\\s`$\"'(:/])spec-kitty-glossary-context\\b"]},
+  {"id":"spec_kitty_implement_review","patterns":["(?i)(^|[\\s`$\"'(:/])spec-kitty-implement-review\\b"]},
+  {"id":"spec_kitty_mission_review","patterns":["(?i)(^|[\\s`$\"'(:/])spec-kitty-mission-review\\b"]},
+  {"id":"spec_kitty_mission_system","patterns":["(?i)(^|[\\s`$\"'(:/])spec-kitty-mission-system\\b"]},
+  {"id":"spec_kitty_orchestrator_api_operator","patterns":["(?i)(^|[\\s`$\"'(:/])spec-kitty-orchestrator-api-operator\\b"]},
+  {"id":"spec_kitty_program_orchestrate","patterns":["(?i)(^|[\\s`$\"'(:/])spec-kitty-program-orchestrate\\b"]},
+  {"id":"spec_kitty_runtime_next","patterns":["(?i)(^|[\\s`$\"'(:/])spec-kitty-runtime-next\\b"]},
+  {"id":"spec_kitty_runtime_review","patterns":["(?i)(^|[\\s`$\"'(:/])spec-kitty-runtime-review\\b"]},
+  {"id":"spec_kitty_setup_doctor","patterns":["(?i)(^|[\\s`$\"'(:/])spec-kitty-setup-doctor\\b"]},
+  {"id":"spec_kitty_spdd_reasons","patterns":["(?i)(^|[\\s`$\"'(:/])spec-kitty-spdd-reasons\\b"]}
 ]
-

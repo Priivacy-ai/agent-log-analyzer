@@ -34,6 +34,8 @@
 - (none documented as `mcp__spec_kitty__...`; Spec Kitty uses skills + CLI, not an MCP server)
 
 ### skill_name
+- `ad-hoc-profile-load`
+- `debugger-debbie`
 - `spec-kitty-glossary-context`
 - `spec-kitty-bulk-edit-classification`
 - `spec-kitty-git-workflow`
@@ -72,6 +74,7 @@ Observed at `.claude/skills/spec-kitty-*/SKILL.md` in this repo.
 - **Low**: free-text mention `(?i)\bspec[\s-]?kitty\b` without artifact or CLI evidence.
 
 ## Source references (citations)
+- https://github.com/Priivacy-ai/spec-kitty/tree/main/src/doctrine/skills — canonical doctrine skill inventory.
 - https://spec-kitty.ai/ — product home page and docs (lists CLI, skills, and `.kittify/` workspace layout).
 - https://pypi.org/project/spec-kitty/ — package source of the `spec-kitty` CLI.
 - This repository, `.kittify/skills-manifest.json` — observed manifest of the `spec-kitty-*` skill family (in-tree evidence).
