@@ -5,6 +5,12 @@
 - Do not assume the flag is optional on this machine during dev testing. If a command path touches hosted auth, tracker, or sync behavior, use the env var unless the user explicitly says not to.
 - This is a local testing rule for the CLI on this computer. It does not mean tracker itself has a rollout system, and it does not justify keeping rollout gating inside `spec-kitty-tracker`.
 
+## Git Workflow
+
+- Unless the user explicitly requests a different branch or workflow, all agents must work directly on `main`.
+- For all completed work, agents must commit their changes and push to `origin/main`.
+- Do not leave completed work only in the local working tree or on a feature branch unless the user explicitly requested that.
+
 ## AWS Deployment Profile
 
 - Use the `claude-analyzer-prod` AWS profile for production infrastructure work.
