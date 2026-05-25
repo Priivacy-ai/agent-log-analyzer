@@ -6,9 +6,23 @@
     <title>Security - Agent Analyzer</title>
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="/styles.css" />
+    <script src="/site-header.js" defer></script>
   </head>
   <body>
     <main class="shell doc-page">
+      <site-header data-root="/" data-active="security">
+        <noscript>
+          <nav class="site-header" aria-label="Site navigation">
+            <a href="/index.html">Home</a>
+            <a href="/proof/index.html">Proof</a>
+            <a href="/proof/results.html">Results</a>
+            <a href="/proof/methodology.html">Methodology</a>
+            <a href="/proof/benchmark-comparison.html">Benchmark Landscape</a>
+            <a href="/security/index.html" aria-current="page">Security</a>
+            <a href="/privacy/index.html">Privacy</a>
+          </nav>
+        </noscript>
+      </site-header>
       <p class="eyebrow">security</p>
       <h1>Raw agent logs stay on your machine.</h1>
       <p class="subhead">The launch flow is local-first: parse, redact, and summarize locally; upload only the sanitized report JSON you can inspect first.</p>
