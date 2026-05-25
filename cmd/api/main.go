@@ -85,6 +85,7 @@ func buildMux(store app.APIStore) http.Handler {
 	mux.HandleFunc("GET /r/{id}/{token}", reportPageHandler(store))
 	mux.HandleFunc("GET /api/jobs/{id}", getJobHandler(store))
 	mux.HandleFunc("GET /api/admin/usage-stats", usageStatsHandler(store))
+	mux.HandleFunc("GET /api/admin/email-unlocks", adminEmailUnlocksHandler(store))
 	mux.Handle("GET /docs/", http.StripPrefix("/docs/", http.FileServer(http.Dir(existingDir("docs", "web/docs", "../../docs")))))
 	mux.Handle("/", http.FileServer(http.Dir(existingDir("web", "../../web"))))
 	return mux
@@ -674,6 +675,9 @@ func sanitizePath(path string) string {
 	}
 	if strings.HasPrefix(path, "/api/full-scan-client-reports") {
 		return "/api/full-scan-client-reports"
+	}
+	if strings.HasPrefix(path, "/api/admin/email-unlocks") {
+		return "/api/admin/email-unlocks"
 	}
 	if strings.HasPrefix(path, "/email/confirm/") {
 		return "/email/confirm/:id/:token"

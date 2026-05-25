@@ -6,6 +6,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"time"
 
@@ -94,6 +95,34 @@ func (s *Store) GetEmailUnlockByFullScanTokenHash(tokenHash string) (app.EmailUn
 		}
 	}
 	return unlock, os.ErrNotExist
+}
+
+func (s *Store) ListEmailUnlocks(since time.Time, limit int) ([]app.EmailUnlock, error) {
+	entries, err := os.ReadDir(filepath.Join(s.root, "email_unlocks"))
+	if err != nil {
+		return nil, err
+	}
+	var unlocks []app.EmailUnlock
+	for _, entry := range entries {
+		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".json") {
+			continue
+		}
+		unlock, err := s.GetEmailUnlock(strings.TrimSuffix(entry.Name(), ".json"))
+		if err != nil {
+			continue
+		}
+		if !since.IsZero() && unlock.CreatedAt.Before(since) {
+			continue
+		}
+		unlocks = append(unlocks, unlock)
+	}
+	sort.Slice(unlocks, func(i, j int) bool {
+		return unlocks[i].CreatedAt.After(unlocks[j].CreatedAt)
+	})
+	if limit > 0 && len(unlocks) > limit {
+		unlocks = unlocks[:limit]
+	}
+	return unlocks, nil
 }
 
 func (s *Store) UpdateEmailUnlock(unlock app.EmailUnlock) error {

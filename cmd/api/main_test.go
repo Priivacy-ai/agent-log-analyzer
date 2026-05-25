@@ -31,7 +31,8 @@ type fakeStore struct {
 
 type usageFakeStore struct {
 	fakeStore
-	events []analytics.UsageEvent
+	events  []analytics.UsageEvent
+	unlocks []app.EmailUnlock
 }
 
 type captureEmailSender struct {
@@ -124,6 +125,20 @@ func (f *usageFakeStore) ReadUsageEvents(since time.Time, limit int) ([]analytic
 		}
 	}
 	return events, nil
+}
+
+func (f *usageFakeStore) ListEmailUnlocks(since time.Time, limit int) ([]app.EmailUnlock, error) {
+	var unlocks []app.EmailUnlock
+	for _, unlock := range f.unlocks {
+		if !since.IsZero() && unlock.CreatedAt.Before(since) {
+			continue
+		}
+		unlocks = append(unlocks, unlock)
+		if limit > 0 && len(unlocks) >= limit {
+			break
+		}
+	}
+	return unlocks, nil
 }
 
 func TestSanitizePathRedactsDynamicIDs(t *testing.T) {
@@ -271,8 +286,8 @@ func TestUsageStatsEndpointReturnsAggregates(t *testing.T) {
 	store := &usageFakeStore{
 		events: []analytics.UsageEvent{
 			{Timestamp: now.Add(-time.Hour), Method: http.MethodGet, Path: "/healthz", Status: http.StatusOK, AuthSurface: "none", UserAgent: "curl"},
-			{Timestamp: now.Add(-2 * time.Hour), Method: http.MethodGet, Path: "/api/admin/usage-stats", Status: http.StatusOK, AuthSurface: "admin_token", Authenticated: true, UserAgent: "browser", ClientHash: "client-1"},
-			{Timestamp: now.Add(-48 * time.Hour), Method: http.MethodPost, Path: "/api/client-reports", Status: http.StatusCreated, AuthSurface: "none", UserAgent: "node"},
+			{Timestamp: now.Add(-2 * time.Hour), Method: http.MethodGet, Path: "/api/admin/usage-stats", Status: http.StatusOK, AuthSurface: "admin_token", Authenticated: true, UserAgent: "browser", Browser: "chrome", OperatingSystem: "macos", DeviceClass: "desktop", Language: "en", Region: "US", ReferrerHost: "example.com", ClientHash: "client-1", ClientIPPrefix: "203.0.113.0/24", UTM: map[string]string{"utm_source": "launch", "utm_campaign": "spring"}},
+			{Timestamp: now.Add(-48 * time.Hour), Method: http.MethodPost, Path: "/api/client-reports", Status: http.StatusCreated, AuthSurface: "none", UserAgent: "node", Browser: "node", OperatingSystem: "linux", DeviceClass: "automation"},
 		},
 	}
 	req := httptest.NewRequest(http.MethodGet, "/api/admin/usage-stats?since=24h", nil)
@@ -294,6 +309,9 @@ func TestUsageStatsEndpointReturnsAggregates(t *testing.T) {
 	if stats.UniqueClientHashes != 1 {
 		t.Fatalf("expected one unique client hash, got %d", stats.UniqueClientHashes)
 	}
+	if stats.ByBrowser[0].Key != "chrome" || stats.ByOperatingSystem[0].Key != "macos" || stats.ByLanguage[0].Key != "en" {
+		t.Fatalf("expected enriched aggregate stats, got %#v", stats)
+	}
 }
 
 func TestLogRequestsAppendsSanitizedUsageEvent(t *testing.T) {
@@ -304,7 +322,12 @@ func TestLogRequestsAppendsSanitizedUsageEvent(t *testing.T) {
 	})
 	req := httptest.NewRequest(http.MethodGet, "/api/public-reports/job-1234567890/report-token", nil)
 	req.RemoteAddr = "203.0.113.7:12345"
-	req.Header.Set("User-Agent", "curl/8.0.0")
+	req.Host = "analyzer.spec-kitty.ai"
+	req.Header.Set("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36")
+	req.Header.Set("Accept-Language", "en-US,en;q=0.9,de;q=0.8")
+	req.Header.Set("Referer", "https://analyzer.spec-kitty.ai/r/job-secret/private-token?x=secret")
+	req.Header.Set("X-Forwarded-Proto", "https")
+	req.Header.Set("X-Forwarded-For", "203.0.113.7, 10.0.0.1")
 	rec := httptest.NewRecorder()
 
 	logRequests(next, store).ServeHTTP(rec, req)
@@ -322,8 +345,62 @@ func TestLogRequestsAppendsSanitizedUsageEvent(t *testing.T) {
 	if strings.Contains(event.Path, "job-1234567890") || strings.Contains(event.Path, "report-token") {
 		t.Fatalf("usage event leaked path secret: %#v", event)
 	}
-	if event.Status != http.StatusAccepted || event.UserAgent != "curl" || event.ClientHash == "" {
+	if event.Status != http.StatusAccepted || event.UserAgent != "browser" || event.ClientHash == "" {
 		t.Fatalf("unexpected usage event: %#v", event)
+	}
+	if event.Host != "analyzer.spec-kitty.ai" || event.Scheme != "https" {
+		t.Fatalf("expected host/scheme enrichment: %#v", event)
+	}
+	if event.Browser != "chrome" || event.BrowserMajor != "125" || event.OperatingSystem != "macos" || event.OSMajor != "14" || event.DeviceClass != "desktop" {
+		t.Fatalf("expected browser/os enrichment: %#v", event)
+	}
+	if event.Language != "en" || event.Region != "US" || event.AcceptLanguage == "" {
+		t.Fatalf("expected language enrichment: %#v", event)
+	}
+	if event.ClientIPVersion != "ipv4" || event.ClientIPPrefix != "203.0.113.0/24" {
+		t.Fatalf("expected anonymized IP prefix: %#v", event)
+	}
+	if event.ReferrerPath != "/r/:id/:token" || strings.Contains(event.ReferrerPath, "private-token") {
+		t.Fatalf("expected sanitized internal referrer: %#v", event)
+	}
+}
+
+func TestAdminEmailUnlocksEndpointReturnsProjectedEmailRecords(t *testing.T) {
+	t.Setenv("CLAUDE_ANALYZER_ADMIN_TOKEN", "secret-admin-token")
+	now := time.Now().UTC()
+	store := &usageFakeStore{
+		unlocks: []app.EmailUnlock{
+			{
+				ID:                    "unlock-1",
+				Email:                 "user@example.com",
+				EmailHash:             "do-not-return",
+				MarketingOptIn:        true,
+				ConfirmationTokenHash: "do-not-return",
+				FullScanTokenHash:     "do-not-return",
+				Status:                app.EmailUnlockConfirmed,
+				CreatedAt:             now.Add(-time.Hour),
+				UpdatedAt:             now.Add(-time.Hour),
+				ConfirmedAt:           now.Add(-30 * time.Minute),
+			},
+		},
+	}
+	req := httptest.NewRequest(http.MethodGet, "/api/admin/email-unlocks?since=24h", nil)
+	req.Header.Set("Authorization", "Bearer secret-admin-token")
+	rec := httptest.NewRecorder()
+
+	buildMux(store).ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("expected email unlock export status 200, got %d: %s", rec.Code, rec.Body.String())
+	}
+	body := rec.Body.String()
+	if !strings.Contains(body, "user@example.com") || !strings.Contains(body, `"unique_emails":["user@example.com"]`) {
+		t.Fatalf("expected projected email record, got %s", body)
+	}
+	for _, forbidden := range []string{"do-not-return", "confirmation_token_hash", "full_scan_token_hash", "email_hash"} {
+		if strings.Contains(body, forbidden) {
+			t.Fatalf("admin email export leaked sensitive field %q: %s", forbidden, body)
+		}
 	}
 }
 

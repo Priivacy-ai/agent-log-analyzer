@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -427,9 +428,56 @@ func (s *Store) GetEmailUnlockByFullScanTokenHash(tokenHash string) (app.EmailUn
 	return emailUnlockFromItem(output.Items[0])
 }
 
+func (s *Store) ListEmailUnlocks(since time.Time, limit int) ([]app.EmailUnlock, error) {
+	ctx := context.Background()
+	filter := "record_type = :record_type"
+	values := map[string]dynamodbtypes.AttributeValue{
+		":record_type": &dynamodbtypes.AttributeValueMemberS{Value: "email_unlock"},
+	}
+	if !since.IsZero() {
+		filter += " AND created_at >= :since"
+		values[":since"] = &dynamodbtypes.AttributeValueMemberS{Value: since.UTC().Format(time.RFC3339Nano)}
+	}
+	input := &dynamodb.ScanInput{
+		TableName:                 aws.String(s.jobTable),
+		FilterExpression:          aws.String(filter),
+		ExpressionAttributeValues: values,
+	}
+	if limit > 0 {
+		input.Limit = aws.Int32(int32(limit))
+	}
+	paginator := dynamodb.NewScanPaginator(s.dynamodb, input)
+	var unlocks []app.EmailUnlock
+	for paginator.HasMorePages() {
+		page, err := paginator.NextPage(ctx)
+		if err != nil {
+			return unlocks, err
+		}
+		for _, item := range page.Items {
+			unlock, err := emailUnlockFromItem(item)
+			if err != nil {
+				continue
+			}
+			unlocks = append(unlocks, unlock)
+			if limit > 0 && len(unlocks) >= limit {
+				sortEmailUnlocks(unlocks)
+				return unlocks, nil
+			}
+		}
+	}
+	sortEmailUnlocks(unlocks)
+	return unlocks, nil
+}
+
 func (s *Store) UpdateEmailUnlock(unlock app.EmailUnlock) error {
 	unlock.UpdatedAt = time.Now().UTC()
 	return s.putEmailUnlock(unlock)
+}
+
+func sortEmailUnlocks(unlocks []app.EmailUnlock) {
+	sort.Slice(unlocks, func(i, j int) bool {
+		return unlocks[i].CreatedAt.After(unlocks[j].CreatedAt)
+	})
 }
 
 func (s *Store) GetEmailSuppression(emailHash string) (app.EmailSuppression, error) {

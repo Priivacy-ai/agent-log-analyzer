@@ -96,7 +96,7 @@ variable "waf_rate_limit_per_5m" {
 
 variable "admin_token_sha256" {
   type        = string
-  description = "Optional SHA-256 hex digest for the bearer token that can read /api/admin/usage-stats."
+  description = "Optional SHA-256 hex digest for the bearer token that can read admin analytics and email export endpoints."
   default     = ""
   sensitive   = true
 }

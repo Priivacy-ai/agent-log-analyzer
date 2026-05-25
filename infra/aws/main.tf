@@ -284,6 +284,36 @@ resource "aws_s3_bucket_lifecycle_configuration" "uploads" {
   }
 }
 
+resource "aws_s3_bucket_lifecycle_configuration" "reports" {
+  bucket = aws_s3_bucket.reports.id
+
+  rule {
+    id     = "expire-cookie-free-usage-events"
+    status = "Enabled"
+
+    filter {
+      prefix = "usage/events/"
+    }
+
+    expiration {
+      days = 90
+    }
+  }
+
+  rule {
+    id     = "expire-aggregate-analytics-events"
+    status = "Enabled"
+
+    filter {
+      prefix = "analytics/events/"
+    }
+
+    expiration {
+      days = 90
+    }
+  }
+}
+
 resource "aws_sqs_queue" "jobs" {
   name                       = "${local.name}-jobs"
   visibility_timeout_seconds = 180
@@ -406,7 +436,7 @@ resource "aws_dynamodb_table" "jobs" {
 
 resource "aws_cloudwatch_log_group" "app" {
   name              = "/ecs/${local.name}"
-  retention_in_days = 7
+  retention_in_days = 90
   tags              = local.common_tags
 }
 
