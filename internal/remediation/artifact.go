@@ -975,6 +975,7 @@ func installInstructions(pluginName, artifactURL string) Install {
 		Notes: []string{
 			"The default command is for Claude Code only. Other harnesses should use their matching directory under harnesses/: codex, opencode, cursor, kiro, antigravity, or claude-desktop-mcp.",
 			"Claude Code plugin marketplace installation can be added later once Agent Analyzer publishes a marketplace entry.",
+			"Claude Desktop local/session logs can be analyzed, but Desktop remediation currently uses the Claude Desktop MCP connector guidance.",
 			"Claude Desktop MCP uses connectors or .mcpb desktop extensions, not Claude Code plugin zips.",
 		},
 		Harnesses: harnessInstallMatrix(),
@@ -1067,7 +1068,7 @@ Generated from deterministic Agent Analyzer metrics.
 
 Use the included skills and commands to make the codebase easier for Claude Code to navigate: lean CLAUDE.md layers, scoped skills, official code-intelligence plugins, and vetted MCP integrations. This plugin does not nag on Bash commands.
 
-For non-Claude-Code harnesses, use the matching files under harnesses/: Codex uses harnesses/codex/, OpenCode uses harnesses/opencode/, Cursor uses harnesses/cursor/, Kiro uses harnesses/kiro/, Antigravity uses harnesses/antigravity/, and Claude Desktop MCP uses harnesses/claude-desktop-mcp/. Those files are installable guidance/config for each harness; they are not Claude Code plugin installs.
+For non-Claude-Code harnesses, use the matching files under harnesses/: Codex uses harnesses/codex/, OpenCode uses harnesses/opencode/, Cursor uses harnesses/cursor/, Kiro uses harnesses/kiro/, Antigravity uses harnesses/antigravity/, and Claude Desktop MCP uses harnesses/claude-desktop-mcp/. Claude Desktop local/session logs can be analyzed automatically; Desktop remediation currently uses the MCP/connector harness. Those files are installable guidance/config for each harness; they are not Claude Code plugin installs.
 `, report.AggregateEvent.ScoreBucket, report.AggregateEvent.WasteBucket)
 }
 

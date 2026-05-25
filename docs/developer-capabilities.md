@@ -38,7 +38,8 @@ allowlists, and remediation allowlists are:
 | Source ID | Product / surface |
 | --- | --- |
 | `claude_code` | Claude Code JSONL sessions |
-| `codex` | Codex CLI / Codex desktop session JSONL |
+| `claude_desktop` | Claude Desktop local agent/session JSON and audit logs |
+| `codex` | Codex CLI / Codex desktop session JSONL and bounded diagnostic SQLite logs |
 | `opencode` | OpenCode session directories |
 | `claude_desktop_mcp` | Claude Desktop MCP logs |
 | `cursor` | Cursor agent transcripts and optional state DB rows |
@@ -54,8 +55,9 @@ out by analytics/remediation allowlist code.
 ## Discovery Model
 
 `recentSupportedLogsWithBounds` is the main discovery coordinator. It collects
-candidates from the source registry, OpenCode session discovery, Kiro workspace
-session discovery, and SQLite source discovery. After collection, it
+candidates from the source registry, Codex session index discovery, OpenCode
+session discovery, Kiro workspace session discovery, Codex diagnostic SQLite
+discovery, and VS Code-style SQLite source discovery. After collection, it
 applies a final largest-recent per-source cap so a source cannot exceed the
 requested limit by contributing multiple reader families.
 
@@ -105,7 +107,8 @@ Source roots:
 | Source | Roots |
 | --- | --- |
 | Claude Code | `$CLAUDE_CONFIG_DIR/projects` or `$HOME/.claude/projects` |
-| Codex | `$CODEX_HOME/sessions`, `$CODEX_HOME/archived_sessions`, or `$HOME/.codex/...` |
+| Claude Desktop | app-support `Claude/local-agent-mode-sessions`, `Claude/claude-code-sessions`, and `Claude/audit.jsonl` |
+| Codex | `$CODEX_HOME/session_index.jsonl`, `$CODEX_HOME/sessions`, `$CODEX_HOME/archived_sessions`, `$CODEX_HOME/logs*.sqlite`, or `$HOME/.codex/...` |
 | OpenCode | `$HOME/.local/share/opencode/storage/message` plus associated part files |
 | Claude Desktop MCP | macOS `$HOME/Library/Logs/Claude`; Windows `%APPDATA%/Claude/logs` |
 | Cursor JSONL | `$HOME/.cursor/projects`, plus Cursor app-support workspace/global storage roots |
@@ -128,6 +131,7 @@ accepts files using a source-specific predicate.
 Examples:
 
 - Codex accepts `.jsonl`.
+- Claude Desktop accepts `local_*.json` session files and `audit.jsonl`.
 - Claude Desktop MCP accepts `mcp.log` and `mcp-server-*.log`.
 - Cursor accepts JSONL under `agent-transcripts`.
 - Kiro CLI accepts the exact `KIRO_CHAT_LOG_FILE` path when configured, or
@@ -170,6 +174,33 @@ The reader accepts session `.json` files and skips `sessions.json`. The
 normalizer walks nested arrays/maps, so hook events inside session `history`
 arrays are converted into tool calls/results.
 
+### Claude Desktop Session Reader
+
+Claude Desktop local-agent/session logs can live in app-support session trees:
+
+```text
+Claude/local-agent-mode-sessions
+Claude/claude-code-sessions
+```
+
+The reader accepts `local_*.json` session files and `audit.jsonl`. Session JSON
+is passed through as JSONL-compatible input, and top-level `enabledMcpTools`
+metadata is converted into a bounded synthetic MCP availability header using
+only sanitized server IDs.
+
+### Codex Session Index And Diagnostic Reader
+
+Codex discovery prefers `$CODEX_HOME/session_index.jsonl` when present. The
+index is scanned for JSONL path references, then each resolved session is scored
+by size and recency. If the index is missing or produces no readable candidates,
+discovery falls back to `$CODEX_HOME/sessions` and
+`$CODEX_HOME/archived_sessions`.
+
+Codex also discovers `$CODEX_HOME/logs*.sqlite`. Those databases are opened in
+SQLite read-only/query-only mode, and only bounded rows from a `logs` table are
+converted to synthetic diagnostic JSONL. The reader never emits source paths,
+raw session IDs, or unbounded diagnostic text.
+
 ### SQLite State Reader
 
 Cursor, Kiro, and Antigravity can store conversation state in VS Code-style
@@ -199,7 +230,7 @@ Supported key prefixes:
 
 | Source | Prefixes |
 | --- | --- |
-| Cursor | `bubbleId:`, `composerData:`, `composer.composerData`, `agentKv:`, `messageRequestContext:` |
+| Cursor | `bubbleId:`, `composerData:`, `composer.composerData`, `agentKv:`, `agentKv:blob:`, `messageRequestContext:`, `aiService.prompts`, `aiService.generations`, `workbench.panel.aichat.view.aichat.chatdata`, `workbench.panel.chat.view.chat.chatdata` |
 | Kiro IDE | `kiro.kiroAgent`, `kiro:`, `chat`, `session` |
 | Antigravity | `agent`, `chat`, `conversation`, `task`, `transcript` |
 
@@ -227,8 +258,9 @@ names, or transcript IDs.
 
 ### Codex
 
-Codex supports both older direct JSONL and newer rollout-style records with a
-top-level `payload`.
+Codex supports session selection through `session_index.jsonl`, older direct
+JSONL, newer rollout-style records with a top-level `payload`, and synthetic
+diagnostic rows from bounded `logs*.sqlite` reads.
 
 The Codex normalizer:
 
@@ -245,6 +277,21 @@ The Codex normalizer:
 - maps corresponding `*_output` item types into `tool_result`,
 - hashes call IDs and tool arguments instead of emitting raw values,
 - extracts patch statistics from patch events.
+
+Diagnostic SQLite rows contribute bounded error/signal counts through synthetic
+JSONL and do not emit raw file paths, session IDs, or diagnostic bodies.
+
+### Claude Desktop
+
+Claude Desktop support covers local-agent/session JSON files and audit JSONL.
+The normalizer:
+
+- maps initial session metadata and enabled MCP tools to bounded message/tool
+  availability signals,
+- recognizes JSON-RPC tool/resource calls and matching results,
+- maps embedded hook/tool objects to tool calls/results,
+- recursively walks nested arrays/maps for supported event shapes,
+- hashes IDs and arguments instead of emitting raw values.
 
 ### Claude Desktop MCP
 
@@ -361,15 +408,18 @@ Important tests:
 
 - `cmd/agent-analyzer/main_test.go`
   - source discovery for desktop and agent sources,
+  - explicit `--source` override for explicit `--log` paths,
   - cross-platform root helpers,
   - exact `KIRO_CHAT_LOG_FILE` discovery,
   - app-support Cursor/Antigravity transcripts,
+  - Claude Desktop local-session and audit discovery,
   - Claude Desktop MCP server-log header synthesis,
+  - Codex `session_index.jsonl` preference and diagnostic SQLite reads,
   - permission-denied discovery/read behavior,
   - Kiro workspace session reads and nested tool signal extraction,
   - SQLite default discovery, read-only source behavior, empty stores,
-    Kiro/Antigravity stores, filtering before limit, output bounds, invalid
-    UTF-8/protobuf skipping,
+    Cursor legacy/current keys, Kiro/Antigravity stores, filtering before
+    limit, output bounds, invalid UTF-8/protobuf skipping,
   - ordinal-only local refs.
 - `internal/analyzer/normalized_events_test.go`
   - Codex payload token/tool normalization,

@@ -393,7 +393,7 @@ func fullScanCommandEmailBody(command string, expiresAt time.Time) string {
 }
 
 func pluginReadyEmailBody(reportURL, artifactURL string) string {
-	return "Your full Agent Analyzer report and generated optimization plugin are ready.\n\nReport:\n" + reportURL + "\n\nPlugin zip:\n" + artifactURL + "\n\nInstall notes:\n- Claude Code: download the zip and run `claude --plugin-dir /path/to/agent-analyzer-optimization-plugin.zip`.\n- Codex: use harnesses/codex/.\n- OpenCode: use harnesses/opencode/.\n- Cursor: use harnesses/cursor/.\n- Kiro: use harnesses/kiro/.\n- Antigravity: use harnesses/antigravity/.\n- Claude Desktop MCP: use harnesses/claude-desktop-mcp/.\n\nBoth links use the private report token from this run.\n"
+	return "Your full Agent Analyzer report and generated optimization plugin are ready.\n\nReport:\n" + reportURL + "\n\nPlugin zip:\n" + artifactURL + "\n\nInstall notes:\n- Claude Code: download the zip and run `claude --plugin-dir /path/to/agent-analyzer-optimization-plugin.zip`.\n- Codex: use harnesses/codex/.\n- OpenCode: use harnesses/opencode/.\n- Cursor: use harnesses/cursor/.\n- Kiro: use harnesses/kiro/.\n- Antigravity: use harnesses/antigravity/.\n- Claude Desktop local/session logs: analyzed automatically; no plugin install surface.\n- Claude Desktop MCP: use harnesses/claude-desktop-mcp/ for connector or .mcpb guidance.\n\nBoth links use the private report token from this run.\n"
 }
 
 func fullScanNPXCommand(baseURL, token string) string {

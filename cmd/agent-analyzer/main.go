@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
 	"database/sql"
 	"encoding/hex"
@@ -17,6 +18,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -36,6 +38,7 @@ const largestRecentHalfLife = 14 * 24 * time.Hour
 
 var representativeSourceOrder = []string{
 	"claude_code",
+	"claude_desktop",
 	"codex",
 	"opencode",
 	"claude_desktop_mcp",
@@ -85,6 +88,7 @@ func runAnalyze(args []string) error {
 	fs := flag.NewFlagSet("analyze", flag.ContinueOnError)
 	out := fs.String("out", "agent-analyzer-report.json", "path to write sanitized report JSON")
 	logPath := fs.String("log", "", "explicit supported JSON/JSONL log path")
+	sourceID := fs.String("source", "", "source ID for an explicit log path")
 	paid := fs.Bool("paid", false, "analyze recent supported agent logs locally and write a sanitized paid aggregate report")
 	limit := fs.Int("limit", defaultAutoLogLimit, "maximum target-sized recent logs per supported source to analyze with --paid")
 	orderedArgs := reorderAnalyzeArgs(args)
@@ -94,8 +98,8 @@ func runAnalyze(args []string) error {
 
 	positional := fs.Args()
 	if *paid {
-		if *logPath != "" || len(positional) > 0 {
-			return errors.New("agent-analyzer analyze: --paid cannot be combined with --log or positional log paths")
+		if *logPath != "" || *sourceID != "" || len(positional) > 0 {
+			return errors.New("agent-analyzer analyze: --paid cannot be combined with --log, --source, or positional log paths")
 		}
 		return runAnalyzePaid(*out, *limit)
 	}
@@ -113,16 +117,23 @@ func runAnalyze(args []string) error {
 		path = positional[0]
 	}
 	if path == "" {
+		if *sourceID != "" {
+			return errors.New("agent-analyzer analyze: --source requires --log or a positional log path")
+		}
 		candidates, err := defaultSupportedLogsFn()
 		if err != nil {
 			return err
 		}
 		return analyzeDiscovered(candidates, *out, "", true)
 	}
-	return analyzeSingle(path, *out, true)
+	source, err := explicitOrInferredSource(*sourceID, path)
+	if err != nil {
+		return err
+	}
+	return analyzeSingle(path, *out, true, source)
 }
 
-func analyzeSingle(path, out string, printNextSteps bool) error {
+func analyzeSingle(path, out string, printNextSteps bool, sourceID string) error {
 	progress := newProgressBar(3)
 	progress.Update(0, "reading "+shortDisplay(path))
 	data, err := os.ReadFile(path)
@@ -131,7 +142,7 @@ func analyzeSingle(path, out string, printNextSteps bool) error {
 		return err
 	}
 	progress.Update(1, "analyzing "+shortDisplay(path))
-	report, err := analyzeBytesForSource("local", "unknown", data)
+	report, err := analyzeBytesForSource("local", sourceID, data)
 	if err != nil {
 		progress.Fail()
 		return err
@@ -151,6 +162,49 @@ func analyzeSingle(path, out string, printNextSteps bool) error {
 		printNextStepsFor(out)
 	}
 	return nil
+}
+
+func explicitOrInferredSource(explicit, path string) (string, error) {
+	explicit = strings.TrimSpace(explicit)
+	if explicit != "" {
+		if !analyzer.ValidEcosystemID("coding_agent", explicit) {
+			return "", fmt.Errorf("agent-analyzer analyze: unknown --source %q", explicit)
+		}
+		return explicit, nil
+	}
+	if inferred := inferSourceFromPath(path); inferred != "" {
+		return inferred, nil
+	}
+	return "unknown", nil
+}
+
+func inferSourceFromPath(path string) string {
+	normalized := strings.ToLower(filepath.ToSlash(filepath.Clean(path)))
+	base := strings.ToLower(filepath.Base(path))
+	switch {
+	case strings.Contains(normalized, "/local-agent-mode-sessions/") || strings.Contains(normalized, "/claude-code-sessions/"):
+		return "claude_desktop"
+	case base == "audit.jsonl" && strings.Contains(normalized, "/claude/"):
+		return "claude_desktop"
+	case strings.Contains(normalized, "/logs/claude/") && acceptClaudeDesktopMCPLog(path, nil):
+		return "claude_desktop_mcp"
+	case strings.Contains(normalized, "/.codex/") || strings.Contains(base, "codex") || strings.HasPrefix(base, "rollout-"):
+		return "codex"
+	case strings.Contains(normalized, "/.cursor/") || strings.Contains(normalized, "/application support/cursor/") || strings.Contains(normalized, "/cursor/user/"):
+		return "cursor"
+	case strings.Contains(normalized, "/opencode/"):
+		return "opencode"
+	case strings.Contains(normalized, "/kiro-log/") || strings.Contains(normalized, "/.kiro/"):
+		return "kiro_cli"
+	case strings.Contains(normalized, "/application support/kiro/") || strings.Contains(normalized, "/kiro/user/"):
+		return "kiro_ide"
+	case strings.Contains(normalized, "/antigravity"):
+		return "antigravity"
+	case strings.Contains(normalized, "/.claude/"):
+		return "claude_code"
+	default:
+		return ""
+	}
 }
 
 func analyzeBytesForSource(jobID string, sourceID string, data []byte) (analyzer.Report, error) {
@@ -636,8 +690,14 @@ func runOneShot(args []string) error {
 		if err := analyzeDiscovered(candidates, *out, "", false); err != nil {
 			return err
 		}
-	} else if err := analyzeSingle(path, *out, false); err != nil {
-		return err
+	} else {
+		source, err := explicitOrInferredSource("", path)
+		if err != nil {
+			return err
+		}
+		if err := analyzeSingle(path, *out, false, source); err != nil {
+			return err
+		}
 	}
 	fmt.Println()
 	fmt.Println("Are you ready to get your report?")
@@ -669,7 +729,7 @@ func reorderAnalyzeArgs(args []string) []string {
 	for i := 0; i < len(args); i++ {
 		arg := args[i]
 		switch {
-		case arg == "--out" || arg == "-out" || arg == "--log" || arg == "-log" || arg == "--limit" || arg == "-limit":
+		case arg == "--out" || arg == "-out" || arg == "--log" || arg == "-log" || arg == "--source" || arg == "-source" || arg == "--limit" || arg == "-limit":
 			flags = append(flags, arg)
 			if i+1 < len(args) {
 				i++
@@ -677,6 +737,7 @@ func reorderAnalyzeArgs(args []string) []string {
 			}
 		case strings.HasPrefix(arg, "--out=") || strings.HasPrefix(arg, "-out=") ||
 			strings.HasPrefix(arg, "--log=") || strings.HasPrefix(arg, "-log=") ||
+			strings.HasPrefix(arg, "--source=") || strings.HasPrefix(arg, "-source=") ||
 			strings.HasPrefix(arg, "--limit=") || strings.HasPrefix(arg, "-limit="):
 			flags = append(flags, arg)
 		case strings.HasPrefix(arg, "-"):
@@ -885,12 +946,23 @@ func recentSupportedLogsWithBounds(limit int, maxBytes int64, minBytes int64) ([
 	}
 	var candidates []logCandidate
 	for _, source := range logSourceDefinitions() {
-		found, err := recentPathLogs(source.id, source.label, source.roots, source.accept, limit, maxBytes, minBytes)
+		var found []logCandidate
+		var err error
+		if source.id == "codex" {
+			found, err = recentCodexLogs(limit, maxBytes, minBytes)
+		} else {
+			found, err = recentPathLogs(source.id, source.label, source.roots, source.accept, limit, maxBytes, minBytes)
+		}
 		if err != nil {
 			return nil, err
 		}
 		candidates = append(candidates, found...)
 	}
+	codexSQLite, err := recentCodexSQLiteLogs(limit, maxBytes, minBytes)
+	if err != nil {
+		return nil, err
+	}
+	candidates = append(candidates, codexSQLite...)
 	openCode, err := recentOpenCodeSessions(limit, maxBytes, minBytes)
 	if err != nil {
 		return nil, err
@@ -933,6 +1005,12 @@ func logSourceDefinitions() []logSourceDefinition {
 			label:  "Codex",
 			roots:  codexSessionRoots(),
 			accept: acceptCodexRollout,
+		},
+		{
+			id:     "claude_desktop",
+			label:  "Claude Desktop",
+			roots:  claudeDesktopSessionRoots(),
+			accept: acceptClaudeDesktopSession,
 		},
 		{
 			id:     "claude_desktop_mcp",
@@ -1030,6 +1108,11 @@ func recentPathLogs(sourceID, sourceLabel string, roots []string, accept func(st
 }
 
 func candidateReadFunc(sourceID, path string) func() ([]byte, error) {
+	if sourceID == "claude_desktop" {
+		return func() ([]byte, error) {
+			return readClaudeDesktopSession(path)
+		}
+	}
 	if sourceID == "claude_desktop_mcp" {
 		if server := claudeDesktopMCPServerName(path); server != "" {
 			return func() ([]byte, error) {
@@ -1045,8 +1128,75 @@ func candidateReadFunc(sourceID, path string) func() ([]byte, error) {
 	return nil
 }
 
+func readClaudeDesktopSession(path string) ([]byte, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+	if !strings.EqualFold(filepath.Ext(path), ".json") {
+		return data, nil
+	}
+	servers := claudeDesktopSessionMCPServers(data)
+	if len(servers) == 0 {
+		return data, nil
+	}
+	var builder strings.Builder
+	builder.WriteString("Available MCP servers:\n")
+	for _, server := range servers {
+		builder.WriteString("- ")
+		builder.WriteString(server)
+		builder.WriteByte('\n')
+	}
+	builder.Write(data)
+	return []byte(builder.String()), nil
+}
+
+func claudeDesktopSessionMCPServers(data []byte) []string {
+	var obj map[string]any
+	if json.Unmarshal(data, &obj) != nil {
+		return nil
+	}
+	tools, ok := obj["enabledMcpTools"].(map[string]any)
+	if !ok || len(tools) == 0 {
+		return nil
+	}
+	seen := map[string]bool{}
+	var servers []string
+	for raw := range tools {
+		server := sanitizeMCPServerFromClaudeToolKey(raw)
+		if server == "" || seen[server] {
+			continue
+		}
+		seen[server] = true
+		servers = append(servers, server)
+	}
+	sort.Strings(servers)
+	return servers
+}
+
+func sanitizeMCPServerFromClaudeToolKey(key string) string {
+	parts := strings.Split(key, ":")
+	if len(parts) >= 3 {
+		key = parts[len(parts)-2]
+	}
+	key = strings.TrimSpace(key)
+	var out []rune
+	for _, r := range key {
+		switch {
+		case r >= 'a' && r <= 'z', r >= 'A' && r <= 'Z', r >= '0' && r <= '9', r == '_', r == '-':
+			out = append(out, r)
+		case r == ' ' || r == '.':
+			out = append(out, '_')
+		}
+		if len(out) >= 64 {
+			break
+		}
+	}
+	return string(out)
+}
+
 func noSupportedLogsError() error {
-	return errors.New("no supported agent logs found; checked Claude Code, Codex, OpenCode, Claude Desktop MCP, Cursor, Kiro, and Google Antigravity")
+	return errors.New("no supported agent logs found; checked Claude Code, Claude Desktop, Codex, OpenCode, Claude Desktop MCP, Cursor, Kiro, and Google Antigravity")
 }
 
 func acceptExtension(ext string) func(string, os.FileInfo) bool {
@@ -1057,6 +1207,14 @@ func acceptExtension(ext string) func(string, os.FileInfo) bool {
 
 func acceptCodexRollout(path string, _ os.FileInfo) bool {
 	return strings.EqualFold(filepath.Ext(path), ".jsonl")
+}
+
+func acceptClaudeDesktopSession(path string, _ os.FileInfo) bool {
+	base := strings.ToLower(filepath.Base(path))
+	if base == "audit.jsonl" {
+		return true
+	}
+	return strings.HasPrefix(base, "local_") && strings.EqualFold(filepath.Ext(base), ".json")
 }
 
 func acceptClaudeDesktopMCPLog(path string, _ os.FileInfo) bool {
@@ -1110,8 +1268,132 @@ func codexSessionRoots() []string {
 	}
 }
 
+func codexHomeDir() string {
+	if root := os.Getenv("CODEX_HOME"); root != "" {
+		return root
+	}
+	return filepath.Join(homeDir(), ".codex")
+}
+
+func recentCodexLogs(limit int, maxBytes int64, minBytes int64) ([]logCandidate, error) {
+	indexed, err := recentCodexIndexedSessions(limit, maxBytes, minBytes)
+	if err != nil {
+		return nil, err
+	}
+	if len(indexed) > 0 {
+		return indexed, nil
+	}
+	return recentPathLogs("codex", "Codex", codexSessionRoots(), acceptCodexRollout, limit, maxBytes, minBytes)
+}
+
+func recentCodexIndexedSessions(limit int, maxBytes int64, minBytes int64) ([]logCandidate, error) {
+	indexPath := filepath.Join(codexHomeDir(), "session_index.jsonl")
+	data, err := os.ReadFile(indexPath)
+	if err != nil {
+		if errors.Is(err, os.ErrNotExist) || isPermissionError(err) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	scanner := bufio.NewScanner(bytes.NewReader(data))
+	scanner.Buffer(make([]byte, 0, 64*1024), 2*1024*1024)
+	var matches []logMatch
+	seen := map[string]bool{}
+	for scanner.Scan() {
+		var obj map[string]any
+		if json.Unmarshal(bytes.TrimSpace(scanner.Bytes()), &obj) != nil {
+			continue
+		}
+		path := codexSessionPathFromIndex(obj)
+		if path == "" || seen[path] {
+			continue
+		}
+		seen[path] = true
+		info, err := os.Stat(path)
+		if err != nil || info.IsDir() {
+			continue
+		}
+		if maxBytes > 0 && info.Size() > maxBytes {
+			continue
+		}
+		if minBytes > 0 && info.Size() < minBytes {
+			continue
+		}
+		matches = append(matches, logMatch{path: path, modTime: info.ModTime(), size: info.Size()})
+	}
+	if err := scanner.Err(); err != nil {
+		return nil, err
+	}
+	if len(matches) == 0 {
+		return nil, nil
+	}
+	matches = selectTargetSizedRecentMatches(matches, limit)
+	candidates := make([]logCandidate, 0, len(matches))
+	for _, match := range matches {
+		candidates = append(candidates, logCandidate{
+			SourceID:    "codex",
+			SourceLabel: "Codex",
+			Display:     match.path,
+			ModTime:     match.modTime,
+			Size:        match.size,
+		})
+	}
+	return candidates, nil
+}
+
+func codexSessionPathFromIndex(obj map[string]any) string {
+	for _, key := range []string{"path", "session_path", "log_path", "file", "filepath", "filename"} {
+		if value, ok := obj[key].(string); ok {
+			if path := resolveCodexJSONLPath(value); path != "" {
+				return path
+			}
+		}
+	}
+	var found string
+	var walk func(any)
+	walk = func(value any) {
+		if found != "" {
+			return
+		}
+		switch typed := value.(type) {
+		case string:
+			found = resolveCodexJSONLPath(typed)
+		case []any:
+			for _, item := range typed {
+				walk(item)
+			}
+		case map[string]any:
+			for _, item := range typed {
+				walk(item)
+			}
+		}
+	}
+	walk(obj)
+	return found
+}
+
+func resolveCodexJSONLPath(value string) string {
+	value = strings.TrimSpace(value)
+	if value == "" || !strings.HasSuffix(strings.ToLower(value), ".jsonl") {
+		return ""
+	}
+	if filepath.IsAbs(value) {
+		return filepath.Clean(value)
+	}
+	return filepath.Join(codexHomeDir(), value)
+}
+
 func claudeDesktopLogRoots() []string {
 	return claudeDesktopLogRootsFor(runtime.GOOS, homeDir(), appDataDir())
+}
+
+func claudeDesktopSessionRoots() []string {
+	root := appSupportDir("Claude")
+	return []string{
+		filepath.Join(root, "local-agent-mode-sessions"),
+		filepath.Join(root, "claude-code-sessions"),
+		filepath.Join(root, "audit.jsonl"),
+	}
 }
 
 func claudeDesktopLogRootsFor(goos, home, appData string) []string {
@@ -1202,6 +1484,239 @@ func recentSQLiteSourceLogs(limit int, maxBytes int64, minBytes int64) ([]logCan
 	return candidates, nil
 }
 
+func recentCodexSQLiteLogs(limit int, maxBytes int64, minBytes int64) ([]logCandidate, error) {
+	root := codexHomeDir()
+	entries, err := os.ReadDir(root)
+	if err != nil {
+		if errors.Is(err, os.ErrNotExist) || isPermissionError(err) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	var matches []logMatch
+	for _, entry := range entries {
+		if entry.IsDir() {
+			continue
+		}
+		name := strings.ToLower(entry.Name())
+		if !strings.HasPrefix(name, "logs") || !strings.HasSuffix(name, ".sqlite") {
+			continue
+		}
+		path := filepath.Join(root, entry.Name())
+		info, err := entry.Info()
+		if err != nil {
+			if isSkippableDiscoveryError(err) {
+				continue
+			}
+			return nil, err
+		}
+		storeSize, err := sqliteStoreSize(path)
+		if err != nil {
+			continue
+		}
+		if maxBytes > 0 && storeSize > maxBytes {
+			continue
+		}
+		if minBytes > 0 && storeSize < minBytes {
+			continue
+		}
+		matches = append(matches, logMatch{path: path, modTime: info.ModTime(), size: storeSize})
+	}
+	if len(matches) == 0 {
+		return nil, nil
+	}
+	matches = selectTargetSizedRecentMatches(matches, limit)
+	candidates := make([]logCandidate, 0, len(matches))
+	for _, match := range matches {
+		dbPath := match.path
+		candidates = append(candidates, logCandidate{
+			SourceID:    "codex",
+			SourceLabel: "Codex SQLite",
+			Display:     dbPath,
+			ModTime:     match.modTime,
+			Size:        match.size,
+			Read: func() ([]byte, error) {
+				return readCodexSQLiteLogsAsJSONL(dbPath, maxBytes)
+			},
+		})
+	}
+	return candidates, nil
+}
+
+func readCodexSQLiteLogsAsJSONL(path string, maxOutputBytes int64) ([]byte, error) {
+	db, err := sql.Open("sqlite", sqliteReadOnlyDSN(path))
+	if err != nil {
+		return nil, err
+	}
+	defer db.Close()
+	if !sqliteTableExists(db, "logs") {
+		return []byte("{\"type\":\"message\",\"kind\":\"codex_sqlite_empty\"}\n"), nil
+	}
+	columnSet, err := sqliteTableColumnSet(db, "logs")
+	if err != nil {
+		return nil, err
+	}
+	orderBy := "rowid DESC"
+	switch {
+	case columnSet["ts"] && columnSet["ts_nanos"]:
+		orderBy = "ts DESC, ts_nanos DESC"
+	case columnSet["ts"]:
+		orderBy = "ts DESC"
+	case columnSet["timestamp"]:
+		orderBy = "timestamp DESC"
+	case columnSet["created_at"]:
+		orderBy = "created_at DESC"
+	}
+	rows, err := db.Query("SELECT * FROM logs ORDER BY " + orderBy + " LIMIT 500")
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	columns, err := rows.Columns()
+	if err != nil {
+		return nil, err
+	}
+	columnIndex := map[string]int{}
+	for i, column := range columns {
+		columnIndex[strings.ToLower(column)] = i
+	}
+	var output bytes.Buffer
+	for rows.Next() {
+		values := make([]any, len(columns))
+		scanTargets := make([]any, len(columns))
+		for i := range values {
+			scanTargets[i] = &values[i]
+		}
+		if err := rows.Scan(scanTargets...); err != nil {
+			return nil, err
+		}
+		cell := func(names ...string) string {
+			for _, name := range names {
+				if idx, ok := columnIndex[strings.ToLower(name)]; ok {
+					if text := strings.TrimSpace(sqliteCellString(values[idx])); text != "" {
+						return text
+					}
+				}
+			}
+			return ""
+		}
+		level := cell("level", "severity")
+		target := cell("target", "logger", "module")
+		estimatedBytes := 0
+		if raw := cell("estimated_bytes", "bytes"); raw != "" {
+			if parsed, err := strconv.Atoi(raw); err == nil {
+				estimatedBytes = parsed
+			}
+		}
+		row := map[string]any{
+			"type":            "message",
+			"kind":            "codex_diagnostic",
+			"level":           strings.ToLower(level),
+			"target":          boundedDiagnosticField(target),
+			"estimated_bytes": estimatedBytes,
+			"error":           strings.Contains(strings.ToLower(level), "error"),
+		}
+		if timestamp := cell("ts", "timestamp", "created_at"); timestamp != "" {
+			row["timestamp"] = boundedDiagnosticField(timestamp)
+		}
+		if feedback := cell("feedback_log_body", "message", "body", "text", "content", "error"); feedback != "" {
+			row["content"] = truncateString(feedback, maxSQLiteValueTextBytes)
+		}
+		if modulePath := cell("module_path", "module", "target"); modulePath != "" {
+			row["module"] = boundedDiagnosticField(modulePath)
+		}
+		if cell("file", "filename", "path") != "" {
+			row["file_kind"] = "present"
+		}
+		if cell("line", "line_number") != "" {
+			row["line_present"] = true
+		}
+		encoded, err := json.Marshal(row)
+		if err != nil {
+			return nil, err
+		}
+		if maxOutputBytes > 0 && int64(output.Len()+len(encoded)+1) > maxOutputBytes {
+			break
+		}
+		output.Write(encoded)
+		output.WriteByte('\n')
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	if output.Len() == 0 {
+		return []byte("{\"type\":\"message\",\"kind\":\"codex_sqlite_empty\"}\n"), nil
+	}
+	return output.Bytes(), nil
+}
+
+func sqliteTableColumnSet(db *sql.DB, table string) (map[string]bool, error) {
+	rows, err := db.Query("PRAGMA table_info(" + table + ")")
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	columns := map[string]bool{}
+	for rows.Next() {
+		var cid int
+		var name, columnType string
+		var notNull int
+		var defaultValue any
+		var pk int
+		if err := rows.Scan(&cid, &name, &columnType, &notNull, &defaultValue, &pk); err != nil {
+			return nil, err
+		}
+		columns[strings.ToLower(name)] = true
+	}
+	return columns, rows.Err()
+}
+
+func sqliteCellString(value any) string {
+	switch typed := value.(type) {
+	case nil:
+		return ""
+	case []byte:
+		if !utf8.Valid(typed) {
+			return ""
+		}
+		return string(typed)
+	case string:
+		return typed
+	case int64:
+		return strconv.FormatInt(typed, 10)
+	case float64:
+		return strconv.FormatFloat(typed, 'f', -1, 64)
+	case bool:
+		return strconv.FormatBool(typed)
+	default:
+		return fmt.Sprint(typed)
+	}
+}
+
+func boundedDiagnosticField(value string) string {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return ""
+	}
+	var out []rune
+	for _, r := range value {
+		if (r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') || (r >= '0' && r <= '9') || r == '_' || r == '-' || r == '.' || r == ':' {
+			out = append(out, r)
+		}
+		if len(out) >= 96 {
+			break
+		}
+	}
+	return string(out)
+}
+
+func truncateString(value string, maxBytes int) string {
+	if maxBytes <= 0 || len(value) <= maxBytes {
+		return value
+	}
+	return value[:maxBytes]
+}
+
 func sqliteSourceDefinitions() []sqliteSourceDefinition {
 	return []sqliteSourceDefinition{
 		{
@@ -1211,7 +1726,7 @@ func sqliteSourceDefinitions() []sqliteSourceDefinition {
 				filepath.Join(appSupportDir("Cursor"), "User", "globalStorage"),
 				filepath.Join(appSupportDir("Cursor"), "User", "workspaceStorage"),
 			},
-			prefixes: []string{"bubbleId:", "composerData:", "composer.composerData", "agentKv:", "messageRequestContext:"},
+			prefixes: []string{"bubbleId:", "composerData:", "composer.composerData", "agentKv:blob:", "agentKv:", "messageRequestContext:", "aiService.prompts", "aiService.generations", "workbench.panel.aichat.view.aichat.chatdata", "workbench.panel.chat.view.chat.chatdata"},
 		},
 		{
 			id:    "kiro_ide",
@@ -2030,8 +2545,9 @@ func usage() {
 	fmt.Fprintln(os.Stderr, "  run            analyze locally, ask for upload confirmation, upload sanitized JSON, and open the report.")
 	fmt.Fprintln(os.Stderr, "  <log-path>     path to a supported JSON/JSONL log; mutually exclusive with --log.")
 	fmt.Fprintf(os.Stderr, "                 if neither is supplied, recent logs per source are selected to target about %s total.\n", formatBytesForHelp(targetAutoLogBytes))
-	fmt.Fprintln(os.Stderr, "                 currently auto-discovers Claude Code, Codex, OpenCode, Claude Desktop MCP, Cursor, Kiro, and Google Antigravity.")
+	fmt.Fprintln(os.Stderr, "                 currently auto-discovers Claude Code, Claude Desktop, Codex, OpenCode, Claude Desktop MCP, Cursor, Kiro, and Google Antigravity.")
 	fmt.Fprintln(os.Stderr, "  --log <path>   explicit log path; mutually exclusive with a positional <log-path>.")
+	fmt.Fprintln(os.Stderr, "  --source <id>  source ID for explicit --log or positional analysis; inferred from path when omitted.")
 	fmt.Fprintln(os.Stderr, "  --out <path>   output path for the sanitized report JSON (default: ./agent-analyzer-report.json).")
 	fmt.Fprintln(os.Stderr, "  --paid         legacy alias: analyze target-sized recent supported logs locally and write a sanitized aggregate report.")
 	fmt.Fprintf(os.Stderr, "  --limit <n>    maximum recent logs per source for aggregate modes, capped at %d (default: %d).\n", maxAutoLogLimit, defaultAutoLogLimit)

@@ -199,7 +199,7 @@ func renderPluginPreviewMarkdown(report analyzer.Report) string {
 	artifact := remediation.Generate(report, remediation.Options{GeneratedAt: deterministicPDFTime()})
 	var b strings.Builder
 	fmt.Fprintf(&b, "# Agent Analyzer Plugin Preview\n\n")
-	fmt.Fprintf(&b, "The custom artifact turns this report into Claude Code plugin guidance plus harness-specific instructions for Codex, OpenCode, Cursor, Kiro, Antigravity, and Claude Desktop MCP. It is generated from sanitized report JSON only.\n\n")
+	fmt.Fprintf(&b, "The custom artifact turns this report into Claude Code plugin guidance plus harness-specific instructions for Codex, OpenCode, Cursor, Kiro, Antigravity, and Claude Desktop MCP. Reports can also originate from Claude Desktop local/session logs; Desktop remediation currently uses the MCP connector guidance. It is generated from sanitized report JSON only.\n\n")
 	fmt.Fprintf(&b, "## Harness install matrix\n\n")
 	for _, install := range artifact.Install.Harnesses {
 		fmt.Fprintf(&b, "- **%s** (%s): %s\n", install.Harness, install.Surface, install.Install)

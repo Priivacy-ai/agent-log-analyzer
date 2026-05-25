@@ -170,6 +170,38 @@ func TestAnalyze_NoArgs_UsesDefaultDiscovery(t *testing.T) {
 	}
 }
 
+func TestAnalyze_ExplicitSourceUsesSourceSpecificNormalizer(t *testing.T) {
+	dir := t.TempDir()
+	logPath := filepath.Join(dir, "codex.jsonl")
+	writeLogContent(t, logPath, `{"type":"event_msg","payload":{"msg":{"type":"token_count","last_token_usage":{"input_tokens":4321,"cached_input_tokens":123,"output_tokens":55}}}}`+"\n")
+	outPath := filepath.Join(dir, "report.json")
+
+	if err := runAnalyze([]string{"--source", "codex", "--log", logPath, "--out", outPath}); err != nil {
+		t.Fatalf("runAnalyze: %v", err)
+	}
+	data, err := os.ReadFile(outPath)
+	if err != nil {
+		t.Fatalf("read report: %v", err)
+	}
+	var report analyzer.Report
+	if err := json.Unmarshal(data, &report); err != nil {
+		t.Fatalf("unmarshal report: %v", err)
+	}
+	if report.AnalysisSignals.InputTokens != 4321 || report.AnalysisSignals.CacheReadTokens != 123 || report.AnalysisSignals.OutputTokens != 55 {
+		t.Fatalf("expected Codex source-specific token signals, got %#v", report.AnalysisSignals)
+	}
+}
+
+func TestAnalyze_RejectsUnknownExplicitSource(t *testing.T) {
+	dir := t.TempDir()
+	logPath := writeSampleLog(t, dir)
+	outPath := filepath.Join(dir, "report.json")
+	err := runAnalyze([]string{"--source", "not_a_source", "--log", logPath, "--out", outPath})
+	if err == nil || !strings.Contains(err.Error(), "unknown --source") {
+		t.Fatalf("expected unknown source error, got %v", err)
+	}
+}
+
 func TestAnalyze_NoArgs_UsesMultiplePerSupportedSource(t *testing.T) {
 	dir := t.TempDir()
 	claude := writeSampleLog(t, dir)
@@ -357,6 +389,7 @@ func TestRecentSupportedLogs_DiscoversDesktopAndAgentSources(t *testing.T) {
 	t.Setenv("CODEX_HOME", codexHome)
 	writeMeaningfulLog(t, filepath.Join(codexHome, "sessions", "2026", "05", "21", "rollout-2026-05-21T19-00-00-thread.jsonl"))
 
+	writeLogContent(t, filepath.Join(appSupportDir("Claude"), "local-agent-mode-sessions", "org", "workspace", "local_session.json"), strings.Repeat(`{"sessionId":"session-secret","initialMessage":"fix private@example.com","enabledMcpTools":{"local:Claude Code:Bash":true},"history":[{"hook_event_name":"PreToolUse","tool_name":"Bash","tool_input":{"command":"go test ./..."}}]}`+"\n", 80))
 	writeMeaningfulLog(t, filepath.Join(home, ".cursor", "projects", "repo", "agent-transcripts", "session", "transcript.jsonl"))
 	writeMeaningfulLog(t, filepath.Join(home, ".gemini", "antigravity-ide", "brain", "task", ".system_generated", "logs", "transcript.jsonl"))
 
@@ -383,7 +416,7 @@ func TestRecentSupportedLogs_DiscoversDesktopAndAgentSources(t *testing.T) {
 	for _, candidate := range candidates {
 		seen[candidate.SourceID] = true
 	}
-	for _, want := range []string{"claude_code", "codex", "cursor", "kiro_cli", "kiro_ide", "antigravity"} {
+	for _, want := range []string{"claude_code", "claude_desktop", "codex", "cursor", "kiro_cli", "kiro_ide", "antigravity"} {
 		if !seen[want] {
 			t.Fatalf("missing source %s from candidates %#v", want, candidates)
 		}
@@ -461,6 +494,116 @@ func TestRecentSupportedLogs_DiscoversAppSupportTranscripts(t *testing.T) {
 			t.Fatalf("missing %s app support transcript from %#v", want, candidates)
 		}
 	}
+}
+
+func TestRecentCodexLogs_PrefersSessionIndex(t *testing.T) {
+	home := isolatedDiscoveryHome(t)
+	codexHome := filepath.Join(home, "codex-home")
+	t.Setenv("CODEX_HOME", codexHome)
+	indexed := filepath.Join(codexHome, "sessions", "2026", "05", "25", "rollout-indexed.jsonl")
+	fallback := filepath.Join(codexHome, "sessions", "2026", "05", "25", "rollout-fallback.jsonl")
+	writeMeaningfulLog(t, indexed)
+	writeMeaningfulLog(t, fallback)
+	writeLogContent(t, filepath.Join(codexHome, "session_index.jsonl"), `{"session_path":"sessions/2026/05/25/rollout-indexed.jsonl","cwd":"/Users/private/repo"}`+"\n")
+
+	candidates, err := recentCodexLogs(1, 0, 1)
+	if err != nil {
+		t.Fatalf("recentCodexLogs: %v", err)
+	}
+	if len(candidates) != 1 || candidates[0].Display != indexed {
+		t.Fatalf("expected indexed Codex candidate, got %#v", candidates)
+	}
+}
+
+func TestRecentClaudeDesktopLogs_DiscoversSessionAndAudit(t *testing.T) {
+	isolatedDiscoveryHome(t)
+	sessionPath := filepath.Join(appSupportDir("Claude"), "local-agent-mode-sessions", "org", "workspace", "local_session.json")
+	auditPath := filepath.Join(appSupportDir("Claude"), "audit.jsonl")
+	writeLogContent(t, sessionPath, strings.Repeat(`{"initialMessage":"fix private@example.com","history":[{"hook_event_name":"PreToolUse","tool_name":"Bash"}]}`+"\n", 80))
+	writeLogContent(t, auditPath, strings.Repeat(`{"method":"tools/call","params":{"name":"filesystem","arguments":{"path":"/Users/private/repo"}}}`+"\n", 80))
+
+	candidates, err := recentPathLogs("claude_desktop", "Claude Desktop", claudeDesktopSessionRoots(), acceptClaudeDesktopSession, 10, 0, 1)
+	if err != nil {
+		t.Fatalf("recentPathLogs: %v", err)
+	}
+	seen := map[string]bool{}
+	for _, candidate := range candidates {
+		seen[filepath.Base(candidate.Display)] = true
+	}
+	if !seen["local_session.json"] || !seen["audit.jsonl"] {
+		t.Fatalf("expected session and audit candidates, got %#v", candidates)
+	}
+	if source := inferSourceFromPath(auditPath); source != "claude_desktop" {
+		t.Fatalf("expected audit path to infer claude_desktop, got %q", source)
+	}
+}
+
+func TestRecentCodexSQLiteLogs_ReadsDiagnosticsWithoutSourceWrites(t *testing.T) {
+	home := isolatedDiscoveryHome(t)
+	codexHome := filepath.Join(home, "codex-home")
+	t.Setenv("CODEX_HOME", codexHome)
+	dbPath := filepath.Join(codexHome, "logs_2.sqlite")
+	writeCodexLogsDB(t, dbPath)
+	beforeEntries := snapshotDirEntries(t, filepath.Dir(dbPath))
+	beforeModTimes := snapshotFileModTimes(t, dbPath)
+
+	candidates, err := recentCodexSQLiteLogs(1, 0, 1)
+	if err != nil {
+		t.Fatalf("recentCodexSQLiteLogs: %v", err)
+	}
+	if len(candidates) != 1 || candidates[0].SourceID != "codex" {
+		t.Fatalf("expected Codex SQLite candidate, got %#v", candidates)
+	}
+	data, err := candidates[0].readBytes()
+	if err != nil {
+		t.Fatalf("read Codex SQLite: %v", err)
+	}
+	afterEntries := snapshotDirEntries(t, filepath.Dir(dbPath))
+	if !reflect.DeepEqual(beforeEntries, afterEntries) {
+		t.Fatalf("Codex SQLite read changed source directory entries: before=%#v after=%#v", beforeEntries, afterEntries)
+	}
+	afterModTimes := snapshotFileModTimes(t, dbPath)
+	if !reflect.DeepEqual(beforeModTimes, afterModTimes) {
+		t.Fatalf("Codex SQLite read changed source file mtimes: before=%#v after=%#v", beforeModTimes, afterModTimes)
+	}
+	report, err := analyzer.AnalyzeForSource("codex-sqlite-test", "codex", data)
+	if err != nil {
+		t.Fatalf("AnalyzeForSource: %v", err)
+	}
+	if report.Metrics.FailedCommands == 0 {
+		t.Fatalf("expected diagnostic error signal, got %#v", report.Metrics)
+	}
+	assertReportDoesNotContain(t, report, "/Users/private/repo", "sk-test-secret")
+}
+
+func TestCodexSQLiteLogs_ToleratesMinimalSchema(t *testing.T) {
+	dbPath := filepath.Join(t.TempDir(), "logs.sqlite")
+	db, err := sql.Open("sqlite", dbPath)
+	if err != nil {
+		t.Fatalf("open sqlite: %v", err)
+	}
+	if _, err := db.Exec(`CREATE TABLE logs (level TEXT, message TEXT)`); err != nil {
+		t.Fatalf("create logs: %v", err)
+	}
+	if _, err := db.Exec(`INSERT INTO logs(level, message) VALUES ('ERROR', 'failed with /Users/private/repo and sk-test-secret')`); err != nil {
+		t.Fatalf("insert log: %v", err)
+	}
+	if err := db.Close(); err != nil {
+		t.Fatalf("close sqlite: %v", err)
+	}
+
+	data, err := readCodexSQLiteLogsAsJSONL(dbPath, 0)
+	if err != nil {
+		t.Fatalf("read Codex SQLite: %v", err)
+	}
+	report, err := analyzer.AnalyzeForSource("codex-sqlite-minimal-test", "codex", data)
+	if err != nil {
+		t.Fatalf("AnalyzeForSource: %v", err)
+	}
+	if report.Metrics.FailedCommands == 0 {
+		t.Fatalf("expected diagnostic error signal, got %#v", report.Metrics)
+	}
+	assertReportDoesNotContain(t, report, "/Users/private/repo", "sk-test-secret")
 }
 
 func TestClaudeDesktopMCPServerLogAddsBoundedServerEvidence(t *testing.T) {
@@ -604,6 +747,37 @@ func TestSQLiteSourceExtraction_ReadsStateDBByDefaultWithoutSourceWrites(t *test
 		t.Fatalf("expected Cursor SQLite stringified JSON tool call, got %#v", report.AnalysisSignals)
 	}
 	assertReportDoesNotContain(t, report, "private@example.com", "arn:aws:iam::123456789012:user/private", "oauth-refresh-token", "composer-secret")
+}
+
+func TestSQLiteSourceExtraction_ReadsLegacyCursorKeys(t *testing.T) {
+	isolatedDiscoveryHome(t)
+	dbPath := filepath.Join(appSupportDir("Cursor"), "User", "workspaceStorage", "abc123", "state.vscdb")
+	writeStateDBRows(t, dbPath, map[string]any{
+		"aiService.prompts":                           `[{"role":"user","content":"private@example.com"}]`,
+		"aiService.generations":                       `[{"tool":"terminal","arguments":{"command":"cat /Users/private/repo/.env"}}]`,
+		"workbench.panel.aichat.view.aichat.chatdata": `{"messages":[{"role":"assistant","content":"oauth-refresh-token"}]}`,
+		"workbench.panel.chat.view.chat.chatdata":     `{"messages":[{"role":"user","content":"sk-test-secret"}]}`,
+		"agentKv:blob:composer-secret":                `{"tool":"apply_patch","arguments":{"patch":"secret patch"}}`,
+		"unrelatedPrivateKey":                         "should not be extracted",
+	})
+
+	data, err := readSQLiteStateAsJSONL(dbPath, sqliteSourceDefinitions()[0].prefixes, 0)
+	if err != nil {
+		t.Fatalf("read SQLite state: %v", err)
+	}
+	for _, want := range []string{`"key_type":"aiservice_prompts"`, `"key_type":"aiservice_generations"`, `"key_type":"workbench_panel_aichat_view_aichat_chatdata"`, `"key_type":"workbench_panel_chat_view_chat_chatdata"`, `"key_type":"agentkvblob"`} {
+		if !strings.Contains(string(data), want) {
+			t.Fatalf("expected %s in extracted Cursor rows, got %s", want, data)
+		}
+	}
+	report, err := analyzer.AnalyzeForSource("cursor-legacy-sqlite-test", "cursor", data)
+	if err != nil {
+		t.Fatalf("AnalyzeForSource: %v", err)
+	}
+	if report.AnalysisSignals.ToolCallCount == 0 {
+		t.Fatalf("expected Cursor legacy SQLite tool signal, got %#v", report.AnalysisSignals)
+	}
+	assertReportDoesNotContain(t, report, "private@example.com", "/Users/private/repo", "oauth-refresh-token", "sk-test-secret", "composer-secret")
 }
 
 func TestSQLiteReadOnlyDSNRejectsWrites(t *testing.T) {
@@ -812,6 +986,39 @@ func writeStateDBRows(t *testing.T, path string, rows map[string]any) {
 	for key, value := range rows {
 		if _, err := db.Exec(`INSERT INTO ItemTable(key, value) VALUES (?, ?)`, key, value); err != nil {
 			t.Fatalf("insert sqlite row %q: %v", key, err)
+		}
+	}
+}
+
+func writeCodexLogsDB(t *testing.T, path string) {
+	t.Helper()
+	if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
+		t.Fatalf("mkdir codex sqlite parent: %v", err)
+	}
+	db, err := sql.Open("sqlite", path)
+	if err != nil {
+		t.Fatalf("open codex sqlite: %v", err)
+	}
+	defer db.Close()
+	for _, stmt := range []string{
+		`CREATE TABLE logs (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			ts INTEGER NOT NULL,
+			ts_nanos INTEGER NOT NULL,
+			level TEXT NOT NULL,
+			target TEXT NOT NULL,
+			feedback_log_body TEXT,
+			module_path TEXT,
+			file TEXT,
+			line INTEGER,
+			thread_id TEXT,
+			process_uuid TEXT,
+			estimated_bytes INTEGER NOT NULL DEFAULT 0
+		)`,
+		`INSERT INTO logs(ts, ts_nanos, level, target, feedback_log_body, module_path, file, line, estimated_bytes) VALUES (1, 1, 'ERROR', 'codex_core::runner', 'failed in /Users/private/repo with sk-test-secret', 'codex_core::runner', '/Users/private/repo/main.rs', 42, 128)`,
+	} {
+		if _, err := db.Exec(stmt); err != nil {
+			t.Fatalf("exec codex sqlite stmt: %v", err)
 		}
 	}
 }

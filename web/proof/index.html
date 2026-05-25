@@ -6,15 +6,23 @@
     <title>Claude Analyzer Plugin Proof</title>
     <link rel="icon" href="../favicon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="../styles.css" />
+    <script src="../site-header.js" defer></script>
   </head>
   <body>
     <main class="shell doc-page proof-page">
-      <p class="trust-links">
-        <a href="../index.html">Home</a>
-        <a href="benchmark-comparison.html">Benchmark Landscape</a>
-        <a href="../security/index.html">Security</a>
-        <a href="../privacy/index.html">Privacy</a>
-      </p>
+      <site-header data-root="../" data-active="proof">
+        <noscript>
+          <nav class="site-header" aria-label="Site navigation">
+            <a href="../index.html">Home</a>
+            <a href="../proof/index.html" aria-current="page">Proof</a>
+            <a href="../proof/results.html">Results</a>
+            <a href="../proof/methodology.html">Methodology</a>
+            <a href="../proof/benchmark-comparison.html">Benchmark Landscape</a>
+            <a href="../security/index.html">Security</a>
+            <a href="../privacy/index.html">Privacy</a>
+          </nav>
+        </noscript>
+      </site-header>
 
       <section class="proof-hero">
         <p class="eyebrow">benchmark-backed plugin proof</p>

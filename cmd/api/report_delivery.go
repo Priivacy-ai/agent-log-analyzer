@@ -167,7 +167,7 @@ func renderReportDeliverySentPage(w http.ResponseWriter, email, reportURL, artif
 claude --plugin-dir "$PLUGIN_ZIP"`
 	escapedCommand := htmlstd.EscapeString(command)
 	body := fmt.Sprintf(
-		`<p>We recorded <strong>%s</strong> and sent the free report pack and generated plugin links to that address.</p><p class="download-button-row"><a class="plugin-cta" href="%s">Download report pack</a><a class="plugin-cta" href="%s">Download generated plugin</a></p><p>The email also reminds you about the Spec Kitty training voucher and links to the <a href="https://github.com/Priivacy-ai/spec-kitty" rel="noopener noreferrer">Spec Kitty GitHub repo</a>.</p><p>Choose your harness in <strong>INSTALL.md</strong> inside the plugin zip. For Claude Code, point Claude at the zip:</p><div class="simple-command-copy"><pre><code>%s</code></pre><button type="button" class="copy-agents-line" data-copy="%s">Copy command</button></div><p>For other harnesses, use the matching folder instead of installing the Claude Code plugin: Codex uses <strong>harnesses/codex/</strong>, OpenCode uses <strong>harnesses/opencode/</strong>, Cursor uses <strong>harnesses/cursor/</strong>, Kiro uses <strong>harnesses/kiro/</strong>, Antigravity uses <strong>harnesses/antigravity/</strong>, and Claude Desktop MCP uses <strong>harnesses/claude-desktop-mcp/</strong>. The plugin was generated from sanitized report JSON only. Raw transcripts were not attached or uploaded.</p>`,
+		`<p>We recorded <strong>%s</strong> and sent the free report pack and generated plugin links to that address.</p><p class="download-button-row"><a class="plugin-cta" href="%s">Download report pack</a><a class="plugin-cta" href="%s">Download generated plugin</a></p><p>The email also reminds you about the Spec Kitty training voucher and links to the <a href="https://github.com/Priivacy-ai/spec-kitty" rel="noopener noreferrer">Spec Kitty GitHub repo</a>.</p><p>Choose your harness in <strong>INSTALL.md</strong> inside the plugin zip. For Claude Code, point Claude at the zip:</p><div class="simple-command-copy"><pre><code>%s</code></pre><button type="button" class="copy-agents-line" data-copy="%s">Copy command</button></div><p>For other harnesses, use the matching folder instead of installing the Claude Code plugin: Codex uses <strong>harnesses/codex/</strong>, OpenCode uses <strong>harnesses/opencode/</strong>, Cursor uses <strong>harnesses/cursor/</strong>, Kiro uses <strong>harnesses/kiro/</strong>, Antigravity uses <strong>harnesses/antigravity/</strong>, and Claude Desktop MCP uses <strong>harnesses/claude-desktop-mcp/</strong>. Claude Desktop local/session logs are analyzed automatically; Desktop remediation currently uses the MCP/connector guidance. The plugin was generated from sanitized report JSON only. Raw transcripts were not attached or uploaded.</p>`,
 		htmlstd.EscapeString(email),
 		htmlstd.EscapeString(reportURL),
 		htmlstd.EscapeString(artifactURL),
@@ -223,6 +223,7 @@ Google Antigravity:
 
 Claude Desktop MCP:
 - Read harnesses/claude-desktop-mcp/README.md. Desktop uses connectors or .mcpb extensions, not Claude Code plugin zips.
+- Claude Desktop local/session logs are analyzed automatically; there is no separate plugin install surface for those logs.
 
 Privacy boundary:
 - Raw transcripts were not attached.

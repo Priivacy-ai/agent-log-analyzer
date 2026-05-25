@@ -6,9 +6,23 @@
     <title>Privacy - Agent Analyzer</title>
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="/styles.css" />
+    <script src="/site-header.js" defer></script>
   </head>
   <body>
     <main class="shell doc-page">
+      <site-header data-root="/" data-active="privacy">
+        <noscript>
+          <nav class="site-header" aria-label="Site navigation">
+            <a href="/index.html">Home</a>
+            <a href="/proof/index.html">Proof</a>
+            <a href="/proof/results.html">Results</a>
+            <a href="/proof/methodology.html">Methodology</a>
+            <a href="/proof/benchmark-comparison.html">Benchmark Landscape</a>
+            <a href="/security/index.html">Security</a>
+            <a href="/privacy/index.html" aria-current="page">Privacy</a>
+          </nav>
+        </noscript>
+      </site-header>
       <p class="eyebrow">privacy</p>
       <h1>We collect performance signals, not transcripts.</h1>
       <p class="subhead">The useful product data is aggregate workflow intelligence: token buckets, waste patterns, known public tooling fingerprints, parser status, and redaction counts.</p>
@@ -28,7 +42,7 @@
         <h2>What We Do Not Receive</h2>
         <ul>
           <li>Raw agent logs in the public launch flow.</li>
-          <li>Raw SQLite state stores. Cursor, Kiro, and Google Antigravity state extraction is read-only, bounded to known conversation keys, and analyzed locally without writing database snapshots.</li>
+          <li>Raw SQLite state stores. Cursor, Kiro, Google Antigravity, and bounded Codex diagnostic extraction is read-only, limited to known rows, and analyzed locally without writing database snapshots.</li>
           <li>Prompt text, tool output, file contents, command arguments, secret values, repo names, usernames, hostnames, or full file paths.</li>
           <li>Unknown private tool names unless a future explicit opt-in path is added.</li>
         </ul>
