@@ -152,7 +152,7 @@ var reportHTMLTemplate = template.Must(template.New("report").Funcs(template.Fun
           <p class="capacity-note">Cutting this waste helps the same coding plan produce more useful implementation work before you run out of tokens.</p>
           <div class="report-cta-row" aria-label="Report actions">
             <a class="report-primary-cta" href="#download-report-section">Download report pack</a>
-            <a class="report-secondary-cta" href="#plugin-purchase">Get custom plugin</a>
+            <a class="report-secondary-cta" href="#plugin-purchase">Get generated plugin</a>
           </div>
         </div>
         <div class="problem-section">
@@ -213,7 +213,7 @@ var reportHTMLTemplate = template.Must(template.New("report").Funcs(template.Fun
           <div>
             <p class="eyebrow">generated remediation</p>
             <h2>Copy the quick fixes now. Use the plugin to make them stick. {{helpTip "Where do these fixes come from? Fixes are generated from deterministic finding IDs and bounded evidence, not from raw prompts or an LLM reading your transcript. The plugin packages those findings into Claude-facing operating guidance and vetted setup instructions."}}</h2>
-            <p>Add the relevant AGENTS.md lines now. The custom plugin packages the same report into benchmark-backed operating guidance so future sessions spend more of your plan writing software and less on rereads, retries, dead context, and noisy tools.</p>
+            <p>Add the relevant AGENTS.md lines now. The generated plugin packages the same report into benchmark-backed operating guidance so future sessions spend more of your plan writing software and less on rereads, retries, dead context, and noisy tools.</p>
             <ul class="plugin-benefits">
               <li>Session hygiene nudges.</li>
               <li>Scoped retrieval recommendations.</li>
@@ -231,9 +231,9 @@ var reportHTMLTemplate = template.Must(template.New("report").Funcs(template.Fun
         {{if .Report.Recommendation}}
         <section id="recommendation-section" class="intel-section">
           <h2>Recommended tools to address waste {{helpTip "Why this recommendation? Ranking comes from public allowlisted tool metadata and deterministic signals such as tool-output bloat, retrieval friction, usage visibility, and MCP/skill utilization. Unknown private names are not echoed."}}</h2>
-          <p class="section-note">These are not random installs. Telemetry tools are labeled as measurement only, and reducers are recommended only when our repeated runs showed savings for the matching waste signal. Use the custom plugin to turn the report into setup instructions.</p>
+          <p class="section-note">These are not random installs. Telemetry tools are labeled as measurement only, and reducers are recommended only when our repeated runs showed savings for the matching waste signal. Use the generated plugin to turn the report into setup instructions.</p>
           <div class="recommendation-cta-row">
-            <a class="plugin-cta" href="#plugin-purchase">Get custom plugin</a>
+            <a class="plugin-cta" href="#plugin-purchase">Get generated plugin</a>
             <a class="recommendation-allowlist-link" href="/allowed-tools.html">Review vetted allowlist</a>
             <a class="recommendation-allowlist-link" href="/proof/results.html">Review benchmark results</a>
           </div>
@@ -269,7 +269,7 @@ var reportHTMLTemplate = template.Must(template.New("report").Funcs(template.Fun
           <form class="email-unlock-form" action="/api/report-deliveries" method="post">
             <input type="hidden" name="source_report_job_id" value="{{.Job.ID}}" />
             <input type="hidden" name="source_report_token" value="{{.ReportToken}}" />
-            <label>Email for report pack + custom plugin
+            <label>Email for report pack + generated plugin
               <input type="email" name="email" placeholder="you@example.com" required />
             </label>
             <label class="checkbox-row">
@@ -277,7 +277,7 @@ var reportHTMLTemplate = template.Must(template.New("report").Funcs(template.Fun
               <span>Send me occasional updates about the upcoming Spec Kitty Teamspace launch and agentic coding training.</span>
             </label>
             <button class="plugin-cta" type="submit">Unlock downloads</button>
-            <p class="command-note">After submit, this page shows the report pack and custom plugin download buttons. We also email the links, the Spec Kitty training voucher reminder, and the Spec Kitty GitHub repo. Raw transcripts are not attached or uploaded.</p>
+            <p class="command-note">The report pack and generated plugin are free. After submit, this page shows both download buttons and emails the links, the Spec Kitty training voucher reminder, and the Spec Kitty GitHub repo. Raw transcripts are not attached or uploaded.</p>
           </form>
           </div>
         </div>

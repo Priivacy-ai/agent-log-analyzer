@@ -201,7 +201,7 @@ function renderActionPlan(report) {
   item.className = "action-item";
   item.innerHTML = [
     "<strong>No urgent manual fix detected.</strong>",
-    "<span>Download the report pack or use the custom plugin if you want these rules packaged for future sessions.</span>",
+    "<span>Download the report pack or use the generated plugin if you want these rules packaged for future sessions.</span>",
   ].join("");
   fixes.appendChild(item);
 }

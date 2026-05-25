@@ -260,7 +260,7 @@ var teachingArticles = []teachingArticle{
 	{
 		ID:         "retry-loops",
 		Title:      "Break Retry Loops Early",
-		Body:       "Repeated attempts with the same failing premise are one of the fastest ways to burn context. After two similar failures, stop editing, restate the invariant, inspect the latest diff and error, and restart with a narrower scope. The custom plugin can turn recurring retry signatures into session hygiene rules.",
+		Body:       "Repeated attempts with the same failing premise are one of the fastest ways to burn context. After two similar failures, stop editing, restate the invariant, inspect the latest diff and error, and restart with a narrower scope. The generated plugin can turn recurring retry signatures into session hygiene rules.",
 		Source:     "https://developers.openai.com/codex/learn/best-practices",
 		Priority:   80,
 		FindingIDs: []string{"retry_loop_behavior"},

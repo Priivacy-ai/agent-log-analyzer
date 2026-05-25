@@ -210,7 +210,7 @@ func TestReportDeliveryEmailsReportPackAndPluginAttachments(t *testing.T) {
 	message := sender.messages[0]
 	if message.To != "dev@example.com" ||
 		!strings.Contains(message.Body, "Report pack: http://example.test/api/public-reports/job-source-1234/source-token/download.zip") ||
-		!strings.Contains(message.Body, "Custom optimization plugin: http://example.test/api/public-artifacts/job-source-1234/source-token/plugin.zip") ||
+		!strings.Contains(message.Body, "Generated optimization plugin: http://example.test/api/public-artifacts/job-source-1234/source-token/plugin.zip") ||
 		!strings.Contains(message.Body, "Spec Kitty training voucher") ||
 		!strings.Contains(message.Body, "https://github.com/Priivacy-ai/spec-kitty") ||
 		!strings.Contains(message.Body, "Choose your harness") ||
@@ -682,7 +682,7 @@ func TestReportPageServerRendersCompletedReport(t *testing.T) {
 		"Download report pack",
 		"Download the report pack for free",
 		"Enter your email once to unlock both downloads and receive the links.",
-		"Email for report pack + custom plugin",
+		"Email for report pack + generated plugin",
 		"upcoming Spec Kitty Teamspace launch",
 		"Unlock downloads",
 		"0 model tokens used to generate this report.",
@@ -756,7 +756,7 @@ func TestReportPageRendersRealReportFixtures(t *testing.T) {
 			body := rec.Body.String()
 			for _, want := range append(tc.wantLabels,
 				"Download report pack",
-				"Email for report pack + custom plugin",
+				"Email for report pack + generated plugin",
 				"Unlock downloads",
 				"Security Receipt",
 				"Raw log TTL: not uploaded",
