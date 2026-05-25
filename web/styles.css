@@ -2080,18 +2080,6 @@ pre {
     grid-template-columns: 1fr;
   }
 
-  .screenshot-preview {
-    height: 240px;
-  }
-
-  .screenshot-preview img {
-    width: 680px;
-    max-width: none;
-  }
-
-  .screenshot-preview:not(.screenshot-preview-wide) {
-    height: 132px;
-  }
 }
 
 /* Report Intelligence UX sections — kitty-specs/report-intelligence-ux-01KS070G */
