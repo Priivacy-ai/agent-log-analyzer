@@ -321,6 +321,7 @@ def summarize_emails(
     domains = collections.Counter()
     unique_emails: list[str] = []
     seen: set[str] = set()
+    marketing_by_email: dict[str, bool] = {}
     for item in non_owner:
         email = normalize_email(item.get("email"))
         if "@" in email:
@@ -328,6 +329,10 @@ def summarize_emails(
         if email and email not in seen:
             seen.add(email)
             unique_emails.append(email)
+        if email:
+            marketing_by_email[email] = marketing_by_email.get(email, False) or bool(
+                item.get("marketing_opt_in")
+            )
 
     recent_events = [item for item in email_events if in_window(item.get("created_at"), since)]
     delivery_types = collections.Counter(item.get("type") or "unknown" for item in recent_events)
@@ -349,6 +354,13 @@ def summarize_emails(
         "marketing_counts": counter_top(marketing, 4),
         "top_domains": counter_top(domains, 12),
         "masked_unique_emails": [mask_email(email) for email in sorted(unique_emails)],
+        "masked_unique_email_marketing": [
+            {
+                "email": mask_email(email),
+                "marketing_opt_in": marketing_by_email.get(email, False),
+            }
+            for email in sorted(unique_emails)
+        ],
         "delivery_hashed": {
             "events": len(recent_events),
             "daily": dict(sorted(delivery_daily.items())),
@@ -444,6 +456,16 @@ def markdown_pairs(rows: list[tuple[str, int]]) -> str:
     return ", ".join(f"`{key}` {value}" for key, value in rows)
 
 
+def markdown_email_marketing(rows: list[dict[str, Any]]) -> str:
+    if not rows:
+        return "_none_"
+    rendered = []
+    for row in rows:
+        opt_in = "yes" if row.get("marketing_opt_in") else "no"
+        rendered.append(f"`{row['email']}` {opt_in}")
+    return ", ".join(rendered)
+
+
 def render_markdown(report: dict[str, Any]) -> str:
     coverage = report["coverage"]
     website = report["website_requests"]
@@ -509,6 +531,7 @@ def render_markdown(report: dict[str, Any]) -> str:
             f"- Marketing: {markdown_pairs(emails['marketing_counts'])}.",
             f"- Domains: {markdown_pairs(emails['top_domains'])}.",
             f"- Masked emails: {', '.join(f'`{email}`' for email in emails['masked_unique_emails']) or '_none_'}.",
+            f"- Masked emails with marketing opt-in: {markdown_email_marketing(emails['masked_unique_email_marketing'])}.",
             "",
             "## Hashed Email Delivery",
             "",
