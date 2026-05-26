@@ -86,8 +86,8 @@ func buildMux(store app.APIStore) http.Handler {
 	mux.HandleFunc("GET /api/jobs/{id}", getJobHandler(store))
 	mux.HandleFunc("GET /api/admin/usage-stats", usageStatsHandler(store))
 	mux.HandleFunc("GET /api/admin/email-unlocks", adminEmailUnlocksHandler(store))
-	mux.Handle("GET /docs/", http.StripPrefix("/docs/", http.FileServer(http.Dir(existingDir("docs", "web/docs", "../../docs")))))
-	mux.Handle("/", http.FileServer(http.Dir(existingDir("web", "../../web"))))
+	mux.Handle("GET /docs/", http.StripPrefix("/docs/", http.FileServer(http.Dir(docsWebRoot()))))
+	mux.Handle("/", http.FileServer(http.Dir(staticWebRoot())))
 	return mux
 }
 

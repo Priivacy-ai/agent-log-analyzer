@@ -378,7 +378,7 @@ func renderSimpleHTMLStatus(w http.ResponseWriter, status int, title, body strin
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.Header().Set("Cache-Control", "no-store")
 	w.WriteHeader(status)
-	_, _ = fmt.Fprintf(w, `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>%s</title><link rel="stylesheet" href="/styles.css"></head><body><main class="shell"><section class="simple-page"><h1>%s</h1>%s</section></main><script src="/report-actions.js"></script></body></html>`, htmlstd.EscapeString(title), htmlstd.EscapeString(title), body)
+	_, _ = fmt.Fprintf(w, `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>%s</title><link rel="stylesheet" href="%s"></head><body><main class="shell"><section class="simple-page"><h1>%s</h1>%s</section></main><script src="/report-actions.js"></script></body></html>`, htmlstd.EscapeString(title), htmlstd.EscapeString(staticAssetPath("styles.css")), htmlstd.EscapeString(title), body)
 }
 
 func confirmationEmailBody(confirmURL string) string {

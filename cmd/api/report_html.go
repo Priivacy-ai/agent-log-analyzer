@@ -116,6 +116,7 @@ var reportHTMLTemplate = template.Must(template.New("report").Funcs(template.Fun
 	"receiptPanel":              receiptPanelHTML,
 	"savingsRange":              savingsRange,
 	"sourceLogLabel":            sourceLogLabel,
+	"staticAssetPath":           staticAssetPath,
 	"timelineChart":             timelineChartHTML,
 }).Parse(`<!doctype html>
 <html lang="en">
@@ -129,8 +130,8 @@ var reportHTMLTemplate = template.Must(template.New("report").Funcs(template.Fun
     {{if ne .Job.Status "completed"}}<meta http-equiv="refresh" content="2" />{{end}}
     <title>Agent Analyzer Report</title>
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="/vendor/tippy/tippy.css" />
-    <link rel="stylesheet" href="/styles.css" />
+    <link rel="stylesheet" href="{{staticAssetPath "vendor/tippy/tippy.css"}}" />
+    <link rel="stylesheet" href="{{staticAssetPath "styles.css"}}" />
   </head>
   <body>
     <main class="shell">

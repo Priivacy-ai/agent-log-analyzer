@@ -1,9 +1,11 @@
 .DS_Store
+node_modules/
 bin/
 !npm/
 !npm/bin/
 !npm/bin/agent-analyzer.js
 dist/
+web-dist/
 npm/bin/agent-analyzer-*
 .env
 *.log

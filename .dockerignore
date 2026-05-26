@@ -2,6 +2,6 @@
 .data
 tmp
 dist
+web-dist
 bin
 coverage.out
-
