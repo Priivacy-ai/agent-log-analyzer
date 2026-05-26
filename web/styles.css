@@ -94,7 +94,7 @@ body {
   display: grid;
   grid-template-columns: minmax(0, 3fr) minmax(72px, 1fr);
   align-items: start;
-  gap: clamp(16px, 3vw, 36px);
+  gap: clamp(8px, 1.4vw, 18px);
   width: 100%;
 }
 
@@ -125,7 +125,7 @@ input {
 h1 {
   margin: 0;
   max-width: 100%;
-  font-size: clamp(40px, 5.2vw, 68px);
+  font-size: clamp(30px, 4.7vw, 60px);
   line-height: 0.96;
   letter-spacing: 0;
   overflow-wrap: break-word;
@@ -141,6 +141,12 @@ h1 {
   white-space: nowrap;
   vertical-align: -0.04em;
   overflow: hidden;
+}
+
+@media (max-width: 600px) {
+  .tool-rotator {
+    width: 6.35em;
+  }
 }
 
 .tool-rotator span {
