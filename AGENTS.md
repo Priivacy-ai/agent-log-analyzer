@@ -5,6 +5,71 @@
 - Do not assume the flag is optional on this machine during dev testing. If a command path touches hosted auth, tracker, or sync behavior, use the env var unless the user explicitly says not to.
 - This is a local testing rule for the CLI on this computer. It does not mean tracker itself has a rollout system, and it does not justify keeping rollout gating inside `spec-kitty-tracker`.
 
+## Project Snapshot
+
+- Product name: Agent Analyzer.
+- Purpose: local-first deterministic profiling for AI coding logs. The CLI reads supported local agent logs, redacts locally, writes a reviewable sanitized report JSON, and uploads only that sanitized JSON after user approval.
+- Public launch command: `npx --yes agent-analyzer@latest run`.
+- Supported source families include Claude Code, Claude Desktop, Codex, OpenCode, Claude Desktop MCP, Cursor, Kiro, and Google Antigravity. SQLite extraction is read-only and bounded to known conversation/diagnostic rows.
+- Hosted reports live at `/r/{job_id}/{report_token}` and offer a free report pack plus a generated Claude Code plugin/remediation artifact from the same sanitized report.
+- The benchmark/proof pages are part of the product promise. Keep claims tied to repeated benchmark evidence and separate input/context, tool-output, visible output, reasoning, native harness cost, and published API-rate cost.
+
+## Repo Map
+
+- `cmd/agent-analyzer`: local CLI, log discovery, source readers, redaction, report generation, and upload prompt.
+- `cmd/api`: Go HTTP API, static site serving, report pages, private report endpoints, email gate/unlock flow, and admin usage endpoints.
+- `cmd/worker`, `cmd/sweeper`, `cmd/email-events`: background processing and operational utilities.
+- `internal/analyzer`: deterministic analysis, source normalization, privacy scrubber, ecosystem/tooling detection, SDD fingerprinting, and token-saving recommendation logic.
+- `internal/remediation`: generated report pack and Claude Code plugin artifact generation.
+- `internal/backend`, `internal/localstore`, `internal/awsstore`: storage abstractions for local file mode and AWS mode.
+- `web`: static landing page, report UI assets, privacy/security pages, and benchmark proof pages under `web/proof`.
+- `docs/benchmarks`: permanent benchmark fixtures, methodology, primary sanitized benchmark data, and cost translation docs.
+- `docs/remediation`: plugin artifact, receipt email, and token-saving recommendation documentation.
+- `scripts`: smoke tests, benchmark runners, artifact validators, screenshot helpers, npm binary packaging, and AWS deploy.
+- `testdata/fixtures/reports`: sanitized report JSON fixtures used for report generation tests and screenshots.
+- `infra/aws`: production AWS infrastructure. Use the AWS profile rules below before touching it.
+
+## Core Local Commands
+
+```sh
+go test ./...
+go run ./cmd/api
+go run ./cmd/agent-analyzer run
+./scripts/smoke-native.sh
+./scripts/smoke-local.sh
+./scripts/validate-benchmark-artifacts.py
+```
+
+- Use `./scripts/smoke-native.sh` when Docker is unavailable.
+- Use `docker compose up --build` for the local API/worker path with shared local storage.
+- For npm packaging checks, use `./scripts/smoke-npm-package.sh` and `./scripts/build-npm-binaries.sh`.
+
+## Product And Privacy Invariants
+
+- Raw logs are toxic. Do not add product flows that upload raw Claude/Codex/OpenCode logs, raw SQLite stores, prompt text, tool output, file contents, command arguments, secrets, repo names, usernames, hostnames, or full local paths.
+- Public intake should accept sanitized report JSON only and reject reports that claim raw transcript LLM exposure.
+- Operational logs must stay allowlisted to metadata, timings, status, buckets, counts, and error categories.
+- Unknown private MCPs, skills, plugins, and tools stay count-only unless a future explicit opt-in path is added.
+- Generated artifacts must not contain raw transcript text, raw tool output, secrets, redacted secret values, absolute local paths, or unknown private tool names.
+- The public flow has no browser file picker and no hidden access to local agent directories. The copy/paste CLI is the trust boundary.
+
+## Benchmark And Recommendation Rules
+
+- Product-facing savings claims require repeated A/B evidence: at least three fresh baseline/optimized pairs with the same prompt, same commit, same quality gate, and passing quality on both sides.
+- The permanent suite entry point is `REPEATS=3 ./scripts/benchmark-suite.sh`; selected suites can be run with `ONLY=...`.
+- Before publishing proof-page changes, run `./scripts/validate-benchmark-artifacts.py`.
+- Primary sanitized recordings live under `docs/benchmarks/primary-data/`; public aggregates live under `web/proof/reports/aggregate-*.json`.
+- Do not promote telemetry-only tools such as `ccusage` or `ccstatusline` as token reducers.
+- Current default recommendation posture: Agent Analyzer guidance is positive; Semble is positive for bounded retrieval; context-mode, RTK, grepai, and Squeez are conditional; claude-context, Probe, Claude Code Caveman, claude-rlm, and claude-token-efficient are removed or downgraded for default token-saving claims based on the current repeated suite.
+- Cost copy should scale repeated percentage deltas, not one-task cents, and must state the basis when extrapolating monthly/team savings.
+
+## Web And Report UI Rules
+
+- The landing page is intentionally structured around the copy/paste `npx --yes agent-analyzer@latest run` CTA, local-first trust proof, benchmark proof, report preview, and email-gated report/plugin download flow. Do not replace the structure without an explicit request.
+- Static proof, security, and privacy pages share the `web/site-header.js` component and `site-header` CSS. Keep those pages visually consistent.
+- Report page rendering lives mostly in `cmd/api/report_html.go`; static report behavior/assets live in `web/app.js`, `web/report-actions.js`, `web/tooltips.js`, and `web/styles.css`.
+- When testing report generation or screenshots, prefer sanitized fixtures in `testdata/fixtures/reports/`.
+
 ## Git Workflow
 
 - Unless the user explicitly requests a different branch or workflow, all agents must work directly on `main`.
