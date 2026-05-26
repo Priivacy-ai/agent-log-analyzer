@@ -45,7 +45,8 @@ cleanup() {
     if ! aws_cmd dynamodb delete-item \
       --table-name "$DEPLOY_LOCK_TABLE" \
       --key '{"LockID":{"S":"'"$DEPLOY_LOCK_ID"'"}}' \
-      --condition-expression "Token = :token" \
+      --condition-expression "#token = :token" \
+      --expression-attribute-names '{"#token":"Token"}' \
       --expression-attribute-values '{":token":{"S":"'"$DEPLOY_LOCK_TOKEN"'"}}' >/dev/null 2>&1; then
       echo "warning: could not release deploy lock $DEPLOY_LOCK_ID; it will expire by ExpiresAt" >&2
     fi
