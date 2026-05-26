@@ -127,7 +127,8 @@ acquire_deploy_lock() {
     aws_cmd dynamodb get-item \
       --table-name "$DEPLOY_LOCK_TABLE" \
       --key '{"LockID":{"S":"'"$DEPLOY_LOCK_ID"'"}}' \
-      --projection-expression "Holder,Commit,ImageTag,CreatedAt,ExpiresAt" \
+      --projection-expression "Holder,#commit,ImageTag,CreatedAt,ExpiresAt" \
+      --expression-attribute-names '{"#commit":"Commit"}' \
       --output json >&2 || true
 
     if [ "$now" -ge "$deadline" ]; then
