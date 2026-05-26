@@ -23,7 +23,8 @@
     <meta name="twitter:description" content="Local-first deterministic profiler for supported agentic coding log token waste, backed by repeated benchmark fixtures." />
     <meta name="twitter:image" content="https://analyzer.spec-kitty.ai/images/kitty-lab-coat.png" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="/vendor/tippy/tippy.css" />
+    <link rel="preload" href="/vendor/tippy/tippy.css" as="style" onload="this.onload=null;this.rel='stylesheet'" />
+    <noscript><link rel="stylesheet" href="/vendor/tippy/tippy.css" /></noscript>
     <link rel="stylesheet" href="/styles.css" />
     <script type="application/ld+json">
       {
@@ -423,10 +424,10 @@
         </div>
       </section>
     </main>
-    <script src="/vendor/tippy/popper.min.js"></script>
-    <script src="/vendor/tippy/tippy-bundle.umd.min.js"></script>
-    <script src="/tooltips.js"></script>
-    <script src="/report-actions.js"></script>
-    <script src="/app.js"></script>
+    <script src="/vendor/tippy/popper.min.js" defer></script>
+    <script src="/vendor/tippy/tippy-bundle.umd.min.js" defer></script>
+    <script src="/tooltips.js" defer></script>
+    <script src="/report-actions.js" defer></script>
+    <script src="/app.js" defer></script>
   </body>
 </html>

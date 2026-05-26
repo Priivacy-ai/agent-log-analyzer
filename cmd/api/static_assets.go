@@ -20,19 +20,23 @@ func staticAssetPath(asset string) string {
 
 func staticAssetPathFromRoot(root, asset string) string {
 	clean := strings.TrimPrefix(asset, "/")
-	switch clean {
-	case "styles.css":
-		matches, err := filepath.Glob(filepath.Join(root, "assets", "styles-*.css"))
-		if err == nil && len(matches) > 0 {
-			sort.Strings(matches)
-			return "/assets/" + filepath.Base(matches[0])
-		}
-	case "vendor/tippy/tippy.css":
-		matches, err := filepath.Glob(filepath.Join(root, "assets", "tippy-*.css"))
-		if err == nil && len(matches) > 0 {
-			sort.Strings(matches)
-			return "/assets/" + filepath.Base(matches[0])
-		}
+	if hashed, ok := hashedStaticAssetPath(root, clean); ok {
+		return hashed
 	}
 	return "/" + clean
+}
+
+func hashedStaticAssetPath(root, clean string) (string, bool) {
+	base := filepath.Base(clean)
+	ext := filepath.Ext(base)
+	if ext == "" {
+		return "", false
+	}
+	stem := strings.TrimSuffix(base, ext)
+	matches, err := filepath.Glob(filepath.Join(root, "assets", stem+"-*"+ext))
+	if err != nil || len(matches) == 0 {
+		return "", false
+	}
+	sort.Strings(matches)
+	return "/assets/" + filepath.Base(matches[0]), true
 }

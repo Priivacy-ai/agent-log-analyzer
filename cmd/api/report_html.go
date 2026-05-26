@@ -137,7 +137,8 @@ var reportHTMLTemplate = template.Must(template.New("report").Funcs(template.Fun
     {{if ne .Job.Status "completed"}}<meta http-equiv="refresh" content="2" />{{end}}
     <title>Agent Analyzer Report</title>
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="{{staticAssetPath "vendor/tippy/tippy.css"}}" />
+    <link rel="preload" href="{{staticAssetPath "vendor/tippy/tippy.css"}}" as="style" onload="this.onload=null;this.rel='stylesheet'" />
+    <noscript><link rel="stylesheet" href="{{staticAssetPath "vendor/tippy/tippy.css"}}" /></noscript>
     <link rel="stylesheet" href="{{staticAssetPath "styles.css"}}" />
   </head>
   <body>
@@ -298,10 +299,10 @@ var reportHTMLTemplate = template.Must(template.New("report").Funcs(template.Fun
         {{end}}
       </section>
     </main>
-    <script src="/vendor/tippy/popper.min.js"></script>
-    <script src="/vendor/tippy/tippy-bundle.umd.min.js"></script>
-    <script src="/tooltips.js"></script>
-    <script src="/report-actions.js"></script>
+    <script src="{{staticAssetPath "vendor/tippy/popper.min.js"}}" defer></script>
+    <script src="{{staticAssetPath "vendor/tippy/tippy-bundle.umd.min.js"}}" defer></script>
+    <script src="{{staticAssetPath "tooltips.js"}}" defer></script>
+    <script src="{{staticAssetPath "report-actions.js"}}" defer></script>
   </body>
 </html>
 {{define "recommendation"}}
