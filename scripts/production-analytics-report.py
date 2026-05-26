@@ -57,6 +57,9 @@ def parse_args() -> argparse.Namespace:
         default=sorted(DEFAULT_OWN_DOMAINS),
         help="Owner email domain to exclude, without @. Repeatable.",
     )
+    parser.add_argument("--previous-json", help="Previous JSON report used to compute new emails.")
+    parser.add_argument("--new-email-since", help="UTC timestamp; emails first seen at or after it are new.")
+    parser.add_argument("--show-emails", action="store_true", help="Show full non-owner emails in local output.")
     parser.add_argument("--json", action="store_true", help="Emit JSON instead of Markdown.")
     return parser.parse_args()
 
@@ -176,6 +179,13 @@ def mask_email(email: str) -> str:
     else:
         masked = f"{local[0]}***{local[-1]}"
     return f"{masked}@{domain}"
+
+
+def email_label(email: str, show_emails: bool) -> str:
+    email = normalize_email(email)
+    if show_emails:
+        return email
+    return mask_email(email)
 
 
 def counter_top(counter: collections.Counter[str], limit: int = 10) -> list[tuple[str, int]]:
@@ -301,6 +311,9 @@ def summarize_emails(
     since: dt.datetime,
     own_emails: set[str],
     own_domains: set[str],
+    show_emails: bool,
+    new_email_since: dt.datetime | None,
+    previous_email_labels: set[str],
 ) -> dict[str, Any]:
     recent_unlocks = [item for item in unlocks if in_window(item.get("created_at"), since)]
     non_owner: list[dict[str, Any]] = []
@@ -321,7 +334,7 @@ def summarize_emails(
     domains = collections.Counter()
     unique_emails: list[str] = []
     seen: set[str] = set()
-    marketing_by_email: dict[str, bool] = {}
+    by_email: dict[str, dict[str, Any]] = {}
     for item in non_owner:
         email = normalize_email(item.get("email"))
         if "@" in email:
@@ -330,9 +343,23 @@ def summarize_emails(
             seen.add(email)
             unique_emails.append(email)
         if email:
-            marketing_by_email[email] = marketing_by_email.get(email, False) or bool(
-                item.get("marketing_opt_in")
+            created_at = parse_time(item.get("created_at"))
+            current = by_email.setdefault(
+                email,
+                {
+                    "marketing_opt_in": False,
+                    "first_seen_at": created_at,
+                    "latest_seen_at": created_at,
+                    "status": item.get("status") or "unknown",
+                },
             )
+            current["marketing_opt_in"] = current["marketing_opt_in"] or bool(item.get("marketing_opt_in"))
+            if created_at is not None:
+                if current["first_seen_at"] is None or created_at < current["first_seen_at"]:
+                    current["first_seen_at"] = created_at
+                if current["latest_seen_at"] is None or created_at >= current["latest_seen_at"]:
+                    current["latest_seen_at"] = created_at
+                    current["status"] = item.get("status") or "unknown"
 
     recent_events = [item for item in email_events if in_window(item.get("created_at"), since)]
     delivery_types = collections.Counter(item.get("type") or "unknown" for item in recent_events)
@@ -343,6 +370,37 @@ def summarize_emails(
         for item in suppressions
         if in_window(item.get("updated_at") or item.get("suppressed_at"), since)
     ]
+
+    unique_email_marketing = []
+    new_email_marketing = []
+    previous_email_marketing = []
+    for email in sorted(unique_emails):
+        item = by_email[email]
+        first_seen_at = item["first_seen_at"]
+        row = {
+            "email": email_label(email, show_emails),
+            "marketing_opt_in": item["marketing_opt_in"],
+            "status": item["status"],
+            "first_seen_at": first_seen_at.replace(microsecond=0).isoformat() if first_seen_at else None,
+        }
+        unique_email_marketing.append(row)
+        was_in_previous = bool(
+            previous_email_labels
+            and (email in previous_email_labels or mask_email(email) in previous_email_labels)
+        )
+        if was_in_previous:
+            previous_email_marketing.append(row)
+        is_new = bool(previous_email_labels and not was_in_previous)
+        if new_email_since is not None and first_seen_at is not None and first_seen_at >= new_email_since:
+            is_new = True
+        if is_new:
+            new_email_marketing.append(row)
+
+    new_basis = []
+    if previous_email_labels:
+        new_basis.append("previous_json")
+    if new_email_since is not None:
+        new_basis.append(new_email_since.replace(microsecond=0).isoformat())
 
     return {
         "total_email_unlock_records": len(recent_unlocks),
@@ -357,10 +415,14 @@ def summarize_emails(
         "masked_unique_email_marketing": [
             {
                 "email": mask_email(email),
-                "marketing_opt_in": marketing_by_email.get(email, False),
+                "marketing_opt_in": by_email[email]["marketing_opt_in"],
             }
             for email in sorted(unique_emails)
         ],
+        "unique_email_marketing": unique_email_marketing,
+        "new_email_basis": new_basis,
+        "new_unique_email_marketing": new_email_marketing,
+        "previous_unique_email_marketing": previous_email_marketing,
         "delivery_hashed": {
             "events": len(recent_events),
             "daily": dict(sorted(delivery_daily.items())),
@@ -370,12 +432,32 @@ def summarize_emails(
     }
 
 
+def previous_email_labels(path: str | None) -> set[str]:
+    if not path:
+        return set()
+    with open(path, "r", encoding="utf-8") as handle:
+        report = json.load(handle)
+    emails = report.get("emails_not_owner") or {}
+    labels = set()
+    for key in ("unique_email_marketing", "masked_unique_email_marketing"):
+        for item in emails.get(key) or []:
+            if item.get("email"):
+                labels.add(normalize_email(item["email"]))
+    for email in emails.get("masked_unique_emails") or []:
+        labels.add(normalize_email(email))
+    return labels
+
+
 def build_report(args: argparse.Namespace) -> dict[str, Any]:
     now = utc_now()
     since = now - dt.timedelta(days=args.days)
     since_date = since.date()
     own_emails = {normalize_email(email) for email in args.own_email}
     own_domains = {domain.strip().lower().lstrip("@") for domain in args.own_domain}
+    email_since = parse_time(args.new_email_since)
+    if args.new_email_since and email_since is None:
+        raise SystemExit(f"invalid --new-email-since timestamp: {args.new_email_since}")
+    previous_labels = previous_email_labels(args.previous_json)
 
     session = boto3.Session(profile_name=args.profile, region_name=args.region)
     s3 = session.client("s3")
@@ -397,7 +479,15 @@ def build_report(args: argparse.Namespace) -> dict[str, Any]:
     usage = summarize_usage(usage_events)
     product = summarize_product(product_events, product_daily_from_keys)
     emails = summarize_emails(
-        unlocks, email_events, suppressions, since, own_emails, own_domains
+        unlocks,
+        email_events,
+        suppressions,
+        since,
+        own_emails,
+        own_domains,
+        args.show_emails,
+        email_since,
+        previous_labels,
     )
 
     all_days = sorted(
@@ -462,7 +552,14 @@ def markdown_email_marketing(rows: list[dict[str, Any]]) -> str:
     rendered = []
     for row in rows:
         opt_in = "yes" if row.get("marketing_opt_in") else "no"
-        rendered.append(f"`{row['email']}` {opt_in}")
+        status = row.get("status")
+        first_seen = row.get("first_seen_at")
+        suffix = f" {opt_in}"
+        if status:
+            suffix += f", {status}"
+        if first_seen:
+            suffix += f", first seen {first_seen}"
+        rendered.append(f"`{row['email']}`{suffix}")
     return ", ".join(rendered)
 
 
@@ -531,7 +628,9 @@ def render_markdown(report: dict[str, Any]) -> str:
             f"- Marketing: {markdown_pairs(emails['marketing_counts'])}.",
             f"- Domains: {markdown_pairs(emails['top_domains'])}.",
             f"- Masked emails: {', '.join(f'`{email}`' for email in emails['masked_unique_emails']) or '_none_'}.",
-            f"- Masked emails with marketing opt-in: {markdown_email_marketing(emails['masked_unique_email_marketing'])}.",
+            f"- Unique emails with marketing opt-in: {markdown_email_marketing(emails['unique_email_marketing'])}.",
+            f"- Emails already present in previous report: {markdown_email_marketing(emails['previous_unique_email_marketing'])}.",
+            f"- New emails: {markdown_email_marketing(emails['new_unique_email_marketing'])}.",
             "",
             "## Hashed Email Delivery",
             "",
