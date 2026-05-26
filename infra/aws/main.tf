@@ -770,6 +770,11 @@ resource "aws_ecs_service" "api" {
   desired_count   = var.api_desired_count
   launch_type     = "FARGATE"
 
+  deployment_circuit_breaker {
+    enable   = true
+    rollback = true
+  }
+
   network_configuration {
     subnets          = local.private_subnets
     security_groups  = [aws_security_group.tasks.id]
@@ -793,6 +798,11 @@ resource "aws_ecs_service" "worker" {
   desired_count   = var.worker_desired_count
   launch_type     = "FARGATE"
 
+  deployment_circuit_breaker {
+    enable   = true
+    rollback = true
+  }
+
   network_configuration {
     subnets          = local.private_subnets
     security_groups  = [aws_security_group.tasks.id]
@@ -808,6 +818,11 @@ resource "aws_ecs_service" "email_events" {
   task_definition = aws_ecs_task_definition.email_events.arn
   desired_count   = var.email_events_desired_count
   launch_type     = "FARGATE"
+
+  deployment_circuit_breaker {
+    enable   = true
+    rollback = true
+  }
 
   network_configuration {
     subnets          = local.private_subnets

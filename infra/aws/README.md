@@ -27,6 +27,15 @@ Image flow:
 AWS_PROFILE=claude-analyzer-prod AWS_REGION=us-east-1 ./scripts/deploy-aws.sh
 ```
 
+Production deploys are serialized by `scripts/deploy-aws.sh` with a DynamoDB
+lock item in `claude-analyzer-terraform-locks` (`claude-analyzer-prod/deploy-lock`).
+The script waits for the ECS services to be stable before it builds, updates, or
+registers task definitions, and verifies that all running service tasks use the
+same immutable ECR digest before it exits. The GitHub Actions
+`Deploy Production` workflow also uses a `production-deploy` concurrency group;
+direct local deploys should still use the script so the AWS-side lock protects
+against agents outside GitHub Actions.
+
 Do not use a plain `docker build` for production deploys. Production Fargate
 tasks run `linux/amd64`; `scripts/deploy-aws.sh` builds with
 `--platform linux/amd64`, pushes a unique immutable image tag, verifies the
