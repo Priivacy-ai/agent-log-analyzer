@@ -4,9 +4,79 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Benchmark Methodology | Claude Analyzer</title>
+    <meta name="description" content="Agent Analyzer benchmark methodology for same-task same-commit repeated A/B runs, quality gates, token category measurement, and sanitized artifacts." />
+    <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1" />
+    <meta name="author" content="Priivacy.ai" />
+    <meta name="application-name" content="Agent Analyzer" />
+    <meta name="theme-color" content="#0d1117" />
+    <link rel="canonical" href="https://analyzer.spec-kitty.ai/proof/methodology.html" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Agent Analyzer" />
+    <meta property="og:title" content="Benchmark Methodology | Claude Analyzer" />
+    <meta property="og:description" content="How Agent Analyzer benchmark claims are tested with same-task repeated runs, same commit, quality gates, and sanitized artifacts." />
+    <meta property="og:url" content="https://analyzer.spec-kitty.ai/proof/methodology.html" />
+    <meta property="og:image" content="https://analyzer.spec-kitty.ai/images/kitty-lab-coat.png" />
+    <meta property="og:image:alt" content="Agent Analyzer" />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="Benchmark Methodology | Claude Analyzer" />
+    <meta name="twitter:description" content="Same-task repeated benchmark methodology, quality gates, token categories, and sanitized artifacts." />
+    <meta name="twitter:image" content="https://analyzer.spec-kitty.ai/images/kitty-lab-coat.png" />
     <link rel="icon" href="../favicon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="../styles.css" />
     <script src="../site-header.js" defer></script>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "Organization",
+            "@id": "https://analyzer.spec-kitty.ai/#organization",
+            "name": "Priivacy.ai",
+            "url": "https://analyzer.spec-kitty.ai/"
+          },
+          {
+            "@type": "WebPage",
+            "@id": "https://analyzer.spec-kitty.ai/proof/methodology.html#webpage",
+            "url": "https://analyzer.spec-kitty.ai/proof/methodology.html",
+            "name": "Benchmark Methodology | Claude Analyzer",
+            "description": "Agent Analyzer benchmark methodology for same-task same-commit repeated A/B runs, quality gates, token category measurement, and sanitized artifacts.",
+            "isPartOf": {
+              "@id": "https://analyzer.spec-kitty.ai/#website"
+            },
+            "publisher": {
+              "@id": "https://analyzer.spec-kitty.ai/#organization"
+            },
+            "about": {
+              "@id": "https://analyzer.spec-kitty.ai/#software"
+            }
+          },
+          {
+            "@type": "BreadcrumbList",
+            "@id": "https://analyzer.spec-kitty.ai/proof/methodology.html#breadcrumb",
+            "itemListElement": [
+              {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "Home",
+                "item": "https://analyzer.spec-kitty.ai/"
+              },
+              {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "Proof",
+                "item": "https://analyzer.spec-kitty.ai/proof/"
+              },
+              {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "Methodology",
+                "item": "https://analyzer.spec-kitty.ai/proof/methodology.html"
+              }
+            ]
+          }
+        ]
+      }
+    </script>
   </head>
   <body>
     <main class="shell doc-page proof-page">
@@ -154,6 +224,18 @@
         <h2>How We Compare External Benchmarks</h2>
         <p>External token-savings studies use different protocols, so we compare methodology before comparing percentages. Fixture replay, live A/B calls, MCP overhead tests, and CLAUDE.md profile tests answer different questions.</p>
         <p><a class="text-link" href="benchmark-comparison.html">Read the external benchmark comparison</a>.</p>
+      </section>
+
+      <section class="panel command-panel command-panel-primary doc-run-cta">
+        <div class="panel-heading">
+          <div>
+            <p class="eyebrow">run locally</p>
+            <h2>Apply the same local-first flow.</h2>
+          </div>
+        </div>
+        <pre>npx --yes agent-analyzer@latest run</pre>
+        <p class="command-note">Analyzes supported logs locally, asks before upload, and builds a custom plugin from the waste patterns in the sanitized report.</p>
+        <p class="trust-links"><a href="/">Start from the analyzer homepage</a></p>
       </section>
     </main>
   </body>

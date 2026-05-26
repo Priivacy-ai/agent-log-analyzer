@@ -4,9 +4,81 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Claude Analyzer Plugin Proof</title>
+    <meta name="description" content="Agent Analyzer proof page for repeated benchmark evidence, plugin guidance, token-waste reduction claims, and sanitized benchmark artifacts." />
+    <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1" />
+    <meta name="author" content="Priivacy.ai" />
+    <meta name="application-name" content="Agent Analyzer" />
+    <meta name="theme-color" content="#0d1117" />
+    <link rel="canonical" href="https://analyzer.spec-kitty.ai/proof/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Agent Analyzer" />
+    <meta property="og:title" content="Claude Analyzer Plugin Proof" />
+    <meta property="og:description" content="Repeated benchmark proof for Agent Analyzer guidance, token-waste reductions, and evidence-backed plugin recommendations." />
+    <meta property="og:url" content="https://analyzer.spec-kitty.ai/proof/" />
+    <meta property="og:image" content="https://analyzer.spec-kitty.ai/images/kitty-lab-coat.png" />
+    <meta property="og:image:alt" content="Agent Analyzer" />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="Claude Analyzer Plugin Proof" />
+    <meta name="twitter:description" content="Repeated benchmark proof for token-waste reductions and evidence-backed plugin recommendations." />
+    <meta name="twitter:image" content="https://analyzer.spec-kitty.ai/images/kitty-lab-coat.png" />
     <link rel="icon" href="../favicon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="../styles.css" />
     <script src="../site-header.js" defer></script>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "Organization",
+            "@id": "https://analyzer.spec-kitty.ai/#organization",
+            "name": "Priivacy.ai",
+            "url": "https://analyzer.spec-kitty.ai/"
+          },
+          {
+            "@type": "WebPage",
+            "@id": "https://analyzer.spec-kitty.ai/proof/#webpage",
+            "url": "https://analyzer.spec-kitty.ai/proof/",
+            "name": "Claude Analyzer Plugin Proof",
+            "description": "Agent Analyzer proof page for repeated benchmark evidence, plugin guidance, token-waste reduction claims, and sanitized benchmark artifacts.",
+            "isPartOf": {
+              "@id": "https://analyzer.spec-kitty.ai/#website"
+            },
+            "publisher": {
+              "@id": "https://analyzer.spec-kitty.ai/#organization"
+            },
+            "about": {
+              "@id": "https://analyzer.spec-kitty.ai/#software"
+            },
+            "hasPart": [
+              {
+                "@id": "https://analyzer.spec-kitty.ai/proof/results.html#webpage"
+              },
+              {
+                "@id": "https://analyzer.spec-kitty.ai/proof/methodology.html#webpage"
+              }
+            ]
+          },
+          {
+            "@type": "BreadcrumbList",
+            "@id": "https://analyzer.spec-kitty.ai/proof/#breadcrumb",
+            "itemListElement": [
+              {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "Home",
+                "item": "https://analyzer.spec-kitty.ai/"
+              },
+              {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "Proof",
+                "item": "https://analyzer.spec-kitty.ai/proof/"
+              }
+            ]
+          }
+        ]
+      }
+    </script>
   </head>
   <body>
     <main class="shell doc-page proof-page">
@@ -182,6 +254,18 @@
           <li><a class="text-link" href="reports/baseline-report.json">Sanitized baseline report</a></li>
           <li><a class="text-link" href="reports/optimized-report.json">Sanitized optimized report</a></li>
         </ul>
+      </section>
+
+      <section class="panel command-panel command-panel-primary doc-run-cta">
+        <div class="panel-heading">
+          <div>
+            <p class="eyebrow">run locally</p>
+            <h2>Measure your own agent logs.</h2>
+          </div>
+        </div>
+        <pre>npx --yes agent-analyzer@latest run</pre>
+        <p class="command-note">Analyzes recent sessions locally, asks before upload, and uses the sanitized report to build a custom plugin for the waste it detects.</p>
+        <p class="trust-links"><a href="/">Start from the analyzer homepage</a></p>
       </section>
     </main>
   </body>

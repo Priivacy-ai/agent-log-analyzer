@@ -4,9 +4,73 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Security - Agent Analyzer</title>
+    <meta name="description" content="Agent Analyzer security model for local-first parsing, raw-log boundaries, sanitized report uploads, transcript-free rendering, and operational logging controls." />
+    <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1" />
+    <meta name="author" content="Priivacy.ai" />
+    <meta name="application-name" content="Agent Analyzer" />
+    <meta name="theme-color" content="#0d1117" />
+    <link rel="canonical" href="https://analyzer.spec-kitty.ai/security/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Agent Analyzer" />
+    <meta property="og:title" content="Security - Agent Analyzer" />
+    <meta property="og:description" content="Security controls for raw supported agent logs staying local and only sanitized report JSON crossing the upload boundary." />
+    <meta property="og:url" content="https://analyzer.spec-kitty.ai/security/" />
+    <meta property="og:image" content="https://analyzer.spec-kitty.ai/images/kitty-lab-coat.png" />
+    <meta property="og:image:alt" content="Agent Analyzer" />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="Security - Agent Analyzer" />
+    <meta name="twitter:description" content="Security model for local-first parsing, sanitized uploads, transcript-free rendering, and operational logging controls." />
+    <meta name="twitter:image" content="https://analyzer.spec-kitty.ai/images/kitty-lab-coat.png" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="/styles.css" />
     <script src="/site-header.js" defer></script>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "Organization",
+            "@id": "https://analyzer.spec-kitty.ai/#organization",
+            "name": "Priivacy.ai",
+            "url": "https://analyzer.spec-kitty.ai/"
+          },
+          {
+            "@type": "WebPage",
+            "@id": "https://analyzer.spec-kitty.ai/security/#webpage",
+            "url": "https://analyzer.spec-kitty.ai/security/",
+            "name": "Security - Agent Analyzer",
+            "description": "Agent Analyzer security model for local-first parsing, raw-log boundaries, sanitized report uploads, transcript-free rendering, and operational logging controls.",
+            "isPartOf": {
+              "@id": "https://analyzer.spec-kitty.ai/#website"
+            },
+            "publisher": {
+              "@id": "https://analyzer.spec-kitty.ai/#organization"
+            },
+            "about": {
+              "@id": "https://analyzer.spec-kitty.ai/#software"
+            }
+          },
+          {
+            "@type": "BreadcrumbList",
+            "@id": "https://analyzer.spec-kitty.ai/security/#breadcrumb",
+            "itemListElement": [
+              {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "Home",
+                "item": "https://analyzer.spec-kitty.ai/"
+              },
+              {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "Security",
+                "item": "https://analyzer.spec-kitty.ai/security/"
+              }
+            ]
+          }
+        ]
+      }
+    </script>
   </head>
   <body>
     <main class="shell doc-page">
@@ -55,6 +119,18 @@
       <section class="panel">
         <h2>Threat Model</h2>
         <p>We assume agent logs are sensitive and may contain source code, command output, API responses, secrets, hostnames, usernames, and customer data. The primary mitigation is to keep raw logs local. Server-side retention and redaction are defense in depth, not the primary trust boundary.</p>
+      </section>
+
+      <section class="panel command-panel command-panel-primary doc-run-cta">
+        <div class="panel-heading">
+          <div>
+            <p class="eyebrow">run locally</p>
+            <h2>Start with the read-only analyzer.</h2>
+          </div>
+        </div>
+        <pre>npx --yes agent-analyzer@latest run</pre>
+        <p class="command-note">Analyzes supported agent logs on your machine, asks before upload, and uses the sanitized report to build a custom plugin for the waste it finds.</p>
+        <p class="trust-links"><a href="/">Start from the analyzer homepage</a></p>
       </section>
     </main>
   </body>

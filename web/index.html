@@ -16,9 +16,12 @@
     <meta property="og:title" content="Agent Analyzer | Deterministic Profiler for Agentic Coding Logs" />
     <meta property="og:description" content="Analyze supported agentic coding logs locally. Upload only sanitized report JSON and get deterministic, benchmark-backed token-waste recommendations." />
     <meta property="og:url" content="https://analyzer.spec-kitty.ai/" />
+    <meta property="og:image" content="https://analyzer.spec-kitty.ai/images/kitty-lab-coat.png" />
+    <meta property="og:image:alt" content="Agent Analyzer" />
     <meta name="twitter:card" content="summary" />
     <meta name="twitter:title" content="Agent Analyzer | Deterministic Profiler for Agentic Coding Logs" />
     <meta name="twitter:description" content="Local-first deterministic profiler for supported agentic coding log token waste, backed by repeated benchmark fixtures." />
+    <meta name="twitter:image" content="https://analyzer.spec-kitty.ai/images/kitty-lab-coat.png" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="/vendor/tippy/tippy.css" />
     <link rel="stylesheet" href="/styles.css" />
@@ -169,8 +172,8 @@
             tokens?
           </h1>
           <picture class="landing-corner-image" aria-hidden="true">
-            <source srcset="/images/kitty-lab-coat.webp" type="image/webp" />
-            <img src="/images/kitty-lab-coat.png" alt="" width="1024" height="1024" decoding="async" fetchpriority="high" />
+            <source srcset="/images/kitty-lab-coat-192.webp 192w, /images/kitty-lab-coat-384.webp 384w" sizes="(max-width: 700px) 112px, 163px" type="image/webp" />
+            <img src="/images/kitty-lab-coat-384.webp" alt="" width="384" height="384" decoding="async" fetchpriority="high" />
           </picture>
         </div>
         <p class="subhead" itemprop="description">Analyze recent sessions locally. Upload only the sanitized report.</p>
@@ -258,10 +261,16 @@
           </div>
           <div class="screenshot-preview-grid">
             <figure class="screenshot-preview screenshot-preview-wide">
-              <img src="/images/report-preview-waste.png" alt="Agent Analyzer report preview showing an efficiency score, estimated avoidable token spend, and top waste problems." decoding="async" />
+              <picture>
+                <source srcset="/images/report-preview-waste-720.webp 720w, /images/report-preview-waste-1324.webp 1324w" sizes="(max-width: 900px) calc(100vw - 48px), 662px" type="image/webp" />
+                <img src="/images/report-preview-waste.png" alt="Agent Analyzer report preview showing an efficiency score, estimated avoidable token spend, and top waste problems." width="1324" height="715" decoding="async" />
+              </picture>
             </figure>
             <figure class="screenshot-preview">
-              <img src="/images/npx-command-preview.png" alt="Agent Analyzer source report preview showing local Claude Code logs, top problems, estimated waste, and context volume." decoding="async" />
+              <picture>
+                <source srcset="/images/npx-command-preview-720.webp 720w, /images/npx-command-preview-1324.webp 1324w" sizes="(max-width: 900px) calc(100vw - 48px), 662px" type="image/webp" />
+                <img src="/images/npx-command-preview.png" alt="Agent Analyzer source report preview showing local Claude Code logs, top problems, estimated waste, and context volume." width="1324" height="860" decoding="async" />
+              </picture>
             </figure>
           </div>
         </section>
