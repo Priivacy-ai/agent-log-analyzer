@@ -154,7 +154,8 @@ async function pollReport(jobID, token) {
 }
 
 function renderReport(report) {
-  document.querySelector("#report-status").textContent = "This private report link does not expire.";
+  document.querySelector("#report-status").innerHTML =
+    '<a href="#download-report-section">Download your custom skills and save tokens now.</a>';
   document.querySelector("#score").textContent = report.score;
   document.querySelector("#waste").textContent =
     `${report.estimated_waste_pct.low}-${report.estimated_waste_pct.high}% avoidable token spend`;

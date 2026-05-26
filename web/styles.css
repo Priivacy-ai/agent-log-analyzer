@@ -896,6 +896,10 @@ pre {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
 }
 
+.expiry a {
+  color: inherit;
+}
+
 .zero-token-banner {
   grid-column: 1 / -1;
   display: flex;

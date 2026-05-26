@@ -62,7 +62,7 @@ func reportPageHandler(store app.APIStore) http.HandlerFunc {
 			Job:               job,
 			ArtifactURL:       artifactURL,
 			ExtendedReportURL: extendedURL,
-			StatusText:        "This private report link does not expire.",
+			StatusText:        "Download your custom skills and save tokens now.",
 			ReportToken:       r.PathValue("token"),
 		})
 	}
@@ -144,7 +144,7 @@ var reportHTMLTemplate = template.Must(template.New("report").Funcs(template.Fun
   <body>
     <main class="shell">
       <section class="report" id="report">
-        <p class="expiry" id="report-status">{{.StatusText}} {{helpTip "Why is the report permanent? The hosted report contains sanitized metrics and bounded evidence, not raw transcripts. Treat the URL as a private link because anyone with the token can view it."}}</p>
+        <p class="expiry" id="report-status">{{if eq .Job.Status "completed"}}<a href="#download-report-section">{{.StatusText}}</a>{{else}}{{.StatusText}}{{end}}</p>
         {{if eq .Job.Status "completed"}}
         <div class="zero-token-banner">
           <strong>0 model tokens used to generate this report.</strong>
@@ -161,7 +161,7 @@ var reportHTMLTemplate = template.Must(template.New("report").Funcs(template.Fun
           <p class="capacity-note">Cutting this waste helps the same coding plan produce more useful implementation work before you run out of tokens.</p>
           <div class="report-cta-row" aria-label="Report actions">
             <a class="report-primary-cta" href="#download-report-section">Download report pack</a>
-            <a class="report-secondary-cta" href="#plugin-purchase">Get generated plugin</a>
+            <a class="report-secondary-cta" href="#plugin-purchase">Get my custom plugin</a>
           </div>
         </div>
         <div class="problem-section">
@@ -221,15 +221,15 @@ var reportHTMLTemplate = template.Must(template.New("report").Funcs(template.Fun
         <section class="plugin-pitch" id="plugin-pitch">
           <div>
             <p class="eyebrow">generated remediation</p>
-            <h2>Copy the quick fixes now. Use the plugin to make them stick. {{helpTip "Where do these fixes come from? Fixes are generated from deterministic finding IDs and bounded evidence, not from raw prompts or an LLM reading your transcript. The plugin packages those findings into Claude-facing operating guidance and vetted setup instructions."}}</h2>
-            <p>Add the relevant AGENTS.md lines now. The generated plugin packages the same report into benchmark-backed operating guidance so future sessions spend more of your plan writing software and less on rereads, retries, dead context, and noisy tools.</p>
+            <h2>Copy quick fixes now. Download the plugin built for your leaks. {{helpTip "Where do these fixes come from? Fixes are generated from deterministic finding IDs and bounded evidence, not from raw prompts or an LLM reading your transcript. The plugin packages those findings into Claude-facing operating guidance and vetted setup instructions."}}</h2>
+            <p>Add the relevant AGENTS.md lines now. The generated plugin packages your own report into benchmark-backed operating guidance so future sessions spend more of your plan writing software and less on the rereads, retries, dead context, and noisy tools found in your logs.</p>
             <ul class="plugin-benefits">
               <li>Session hygiene nudges.</li>
               <li>Scoped retrieval recommendations.</li>
               <li>Output-budgeted command habits.</li>
               <li>No unproven reducer installs.</li>
             </ul>
-            <a class="plugin-cta" href="#plugin-purchase">Get my optimization plugin</a>
+            <a class="plugin-cta" href="#plugin-purchase">Get my custom plugin</a>
           </div>
           <div class="plugin-fixes-card">
             <h3>Copy-ready AGENTS.md lines</h3>
@@ -242,7 +242,7 @@ var reportHTMLTemplate = template.Must(template.New("report").Funcs(template.Fun
           <h2>Recommended tools to address waste {{helpTip "Why this recommendation? Ranking comes from public allowlisted tool metadata and deterministic signals such as tool-output bloat, retrieval friction, usage visibility, and MCP/skill utilization. Unknown private names are not echoed."}}</h2>
           <p class="section-note">These are not random installs. Telemetry tools are labeled as measurement only, and reducers are recommended only when our repeated runs showed savings for the matching waste signal. Use the generated plugin to turn the report into setup instructions.</p>
           <div class="recommendation-cta-row">
-            <a class="plugin-cta" href="#plugin-purchase">Get generated plugin</a>
+            <a class="plugin-cta" href="#plugin-purchase">Get my custom plugin</a>
             <a class="recommendation-allowlist-link" href="/allowed-tools.html">Review vetted allowlist</a>
             <a class="recommendation-allowlist-link" href="/proof/results.html">Review benchmark results</a>
           </div>
@@ -266,8 +266,8 @@ var reportHTMLTemplate = template.Must(template.New("report").Funcs(template.Fun
         <div class="upsell" id="download-report-section">
           <div class="upsell-copy">
           <p class="eyebrow">portable findings</p>
-          <h2>Download the report pack for free</h2>
-          <p class="upsell-lede">The report pack shows where your agent sessions are burning tokens, includes the benchmark methodology and results, and gives you a partner voucher. The generated plugin turns those findings into setup rules and workflow nudges using only the reducers that earned scoped recommendations.</p>
+          <h2>Download the report pack and your custom plugin for free</h2>
+          <p class="upsell-lede">The report pack shows where your own agent sessions are leaking tokens, includes the benchmark methodology and results, and gives you a partner voucher. The generated plugin turns those specific findings into setup rules and workflow nudges using only reducers that earned scoped recommendations.</p>
           <ul class="upsell-proof">
             <li>Raw transcripts stay local.</li>
             <li>Email required: enter it once to unlock both downloads and receive the links.</li>
@@ -285,7 +285,7 @@ var reportHTMLTemplate = template.Must(template.New("report").Funcs(template.Fun
               <input type="checkbox" name="marketing_opt_in" value="1" />
               <span>Send me occasional updates about the upcoming Spec Kitty Teamspace launch and agentic coding training.</span>
             </label>
-            <button class="plugin-cta" type="submit">Unlock downloads</button>
+            <button class="plugin-cta" type="submit">Unlock my custom plugin</button>
             <p class="command-note">The report pack and generated plugin are free. After submit, this page shows both download buttons and emails the links, the Spec Kitty training voucher reminder, and the Spec Kitty GitHub repo. Raw transcripts are not attached or uploaded.</p>
           </form>
           </div>
