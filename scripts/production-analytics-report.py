@@ -374,6 +374,7 @@ def summarize_emails(
     unique_email_marketing = []
     new_email_marketing = []
     previous_email_marketing = []
+    new_email_daily = collections.Counter()
     for email in sorted(unique_emails):
         item = by_email[email]
         first_seen_at = item["first_seen_at"]
@@ -395,6 +396,8 @@ def summarize_emails(
             is_new = True
         if is_new:
             new_email_marketing.append(row)
+            if first_seen_at is not None:
+                new_email_daily[iso_date(first_seen_at.isoformat())] += 1
 
     new_basis = []
     if previous_email_labels:
@@ -422,6 +425,8 @@ def summarize_emails(
         "unique_email_marketing": unique_email_marketing,
         "new_email_basis": new_basis,
         "new_unique_email_marketing": new_email_marketing,
+        "new_unique_email_count": len(new_email_marketing),
+        "new_unique_email_daily": dict(sorted(new_email_daily.items())),
         "previous_unique_email_marketing": previous_email_marketing,
         "delivery_hashed": {
             "events": len(recent_events),
@@ -499,6 +504,7 @@ def build_report(args: argparse.Namespace) -> dict[str, Any]:
     daily = [
         {
             "date": day,
+            "new_non_owner_emails": emails["new_unique_email_daily"].get(day, 0),
             "website_requests": usage["daily"].get(day, 0),
             "product_analytics_events": product["daily"].get(day, 0),
             "non_owner_email_unlocks": emails["daily"].get(day, 0),
@@ -529,9 +535,15 @@ def build_report(args: argparse.Namespace) -> dict[str, Any]:
             "product_analytics_events": product["total_report_events"],
             "email_unlock_records": emails["total_email_unlock_records"],
             "non_owner_email_unlock_records": emails["non_owner_records"],
+            "new_non_owner_emails": emails["new_unique_email_count"],
             "owner_email_unlock_records_excluded": emails["owner_records_excluded"],
             "email_delivery_events_hashed": emails["delivery_hashed"]["events"],
             "email_suppressions_hashed": emails["delivery_hashed"]["suppressions"],
+        },
+        "top_line_metrics": {
+            "new_non_owner_emails": emails["new_unique_email_count"],
+            "new_email_basis": emails["new_email_basis"],
+            "new_emails": emails["new_unique_email_marketing"],
         },
         "website_requests": usage,
         "product_analytics": product,
@@ -563,6 +575,12 @@ def markdown_email_marketing(rows: list[dict[str, Any]]) -> str:
     return ", ".join(rendered)
 
 
+def markdown_new_email_basis(basis: list[str]) -> str:
+    if not basis:
+        return "no previous report or new-email timestamp supplied"
+    return ", ".join(f"`{item}`" for item in basis)
+
+
 def render_markdown(report: dict[str, Any]) -> str:
     coverage = report["coverage"]
     website = report["website_requests"]
@@ -581,14 +599,20 @@ def render_markdown(report: dict[str, Any]) -> str:
         f"- exact emails: {', '.join(f'`{email}`' for email in owner_filter['emails']) or '_none_'}",
         f"- domains: {', '.join(f'`@{domain}`' for domain in owner_filter['domains']) or '_none_'}",
         "",
+        "## New Emails",
+        "",
+        f"- New non-owner emails: `{emails['new_unique_email_count']:,}`.",
+        f"- Basis: {markdown_new_email_basis(emails['new_email_basis'])}.",
+        f"- Emails: {markdown_email_marketing(emails['new_unique_email_marketing'])}.",
+        "",
         "## Daily Time Scale",
         "",
-        "| Date | Website requests | Product analytics events | Non-owner email unlocks | Hashed email delivery events |",
-        "|---|---:|---:|---:|---:|",
+        "| Date | New emails | Website requests | Product analytics events | Non-owner email unlocks | Hashed email delivery events |",
+        "|---|---:|---:|---:|---:|---:|",
     ]
     for row in report["time_scale_daily"]:
         lines.append(
-            "| {date} | {website_requests:,} | {product_analytics_events:,} | {non_owner_email_unlocks:,} | {hashed_delivery_events:,} |".format(
+            "| {date} | {new_non_owner_emails:,} | {website_requests:,} | {product_analytics_events:,} | {non_owner_email_unlocks:,} | {hashed_delivery_events:,} |".format(
                 **row
             )
         )
@@ -598,6 +622,7 @@ def render_markdown(report: dict[str, Any]) -> str:
             "",
             "## Coverage",
             "",
+            f"- New non-owner emails: `{coverage['new_non_owner_emails']:,}`.",
             f"- Website usage: `{coverage['usage_events']:,}` events from `{coverage['usage_first_day']}` to `{coverage['usage_last_day']}`.",
             f"- Product analytics: `{coverage['product_analytics_events']:,}` report events from `{coverage['product_analytics_first_day']}` to `{coverage['product_analytics_last_day']}`.",
             f"- Email unlocks: `{coverage['email_unlock_records']:,}` records; `{coverage['owner_email_unlock_records_excluded']:,}` owner records excluded; `{coverage['non_owner_email_unlock_records']:,}` non-owner records.",
@@ -623,6 +648,7 @@ def render_markdown(report: dict[str, Any]) -> str:
             "",
             "## Emails Not Owner",
             "",
+            f"- New emails: `{emails['new_unique_email_count']:,}`; {markdown_email_marketing(emails['new_unique_email_marketing'])}.",
             f"- Records: `{emails['non_owner_records']:,}`; unique emails: `{emails['unique_non_owner_emails']:,}`.",
             f"- Status: {markdown_pairs(emails['status_counts'])}.",
             f"- Marketing: {markdown_pairs(emails['marketing_counts'])}.",
@@ -630,7 +656,6 @@ def render_markdown(report: dict[str, Any]) -> str:
             f"- Masked emails: {', '.join(f'`{email}`' for email in emails['masked_unique_emails']) or '_none_'}.",
             f"- Unique emails with marketing opt-in: {markdown_email_marketing(emails['unique_email_marketing'])}.",
             f"- Emails already present in previous report: {markdown_email_marketing(emails['previous_unique_email_marketing'])}.",
-            f"- New emails: {markdown_email_marketing(emails['new_unique_email_marketing'])}.",
             "",
             "## Hashed Email Delivery",
             "",
