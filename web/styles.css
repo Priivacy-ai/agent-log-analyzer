@@ -56,19 +56,20 @@ body {
 
 .landing-corner-image {
   display: block;
-  position: absolute;
-  top: 69px;
-  right: 0;
-  z-index: 0;
-  width: clamp(92px, 11vw, 132px);
-  max-width: 14%;
+  justify-self: stretch;
+  align-self: stretch;
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
   pointer-events: none;
 }
 
 .landing-corner-image img {
   display: block;
   width: 100%;
-  height: auto;
+  height: 100%;
+  object-fit: cover;
+  object-position: right center;
   border-radius: 8px;
 }
 
@@ -89,18 +90,21 @@ body {
   margin-bottom: 32px;
 }
 
+.hero-title-lockup {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(72px, 1fr);
+  align-items: start;
+  gap: clamp(16px, 3vw, 36px);
+  width: 100%;
+}
+
+.hero-title-lockup h1 {
+  max-width: 100%;
+}
+
 @media (max-width: 900px) {
   .hero {
     max-width: 100%;
-  }
-
-  .hero h1 {
-    max-width: calc(100% - 92px);
-  }
-
-  .landing-corner-image {
-    width: min(72px, 18vw);
-    max-width: 22%;
   }
 }
 
