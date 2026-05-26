@@ -4,10 +4,13 @@ import { basename, extname, join } from "node:path";
 
 const passthroughAssets = [
   "app.js",
+  "images",
   "report-actions.js",
   "site-header.js",
   "styles.css",
   "tooltips.js",
+  "robots.txt",
+  "sitemap.xml",
   "vendor",
 ];
 
