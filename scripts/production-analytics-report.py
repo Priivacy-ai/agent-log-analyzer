@@ -35,6 +35,7 @@ DEFAULT_BUCKET = "claude-analyzer-prod-reports-984d05ff"
 DEFAULT_TABLE = "claude-analyzer-prod-jobs"
 DEFAULT_OWN_EMAILS = {"robert@spec-kitty.ai"}
 DEFAULT_OWN_DOMAINS = {"robshouse.net"}
+SHA256_HEX = re.compile(r"^[0-9a-f]{64}$")
 
 
 def parse_args() -> argparse.Namespace:
@@ -121,14 +122,18 @@ def read_jsonl_object(s3: Any, bucket: str, key: str) -> list[dict[str, Any]]:
     obj = s3.get_object(Bucket=bucket, Key=key)
     body = obj["Body"].read().decode("utf-8").strip()
     rows: list[dict[str, Any]] = []
+    object_date = key_date(key)
     for line in body.splitlines():
         line = line.strip()
         if not line:
             continue
         try:
-            rows.append(json.loads(line))
+            row = json.loads(line)
         except json.JSONDecodeError:
             continue
+        if object_date:
+            row["_object_date"] = object_date
+        rows.append(row)
     return rows
 
 
@@ -324,6 +329,41 @@ def summarize_usage(events: list[dict[str, Any]]) -> dict[str, Any]:
     }
 
 
+def product_event_hashes(event: dict[str, Any]) -> list[str]:
+    hashes: list[str] = []
+    seen: set[str] = set()
+    for item in event.get("analyzed_log_hashes") or []:
+        if not isinstance(item, dict):
+            continue
+        value = (item.get("content_hash_sha256") or "").strip().lower()
+        if not SHA256_HEX.match(value) or value in seen:
+            continue
+        seen.add(value)
+        hashes.append(value)
+    return hashes
+
+
+def increment_product_counters(event: dict[str, Any], weight: int, counters: dict[str, collections.Counter[str]]) -> None:
+    counters["scan_types"][event.get("scan_type") or "unknown"] += weight
+    ecosystem = event.get("ecosystem") or {}
+    counters["clients"][ecosystem.get("client") or "unknown"] += weight
+    counters["score_buckets"][event.get("score_bucket") or "unknown"] += weight
+    counters["waste_buckets"][event.get("waste_bucket") or "unknown"] += weight
+    tooling = ecosystem.get("tooling_utilization") or {}
+    counters["mcp_warning_bands"][(tooling.get("mcp") or {}).get("warning_band") or "unknown"] += weight
+    counters["skill_warning_bands"][(tooling.get("skill") or {}).get("warning_band") or "unknown"] += weight
+    for fingerprint in ecosystem.get("workflow_fingerprints") or []:
+        if fingerprint.get("id"):
+            counters["sdd_tools"][fingerprint["id"]] += weight
+    recommendation = event.get("recommendation") or {}
+    for slot_name in ("primary", "secondary"):
+        slot = recommendation.get(slot_name) or {}
+        if slot.get("class"):
+            counters["recommendation_classes"][slot["class"]] += weight
+        if slot.get("tool_id"):
+            counters["recommendation_tools"][slot["tool_id"]] += weight
+
+
 def summarize_product(events: list[dict[str, Any]], daily_from_keys: collections.Counter[str]) -> dict[str, Any]:
     scan_types = collections.Counter()
     clients = collections.Counter()
@@ -334,30 +374,61 @@ def summarize_product(events: list[dict[str, Any]], daily_from_keys: collections
     sdd_tools = collections.Counter()
     recommendation_classes = collections.Counter()
     recommendation_tools = collections.Counter()
+    counters = {
+        "scan_types": scan_types,
+        "clients": clients,
+        "score_buckets": score_buckets,
+        "waste_buckets": waste_buckets,
+        "mcp_warning_bands": mcp_warning_bands,
+        "skill_warning_bands": skill_warning_bands,
+        "sdd_tools": sdd_tools,
+        "recommendation_classes": recommendation_classes,
+        "recommendation_tools": recommendation_tools,
+    }
+    daily = collections.Counter()
+    seen_hashes: set[str] = set()
+    hash_refs = 0
+    duplicate_hash_refs = 0
+    events_with_hashes = 0
+    events_without_hashes = 0
+    deduped_count = 0
 
     for event in events:
-        scan_types[event.get("scan_type") or "unknown"] += 1
-        ecosystem = event.get("ecosystem") or {}
-        clients[ecosystem.get("client") or "unknown"] += 1
-        score_buckets[event.get("score_bucket") or "unknown"] += 1
-        waste_buckets[event.get("waste_bucket") or "unknown"] += 1
-        tooling = ecosystem.get("tooling_utilization") or {}
-        mcp_warning_bands[(tooling.get("mcp") or {}).get("warning_band") or "unknown"] += 1
-        skill_warning_bands[(tooling.get("skill") or {}).get("warning_band") or "unknown"] += 1
-        for fingerprint in ecosystem.get("workflow_fingerprints") or []:
-            if fingerprint.get("id"):
-                sdd_tools[fingerprint["id"]] += 1
-        recommendation = event.get("recommendation") or {}
-        for slot_name in ("primary", "secondary"):
-            slot = recommendation.get(slot_name) or {}
-            if slot.get("class"):
-                recommendation_classes[slot["class"]] += 1
-            if slot.get("tool_id"):
-                recommendation_tools[slot["tool_id"]] += 1
+        object_day = event.get("_object_date") or "unknown"
+        hashes = product_event_hashes(event)
+        if not hashes:
+            events_without_hashes += 1
+            deduped_count += 1
+            daily[object_day] += 1
+            increment_product_counters(event, 1, counters)
+            continue
 
+        events_with_hashes += 1
+        new_hash_count = 0
+        for content_hash in hashes:
+            hash_refs += 1
+            if content_hash in seen_hashes:
+                duplicate_hash_refs += 1
+                continue
+            seen_hashes.add(content_hash)
+            new_hash_count += 1
+        if new_hash_count == 0:
+            continue
+        deduped_count += new_hash_count
+        daily[object_day] += new_hash_count
+        increment_product_counters(event, new_hash_count, counters)
+
+    daily_counts = daily if daily else daily_from_keys
     return {
-        "total_report_events": len(events),
-        "daily": dict(sorted(daily_from_keys.items())),
+        "total_report_events": deduped_count,
+        "raw_report_events": len(events),
+        "events_with_hashes": events_with_hashes,
+        "events_without_hashes": events_without_hashes,
+        "analyzed_log_hash_refs": hash_refs,
+        "unique_analyzed_log_hashes": len(seen_hashes),
+        "duplicate_analyzed_log_hash_refs": duplicate_hash_refs,
+        "dedupe_mode": "content_hash_sha256_with_legacy_event_fallback",
+        "daily": dict(sorted(daily_counts.items())),
         "scan_types": counter_top(scan_types, 8),
         "clients": counter_top(clients, 8),
         "score_buckets": counter_top(score_buckets, 8),
@@ -634,6 +705,11 @@ def build_report(args: argparse.Namespace) -> dict[str, Any]:
             "product_analytics_first_day": min(product["daily"]) if product["daily"] else None,
             "product_analytics_last_day": max(product["daily"]) if product["daily"] else None,
             "product_analytics_events": product["total_report_events"],
+            "product_analytics_raw_events": product["raw_report_events"],
+            "product_analytics_events_with_hashes": product["events_with_hashes"],
+            "product_analytics_events_without_hashes": product["events_without_hashes"],
+            "product_analytics_unique_file_hashes": product["unique_analyzed_log_hashes"],
+            "product_analytics_duplicate_file_hash_refs": product["duplicate_analyzed_log_hash_refs"],
             "email_unlock_records": emails["total_email_unlock_records"],
             "non_owner_email_unlock_records": emails["non_owner_records"],
             "new_non_owner_emails": emails["new_unique_email_count"],
@@ -723,7 +799,7 @@ def render_markdown(report: dict[str, Any]) -> str:
         "",
         "## Daily Time Scale",
         "",
-        "| Date | New usable emails | New rejected emails | Website requests | Product analytics events | Non-owner email unlocks | Hashed email delivery events |",
+        "| Date | New usable emails | New rejected emails | Website requests | Product analytics deduped | Non-owner email unlocks | Hashed email delivery events |",
         "|---|---:|---:|---:|---:|---:|---:|",
     ]
     for row in report["time_scale_daily"]:
@@ -740,7 +816,8 @@ def render_markdown(report: dict[str, Any]) -> str:
             "",
             f"- New usable emails: `{coverage['new_usable_non_owner_emails']:,}`; rejected/failed new submissions: `{coverage['new_rejected_non_owner_emails']:,}`.",
             f"- Website usage: `{coverage['usage_events']:,}` events from `{coverage['usage_first_day']}` to `{coverage['usage_last_day']}`.",
-            f"- Product analytics: `{coverage['product_analytics_events']:,}` report events from `{coverage['product_analytics_first_day']}` to `{coverage['product_analytics_last_day']}`.",
+            f"- Product analytics: `{coverage['product_analytics_events']:,}` deduped analyzed files/reports from `{coverage['product_analytics_first_day']}` to `{coverage['product_analytics_last_day']}`.",
+            f"- Product analytics raw: `{coverage['product_analytics_raw_events']:,}` report events; `{coverage['product_analytics_unique_file_hashes']:,}` unique file hashes; `{coverage['product_analytics_duplicate_file_hash_refs']:,}` duplicate file-hash refs; `{coverage['product_analytics_events_without_hashes']:,}` legacy events without hashes.",
             f"- Email unlocks: `{coverage['email_unlock_records']:,}` records; `{coverage['owner_email_unlock_records_excluded']:,}` owner records excluded; `{coverage['non_owner_email_unlock_records']:,}` non-owner records.",
             f"- Hashed delivery telemetry: `{coverage['email_delivery_events_hashed']:,}` events; `{coverage['email_suppressions_hashed']:,}` suppressions.",
             "",
@@ -755,7 +832,9 @@ def render_markdown(report: dict[str, Any]) -> str:
             "",
             "## Product Analytics",
             "",
-            f"- Report events: `{product['total_report_events']:,}`.",
+            f"- Deduped analyzed files/reports: `{product['total_report_events']:,}`.",
+            f"- Raw report events: `{product['raw_report_events']:,}`.",
+            f"- File-hash dedupe: `{product['unique_analyzed_log_hashes']:,}` unique hashes, `{product['duplicate_analyzed_log_hash_refs']:,}` duplicate refs, `{product['events_with_hashes']:,}` events with hashes, `{product['events_without_hashes']:,}` legacy events without hashes.",
             f"- Scan types: {markdown_pairs(product['scan_types'])}.",
             f"- Clients: {markdown_pairs(product['clients'])}.",
             f"- SDD tools: {markdown_pairs(product['sdd_tools'])}.",
