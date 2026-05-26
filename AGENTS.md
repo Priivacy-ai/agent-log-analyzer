@@ -109,3 +109,21 @@ AWS_PROFILE=claude-analyzer-prod terraform -chdir=infra/aws plan
 - Production usage stats are exposed through a bearer-authenticated admin endpoint.
 - Do not document credential locations, service names, secret IDs, token hashes, or raw tokens in public repo files.
 - Retrieve the admin token only from the operator's private credential store, keep it out of shell history where practical, and never paste it into chat, docs, commits, or logs.
+- Use macOS Keychain from the shell when the user asks for production usage stats or email-form data. Prefer command substitution so the token never appears in terminal output:
+
+```sh
+TOKEN="$(security find-generic-password -s '<keychain-service>' -a '<keychain-account>' -w)"
+curl -fsS 'https://analyzer.spec-kitty.ai/api/admin/usage-stats?days=1' \
+  -H "Authorization: Bearer ${TOKEN}"
+```
+
+- If the Keychain service/account is unknown, first do a metadata-only search and do not print passwords:
+
+```sh
+security dump-keychain 2>/dev/null | rg -i -C 3 'claude|analyzer|agent|usage|admin'
+```
+
+- Use `GET /api/admin/usage-stats?days=N` for aggregate traffic analytics. Useful fields include `event_count`, `requests`, `unique_client_hashes`, `by_path`, `by_browser`, `by_operating_system`, `by_device_class`, `by_language`, `by_referrer_host`, and UTM aggregates.
+- Use `GET /api/admin/email-unlocks?days=N&limit=1000` for email-form/export records. Treat current report-pack deliveries as records with `status: "used"` and a `source_report_job_id`; older `pending`/`confirmed` records can be legacy full-scan unlock cruft and should not be described as current email-confirmation behavior.
+- Current no-confirmation report-pack email form posts to `/api/report-deliveries`. There is no user-facing email confirmation step for that flow.
+- If the admin endpoint is unavailable, read the same usage events from the encrypted production report bucket with the `claude-analyzer-prod` AWS profile, but keep raw event dumps out of chat unless the user explicitly asks. Summarize counts and trends instead.
