@@ -16,6 +16,8 @@ DEPLOY_LOCK_ID="${DEPLOY_LOCK_ID:-${CLUSTER}/deploy-lock}"
 DEPLOY_LOCK_TTL_SECONDS="${DEPLOY_LOCK_TTL_SECONDS:-2700}"
 DEPLOY_LOCK_WAIT_SECONDS="${DEPLOY_LOCK_WAIT_SECONDS:-1800}"
 DEPLOY_LOCK_POLL_SECONDS="${DEPLOY_LOCK_POLL_SECONDS:-10}"
+SERVICE_QUIESCENT_WAIT_SECONDS="${SERVICE_QUIESCENT_WAIT_SECONDS:-300}"
+SERVICE_QUIESCENT_POLL_SECONDS="${SERVICE_QUIESCENT_POLL_SECONDS:-10}"
 DEPLOY_LOCK_TOKEN="${DEPLOY_LOCK_TOKEN:-$(python3 -c 'import uuid; print(uuid.uuid4())' 2>/dev/null || uuidgen 2>/dev/null || date -u +%s-$$)}"
 DEPLOY_LOCK_HOLDER="${DEPLOY_LOCK_HOLDER:-$(whoami 2>/dev/null || echo unknown)@$(hostname 2>/dev/null || echo unknown):$$}"
 DEPLOY_COMMIT="$(git rev-parse --short=12 HEAD 2>/dev/null || echo unknown)"
@@ -178,6 +180,29 @@ if bad:
 ' <<< "$services_json"
 }
 
+wait_for_services_quiescent() {
+  local phase="$1"
+  local started deadline now output
+  started="$(date -u +%s)"
+  deadline=$((started + SERVICE_QUIESCENT_WAIT_SECONDS))
+
+  echo "checking ECS service quiescence ($phase)"
+  while true; do
+    if output="$(verify_services_quiescent 2>&1)"; then
+      return 0
+    fi
+
+    now="$(date -u +%s)"
+    if [ "$now" -ge "$deadline" ]; then
+      printf '%s\n' "$output" >&2
+      return 1
+    fi
+
+    echo "ECS service rollout metadata is not quiescent yet ($phase); retrying in ${SERVICE_QUIESCENT_POLL_SECONDS}s" >&2
+    sleep "$SERVICE_QUIESCENT_POLL_SECONDS"
+  done
+}
+
 verify_deployed_image() {
   local service service_tasks task_definition task_image tasks_json
   for service in $SERVICES; do
@@ -237,7 +262,7 @@ echo "immutable tag: $IMAGE_TAG"
 
 acquire_deploy_lock
 wait_for_services_stable "preflight"
-verify_services_quiescent
+wait_for_services_quiescent "preflight"
 
 retry 3 ecr_login
 
@@ -344,7 +369,7 @@ PY
 done
 
 wait_for_services_stable "post-update"
-verify_services_quiescent
+wait_for_services_quiescent "post-update"
 verify_deployed_image
 
 echo "deploy stable: $immutable_image ($PLATFORM)"
