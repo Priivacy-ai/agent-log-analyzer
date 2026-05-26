@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"bytes"
+	"crypto/sha256"
 	"database/sql"
 	"encoding/hex"
 	"encoding/json"
@@ -147,6 +148,18 @@ func analyzeSingle(path, out string, printNextSteps bool, sourceID string) error
 		progress.Fail()
 		return err
 	}
+	report.SourceReports = buildSourceReports([]sourceAnalysisResult{
+		{
+			Candidate: logCandidate{
+				SourceID:    sourceID,
+				SourceLabel: sourceLabelForID(sourceID),
+				Display:     path,
+			},
+			Report:            report,
+			Bytes:             len(data),
+			ContentHashSHA256: contentHashSHA256(data),
+		},
+	})
 	progress.Update(2, "writing sanitized report")
 	if err := writeReport(out, report); err != nil {
 		progress.Fail()
@@ -355,9 +368,10 @@ func (bar *progressBar) Fail() {
 }
 
 type sourceAnalysisResult struct {
-	Candidate logCandidate
-	Report    analyzer.Report
-	Bytes     int
+	Candidate         logCandidate
+	Report            analyzer.Report
+	Bytes             int
+	ContentHashSHA256 string
 }
 
 type candidateAnalysisResult struct {
@@ -400,7 +414,7 @@ func buildSourceReports(results []sourceAnalysisResult) []analyzer.SourceReport 
 		}
 		groups[key].reports = append(groups[key].reports, result.Report)
 		groups[key].bytes += result.Bytes
-		groups[key].logRefs = append(groups[key].logRefs, safeAnalyzedLogRef(result.Candidate, len(groups[key].logRefs)+1, result.Bytes))
+		groups[key].logRefs = append(groups[key].logRefs, safeAnalyzedLogRef(result.Candidate, len(groups[key].logRefs)+1, result.Bytes, result.ContentHashSHA256))
 	}
 	sourceReports := make([]analyzer.SourceReport, 0, len(order))
 	for _, key := range order {
@@ -456,15 +470,45 @@ func combinedSourceTimeline(reports []analyzer.Report) []analyzer.TimelinePoint 
 	return timeline
 }
 
-func safeAnalyzedLogRef(candidate logCandidate, ordinal int, bytesRead int) analyzer.AnalyzedLogRef {
+func safeAnalyzedLogRef(candidate logCandidate, ordinal int, bytesRead int, contentHashSHA256 string) analyzer.AnalyzedLogRef {
 	prefix := candidate.SourceID
 	if prefix == "" {
 		prefix = "log"
 	}
 	return analyzer.AnalyzedLogRef{
-		Label:      fmt.Sprintf("%s log %d", candidate.SourceLabel, ordinal),
-		LocalRef:   fmt.Sprintf("%s-log-%d", prefix, ordinal),
-		SizeBucket: byteSizeBucket(bytesRead),
+		Label:             fmt.Sprintf("%s log %d", candidate.SourceLabel, ordinal),
+		LocalRef:          fmt.Sprintf("%s-log-%d", prefix, ordinal),
+		SizeBucket:        byteSizeBucket(bytesRead),
+		ContentHashSHA256: contentHashSHA256,
+	}
+}
+
+func contentHashSHA256(data []byte) string {
+	sum := sha256.Sum256(data)
+	return hex.EncodeToString(sum[:])
+}
+
+func sourceLabelForID(sourceID string) string {
+	for _, source := range logSourceDefinitions() {
+		if source.id == sourceID {
+			return source.label
+		}
+	}
+	switch sourceID {
+	case "codex":
+		return "Codex"
+	case "cursor":
+		return "Cursor"
+	case "kiro_ide":
+		return "Kiro IDE"
+	case "antigravity":
+		return "Google Antigravity"
+	case "opencode":
+		return "OpenCode"
+	case "unknown", "":
+		return "Unknown"
+	default:
+		return sourceID
 	}
 }
 
@@ -607,9 +651,10 @@ func analyzeCandidates(candidates []logCandidate, progress *progressBar) ([]sour
 				outcomes <- candidateAnalysisResult{
 					Index: index,
 					Result: sourceAnalysisResult{
-						Candidate: candidate,
-						Report:    report,
-						Bytes:     len(data),
+						Candidate:         candidate,
+						Report:            report,
+						Bytes:             len(data),
+						ContentHashSHA256: contentHashSHA256(data),
 					},
 				}
 			}

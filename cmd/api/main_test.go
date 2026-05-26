@@ -1121,7 +1121,8 @@ func TestAnalysisSessionCurlFlow(t *testing.T) {
 }
 
 func TestClientReportUploadStoresSanitizedReportOnly(t *testing.T) {
-	store, err := localstore.New(t.TempDir())
+	root := t.TempDir()
+	store, err := localstore.New(root)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1135,6 +1136,14 @@ func TestClientReportUploadStoresSanitizedReportOnly(t *testing.T) {
 			OutboundDuringAnalysis: false,
 			SecretsRedacted:        2,
 			RawLogTTL:              "not uploaded",
+		},
+		SourceReports: []analyzer.SourceReport{
+			{
+				SourceID: "codex",
+				LogRefs: []analyzer.AnalyzedLogRef{
+					{SizeBucket: "10-100 KB", ContentHashSHA256: "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"},
+				},
+			},
 		},
 		AggregateEvent: analyzer.AggregateSafeEvent{Event: "analysis_completed", ParserType: "jsonl"},
 	}
@@ -1177,6 +1186,14 @@ func TestClientReportUploadStoresSanitizedReportOnly(t *testing.T) {
 	}
 	if job.Status != app.StatusCompleted || job.UploadPath != "" || job.UploadTokenHash != "" {
 		t.Fatalf("expected completed report-only job, got %#v", job)
+	}
+	analyticsData, err := os.ReadFile(filepath.Join(root, "analytics", "events.jsonl"))
+	if err != nil {
+		t.Fatalf("read analytics event: %v", err)
+	}
+	if !strings.Contains(string(analyticsData), `"analyzed_log_hashes"`) ||
+		!strings.Contains(string(analyticsData), `"0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"`) {
+		t.Fatalf("analytics event missing analyzed log hash: %s", analyticsData)
 	}
 }
 

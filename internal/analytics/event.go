@@ -4,27 +4,35 @@ import (
 	"encoding/json"
 	"regexp"
 	"sort"
+	"strings"
 
 	"github.com/priivacy-ai/agent-log-analyzer/internal/analyzer"
 )
 
-const SchemaVersion = "2026-05-20"
+const SchemaVersion = "2026-05-26"
 
 type Event struct {
-	SchemaVersion  string              `json:"schema_version"`
-	Event          string              `json:"event"`
-	Analyzer       string              `json:"analyzer_version"`
-	ScanType       string              `json:"scan_type"`
-	ParserType     string              `json:"parser_type"`
-	InputSize      string              `json:"input_size_bucket"`
-	Turns          string              `json:"turn_bucket"`
-	Sessions       string              `json:"session_count_bucket"`
-	Score          string              `json:"score_bucket"`
-	Waste          string              `json:"waste_bucket"`
-	Findings       map[string]string   `json:"findings,omitempty"`
-	Redactions     map[string]int      `json:"redactions,omitempty"`
-	Ecosystem      EcosystemEvent      `json:"ecosystem"`
-	Recommendation RecommendationEvent `json:"recommendation"`
+	SchemaVersion     string              `json:"schema_version"`
+	Event             string              `json:"event"`
+	Analyzer          string              `json:"analyzer_version"`
+	ScanType          string              `json:"scan_type"`
+	ParserType        string              `json:"parser_type"`
+	InputSize         string              `json:"input_size_bucket"`
+	Turns             string              `json:"turn_bucket"`
+	Sessions          string              `json:"session_count_bucket"`
+	Score             string              `json:"score_bucket"`
+	Waste             string              `json:"waste_bucket"`
+	AnalyzedLogHashes []AnalyzedLogHash   `json:"analyzed_log_hashes,omitempty"`
+	Findings          map[string]string   `json:"findings,omitempty"`
+	Redactions        map[string]int      `json:"redactions,omitempty"`
+	Ecosystem         EcosystemEvent      `json:"ecosystem"`
+	Recommendation    RecommendationEvent `json:"recommendation"`
+}
+
+type AnalyzedLogHash struct {
+	SourceID          string `json:"source_id"`
+	ContentHashSHA256 string `json:"content_hash_sha256"`
+	SizeBucket        string `json:"size_bucket,omitempty"`
 }
 
 type EcosystemEvent struct {
@@ -112,20 +120,21 @@ type RecommendationSlot struct {
 func FromReport(report analyzer.Report, scanType string) Event {
 	agg := report.AggregateEvent
 	event := Event{
-		SchemaVersion:  SchemaVersion,
-		Event:          "analytics.report",
-		Analyzer:       report.Version,
-		ScanType:       normalizeScanType(scanType),
-		ParserType:     enumOrUnknown(agg.ParserType, parserTypes),
-		InputSize:      enumOrUnknown(agg.InputSizeBucket, inputSizeBuckets),
-		Turns:          enumOrCalculated(agg.TurnBucket, rangeBucket(report.Metrics.Turns, []int{10, 50, 100, 200}), turnBuckets),
-		Sessions:       intBucket(sessionCount(report, scanType), []int{2, 10, 25, 50, 100}),
-		Score:          enumOrCalculated(agg.ScoreBucket, rangeBucket(report.Score, []int{20, 40, 60, 80}), scoreBuckets),
-		Waste:          enumOrCalculated(agg.WasteBucket, rangeBucket(report.EstimatedWaste.High, []int{10, 20, 40, 60}), wasteBuckets),
-		Findings:       filterFindingSeverities(report),
-		Redactions:     filterRedactions(report.Redactions),
-		Ecosystem:      ecosystemFromReport(report.Ecosystem),
-		Recommendation: recommendationFromReport(report.Recommendation),
+		SchemaVersion:     SchemaVersion,
+		Event:             "analytics.report",
+		Analyzer:          report.Version,
+		ScanType:          normalizeScanType(scanType),
+		ParserType:        enumOrUnknown(agg.ParserType, parserTypes),
+		InputSize:         enumOrUnknown(agg.InputSizeBucket, inputSizeBuckets),
+		Turns:             enumOrCalculated(agg.TurnBucket, rangeBucket(report.Metrics.Turns, []int{10, 50, 100, 200}), turnBuckets),
+		Sessions:          intBucket(sessionCount(report, scanType), []int{2, 10, 25, 50, 100}),
+		Score:             enumOrCalculated(agg.ScoreBucket, rangeBucket(report.Score, []int{20, 40, 60, 80}), scoreBuckets),
+		Waste:             enumOrCalculated(agg.WasteBucket, rangeBucket(report.EstimatedWaste.High, []int{10, 20, 40, 60}), wasteBuckets),
+		AnalyzedLogHashes: analyzedLogHashesFromReport(report),
+		Findings:          filterFindingSeverities(report),
+		Redactions:        filterRedactions(report.Redactions),
+		Ecosystem:         ecosystemFromReport(report.Ecosystem),
+		Recommendation:    recommendationFromReport(report.Recommendation),
 	}
 	if event.Analyzer == "" {
 		event.Analyzer = "unknown"
@@ -160,6 +169,41 @@ func sessionCount(report analyzer.Report, scanType string) int {
 		return 1
 	}
 	return 0
+}
+
+func analyzedLogHashesFromReport(report analyzer.Report) []AnalyzedLogHash {
+	if len(report.SourceReports) == 0 {
+		return nil
+	}
+	allowedSources := knownStringSet(analyzer.KnownEcosystemIDs("coding_agent"))
+	seen := map[string]bool{}
+	out := []AnalyzedLogHash{}
+	for _, source := range report.SourceReports {
+		sourceID := enumOrUnknown(source.SourceID, allowedSources)
+		for _, ref := range source.LogRefs {
+			hash := strings.ToLower(strings.TrimSpace(ref.ContentHashSHA256))
+			if !sha256HexPattern.MatchString(hash) {
+				continue
+			}
+			key := sourceID + "\x00" + hash
+			if seen[key] {
+				continue
+			}
+			seen[key] = true
+			out = append(out, AnalyzedLogHash{
+				SourceID:          sourceID,
+				ContentHashSHA256: hash,
+				SizeBucket:        enumOrEmpty(ref.SizeBucket, logSizeBuckets),
+			})
+		}
+	}
+	sort.Slice(out, func(i, j int) bool {
+		if out[i].SourceID != out[j].SourceID {
+			return out[i].SourceID < out[j].SourceID
+		}
+		return out[i].ContentHashSHA256 < out[j].ContentHashSHA256
+	})
+	return out
 }
 
 func ecosystemFromReport(ecosystem analyzer.Ecosystem) EcosystemEvent {
@@ -498,6 +542,7 @@ func knownStringSet(in map[string]bool) map[string]bool {
 
 var parserTypes = map[string]bool{"jsonl": true, "text": true, "multi_source": true, "paid_bundle": true, "unknown": true}
 var inputSizeBuckets = map[string]bool{"0_1024": true, "1024_1048576": true, "1048576_10485760": true, "10485760_52428800": true, "52428800_plus": true, "unknown": true}
+var logSizeBuckets = map[string]bool{"<10 KB": true, "10-100 KB": true, "100 KB-1 MB": true, "1-5 MB": true, ">5 MB": true, "unknown": true}
 var turnBuckets = map[string]bool{"0_10": true, "10_50": true, "50_100": true, "100_200": true, "200_plus": true, "unknown": true}
 var scoreBuckets = map[string]bool{"0_20": true, "20_40": true, "40_60": true, "60_80": true, "80_plus": true, "unknown": true}
 var wasteBuckets = map[string]bool{"0_10": true, "10_20": true, "20_40": true, "40_60": true, "60_plus": true, "unknown": true}
@@ -549,6 +594,7 @@ var installPolicies = map[string]bool{
 }
 
 var majorMinorVersionRE = regexp.MustCompile(`^(\d+)\.\d+$`)
+var sha256HexPattern = regexp.MustCompile(`^[a-f0-9]{64}$`)
 
 func versionBucket(value string) string {
 	if value == "" {

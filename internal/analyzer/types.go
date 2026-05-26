@@ -189,9 +189,10 @@ type SourceReport struct {
 }
 
 type AnalyzedLogRef struct {
-	Label      string `json:"label"`
-	LocalRef   string `json:"local_ref"`
-	SizeBucket string `json:"size_bucket,omitempty"`
+	Label             string `json:"label"`
+	LocalRef          string `json:"local_ref"`
+	SizeBucket        string `json:"size_bucket,omitempty"`
+	ContentHashSHA256 string `json:"content_hash_sha256,omitempty"`
 }
 
 type AggregateSafeEvent struct {

@@ -360,7 +360,10 @@ The analyzer emits `Report` with:
 
 When multiple sources are analyzed, source reports are grouped by source ID.
 Each source report includes bounded metrics/findings/timeline/signals and
-ordinal log references.
+ordinal log references. Each log reference may include `content_hash_sha256`,
+the SHA-256 hash of the exact local bytes analyzed for that candidate. This is
+not a path hash and it is not derived from workspace, thread, session, or DB key
+material.
 
 `AnalyzedLogRef.LocalRef` is intentionally ordinal only:
 
@@ -370,6 +373,12 @@ ordinal log references.
 
 It is not a hash of a path, thread ID, workspace name, session ID, DB key, or
 any other private value.
+
+`AnalyzedLogRef.ContentHashSHA256` is allowed to contain a SHA-256 content hash
+of the exact local bytes analyzed for that log candidate. Analytics may retain
+that hash to dedupe repeated scans of the same analyzed log payload. Do not
+replace it with a path hash or any hash derived from a local path, workspace,
+session ID, DB key, or thread identifier.
 
 ## Privacy Invariants
 

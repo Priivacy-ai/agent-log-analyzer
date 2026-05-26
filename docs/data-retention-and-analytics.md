@@ -103,7 +103,7 @@ The public scan analyzes target-sized recent sessions per auto-discovered suppor
 
 Cursor, Kiro, and Google Antigravity may also keep conversation state in VS Code-style SQLite stores. Codex may keep diagnostic rows in `logs*.sqlite`. Those stores are raw-sensitive: they can contain prompts, drafts, code, tool inputs, tool outputs, workspace paths, provider metadata, extension state, diagnostics, and error text. The CLI includes readable supported stores in automatic discovery, opens them in SQLite read-only mode, and extracts only known bounded key prefixes or diagnostic columns. It must not modify source stores or write database snapshots. Raw database keys, raw paths, unknown state rows, OAuth/session material, protobuf blobs, and transcript lines are not emitted in reports.
 
-Aggregate analytics from public scans must still use the same allowlist: known public ecosystem IDs, counts, buckets, timing, parser status, and redaction totals. Raw logs, raw paths, unknown private names, emails, and report JSON are not retained as analytics.
+Aggregate analytics from public scans must still use the same allowlist: known public ecosystem IDs, counts, buckets, timing, parser status, redaction totals, and SHA-256 content hashes for the local log payloads that were analyzed. Those hashes exist only to dedupe repeated scans of the same analyzed log content. Raw logs, raw paths, unknown private names, emails, and report JSON are not retained as analytics.
 
 Multi-log scans emit one retained analytics event for the aggregate report. They do not emit one retained event per raw session inside the local scan.
 

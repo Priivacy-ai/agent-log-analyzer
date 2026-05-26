@@ -173,7 +173,8 @@ func TestAnalyze_NoArgs_UsesDefaultDiscovery(t *testing.T) {
 func TestAnalyze_ExplicitSourceUsesSourceSpecificNormalizer(t *testing.T) {
 	dir := t.TempDir()
 	logPath := filepath.Join(dir, "codex.jsonl")
-	writeLogContent(t, logPath, `{"type":"event_msg","payload":{"msg":{"type":"token_count","last_token_usage":{"input_tokens":4321,"cached_input_tokens":123,"output_tokens":55}}}}`+"\n")
+	logContent := `{"type":"event_msg","payload":{"msg":{"type":"token_count","last_token_usage":{"input_tokens":4321,"cached_input_tokens":123,"output_tokens":55}}}}` + "\n"
+	writeLogContent(t, logPath, logContent)
 	outPath := filepath.Join(dir, "report.json")
 
 	if err := runAnalyze([]string{"--source", "codex", "--log", logPath, "--out", outPath}); err != nil {
@@ -190,6 +191,14 @@ func TestAnalyze_ExplicitSourceUsesSourceSpecificNormalizer(t *testing.T) {
 	if report.AnalysisSignals.InputTokens != 4321 || report.AnalysisSignals.CacheReadTokens != 123 || report.AnalysisSignals.OutputTokens != 55 {
 		t.Fatalf("expected Codex source-specific token signals, got %#v", report.AnalysisSignals)
 	}
+	if len(report.SourceReports) != 1 || len(report.SourceReports[0].LogRefs) != 1 {
+		t.Fatalf("expected single source log ref, got %#v", report.SourceReports)
+	}
+	wantHash := contentHashSHA256([]byte(logContent))
+	if got := report.SourceReports[0].LogRefs[0].ContentHashSHA256; got != wantHash {
+		t.Fatalf("expected content hash %s, got %s", wantHash, got)
+	}
+	assertReportDoesNotContain(t, report, logPath, filepath.Base(logPath))
 }
 
 func TestAnalyze_RejectsUnknownExplicitSource(t *testing.T) {
@@ -257,7 +266,7 @@ func TestAnalyze_NoArgs_UsesMultiplePerSupportedSource(t *testing.T) {
 
 func TestSafeAnalyzedLogRefDoesNotHashLocalPath(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "workspace-secret", "rollout-thread-secret.jsonl")
-	ref := safeAnalyzedLogRef(logCandidate{SourceID: "codex", SourceLabel: "Codex", Display: path}, 7, 4096)
+	ref := safeAnalyzedLogRef(logCandidate{SourceID: "codex", SourceLabel: "Codex", Display: path}, 7, 4096, contentHashSHA256([]byte("stable log bytes")))
 	sum := sha256.Sum256([]byte("codex" + "\x00" + path))
 	forbiddenPrefix := hex.EncodeToString(sum[:])[:10]
 	serialized, err := json.Marshal(ref)
@@ -269,6 +278,9 @@ func TestSafeAnalyzedLogRefDoesNotHashLocalPath(t *testing.T) {
 	}
 	if ref.LocalRef != "codex-log-7" {
 		t.Fatalf("expected ordinal-only local ref, got %#v", ref)
+	}
+	if ref.ContentHashSHA256 != contentHashSHA256([]byte("stable log bytes")) {
+		t.Fatalf("expected content hash to be preserved, got %#v", ref)
 	}
 }
 

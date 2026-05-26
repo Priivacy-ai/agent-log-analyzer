@@ -32,6 +32,29 @@ func TestFromReportFiltersPrivateAndHighCardinalityFields(t *testing.T) {
 			"aws_access_key":        2,
 			"private_secret_family": 99,
 		},
+		SourceReports: []analyzer.SourceReport{
+			{
+				SourceID: "codex",
+				LogRefs: []analyzer.AnalyzedLogRef{
+					{
+						SizeBucket:        "10-100 KB",
+						ContentHashSHA256: "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+					},
+					{
+						ContentHashSHA256: "not-a-valid-hash-private_thing",
+					},
+				},
+			},
+			{
+				SourceID: "private_agent",
+				LogRefs: []analyzer.AnalyzedLogRef{
+					{
+						SizeBucket:        "not-a-real-bucket",
+						ContentHashSHA256: "abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789",
+					},
+				},
+			},
+		},
 		Ecosystem: analyzer.Ecosystem{
 			Client:                "claude_code",
 			CodingAgents:          []string{"claude_code", "private_agent"},
@@ -157,6 +180,56 @@ func TestFromReportFiltersPrivateAndHighCardinalityFields(t *testing.T) {
 	}
 	if !strings.Contains(body, `"1.x"`) {
 		t.Fatalf("expected coarse major version bucket to remain: %s", body)
+	}
+	if !strings.Contains(body, `"analyzed_log_hashes"`) || !strings.Contains(body, `"0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"`) {
+		t.Fatalf("expected valid analyzed log hash to remain: %s", body)
+	}
+	if strings.Contains(body, "not-a-valid-hash") || strings.Contains(body, "not-a-real-bucket") {
+		t.Fatalf("analytics event leaked invalid hash metadata: %s", body)
+	}
+}
+
+func TestFromReportIncludesDeterministicAnalyzedLogHashes(t *testing.T) {
+	report := analyzer.Report{
+		Version:        "0.1.0",
+		Metrics:        analyzer.Metrics{Turns: 20},
+		EstimatedWaste: analyzer.WasteRange{High: 15},
+		SourceReports: []analyzer.SourceReport{
+			{
+				SourceID: "codex",
+				LogRefs: []analyzer.AnalyzedLogRef{
+					{SizeBucket: "10-100 KB", ContentHashSHA256: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"},
+					{SizeBucket: "10-100 KB", ContentHashSHA256: "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"},
+					{SizeBucket: "<10 KB", ContentHashSHA256: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"},
+				},
+			},
+			{
+				SourceID: "claude_code",
+				LogRefs: []analyzer.AnalyzedLogRef{
+					{SizeBucket: ">5 MB", ContentHashSHA256: "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"},
+				},
+			},
+		},
+	}
+
+	event := FromReport(report, "single")
+	if len(event.AnalyzedLogHashes) != 3 {
+		t.Fatalf("expected three unique hashes, got %#v", event.AnalyzedLogHashes)
+	}
+	got := []string{
+		event.AnalyzedLogHashes[0].SourceID + ":" + event.AnalyzedLogHashes[0].ContentHashSHA256 + ":" + event.AnalyzedLogHashes[0].SizeBucket,
+		event.AnalyzedLogHashes[1].SourceID + ":" + event.AnalyzedLogHashes[1].ContentHashSHA256 + ":" + event.AnalyzedLogHashes[1].SizeBucket,
+		event.AnalyzedLogHashes[2].SourceID + ":" + event.AnalyzedLogHashes[2].ContentHashSHA256 + ":" + event.AnalyzedLogHashes[2].SizeBucket,
+	}
+	want := []string{
+		"claude_code:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc:>5 MB",
+		"codex:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa:<10 KB",
+		"codex:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb:10-100 KB",
+	}
+	for i := range want {
+		if got[i] != want[i] {
+			t.Fatalf("unexpected hash order at %d: got %q want %q; all=%#v", i, got[i], want[i], event.AnalyzedLogHashes)
+		}
 	}
 }
 
