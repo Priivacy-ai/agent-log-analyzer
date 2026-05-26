@@ -116,6 +116,18 @@
         <h2>Retention</h2>
         <p>Report pages are retained as private-link artifacts so users can return to them later. Aggregate analytics may be retained when they match the allowlist above. Raw logs are not retained because the public flow does not upload them.</p>
       </section>
+
+      <section class="panel command-panel command-panel-primary doc-run-cta">
+        <div class="panel-heading">
+          <div>
+            <p class="eyebrow">run locally</p>
+            <h2>Generate the sanitized report yourself.</h2>
+          </div>
+        </div>
+        <pre>npx --yes agent-analyzer@latest run</pre>
+        <p class="command-note">Analyzes supported agent logs on your machine, asks before upload, and uses the sanitized report to build a custom plugin for the waste it finds.</p>
+        <p class="trust-links"><a href="/">Start from the analyzer homepage</a></p>
+      </section>
     </main>
   </body>
 </html>

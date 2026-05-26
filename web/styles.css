@@ -77,11 +77,14 @@ body {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: 20px;
+  width: min(1440px, calc(100vw - 96px));
+  max-width: 1440px;
 }
 
 .doc-page h1,
+.doc-page .subhead,
 .doc-page .panel {
-  max-width: 860px;
+  max-width: 100%;
 }
 
 .hero {
@@ -2556,16 +2559,6 @@ pre {
   font-size: 0.9em;
 }
 
-.proof-page {
-  width: min(1440px, calc(100vw - 96px));
-  max-width: 1440px;
-}
-
-.proof-page.doc-page h1,
-.proof-page.doc-page .panel {
-  max-width: 100%;
-}
-
 .proof-page .trust-links {
   margin-bottom: 28px;
 }
@@ -2849,7 +2842,7 @@ pre {
 }
 
 @media (max-width: 900px) {
-  .proof-page {
+  .doc-page {
     width: min(100%, calc(100vw - 32px));
   }
 
