@@ -125,6 +125,10 @@ input {
   letter-spacing: 0;
 }
 
+.eyebrow a {
+  color: inherit;
+}
+
 h1 {
   margin: 0;
   max-width: 100%;
