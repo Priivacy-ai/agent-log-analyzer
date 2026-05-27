@@ -33,7 +33,7 @@ For users who do not want npm/NPX, versioned GitHub Release archives with
 There is intentionally no browser upload form. Agent logs live in hidden tool-specific directories, which are awkward for Finder/browser upload flows. The public launch path is local-first:
 
 1. `npx --yes agent-analyzer@latest run` starts the local native analyzer.
-2. The analyzer selects recent logs per supported source, currently Claude Code, Claude Desktop, Codex, OpenCode, Claude Desktop MCP, Cursor, Kiro, and Google Antigravity, targeting roughly 5 MB total per source, parses and redacts them locally, and writes `agent-analyzer-report.json`.
+2. The analyzer selects recent logs per supported source, currently Claude Code, Claude Desktop, Codex, GitHub Copilot, OpenCode, Claude Desktop MCP, Cursor, Kiro, and Google Antigravity, targeting roughly 5 MB total per source, parses and redacts them locally, and writes `agent-analyzer-report.json`.
 3. The CLI prints the upload boundary and asks for confirmation.
 4. After confirmation, it sends only the sanitized report to `POST /api/client-reports`.
 5. The private report opens at `/r/{job_id}/{report_token}` and remains available for later review.
@@ -62,7 +62,7 @@ agent-analyzer analyze --source claude_desktop --log ~/Library/Application\ Supp
 
 If neither form is supplied, the CLI auto-discovers target-sized recent logs per supported source. It aims for roughly 5 MB total per source, combines up to five small logs when that gets closer to the target, and falls back to a single huge log when only oversized sessions are available.
 
-SQLite extraction is included in automatic discovery for Cursor, Kiro, Google Antigravity, and bounded Codex diagnostic logs. The CLI opens readable stores in SQLite read-only mode, extracts only bounded known rows, and does not write database snapshots or modify source stores.
+SQLite extraction is included in automatic discovery for Cursor, Kiro, Google Antigravity, and bounded Codex diagnostic logs. GitHub Copilot discovery includes Copilot CLI session/log files and VS Code Copilot Chat session JSON. The CLI opens readable stores in SQLite read-only mode, extracts only bounded known rows, and does not write database snapshots or modify source stores.
 
 ```bash
 docker compose up --build

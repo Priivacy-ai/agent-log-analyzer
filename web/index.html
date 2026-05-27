@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Agent Analyzer | Deterministic Profiler for Agentic Coding Logs</title>
-    <meta name="description" content="Agent Analyzer is a local-first deterministic profiler for agentic coding logs from Claude Code, Claude Desktop, Codex, OpenCode, Cursor, Kiro, Claude Desktop MCP, and Google Antigravity. Find token waste with benchmark-backed recommendations and no raw transcript upload." />
+    <meta name="description" content="Agent Analyzer is a local-first deterministic profiler for agentic coding logs from Claude Code, Claude Desktop, Codex, GitHub Copilot, OpenCode, Cursor, Kiro, Claude Desktop MCP, and Google Antigravity. Find token waste with benchmark-backed recommendations and no raw transcript upload." />
     <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1" />
     <meta name="author" content="Priivacy.ai" />
     <meta name="application-name" content="Agent Analyzer" />
@@ -70,7 +70,7 @@
             "isAccessibleForFree": true,
             "description": "Local-first deterministic profiler for supported agentic coding logs that detects token waste, repeated reads, retry loops, context bloat, and tool-output overhead, then maps findings to benchmark-backed recommendations.",
             "featureList": [
-              "Local Claude Code, Claude Desktop, Codex, OpenCode, Claude Desktop MCP, Cursor, Kiro, and Google Antigravity log parsing",
+              "Local Claude Code, Claude Desktop, Codex, GitHub Copilot, OpenCode, Claude Desktop MCP, Cursor, Kiro, and Google Antigravity log parsing",
               "Sanitized report JSON upload",
               "Deterministic token-waste findings",
               "Context bloat and retry-loop detection",
@@ -154,7 +154,7 @@
                 "name": "What agent logs are supported?",
                 "acceptedAnswer": {
                   "@type": "Answer",
-                  "text": "Agent Analyzer currently auto-discovers Claude Code, Claude Desktop, Codex, OpenCode, Claude Desktop MCP, Cursor, Kiro, and Google Antigravity logs."
+                  "text": "Agent Analyzer currently auto-discovers Claude Code, Claude Desktop, Codex, GitHub Copilot, OpenCode, Claude Desktop MCP, Cursor, Kiro, and Google Antigravity logs."
                 }
               }
             ]
@@ -178,7 +178,7 @@
               <span>Kiro</span>
               <span>Antigravity</span>
             </span>
-            <span class="sr-only">Claude Code, Claude Desktop, Codex, OpenCode, Cursor, Kiro, or Antigravity</span>
+            <span class="sr-only">Claude Code, Claude Desktop, Codex, GitHub Copilot, OpenCode, Cursor, Kiro, or Antigravity</span>
             tokens?
           </h1>
           <picture class="landing-corner-image" aria-hidden="true">
@@ -187,7 +187,7 @@
           </picture>
         </div>
         <p class="subhead" itemprop="description">Run a safe local scan. Get a custom plugin built from your own coding logs.</p>
-        <p class="capacity-note">Agent Analyzer finds the exact token leaks in your recent sessions, then turns those findings into a personalized setup pack for Claude Code, Codex, OpenCode, Cursor, Kiro, Antigravity, and Claude Desktop MCP.</p>
+        <p class="capacity-note">Agent Analyzer finds the exact token leaks in your recent sessions, then turns those findings into a personalized setup pack for Claude Code, Codex, GitHub Copilot, OpenCode, Cursor, Kiro, Antigravity, and Claude Desktop MCP.</p>
         <h2 class="sr-only">What Agent Analyzer detects</h2>
         <ul class="proof" aria-label="Agent Analyzer detection capabilities">
           <li>Detect context bloat and retry loops</li>
@@ -197,7 +197,7 @@
         <h2 class="sr-only">Privacy and trust guarantees</h2>
         <ul class="trust" aria-label="Privacy and trust guarantees">
           <li>No account required</li>
-          <li>Raw logs stay local <button type="button" class="help-tip" data-tippy-content="The NPX command analyzes supported agent logs on your machine first. SQLite extraction for Cursor, Kiro, Google Antigravity, and bounded Codex diagnostic logs is read-only, bounded to known rows, and remains local. The upload step sends the generated sanitized report JSON, not raw transcript files or raw state databases." aria-label="More information">?</button></li>
+          <li>Raw logs stay local <button type="button" class="help-tip" data-tippy-content="The NPX command analyzes supported agent logs on your machine first. SQLite extraction for Cursor, Kiro, Google Antigravity, and bounded Codex diagnostic logs is read-only, bounded to known rows, and remains local. GitHub Copilot extraction reads Copilot CLI session/log files and VS Code Copilot Chat session JSON locally. The upload step sends the generated sanitized report JSON, not raw transcript files or raw state databases." aria-label="More information">?</button></li>
           <li>No secrets uploaded. <button type="button" class="help-tip" data-tippy-content="The CLI runs deterministic redaction on your computer before writing the report JSON. The hosted service receives category counts and placeholders, not the original redacted values. Redaction is best-effort; users should still review the JSON before upload." aria-label="More information">?</button></li>
         </ul>
         <p class="disclaimer">Your machine does the analysis; only the reviewed sanitized JSON report uploads.</p>

@@ -40,6 +40,7 @@ allowlists, and remediation allowlists are:
 | `claude_code` | Claude Code JSONL sessions |
 | `claude_desktop` | Claude Desktop local agent/session JSON and audit logs |
 | `codex` | Codex CLI / Codex desktop session JSONL and bounded diagnostic SQLite logs |
+| `copilot` | GitHub Copilot CLI sessions/logs and VS Code Copilot Chat sessions |
 | `opencode` | OpenCode session directories |
 | `claude_desktop_mcp` | Claude Desktop MCP logs |
 | `cursor` | Cursor agent transcripts and optional state DB rows |
@@ -98,6 +99,7 @@ Environment variables used by discovery:
 - `$XDG_CONFIG_HOME`
 - `$XDG_RUNTIME_DIR`
 - `$CODEX_HOME`
+- `$COPILOT_HOME`
 - `$KIRO_HOME`
 - `$KIRO_CHAT_LOG_FILE`
 - `$CLAUDE_CONFIG_DIR`
@@ -109,6 +111,7 @@ Source roots:
 | Claude Code | `$CLAUDE_CONFIG_DIR/projects` or `$HOME/.claude/projects` |
 | Claude Desktop | app-support `Claude/local-agent-mode-sessions`, `Claude/claude-code-sessions`, and `Claude/audit.jsonl` |
 | Codex | `$CODEX_HOME/session_index.jsonl`, `$CODEX_HOME/sessions`, `$CODEX_HOME/archived_sessions`, `$CODEX_HOME/logs*.sqlite`, or `$HOME/.codex/...` |
+| GitHub Copilot | `$COPILOT_HOME/session-state`, `$COPILOT_HOME/logs`, or `$HOME/.copilot/...`; VS Code `Code/User/workspaceStorage/*/chatSessions` and `Code/User/globalStorage/emptyWindowChatSessions` |
 | OpenCode | `$HOME/.local/share/opencode/storage/message` plus associated part files |
 | Claude Desktop MCP | macOS `$HOME/Library/Logs/Claude`; Windows `%APPDATA%/Claude/logs` |
 | Cursor JSONL | `$HOME/.cursor/projects`, plus Cursor app-support workspace/global storage roots |
@@ -131,6 +134,7 @@ accepts files using a source-specific predicate.
 Examples:
 
 - Codex accepts `.jsonl`.
+- GitHub Copilot accepts Copilot CLI `events.jsonl`, Copilot CLI `.log` files, and VS Code `chatSessions/*.json`.
 - Claude Desktop accepts `local_*.json` session files and `audit.jsonl`.
 - Claude Desktop MCP accepts `mcp.log` and `mcp-server-*.log`.
 - Cursor accepts JSONL under `agent-transcripts`.

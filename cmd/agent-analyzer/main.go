@@ -41,6 +41,7 @@ var representativeSourceOrder = []string{
 	"claude_code",
 	"claude_desktop",
 	"codex",
+	"copilot",
 	"opencode",
 	"claude_desktop_mcp",
 	"cursor",
@@ -203,6 +204,8 @@ func inferSourceFromPath(path string) string {
 		return "claude_desktop_mcp"
 	case strings.Contains(normalized, "/.codex/") || strings.Contains(base, "codex") || strings.HasPrefix(base, "rollout-"):
 		return "codex"
+	case strings.Contains(normalized, "/.copilot/") || strings.Contains(normalized, "/github.copilot") || strings.Contains(normalized, "/github/copilot") || strings.Contains(normalized, "/chatsessions/"):
+		return "copilot"
 	case strings.Contains(normalized, "/.cursor/") || strings.Contains(normalized, "/application support/cursor/") || strings.Contains(normalized, "/cursor/user/"):
 		return "cursor"
 	case strings.Contains(normalized, "/opencode/"):
@@ -497,6 +500,8 @@ func sourceLabelForID(sourceID string) string {
 	switch sourceID {
 	case "codex":
 		return "Codex"
+	case "copilot":
+		return "GitHub Copilot"
 	case "cursor":
 		return "Cursor"
 	case "kiro_ide":
@@ -1052,6 +1057,12 @@ func logSourceDefinitions() []logSourceDefinition {
 			accept: acceptCodexRollout,
 		},
 		{
+			id:     "copilot",
+			label:  "GitHub Copilot",
+			roots:  copilotLogRoots(),
+			accept: acceptCopilotLog,
+		},
+		{
 			id:     "claude_desktop",
 			label:  "Claude Desktop",
 			roots:  claudeDesktopSessionRoots(),
@@ -1170,6 +1181,11 @@ func candidateReadFunc(sourceID, path string) func() ([]byte, error) {
 			}
 		}
 	}
+	if sourceID == "copilot" && strings.EqualFold(filepath.Ext(path), ".json") {
+		return func() ([]byte, error) {
+			return readCopilotJSONSession(path)
+		}
+	}
 	return nil
 }
 
@@ -1241,7 +1257,7 @@ func sanitizeMCPServerFromClaudeToolKey(key string) string {
 }
 
 func noSupportedLogsError() error {
-	return errors.New("no supported agent logs found; checked Claude Code, Claude Desktop, Codex, OpenCode, Claude Desktop MCP, Cursor, Kiro, and Google Antigravity")
+	return errors.New("no supported agent logs found; checked Claude Code, Claude Desktop, Codex, GitHub Copilot, OpenCode, Claude Desktop MCP, Cursor, Kiro, and Google Antigravity")
 }
 
 func acceptExtension(ext string) func(string, os.FileInfo) bool {
@@ -1252,6 +1268,23 @@ func acceptExtension(ext string) func(string, os.FileInfo) bool {
 
 func acceptCodexRollout(path string, _ os.FileInfo) bool {
 	return strings.EqualFold(filepath.Ext(path), ".jsonl")
+}
+
+func acceptCopilotLog(path string, _ os.FileInfo) bool {
+	normalized := strings.ToLower(filepath.ToSlash(path))
+	base := strings.ToLower(filepath.Base(path))
+	switch {
+	case strings.EqualFold(base, "events.jsonl") && strings.Contains(normalized, "/session-state/"):
+		return true
+	case strings.EqualFold(filepath.Ext(base), ".log") && strings.Contains(normalized, "/logs/"):
+		return true
+	case strings.EqualFold(filepath.Ext(base), ".json") && strings.Contains(normalized, "/chatsessions/"):
+		return true
+	case strings.EqualFold(filepath.Ext(base), ".json") && strings.Contains(normalized, "/emptywindowchatsessions/"):
+		return true
+	default:
+		return false
+	}
 }
 
 func acceptClaudeDesktopSession(path string, _ os.FileInfo) bool {
@@ -1318,6 +1351,291 @@ func codexHomeDir() string {
 		return root
 	}
 	return filepath.Join(homeDir(), ".codex")
+}
+
+func copilotHomeDir() string {
+	if root := os.Getenv("COPILOT_HOME"); root != "" {
+		return root
+	}
+	return filepath.Join(homeDir(), ".copilot")
+}
+
+func copilotLogRoots() []string {
+	home := copilotHomeDir()
+	roots := []string{
+		filepath.Join(home, "session-state"),
+		filepath.Join(home, "logs"),
+	}
+	for _, app := range []string{"Code", "Code - Insiders"} {
+		root := appSupportDir(app)
+		roots = append(roots,
+			filepath.Join(root, "User", "workspaceStorage"),
+			filepath.Join(root, "User", "globalStorage", "emptyWindowChatSessions"),
+		)
+	}
+	return roots
+}
+
+func readCopilotJSONSession(path string) ([]byte, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+	return copilotJSONSessionAsJSONL(data)
+}
+
+func copilotJSONSessionAsJSONL(data []byte) ([]byte, error) {
+	var root any
+	if err := json.Unmarshal(data, &root); err != nil {
+		return data, nil
+	}
+	var output bytes.Buffer
+	appendCopilotRows(&output, root)
+	if output.Len() == 0 {
+		compact, err := json.Marshal(root)
+		if err != nil {
+			return data, nil
+		}
+		output.Write(compact)
+		output.WriteByte('\n')
+	}
+	return output.Bytes(), nil
+}
+
+func appendCopilotRows(output *bytes.Buffer, root any) {
+	if root == nil {
+		return
+	}
+	if obj, ok := root.(map[string]any); ok {
+		if title := firstPresentString(obj, "customTitle", "title"); title != "" {
+			writeCopilotRow(output, map[string]any{"type": "message", "role": "system", "content": title})
+		}
+		if requests, ok := firstPresentValue(obj, "requests").([]any); ok {
+			for _, request := range requests {
+				appendCopilotRequestRows(output, request)
+			}
+			return
+		}
+	}
+	appendCopilotRequestRows(output, root)
+}
+
+func appendCopilotRequestRows(output *bytes.Buffer, request any) {
+	if obj, ok := request.(map[string]any); ok {
+		if content := copilotText(firstPresentValue(obj, "message", "prompt", "request", "input")); content != "" {
+			writeCopilotRow(output, map[string]any{"type": "message", "role": "user", "content": content})
+		}
+		if content := copilotText(firstPresentValue(obj, "response", "responses", "answer")); content != "" {
+			writeCopilotRow(output, map[string]any{"type": "message", "role": "assistant", "content": content})
+		}
+		if usage := firstJSONMapByKey(obj, "usage"); len(usage) > 0 {
+			row := map[string]any{"type": "token_count"}
+			for _, key := range []string{"input_tokens", "prompt_tokens", "cached_input_tokens", "cache_read_input_tokens", "cache_creation_input_tokens", "output_tokens", "completion_tokens"} {
+				if value := firstJSONIntByKey(usage, key); value != 0 {
+					row[key] = value
+				}
+			}
+			if len(row) > 1 {
+				writeCopilotRow(output, row)
+			}
+		}
+	}
+	appendCopilotToolRows(output, request)
+}
+
+func appendCopilotToolRows(output *bytes.Buffer, value any) {
+	var walk func(any)
+	walk = func(item any) {
+		switch typed := item.(type) {
+		case []any:
+			for _, child := range typed {
+				walk(child)
+			}
+		case map[string]any:
+			if row, ok := copilotToolRow(typed); ok {
+				writeCopilotRow(output, row)
+			}
+			for _, child := range typed {
+				walk(child)
+			}
+		}
+	}
+	walk(value)
+}
+
+func copilotToolRow(obj map[string]any) (map[string]any, bool) {
+	tool := firstPresentString(obj, "toolName", "tool_name", "tool", "toolId", "tool_id")
+	if tool == "" {
+		return nil, false
+	}
+	eventText := strings.ToLower(strings.Join([]string{
+		firstPresentString(obj, "type", "kind", "event", "phase", "status"),
+		tool,
+	}, " "))
+	if !strings.Contains(eventText, "tool") &&
+		!strings.Contains(eventText, "function") &&
+		!strings.Contains(eventText, "terminal") &&
+		firstPresentValue(obj, "arguments", "args", "input", "command", "output", "result") == nil {
+		return nil, false
+	}
+	row := map[string]any{
+		"type": "tool_call",
+		"tool": tool,
+	}
+	if id := firstPresentString(obj, "callId", "call_id", "id", "toolCallId", "tool_call_id"); id != "" {
+		row["call_id"] = id
+	}
+	if output := firstPresentValue(obj, "output", "result", "tool_output"); output != nil || strings.Contains(eventText, "result") || strings.Contains(eventText, "output") {
+		row["type"] = "tool_result"
+		if output != nil {
+			row["output"] = output
+		}
+		return row, true
+	}
+	if args := firstPresentValue(obj, "arguments", "args", "input", "command"); args != nil {
+		row["arguments"] = args
+	}
+	return row, true
+}
+
+func copilotText(value any) string {
+	switch typed := value.(type) {
+	case nil:
+		return ""
+	case string:
+		return strings.TrimSpace(typed)
+	case []any:
+		var parts []string
+		for _, item := range typed {
+			if text := copilotText(item); text != "" {
+				parts = append(parts, text)
+			}
+		}
+		return strings.Join(parts, "\n")
+	case map[string]any:
+		for _, key := range []string{"text", "content", "value", "message"} {
+			if text := copilotText(typed[key]); text != "" {
+				return text
+			}
+		}
+	}
+	return ""
+}
+
+func writeCopilotRow(output *bytes.Buffer, row map[string]any) {
+	encoded, err := json.Marshal(row)
+	if err != nil || len(encoded) == 0 {
+		return
+	}
+	output.Write(encoded)
+	output.WriteByte('\n')
+}
+
+func firstPresentValue(value map[string]any, keys ...string) any {
+	for _, key := range keys {
+		if item, ok := value[key]; ok {
+			return item
+		}
+	}
+	return nil
+}
+
+func firstPresentString(value map[string]any, keys ...string) string {
+	for _, key := range keys {
+		if text, ok := value[key].(string); ok && strings.TrimSpace(text) != "" {
+			return strings.TrimSpace(text)
+		}
+	}
+	return ""
+}
+
+func firstJSONMapByKey(value any, target string) map[string]any {
+	target = strings.ToLower(target)
+	var found map[string]any
+	var walk func(any)
+	walk = func(v any) {
+		if found != nil {
+			return
+		}
+		switch typed := v.(type) {
+		case []any:
+			for _, item := range typed {
+				walk(item)
+			}
+		case map[string]any:
+			keys := make([]string, 0, len(typed))
+			for key := range typed {
+				keys = append(keys, key)
+			}
+			sort.Strings(keys)
+			for _, key := range keys {
+				item := typed[key]
+				if strings.ToLower(key) == target {
+					if mapped, ok := item.(map[string]any); ok {
+						found = mapped
+						return
+					}
+				}
+				walk(item)
+			}
+		}
+	}
+	walk(value)
+	if found == nil {
+		return map[string]any{}
+	}
+	return found
+}
+
+func firstJSONIntByKey(value any, target string) int {
+	target = strings.ToLower(target)
+	var found int
+	var walk func(any)
+	walk = func(v any) {
+		if found != 0 {
+			return
+		}
+		switch typed := v.(type) {
+		case []any:
+			for _, item := range typed {
+				walk(item)
+			}
+		case map[string]any:
+			keys := make([]string, 0, len(typed))
+			for key := range typed {
+				keys = append(keys, key)
+			}
+			sort.Strings(keys)
+			for _, key := range keys {
+				item := typed[key]
+				if strings.ToLower(key) == target {
+					found = intFromAny(item)
+					if found != 0 {
+						return
+					}
+				}
+				walk(item)
+			}
+		}
+	}
+	walk(value)
+	return found
+}
+
+func intFromAny(value any) int {
+	switch typed := value.(type) {
+	case int:
+		return typed
+	case int64:
+		return int(typed)
+	case float64:
+		return int(typed)
+	case json.Number:
+		parsed, _ := typed.Int64()
+		return int(parsed)
+	default:
+		return 0
+	}
 }
 
 func recentCodexLogs(limit int, maxBytes int64, minBytes int64) ([]logCandidate, error) {
@@ -2590,7 +2908,7 @@ func usage() {
 	fmt.Fprintln(os.Stderr, "  run            analyze locally, ask for upload confirmation, upload sanitized JSON, and open the report.")
 	fmt.Fprintln(os.Stderr, "  <log-path>     path to a supported JSON/JSONL log; mutually exclusive with --log.")
 	fmt.Fprintf(os.Stderr, "                 if neither is supplied, recent logs per source are selected to target about %s total.\n", formatBytesForHelp(targetAutoLogBytes))
-	fmt.Fprintln(os.Stderr, "                 currently auto-discovers Claude Code, Claude Desktop, Codex, OpenCode, Claude Desktop MCP, Cursor, Kiro, and Google Antigravity.")
+	fmt.Fprintln(os.Stderr, "                 currently auto-discovers Claude Code, Claude Desktop, Codex, GitHub Copilot, OpenCode, Claude Desktop MCP, Cursor, Kiro, and Google Antigravity.")
 	fmt.Fprintln(os.Stderr, "  --log <path>   explicit log path; mutually exclusive with a positional <log-path>.")
 	fmt.Fprintln(os.Stderr, "  --source <id>  source ID for explicit --log or positional analysis; inferred from path when omitted.")
 	fmt.Fprintln(os.Stderr, "  --out <path>   output path for the sanitized report JSON (default: ./agent-analyzer-report.json).")

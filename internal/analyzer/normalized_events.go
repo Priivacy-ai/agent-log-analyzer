@@ -366,7 +366,7 @@ func normalizeAntigravityJSONObject(obj map[string]any, base normalizedEvent) []
 
 func normalizeRawEventLine(source string, raw []byte) []byte {
 	switch source {
-	case "claude_desktop", "claude_desktop_mcp", "kiro_cli", "kiro_ide":
+	case "claude_desktop", "claude_desktop_mcp", "copilot", "kiro_cli", "kiro_ide":
 		trimmed := bytes.TrimSpace(raw)
 		if len(trimmed) == 0 || trimmed[0] == '{' {
 			return raw

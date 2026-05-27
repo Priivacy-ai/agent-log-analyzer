@@ -45,6 +45,43 @@ func writeMeaningfulLog(t *testing.T, path string) {
 	writeLogContent(t, path, builder.String())
 }
 
+func writeCopilotChatSession(t *testing.T, path string, minBytes int) {
+	t.Helper()
+	padding := ""
+	for len(padding) < minBytes {
+		padding += " context"
+	}
+	content := `{
+  "sessionId": "session-secret",
+  "customTitle": "GitHub Copilot chat",
+  "requests": [
+    {
+      "message": {"text": "fix private@example.com ` + padding + `"},
+      "response": [{"value": "I will inspect the failing test."}],
+      "usage": {"input_tokens": 1200, "cached_input_tokens": 200, "output_tokens": 80}
+    },
+    {
+      "message": "run tests",
+      "toolInvocation": {
+        "kind": "toolInvocation",
+        "toolName": "terminal",
+        "callId": "call-secret",
+        "input": {"command": "cat /Users/private/repo/.env"}
+      },
+      "response": [
+        {
+          "kind": "toolInvocationResult",
+          "toolName": "terminal",
+          "callId": "call-secret",
+          "output": "oauth-refresh-token"
+        }
+      ]
+    }
+  ]
+}`
+	writeLogContent(t, path, content)
+}
+
 func writeLogContent(t *testing.T, path string, content string) {
 	t.Helper()
 	if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
@@ -102,6 +139,7 @@ func isolatedDiscoveryHome(t *testing.T) string {
 	t.Setenv("TMPDIR", filepath.Join(home, "tmp"))
 	t.Setenv("CLAUDE_CONFIG_DIR", filepath.Join(home, ".claude"))
 	t.Setenv("CODEX_HOME", filepath.Join(home, ".codex"))
+	t.Setenv("COPILOT_HOME", filepath.Join(home, ".copilot"))
 	t.Setenv("KIRO_HOME", filepath.Join(home, ".kiro"))
 	t.Setenv("KIRO_CHAT_LOG_FILE", "")
 	for _, dir := range []string{os.Getenv("TMPDIR"), os.Getenv("XDG_RUNTIME_DIR"), os.Getenv("XDG_CONFIG_HOME"), os.Getenv("APPDATA")} {
@@ -153,6 +191,15 @@ func assertReportDoesNotContain(t *testing.T, report analyzer.Report, forbidden 
 			t.Fatalf("report leaked %q in %s", value, serialized)
 		}
 	}
+}
+
+func containsString(values []string, want string) bool {
+	for _, value := range values {
+		if value == want {
+			return true
+		}
+	}
+	return false
 }
 
 func TestAnalyze_NoArgs_UsesDefaultDiscovery(t *testing.T) {
@@ -404,6 +451,7 @@ func TestRecentSupportedLogs_DiscoversDesktopAndAgentSources(t *testing.T) {
 	writeLogContent(t, filepath.Join(appSupportDir("Claude"), "local-agent-mode-sessions", "org", "workspace", "local_session.json"), strings.Repeat(`{"sessionId":"session-secret","initialMessage":"fix private@example.com","enabledMcpTools":{"local:Claude Code:Bash":true},"history":[{"hook_event_name":"PreToolUse","tool_name":"Bash","tool_input":{"command":"go test ./..."}}]}`+"\n", 80))
 	writeMeaningfulLog(t, filepath.Join(home, ".cursor", "projects", "repo", "agent-transcripts", "session", "transcript.jsonl"))
 	writeMeaningfulLog(t, filepath.Join(home, ".gemini", "antigravity-ide", "brain", "task", ".system_generated", "logs", "transcript.jsonl"))
+	writeCopilotChatSession(t, filepath.Join(appSupportDir("Code"), "User", "workspaceStorage", "workspace-a", "chatSessions", "copilot-session.json"), freeAutoMinLogBytes+1024)
 
 	kiroCLI := filepath.Join(home, "kiro-log", "kiro-chat.log")
 	t.Setenv("KIRO_CHAT_LOG_FILE", kiroCLI)
@@ -428,7 +476,7 @@ func TestRecentSupportedLogs_DiscoversDesktopAndAgentSources(t *testing.T) {
 	for _, candidate := range candidates {
 		seen[candidate.SourceID] = true
 	}
-	for _, want := range []string{"claude_code", "claude_desktop", "codex", "cursor", "kiro_cli", "kiro_ide", "antigravity"} {
+	for _, want := range []string{"claude_code", "claude_desktop", "codex", "copilot", "cursor", "kiro_cli", "kiro_ide", "antigravity"} {
 		if !seen[want] {
 			t.Fatalf("missing source %s from candidates %#v", want, candidates)
 		}
@@ -438,6 +486,61 @@ func TestRecentSupportedLogs_DiscoversDesktopAndAgentSources(t *testing.T) {
 			t.Fatalf("missing Claude Desktop MCP candidate from %#v", candidates)
 		}
 	}
+}
+
+func TestRecentCopilotLogs_DiscoversCLIAndVSCodeSessions(t *testing.T) {
+	home := isolatedDiscoveryHome(t)
+	cliEvents := filepath.Join(home, ".copilot", "session-state", "session-1", "events.jsonl")
+	writeLogContent(t, cliEvents, `{"type":"message","content":"GitHub Copilot CLI session"}`+"\n"+strings.Repeat(`{"type":"tool_call","tool":"terminal","arguments":{"command":"go test ./..."}}`+"\n", 80))
+	vscodeSession := filepath.Join(appSupportDir("Code"), "User", "workspaceStorage", "workspace-a", "chatSessions", "copilot-session.json")
+	writeCopilotChatSession(t, vscodeSession, freeAutoMinLogBytes+1024)
+
+	candidates, err := recentSupportedLogs(2)
+	if err != nil {
+		t.Fatalf("recentSupportedLogs: %v", err)
+	}
+	var copilotCandidates []logCandidate
+	for _, candidate := range candidates {
+		if candidate.SourceID == "copilot" {
+			copilotCandidates = append(copilotCandidates, candidate)
+		}
+	}
+	if len(copilotCandidates) != 2 {
+		t.Fatalf("expected Copilot CLI and VS Code candidates, got %#v", candidates)
+	}
+	for _, candidate := range copilotCandidates {
+		data, err := candidate.readBytes()
+		if err != nil {
+			t.Fatalf("read Copilot candidate %s: %v", candidate.Display, err)
+		}
+		report, err := analyzer.AnalyzeForSource("copilot-test", "copilot", data)
+		if err != nil {
+			t.Fatalf("AnalyzeForSource: %v", err)
+		}
+		if !containsString(report.Ecosystem.CodingAgents, "copilot") {
+			t.Fatalf("expected Copilot ecosystem detection, got %#v", report.Ecosystem.CodingAgents)
+		}
+	}
+}
+
+func TestCopilotVSCodeSessionReader_NormalizesToolsAndDoesNotLeakReportData(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "copilot-session.json")
+	writeCopilotChatSession(t, path, 0)
+	data, err := readCopilotJSONSession(path)
+	if err != nil {
+		t.Fatalf("readCopilotJSONSession: %v", err)
+	}
+	if !strings.Contains(string(data), `"type":"tool_call"`) || !strings.Contains(string(data), `"type":"tool_result"`) {
+		t.Fatalf("expected Copilot tool rows, got %s", data)
+	}
+	report, err := analyzer.AnalyzeForSource("copilot-session-test", "copilot", data)
+	if err != nil {
+		t.Fatalf("AnalyzeForSource: %v", err)
+	}
+	if report.AnalysisSignals.ToolCallCount == 0 || report.AnalysisSignals.ToolResultCount == 0 {
+		t.Fatalf("expected Copilot tool signals, got %#v", report.AnalysisSignals)
+	}
+	assertReportDoesNotContain(t, report, "private@example.com", "/Users/private/repo", "oauth-refresh-token", "session-secret")
 }
 
 func TestCrossPlatformSourceRootHelpers(t *testing.T) {

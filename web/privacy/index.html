@@ -110,7 +110,7 @@
         <h2>What We Do Not Receive</h2>
         <ul>
           <li>Raw agent logs in the public launch flow.</li>
-          <li>Raw SQLite state stores. Cursor, Kiro, Google Antigravity, and bounded Codex diagnostic extraction is read-only, limited to known rows, and analyzed locally without writing database snapshots.</li>
+          <li>Raw SQLite state stores and local session stores. Cursor, Kiro, Google Antigravity, and bounded Codex diagnostic extraction is read-only, limited to known rows, and analyzed locally without writing database snapshots. GitHub Copilot extraction reads Copilot CLI session/log files and VS Code Copilot Chat session JSON locally.</li>
           <li>Prompt text, tool output, file contents, command arguments, secret values, repo names, usernames, hostnames, or full file paths.</li>
           <li>Unknown private tool names unless a future explicit opt-in path is added.</li>
         </ul>

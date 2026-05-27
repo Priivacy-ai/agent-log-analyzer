@@ -6,7 +6,7 @@
   {"id":"cline","patterns":["\\bCline\\b","(?i)\\.cline/"]},
   {"id":"codex","patterns":["(?i)\\bCodex CLI\\b","(?i)codex"]},
   {"id":"continue","patterns":["(?i)\\bcontinue\\.dev\\b","\\bContinue (?:IDE|extension|agent)\\b","(?i)\\.continue/"]},
-  {"id":"copilot","patterns":["(?i)\\bGitHub Copilot\\b"]},
+  {"id":"copilot","patterns":["(?i)\\bGitHub Copilot\\b","(?i)\\.copilot/","(?i)github\\.copilot"]},
   {"id":"cursor","patterns":["\\bCursor (?:IDE|rules|agent)\\b","(?i)\\.cursor/","(?i)cursor\\.rules"]},
   {"id":"antigravity","patterns":["(?i)\\bGoogle Antigravity\\b","(?i)\\bAntigravity IDE\\b","(?i)\\.gemini[/\\\\]antigravity"]},
   {"id":"gemini_cli","patterns":["(?i)\\bGemini CLI\\b"]},

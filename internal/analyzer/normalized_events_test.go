@@ -173,7 +173,7 @@ func TestAnalyzeForSource_ClaudeDesktopMCPOnlyCountsToolResultsForToolRequests(t
 }
 
 func TestNewDesktopSourceIDsAreRegisteredCodingAgents(t *testing.T) {
-	for _, id := range []string{"claude_desktop", "claude_desktop_mcp", "codex", "cursor", "kiro_cli", "kiro_ide", "antigravity"} {
+	for _, id := range []string{"claude_desktop", "claude_desktop_mcp", "codex", "copilot", "cursor", "kiro_cli", "kiro_ide", "antigravity"} {
 		if !ValidEcosystemID("coding_agent", id) {
 			t.Fatalf("coding agent source ID %q is not registered", id)
 		}
