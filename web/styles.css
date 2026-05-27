@@ -2732,6 +2732,34 @@ pre {
   overflow-wrap: anywhere;
 }
 
+.benchmark-comparison-table th,
+.benchmark-comparison-table td {
+  white-space: normal !important;
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+
+.benchmark-comparison-table th:nth-child(1),
+.benchmark-comparison-table td:nth-child(1) {
+  width: 16%;
+}
+
+.benchmark-comparison-table th:nth-child(2),
+.benchmark-comparison-table td:nth-child(2),
+.benchmark-comparison-table th:nth-child(3),
+.benchmark-comparison-table td:nth-child(3),
+.benchmark-comparison-table th:nth-child(5),
+.benchmark-comparison-table td:nth-child(5),
+.benchmark-comparison-table th:nth-child(6),
+.benchmark-comparison-table td:nth-child(6) {
+  width: 18%;
+}
+
+.benchmark-comparison-table th:nth-child(4),
+.benchmark-comparison-table td:nth-child(4) {
+  width: 12%;
+}
+
 .results-table th:nth-child(3),
 .results-table td:nth-child(3),
 .results-table th:nth-child(4),
@@ -3029,6 +3057,30 @@ pre {
 
   .controls-matrix td:nth-child(8)::before {
     content: "Verdict";
+  }
+
+  .benchmark-comparison-table td:nth-child(1)::before {
+    content: "Source";
+  }
+
+  .benchmark-comparison-table td:nth-child(2)::before {
+    content: "Methodology";
+  }
+
+  .benchmark-comparison-table td:nth-child(3)::before {
+    content: "Reported result";
+  }
+
+  .benchmark-comparison-table td:nth-child(4)::before {
+    content: "Token category";
+  }
+
+  .benchmark-comparison-table td:nth-child(5)::before {
+    content: "What it proves";
+  }
+
+  .benchmark-comparison-table td:nth-child(6)::before {
+    content: "How we use it";
   }
 }
 
