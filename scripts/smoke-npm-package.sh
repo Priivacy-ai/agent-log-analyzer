@@ -26,4 +26,18 @@ cat >"$tmpdir/sample.jsonl" <<'JSONL'
 JSONL
 
 node npm/bin/agent-analyzer.js analyze --log "$tmpdir/sample.jsonl" --out "$tmpdir/report.json" >/dev/null
-node -e 'const fs=require("node:fs"); const report=JSON.parse(fs.readFileSync(process.argv[1], "utf8")); if (!report.security_receipt || report.security_receipt.raw_transcript_sent_to_llm) process.exit(1);' "$tmpdir/report.json"
+node -e '
+const fs = require("node:fs");
+const crypto = require("node:crypto");
+const logPath = process.argv[1];
+const reportPath = process.argv[2];
+const log = fs.readFileSync(logPath);
+const report = JSON.parse(fs.readFileSync(reportPath, "utf8"));
+if (!report.security_receipt || report.security_receipt.raw_transcript_sent_to_llm) process.exit(1);
+const want = crypto.createHash("sha256").update(log).digest("hex");
+const got = report.source_reports?.[0]?.log_refs?.[0]?.content_hash_sha256;
+if (got !== want) {
+  console.error(`expected content_hash_sha256 ${want}, got ${got || "<missing>"}`);
+  process.exit(1);
+}
+' "$tmpdir/sample.jsonl" "$tmpdir/report.json"
