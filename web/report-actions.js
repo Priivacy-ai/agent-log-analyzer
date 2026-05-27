@@ -21,6 +21,7 @@
     const original = button.textContent;
     try {
       await copyText(button.dataset.copy || "");
+      trackCTACopy(button.dataset.analyticsCtaId);
       button.textContent = "Copied";
       setTimeout(function () {
         button.textContent = original;
@@ -32,4 +33,13 @@
       }, 1600);
     }
   });
+
+  function trackCTACopy(id) {
+    if (!id) return;
+    const path = "/api/analytics/cta-copy/" + encodeURIComponent(id);
+    if (navigator.sendBeacon) {
+      if (navigator.sendBeacon(path)) return;
+    }
+    fetch(path, { method: "POST", keepalive: true }).catch(function () {});
+  }
 })();

@@ -210,7 +210,7 @@
               <p class="eyebrow">start here</p>
               <h2>Run the safe local scan</h2>
             </div>
-            <button id="copy-prompt" class="cta-copy-button" data-copy-prompt type="button">Copy command</button>
+            <button id="copy-prompt" class="cta-copy-button" data-copy-prompt data-analytics-cta-id="npx_landing_hero" type="button">Copy command</button>
           </div>
           <pre id="claude-prompt" data-run-command>npx --yes agent-analyzer@latest run</pre>
           <p class="command-note">Read-only local scan: no hooks, settings changes, or repo edits. It asks before uploading only the sanitized report JSON, then uses that report to build your personalized plugin. <button type="button" class="help-tip" data-tippy-content="This command uses the published npm package. It discovers supported local agent logs, parses and redacts locally, writes a reviewable report file, asks for confirmation, then uploads only that report JSON. NPX does not install Agent Analyzer globally." aria-label="More information">?</button></p>
@@ -318,7 +318,7 @@
               <p class="eyebrow">copy / paste</p>
               <h2>Find your leaks. Download your plugin.</h2>
             </div>
-            <button class="cta-copy-button" data-copy-prompt type="button">Copy NPX Command</button>
+            <button class="cta-copy-button" data-copy-prompt data-analytics-cta-id="npx_landing_final" type="button">Copy NPX Command</button>
           </div>
           <pre data-run-command>npx --yes agent-analyzer@latest run</pre>
           <p class="command-note">Runs on your machine first, asks before upload, sends only sanitized report JSON, and builds a plugin from your detected token leaks. <button type="button" class="help-tip" data-tippy-content="This command uses the published npm package. It discovers supported local agent logs, parses and redacts locally, writes a reviewable report file, asks for confirmation, then uploads only that report JSON." aria-label="More information">?</button></p>

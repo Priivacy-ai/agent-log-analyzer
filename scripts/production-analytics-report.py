@@ -276,12 +276,16 @@ def summarize_usage(events: list[dict[str, Any]]) -> dict[str, Any]:
     by_referrer = collections.Counter()
     by_utm_source = collections.Counter()
     by_auth_surface = collections.Counter()
+    by_cta_copy = collections.Counter()
     client_hashes: set[str] = set()
     bot_requests = 0
 
     for event in events:
+        path = event.get("path") or "unknown"
         by_day[iso_date(event.get("timestamp"))] += 1
-        by_path[event.get("path") or "unknown"] += 1
+        by_path[path] += 1
+        if path.startswith("/api/analytics/cta-copy/"):
+            by_cta_copy[path.rsplit("/", 1)[-1] or "unknown"] += 1
         status = int(event.get("status") or 0)
         by_status[str(status or "unknown")] += 1
         if status >= 500:
@@ -321,6 +325,7 @@ def summarize_usage(events: list[dict[str, Any]]) -> dict[str, Any]:
         "auth_surfaces": counter_top(by_auth_surface, 8),
         "top_referrers": [(k, v) for k, v in counter_top(by_referrer, 10) if k != "unknown"],
         "utm_sources": counter_top(by_utm_source, 10),
+        "cta_copies": counter_top(by_cta_copy, 12),
         "browsers": counter_top(by_browser, 8),
         "operating_systems": counter_top(by_os, 8),
         "devices": counter_top(by_device, 8),
@@ -826,6 +831,7 @@ def render_markdown(report: dict[str, Any]) -> str:
             f"- Total: `{website['total']:,}`; success `{website['success']:,}`, redirects `{website['redirect']:,}`, client errors `{website['client_error']:,}`, server errors `{website['server_error']:,}`.",
             f"- Unique client hashes: `{website['unique_client_hashes']:,}`; bot requests: `{website['bot_requests']:,}`.",
             f"- Top paths: {markdown_pairs(website['top_paths'])}.",
+            f"- CTA copies: {markdown_pairs(website['cta_copies'])}.",
             f"- Referrers: {markdown_pairs(website['top_referrers'])}.",
             f"- Browsers: {markdown_pairs(website['browsers'])}.",
             f"- Regions: {markdown_pairs(website['regions'])}.",

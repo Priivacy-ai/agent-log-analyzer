@@ -152,6 +152,7 @@ func TestSanitizePathRedactsDynamicIDs(t *testing.T) {
 		"/api/public-reports/job-1234567890/token-secret/download.zip",
 		"/api/public-artifacts/job-1234567890/token-secret/plugin.zip",
 		"/api/report-deliveries",
+		"/api/analytics/cta-copy/not-allowed-secret",
 		"/api/jobs/job-1234567890",
 		"/r/job-1234567890/token-secret",
 	} {
@@ -159,6 +160,32 @@ func TestSanitizePathRedactsDynamicIDs(t *testing.T) {
 		if strings.Contains(got, "job-1234567890") || strings.Contains(got, "token-secret") {
 			t.Fatalf("sanitizePath leaked job id for %q: %q", path, got)
 		}
+	}
+	if got := sanitizePath("/api/analytics/cta-copy/npx_landing_hero"); got != "/api/analytics/cta-copy/npx_landing_hero" {
+		t.Fatalf("expected known cta path to remain distinct, got %q", got)
+	}
+	if got := sanitizePath("/api/analytics/cta-copy/private-value"); got != "/api/analytics/cta-copy/:id" {
+		t.Fatalf("expected unknown cta path to be collapsed, got %q", got)
+	}
+}
+
+func TestCTACopyAnalyticsHandlerAllowsOnlyKnownIDs(t *testing.T) {
+	handler := ctaCopyAnalyticsHandler()
+
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodPost, "/api/analytics/cta-copy/npx_landing_hero", nil)
+	req.SetPathValue("id", "npx_landing_hero")
+	handler.ServeHTTP(rec, req)
+	if rec.Code != http.StatusNoContent {
+		t.Fatalf("expected 204 for known cta, got %d: %s", rec.Code, rec.Body.String())
+	}
+
+	rec = httptest.NewRecorder()
+	req = httptest.NewRequest(http.MethodPost, "/api/analytics/cta-copy/not-allowed", nil)
+	req.SetPathValue("id", "not-allowed")
+	handler.ServeHTTP(rec, req)
+	if rec.Code != http.StatusNotFound {
+		t.Fatalf("expected 404 for unknown cta, got %d: %s", rec.Code, rec.Body.String())
 	}
 }
 

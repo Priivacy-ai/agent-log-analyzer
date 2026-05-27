@@ -72,6 +72,7 @@ func buildMux(store app.APIStore) http.Handler {
 	mux.HandleFunc("POST /api/paid-client-reports", createPaidClientReportHandler(store, reportTTL()))
 	mux.HandleFunc("POST /api/email-unlocks", createEmailUnlockHandler(store, emailSender))
 	mux.HandleFunc("POST /api/report-deliveries", createReportDeliveryHandler(store, emailSender))
+	mux.HandleFunc("POST /api/analytics/cta-copy/{id}", ctaCopyAnalyticsHandler())
 	mux.HandleFunc("GET /email/confirm/{id}/{token}", confirmEmailUnlockHandler(store, emailSender))
 	mux.HandleFunc("POST /api/full-scan-client-reports", createFullScanClientReportHandler(store, emailSender, reportTTL()))
 	mux.HandleFunc("PUT /api/uploads/{id}", tokenUploadHandler(store))
@@ -673,6 +674,12 @@ func sanitizePath(path string) string {
 	if strings.HasPrefix(path, "/api/report-deliveries") {
 		return "/api/report-deliveries"
 	}
+	if strings.HasPrefix(path, "/api/analytics/cta-copy/") {
+		if knownCTACopyID(strings.TrimPrefix(path, "/api/analytics/cta-copy/")) {
+			return path
+		}
+		return "/api/analytics/cta-copy/:id"
+	}
 	if strings.HasPrefix(path, "/api/full-scan-client-reports") {
 		return "/api/full-scan-client-reports"
 	}
@@ -689,6 +696,32 @@ func sanitizePath(path string) string {
 		return "/r/:id/:token"
 	}
 	return path
+}
+
+func ctaCopyAnalyticsHandler() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if !knownCTACopyID(r.PathValue("id")) {
+			writeError(w, http.StatusNotFound, "unknown cta")
+			return
+		}
+		w.WriteHeader(http.StatusNoContent)
+	}
+}
+
+func knownCTACopyID(id string) bool {
+	switch id {
+	case "npx_landing_hero",
+		"npx_landing_final",
+		"npx_privacy",
+		"npx_security",
+		"npx_proof_index",
+		"npx_proof_methodology",
+		"npx_proof_results",
+		"npx_proof_benchmark_comparison":
+		return true
+	default:
+		return false
+	}
 }
 
 func writeJSON(w http.ResponseWriter, status int, value any) {

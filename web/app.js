@@ -1779,6 +1779,7 @@ async function copyText(text, button) {
   setTimeout(() => {
     button.textContent = previous;
   }, 1200);
+  trackCTACopy(button?.dataset?.analyticsCtaId);
 }
 
 function copyTextFallback(text) {
@@ -1791,6 +1792,15 @@ function copyTextFallback(text) {
   field.select();
   document.execCommand("copy");
   field.remove();
+}
+
+function trackCTACopy(id) {
+  if (!id) return;
+  const path = `/api/analytics/cta-copy/${encodeURIComponent(id)}`;
+  if (navigator.sendBeacon) {
+    if (navigator.sendBeacon(path)) return;
+  }
+  fetch(path, { method: "POST", keepalive: true }).catch(() => {});
 }
 
 function sleep(ms) {
