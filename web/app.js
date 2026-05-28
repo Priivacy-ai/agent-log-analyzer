@@ -921,7 +921,7 @@ const TOOL_PURPOSE = {
   claude_code_hooks_mastery: "Claude Code Hooks Mastery is a reference set for deterministic hooks that can enforce session hygiene.",
   rtk: "RTK is a high-risk shell-output reducer candidate. Only consider the linked rtk-ai/rtk project, not unrelated packages with the same name.",
   semble: "Semble earned a scoped retrieval recommendation in our 3x runs when path-limited search replaced broad repeated file reads.",
-  squeez: "Squeez earned a scoped shell/log compression recommendation; use it explicitly for noisy command output, not as a general reasoning-token reducer.",
+  squeez: "Squeez is not recommended: it conflicts with Spec Kitty workflows despite a positive old shell/log compression benchmark result.",
 };
 
 function savingsBucket(report) {

@@ -320,10 +320,8 @@ func TestRecommend_AcceptanceScenarios(t *testing.T) {
 				State:   ToolStateActiveHigh,
 				Sources: map[EvidenceSource]int{EvidenceLogActiveCommand: 2},
 			}),
-			// Squeez is the benchmark-backed fallback after active RTK.
 			want: acceptanceExpectation{
-				primary:       "squeez",
-				primaryReason: ReasonAbsent,
+				primaryNil: true,
 				skipped: []SkipNote{
 					{ToolID: "rtk", Reason: ReasonActivePersistent, ForSignal: SignalShellOutputBloat},
 				},
@@ -338,8 +336,7 @@ func TestRecommend_AcceptanceScenarios(t *testing.T) {
 				Sources: map[EvidenceSource]int{EvidenceFailureOrRejection: 1},
 			}),
 			want: acceptanceExpectation{
-				primary:       "squeez",
-				primaryReason: ReasonAbsent,
+				primaryNil: true,
 				skipped: []SkipNote{
 					{ToolID: "rtk", Reason: ReasonRejectedAlternative, ForSignal: SignalShellOutputBloat},
 				},

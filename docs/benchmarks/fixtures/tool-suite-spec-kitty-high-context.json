@@ -72,21 +72,6 @@
       }
     },
     {
-      "id": "spec-kitty-squeez",
-      "tool": "Squeez",
-      "harness": "claude",
-      "guidance_file": "docs/benchmarks/fixtures/guidance/squeez-guidance.txt",
-      "requires": [
-        "npx"
-      ],
-      "env": {
-        "AGENT_PLUGIN_ENABLED": "0",
-        "TOOLING_REVIEW_ENABLED": "0",
-        "BASELINE_CLAUDE_ARGS": "--setting-sources project,local --strict-mcp-config --mcp-config {\"mcpServers\":{}} --settings {\"enabledPlugins\":{\"sentrux@sentrux-marketplace\":false},\"permissions\":{\"defaultMode\":\"bypassPermissions\"}} --permission-mode bypassPermissions --disallowedTools Agent --output-format json --model sonnet --max-budget-usd 20",
-        "OPTIMIZED_CLAUDE_ARGS": "--setting-sources project,local --strict-mcp-config --mcp-config {\"mcpServers\":{}} --settings {\"enabledPlugins\":{\"sentrux@sentrux-marketplace\":false},\"permissions\":{\"defaultMode\":\"bypassPermissions\"}} --permission-mode bypassPermissions --disallowedTools Agent --output-format json --model sonnet --max-budget-usd 20"
-      }
-    },
-    {
       "id": "spec-kitty-codex-guided",
       "tool": "Agent Analyzer guidance for Codex",
       "harness": "codex",

@@ -32,7 +32,6 @@ These tools reduced published API-rate cost in 3/3 repeated runs on the noisy be
 | context-mode | https://github.com/mksglu/context-mode | Tool-output/input-context batching | `20.4%` | Recommend for tool-output bloat or context-growth spikes; note that visible output rose on average. |
 | RTK | https://github.com/rtk-ai/rtk | Explicit shell-output compression | `18.2%` | Recommend explicit commands first; global hooks require separate approval. |
 | grepai | https://github.com/yoanbernabeu/grepai | Path-constrained compact retrieval | `14.5%` | Recommend only with small limits and path filters. |
-| Squeez | https://github.com/claudioemmanuel/squeez | Explicit shell/log compression | `12.1%` | Recommend for noisy shell/log tasks, not as a general reasoning or visible-output reducer. |
 
 ## Measurement, Not Reduction
 
@@ -51,6 +50,7 @@ These tools reduced published API-rate cost in 3/3 repeated runs on the noisy be
 | Caveman for Claude Code | https://github.com/JuliusBrussee/caveman | `+4,355` estimated tokens, `+3.9%` API-rate cost | Keep out of Claude plugin guidance. It helped Codex in this fixture, but worsened Claude Code. |
 | claude-rlm | https://github.com/Tenobrus/claude-rlm | `+19,477` estimated tokens on root+subagent aggregate | Do not recommend for medium-context tasks; root stdout cost is incomplete for sub-agent usage. |
 | claude-token-efficient | https://github.com/drona23/claude-token-efficient | `1.8%` API-rate savings | Too small/noisy for the default pack; use only as manual verbosity hygiene if a user asks. |
+| Squeez | https://github.com/claudioemmanuel/squeez | `-12.1%` API-rate savings in the old noisy-shell fixture | Do not recommend. It conflicts with Spec Kitty workflows, so the benchmark result stays visible only as historical evidence. |
 | Broad ecosystem lists and generic plugin installs | Various | Not benchmarked as reducers | Do not ship as default remediation advice. |
 
 ## Cost Translation Rule

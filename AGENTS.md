@@ -60,7 +60,7 @@ go run ./cmd/agent-analyzer run
 - Before publishing proof-page changes, run `./scripts/validate-benchmark-artifacts.py`.
 - Primary sanitized recordings live under `docs/benchmarks/primary-data/`public aggregates live under `web/proof/reports/aggregate-*.json`.
 - Do not promote telemetry-only tools such as `ccusage`  `ccstatusline` as token reducers.
-- Current default recommendation posture: Agent Analyzer guidance is positive; Semble is positive for bounded retrieval; context-mode, RTK, grepai, and Squeez are conditional; claude-context, Probe, Claude Code Caveman, claude-rlm, and claude-token-efficient are removed or downgraded for default token-saving claims based on current repeated suite.
+- Current default recommendation posture: Agent Analyzer guidance is positive; Semble is positive for bounded retrieval; context-mode, RTK, and grepai are conditional; Squeez is removed because it conflicts with Spec Kitty workflows; claude-context, Probe, Claude Code Caveman, claude-rlm, and claude-token-efficient are removed or downgraded for default token-saving claims based on current repeated suite.
 - Cost copy should scale repeated percentage deltas, not one-task cents, and must state basis when extrapolating monthly/team savings.
 
 ## Web And Report UI Rules
@@ -128,4 +128,3 @@ security dump-keychain 2>/dev/null | rg -i -C 3 'claude|analyzer|agent|usage|adm
 - Current no-confirmation report-pack email form posts to `/api/report-deliveries`. There is no user-facing email confirmation step for that flow.
 - If admin endpoint is unavailable, read same usage events from encrypted production report bucket w/ `claude-analyzer-prod` AWS profile, but keep raw event dumps out of chat unless user explicitly asks. Summarize counts and trends instead.
 - For future website analytics + email reports, use `scripts/production-analytics-report.py` unless there is reason to inspect raw data manually. default owner filter treats every `@robshouse.net` address as Robert's and excludes it from "not my own" email counts; keep email addresses masked in chat unless explicitly asked otherwise.
-

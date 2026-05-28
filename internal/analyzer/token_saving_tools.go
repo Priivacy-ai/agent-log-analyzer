@@ -31,7 +31,7 @@ type ToolID string
 // in any observable way (added/removed tool, field edit, ordering
 // change). NFR-005 in spec.md gates this; a CI test compares the live
 // value to a checked-in golden constant.
-const registryVersion = "phase-a-2026-05-24-benchmark-narrowed"
+const registryVersion = "phase-a-2026-05-28-squeez-removed"
 
 // TokenSavingTool is one immutable registry entry. The struct shape is
 // frozen by contracts/token_saving_engine_go_api.md.
@@ -224,28 +224,12 @@ var registry = []TokenSavingTool{
 		Notes:               "Rewrites shell command execution. This is github.com/rtk-ai/rtk, not the unrelated npm package named rtk.",
 	},
 	{
-		ID:                  "squeez",
-		DisplayName:         "Squeez",
-		SourceURL:           "https://github.com/claudioemmanuel/squeez",
-		Category:            "shell",
-		RecommendationClass: "shell_output_reducer",
-		ClassRank:           2,
-		DetectorSources:     []EvidenceSource{"cli_presence", "log_active_command"},
-		InstallRisk:         "medium",
-		DataMovementRisk:    "low",
-		FreeReportAllowed:   true,
-		PaidPackAllowed:     true,
-		ResearchOnly:        false,
-		InstallPolicy:       "recommend",
-		Notes:               "Benchmarked as explicit shell/log compression; recommend for noisy logs, not as a general reasoning reducer.",
-	},
-	{
 		ID:                  "leanctx",
 		DisplayName:         "leanctx",
 		SourceURL:           "",
 		Category:            "shell",
 		RecommendationClass: "shell_output_reducer",
-		ClassRank:           3,
+		ClassRank:           2,
 		DetectorSources:     []EvidenceSource{"cli_presence", "hook_configured"},
 		InstallRisk:         "low",
 		DataMovementRisk:    "low",
@@ -261,7 +245,7 @@ var registry = []TokenSavingTool{
 		SourceURL:           "",
 		Category:            "shell",
 		RecommendationClass: "shell_output_reducer",
-		ClassRank:           4,
+		ClassRank:           3,
 		DetectorSources:     []EvidenceSource{"cli_presence", "hook_configured"},
 		InstallRisk:         "low",
 		DataMovementRisk:    "low",

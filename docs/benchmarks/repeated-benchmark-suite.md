@@ -102,7 +102,7 @@ All rows below passed the quality gate in all three repeats.
 | RTK explicit | Claude Code | `-12,446` | `-12,716` | Claude output `+114` | native `-$0.031479`; API estimate `-$0.044316` | `-18.2%` | Conditional |
 | Probe | Claude Code | `+874` | `-745` | Claude output `+548` | native `+$0.038069`; API estimate `+$0.038340` | `+16.6%` | Removed |
 | Semble | Claude Code | `-16,301` | `-16,060` | Claude output `-480` | native `-$0.089147`; API estimate `-$0.114194` | `-41.5%` | Positive |
-| Squeez | Claude Code | `-8,471` | `-8,917` | Claude output `+73` | native `-$0.014049`; API estimate `-$0.028224` | `-12.1%` | Conditional |
+| Squeez | Claude Code | `-8,471` | `-8,917` | Claude output `+73` | native `-$0.014049`; API estimate `-$0.028224` | `-12.1%` | Removed: conflicts with Spec Kitty |
 | Agent Analyzer text guidance | Codex | `-14,520` | `-14,527` | output `-483`; reasoning `-45`; uncached+output `-24,369` | API estimate `-$0.062392` | `-31.8%` | Positive here |
 | Caveman | Claude Code | `+4,355` | `+4,868` | Claude output `-370` | native `+$0.009919`; API estimate `+$0.009211` | `+3.9%` | Removed |
 | Caveman | Codex | `-9,210` | `-9,109` | output `-172`; reasoning `-2`; uncached+output `-4,739` | API estimate `-$0.033986` | `-18.3%` | Harness-specific |

@@ -10,7 +10,7 @@ This note records the additional tools and approaches added after the first benc
 | --- | --- | --- | --- |
 | Probe | Local AST-aware/BM25 code search with bounded output | Input/context through compact retrieval | Negative here: tool output dipped, but total/cost rose. |
 | Semble | Local code-aware chunks with semantic and BM25 retrieval | Input/context through compact retrieval | Positive here: repeated task runs saved estimated, tool-output, output, and cost. |
-| Squeez | Explicit shell-output compression via `squeez wrap` | Tool-output/input-context | Conditional: repeated task runs saved tool-output/cost, but visible output stayed noisy. |
+| Squeez | Explicit shell-output compression via `squeez wrap` | Tool-output/input-context | Removed from recommendations: repeated task runs saved tool-output/cost, but it conflicts with Spec Kitty workflows. |
 | RTK | Explicit shell-output compression via `rtk` | Tool-output/input-context | Conditional: useful for noisy shell output; keep global hooks waiver-gated. |
 
 ## Smoke Results
@@ -32,13 +32,14 @@ All rows passed `go test ./...` in all three repeats.
 | --- | --- | ---: | ---: | --- | --- | --- |
 | Probe | 3/3 | `+874` | `-745` | Claude output `+548` | native `+$0.038069`; API estimate `+$0.038340` | Negative here |
 | Semble | 3/3 | `-16,301` | `-16,060` | Claude output `-480` | native `-$0.089147`; API estimate `-$0.114194` | Positive here |
-| Squeez | 3/3 | `-8,471` | `-8,917` | Claude output `+73` | native `-$0.014049`; API estimate `-$0.028224` | Conditional |
+| Squeez | 3/3 | `-8,471` | `-8,917` | Claude output `+73` | native `-$0.014049`; API estimate `-$0.028224` | Removed: conflicts with Spec Kitty |
 | RTK | 3/3 | `-12,446` | `-12,716` | Claude output `+114` | native `-$0.031479`; API estimate `-$0.044316` | Conditional |
 
 ## Product Actions
 
 - Add Semble as a positive but fixture-scoped candidate.
-- Keep RTK and Squeez as explicit shell-output compression recommendations, not global hook defaults.
+- Keep RTK as the explicit shell-output compression recommendation, not a silent global hook default.
+- Do not recommend Squeez because it conflicts with Spec Kitty workflows.
 - Do not add Probe as a default recommendation for this task family.
 - Keep smoke-test claims separate from task benchmark claims.
 

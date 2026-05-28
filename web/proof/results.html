@@ -255,7 +255,7 @@
               <td class="delta-bad">Claude output +73</td>
               <td class="delta-good">-$0.028224</td>
               <td class="delta-good">-12.1%</td>
-              <td><span class="verdict mixed">Conditional</span></td>
+              <td><span class="verdict bad">Removed: Spec Kitty conflict</span></td>
             </tr>
             <tr>
               <td><a class="text-link" href="https://github.com/ryoppippi/ccusage">ccusage</a> / <a class="text-link" href="https://github.com/sirmalloc/ccstatusline">ccstatusline</a></td>
@@ -340,9 +340,9 @@
         <ul class="artifact-list">
           <li><strong>Keep Agent Analyzer as the core:</strong> it produced repeated reductions in estimated tokens, tool output, visible output, native Claude cost, and published-rate estimated cost.</li>
           <li><strong>Narrow the paid pack:</strong> default guidance now includes Agent Analyzer workflow, output-budgeted commands, retrieval hygiene, session hygiene, and retry breaking.</li>
-          <li><strong>Recommend only working reducers by category:</strong> Semble, context-mode, RTK, grepai, and Squeez remain conditional recommendations tied to matching findings.</li>
+          <li><strong>Recommend only working reducers by category:</strong> Semble, context-mode, RTK, and grepai remain conditional recommendations tied to matching findings.</li>
           <li><strong>Do not recommend telemetry as a reducer:</strong> ccusage and ccstatusline help users see spend and context pressure, but they do not directly reduce input, output, tool-output, or reasoning tokens.</li>
-          <li><strong>Remove negative or too-small tools from default advice:</strong> claude-context, Probe, Caveman for Claude, claude-rlm, and claude-token-efficient no longer ship as default token-saving recommendations.</li>
+          <li><strong>Remove negative, conflicting, or too-small tools from default advice:</strong> claude-context, Probe, Caveman for Claude, claude-rlm, claude-token-efficient, and Squeez no longer ship as default token-saving recommendations.</li>
           <li><strong>Do not use RLM as proof for this fixture:</strong> claude-rlm is designed for truly long contexts, and on this medium-context task its sub-agent decomposition added analyzer-estimated tokens, tool output, and failed commands.</li>
           <li><strong>Keep negative and mixed evidence visible:</strong> users can audit what failed, but the download path now points only at what worked.</li>
         </ul>

@@ -95,7 +95,6 @@ Conditional third-party reducers:
 - `context-mode` for tool-output/input-context defense; `20.4%` savings, with visible output rising on average
 - `RTK (Rust Token Killer, rtk-ai/rtk)` for explicit shell-output compression; `18.2%` savings; global hooks require separate approval because it rewrites shell command execution; never install npm `rtk`, which is an unrelated package
 - `grepai` for path-constrained compact retrieval; `14.5%` savings
-- `Squeez` for explicit shell/log compression; `12.1%` savings
 
 Measurement-only tools:
 
@@ -110,6 +109,7 @@ Removed from default token-saving recommendations:
 - `Caveman` for Claude Code: reduced visible output but increased estimated/tool-output tokens and cost
 - `claude-rlm`: increased analyzer-estimated tokens and tool output in this medium-context fixture; root stdout cost was incomplete for sub-agent usage
 - `claude-token-efficient`: only `1.8%` repeated API-rate savings, too small for default install advice
+- `Squeez`: conflicts with Spec Kitty workflows; keep the old benchmark result visible as historical evidence, but do not recommend or emit it in generated artifacts
 
 Generated copy must not blur output tokens and reasoning tokens. Output tokens are visible assistant text/tool calls. Reasoning tokens are hidden model work reported by some harnesses and should only be claimed when measured. Terse-response tools can reduce output tokens while still increasing full-session cost.
 

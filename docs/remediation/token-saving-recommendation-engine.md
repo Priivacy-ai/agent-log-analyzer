@@ -66,9 +66,9 @@ with `distill` and `token_optimizer_mcp` as research-only candidates.
 
 **`shell_output_reducer`** — Compressing or proxying shell command output.
 Responds to `shell_output_bloat`. Anchored by `RTK (Rust Token Killer,
-rtk-ai/rtk)` (rank 1, waiver-gated) and `Squeez` (rank 2) for explicit
-shell/log compression, with `leanctx` and `headroom` as research-only
-entries.
+rtk-ai/rtk)` (rank 1, waiver-gated), with `leanctx` and `headroom` as
+research-only entries. Squeez is intentionally not in the recommendable
+registry because it conflicts with Spec Kitty workflows.
 
 **`retrieval`** — Code-aware retrieval that replaces broad file reads.
 Responds to `repeated_file_reads` and `broad_repo_exploration`. The
@@ -112,7 +112,7 @@ recommendations leave them empty.
 Adding, removing, or modifying any registry entry must bump
 `RegistryVersion()` — a CI test compares the live value to a checked-in
 golden constant and fails fast otherwise. The current benchmark-narrowed
-registry is `"phase-a-2026-05-24-benchmark-narrowed"`; see NFR-005.
+registry is `"phase-a-2026-05-28-squeez-removed"`; see NFR-005.
 
 For URL verification, see `research.md` §"Per-tool research notes". The
 short version: Phase A does **not** invent or guess source URLs. Every

@@ -45,7 +45,6 @@ var briefAllowlist = []ToolID{
 	"claude_meter",
 	"ccstatusline",
 	"rtk",
-	"squeez",
 	"leanctx",
 	"headroom",
 	"context_mode",
@@ -222,7 +221,7 @@ func TestRegistryAllowlistCoverage(t *testing.T) {
 }
 
 func TestRegistryVersionConstant(t *testing.T) {
-	if got, want := RegistryVersion(), "phase-a-2026-05-24-benchmark-narrowed"; got != want {
+	if got, want := RegistryVersion(), "phase-a-2026-05-28-squeez-removed"; got != want {
 		t.Errorf("RegistryVersion() = %q, want %q", got, want)
 	}
 }

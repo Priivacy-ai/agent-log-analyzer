@@ -586,7 +586,7 @@ func TestExtendedReportPackageUsesRealReportFixtures(t *testing.T) {
 			}
 			reportJSON := mustZipEntry(t, reader, "agent-analyzer-report.json")
 			if !bytes.Contains(reportJSON, []byte(`"source_reports"`)) ||
-				!bytes.Contains(reportJSON, []byte(`"registry_version": "phase-a-2026-05-24-benchmark-narrowed"`)) ||
+				!bytes.Contains(reportJSON, []byte(`"registry_version": "phase-a-2026-05-28-squeez-removed"`)) ||
 				bytes.Contains(reportJSON, []byte("sk-ant-")) {
 				t.Fatalf("real fixture report JSON missing expected sanitized/current data")
 			}

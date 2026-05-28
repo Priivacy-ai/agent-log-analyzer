@@ -165,10 +165,13 @@ func TestGenerateCreatesClaudePluginArtifact(t *testing.T) {
 	if !containsCustomization(artifact, "retrieval-hygiene") || !containsCustomization(artifact, "output-budget") || !containsCustomization(artifact, "retry-breaker") {
 		t.Fatalf("missing expected customizations: %#v", artifact.Customizations)
 	}
-	for _, want := range []string{"ccusage", "context-mode", "grepai", "semble", "squeez", "typescript-lsp", "github"} {
+	for _, want := range []string{"ccusage", "context-mode", "grepai", "semble", "typescript-lsp", "github"} {
 		if !containsRecommendation(artifact, want) {
 			t.Fatalf("missing vetted recommendation %s: %#v", want, artifact.VettedRecommendations)
 		}
+	}
+	if containsRecommendation(artifact, "squeez") {
+		t.Fatalf("Squeez must not be emitted as a vetted recommendation: %#v", artifact.VettedRecommendations)
 	}
 	for _, recommendation := range artifact.VettedRecommendations {
 		if !isHTTPSURL(recommendation.Source) {

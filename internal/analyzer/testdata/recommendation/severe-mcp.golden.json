@@ -33,14 +33,13 @@
     "install_policy": "recommend_with_waiver",
     "install_surface": "local_binary_plus_claude_hook",
     "conflicts_with": [
-      "squeez",
       "leanctx",
       "headroom"
     ],
     "ambiguity_warning": "RTK means github.com/rtk-ai/rtk. Do not install or recommend the unrelated npm package named rtk.",
     "evidence_counts": {}
   },
-  "registry_version": "phase-a-2026-05-24-benchmark-narrowed",
+  "registry_version": "phase-a-2026-05-28-squeez-removed",
   "engine_version": "v0.2-benchmark-narrowed",
   "signals": [
     "mcp_skill_bloat",

@@ -307,8 +307,8 @@
       "tool_output_token_delta": -8917,
       "cost_delta_usd": -0.014049,
       "turn_delta": 9,
-      "observed_result": "Repeated Squeez guidance reduced estimated/tool-output tokens and cost on average; visible output stayed noisy, so frame it as tool-output compression.",
-      "verdict": "conditional_positive",
+      "observed_result": "Repeated Squeez guidance reduced estimated/tool-output tokens and cost on average, but Squeez conflicts with Spec Kitty workflows; keep this as historical evidence only.",
+      "verdict": "removed_spec_kitty_conflict",
       "published_api_cost_delta_usd": -0.028224,
       "published_api_cost_model": "claude-sonnet-4-6",
       "replication_status": "repeated_ab",
@@ -456,8 +456,8 @@
     {
       "recommendation": "Squeez",
       "source": "https://github.com/claudioemmanuel/squeez",
-      "verdict": "conditional repeated positive",
-      "product_action": "Conditionally recommend for explicit shell/log compression; repeated API-rate savings were 12.1%."
+      "verdict": "removed: Spec Kitty conflict",
+      "product_action": "Do not recommend or emit in generated artifacts; repeated API-rate savings were 12.1%, but Squeez conflicts with Spec Kitty workflows."
     },
     {
       "recommendation": "Caveman",
@@ -950,8 +950,7 @@
       "semble",
       "context-mode",
       "rtk-explicit",
-      "grepai-path-constrained",
-      "squeez"
+      "grepai-path-constrained"
     ],
     "telemetry_only": [
       "ccusage",
@@ -964,7 +963,8 @@
       "probe",
       "caveman-claude",
       "claude-rlm",
-      "claude-token-efficient"
+      "claude-token-efficient",
+      "squeez"
     ],
     "rule": "Recommend a third-party reducer only when it reduced the target token/cost category in repeated runs and the user report contains the matching waste pattern."
   },

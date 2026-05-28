@@ -66,7 +66,7 @@ The benchmark setup command copies these logs into each fresh worktree at `.benc
 This fixture is designed to separate three token-saving mechanisms:
 
 - Retrieval and path planning: `claude-context`, `grepai`, Semble, and Probe-like tools should only help if their search/index overhead is amortized by fewer repeated broad reads.
-- Tool-output/log compression: RTK, Squeez, and context-mode should help most on the CI and evidence-log parts, especially if the agent avoids dumping huge logs verbatim.
+- Tool-output/log compression: RTK and context-mode should help most on the CI and evidence-log parts, especially if the agent avoids dumping huge logs verbatim. Do not recommend Squeez for this fixture because it conflicts with Spec Kitty workflows.
 - Visible-output terseness: `claude-token-efficient`, Caveman, and Agent Analyzer guidance can reduce final response/output tokens, but they do not automatically reduce input/context tokens unless paired with better search discipline.
 
 Telemetry-only tools such as ccusage and ccstatusline remain excluded from this suite as direct reducers. They can measure or surface cost, but they do not change task behavior by themselves.

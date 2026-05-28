@@ -43,7 +43,6 @@ const (
 	sourceGrepAI               = "https://github.com/yoanbernabeu/grepai"
 	sourceRTK                  = "https://github.com/rtk-ai/rtk"
 	sourceSemble               = "https://github.com/MinishLab/semble"
-	sourceSqueez               = "https://github.com/claudioemmanuel/squeez"
 	sourceUsageMonitor         = "https://github.com/Maciek-roboblog/Claude-Code-Usage-Monitor"
 	sourceGitHubPlugin         = "https://claude.com/plugins/github"
 	sourceLinearPlugin         = "https://claude.com/plugins/linear"
@@ -451,15 +450,6 @@ func toolingRecommendations(report analyzer.Report) []ToolRecommendation {
 			BinaryInstallHint: "This is github.com/rtk-ai/rtk. Do not install the unrelated npm package named rtk.",
 			Source:            sourceRTK,
 		})
-		add(ToolRecommendation{
-			ID:                "squeez",
-			Category:          "explicit_shell_compression",
-			Why:               "Compress noisy shell or log output explicitly when large logs would otherwise enter the live context.",
-			InstallCommand:    "Review https://github.com/claudioemmanuel/squeez first, then use explicit squeez commands for noisy logs instead of global hooks.",
-			RequiredBinary:    "squeez",
-			BinaryInstallHint: "Use for shell/log compression only; it is not a general reasoning-token reducer.",
-			Source:            sourceSqueez,
-		})
 	}
 
 	if findingIDs["repeated_file_reads"] {
@@ -731,8 +721,6 @@ func recommendationRegistryID(id string) analyzer.ToolID {
 		return "claude_token_efficient"
 	case "claude-code-usage-monitor":
 		return "claude_code_usage_monitor"
-	case "squeez":
-		return "squeez"
 	default:
 		return analyzer.ToolID(strings.ReplaceAll(id, "-", "_"))
 	}
@@ -772,8 +760,6 @@ func remediationInstallSurface(id analyzer.ToolID, category string) string {
 	switch id {
 	case "rtk":
 		return "local_binary_plus_claude_hook"
-	case "squeez":
-		return "local_binary_explicit_compression"
 	case "context_mode":
 		return "claude_plugin_plus_mcp"
 	case "claude_context":
@@ -793,9 +779,7 @@ func remediationInstallSurface(id analyzer.ToolID, category string) string {
 func remediationConflicts(id analyzer.ToolID) []string {
 	switch id {
 	case "rtk":
-		return []string{"squeez", "leanctx", "headroom"}
-	case "squeez":
-		return []string{"rtk", "leanctx", "headroom"}
+		return []string{"leanctx", "headroom"}
 	case "context_mode":
 		return []string{"token_optimizer_mcp", "headroom"}
 	case "claude_context":
@@ -1137,7 +1121,6 @@ Third-party token-saving patterns reviewed against benchmark results:
 - RTK: ` + sourceRTK + ` — retained as a high-risk, waiver-gated shell-output reducer.
 - grepai: ` + sourceGrepAI + ` — retained as a scoped local retrieval candidate.
 - Semble: ` + sourceSemble + ` — retained as a scoped, path-limited retrieval candidate.
-- Squeez: ` + sourceSqueez + ` — retained as an explicit shell/log compression candidate.
 - ccusage: ` + sourceCCUsage + ` — retained as optional measurement, not as a direct reducer.
 - ccstatusline: ` + sourceCCStatusline + ` — retained as optional awareness, not as a direct reducer.
 - claude-context: ` + sourceClaudeContext + ` — reviewed but not recommended by default after negative fixture results.

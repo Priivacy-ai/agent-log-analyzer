@@ -292,7 +292,6 @@
       "install_policy": "recommend_with_waiver",
       "install_surface": "local_binary_plus_claude_hook",
       "conflicts_with": [
-        "squeez",
         "leanctx",
         "headroom"
       ],
@@ -324,7 +323,7 @@
       ],
       "evidence_counts": {}
     },
-    "registry_version": "phase-a-2026-05-24-benchmark-narrowed",
+    "registry_version": "phase-a-2026-05-28-squeez-removed",
     "engine_version": "v0.2-benchmark-narrowed",
     "signals": [
       "no_usage_visibility",

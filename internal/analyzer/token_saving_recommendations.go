@@ -351,8 +351,6 @@ func installSurfaceForTool(tool TokenSavingTool) string {
 	switch tool.ID {
 	case "rtk":
 		return "local_binary_plus_claude_hook"
-	case "squeez":
-		return "local_binary_explicit_compression"
 	case "context_mode":
 		return "claude_plugin_plus_mcp"
 	case "claude_context":
@@ -378,9 +376,7 @@ func installSurfaceForTool(tool TokenSavingTool) string {
 func conflictsForTool(id ToolID) []ToolID {
 	switch id {
 	case "rtk":
-		return []ToolID{"squeez", "leanctx", "headroom"}
-	case "squeez":
-		return []ToolID{"rtk", "leanctx", "headroom"}
+		return []ToolID{"leanctx", "headroom"}
 	case "context_mode":
 		return []ToolID{"token_optimizer_mcp", "headroom"}
 	case "claude_context":
