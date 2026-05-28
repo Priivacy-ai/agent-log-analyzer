@@ -161,7 +161,7 @@ h1 {
   inset: 0 auto auto 0;
   opacity: 0;
   transform: translateY(0.18em);
-  animation: tool-name-rotate 12s ease-in-out infinite;
+  animation: tool-name-rotate 14s ease-in-out infinite;
 }
 
 .tool-rotator span:nth-child(2) {
@@ -184,14 +184,18 @@ h1 {
   animation-delay: 10s;
 }
 
+.tool-rotator span:nth-child(7) {
+  animation-delay: 12s;
+}
+
 @keyframes tool-name-rotate {
   0%,
-  12% {
+  10.5% {
     opacity: 1;
     transform: translateY(0);
   }
 
-  16.66%,
+  14.28%,
   100% {
     opacity: 0;
     transform: translateY(-0.18em);
