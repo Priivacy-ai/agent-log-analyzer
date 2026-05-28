@@ -502,16 +502,16 @@ func extractToolEvent(source string, obj map[string]any, base normalizedEvent) n
 
 func nestedToolEvents(source string, obj map[string]any, base normalizedEvent) []normalizedEvent {
 	var events []normalizedEvent
-	var walk func(any)
-	walk = func(value any) {
+	var walk func(any, bool)
+	walk = func(value any, root bool) {
 		switch typed := value.(type) {
 		case []any:
 			for _, item := range typed {
-				walk(item)
+				walk(item, false)
 			}
 		case map[string]any:
 			kind := boundedKind(stringValue(typed["type"]))
-			if kind == "tool_use" || kind == "tool_result" || kind == "function_call" || kind == "function_call_output" {
+			if !root && (kind == "tool_use" || kind == "tool_result" || kind == "function_call" || kind == "function_call_output") {
 				nested := base
 				clearEventQuantities(&nested)
 				nested.Kind = kind
@@ -530,11 +530,11 @@ func nestedToolEvents(source string, obj map[string]any, base normalizedEvent) [
 				return
 			}
 			for _, item := range typed {
-				walk(item)
+				walk(item, false)
 			}
 		}
 	}
-	walk(obj)
+	walk(obj, true)
 	return events
 }
 

@@ -138,7 +138,13 @@ func runAnalyze(args []string) error {
 func analyzeSingle(path, out string, printNextSteps bool, sourceID string) error {
 	progress := newProgressBar(3)
 	progress.Update(0, "reading "+shortDisplay(path))
-	data, err := os.ReadFile(path)
+	candidate := logCandidate{
+		SourceID:    sourceID,
+		SourceLabel: sourceLabelForID(sourceID),
+		Display:     path,
+		Read:        candidateReadFunc(sourceID, path),
+	}
+	data, err := candidate.readBytes()
 	if err != nil {
 		progress.Fail()
 		return err
@@ -151,11 +157,7 @@ func analyzeSingle(path, out string, printNextSteps bool, sourceID string) error
 	}
 	report.SourceReports = buildSourceReports([]sourceAnalysisResult{
 		{
-			Candidate: logCandidate{
-				SourceID:    sourceID,
-				SourceLabel: sourceLabelForID(sourceID),
-				Display:     path,
-			},
+			Candidate:         candidate,
 			Report:            report,
 			Bytes:             len(data),
 			ContentHashSHA256: contentHashSHA256(data),

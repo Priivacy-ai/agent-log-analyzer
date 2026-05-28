@@ -248,6 +248,32 @@ func TestAnalyze_ExplicitSourceUsesSourceSpecificNormalizer(t *testing.T) {
 	assertReportDoesNotContain(t, report, logPath, filepath.Base(logPath))
 }
 
+func TestAnalyze_ExplicitCopilotPathUsesSessionReader(t *testing.T) {
+	dir := t.TempDir()
+	logPath := filepath.Join(dir, "workspaceStorage", "workspace-a", "chatSessions", "copilot-session.json")
+	writeCopilotChatSession(t, logPath, 0)
+	outPath := filepath.Join(dir, "report.json")
+
+	if err := runAnalyze([]string{logPath, "--out", outPath}); err != nil {
+		t.Fatalf("runAnalyze: %v", err)
+	}
+	data, err := os.ReadFile(outPath)
+	if err != nil {
+		t.Fatalf("read report: %v", err)
+	}
+	var report analyzer.Report
+	if err := json.Unmarshal(data, &report); err != nil {
+		t.Fatalf("unmarshal report: %v", err)
+	}
+	if report.AnalysisSignals.ToolCallCount != 1 || report.AnalysisSignals.ToolResultCount != 1 {
+		t.Fatalf("expected exact Copilot tool signals, got %#v", report.AnalysisSignals)
+	}
+	if report.AnalysisSignals.InputTokens != 1200 || report.AnalysisSignals.CacheReadTokens != 200 || report.AnalysisSignals.OutputTokens != 80 {
+		t.Fatalf("expected Copilot token signals, got %#v", report.AnalysisSignals)
+	}
+	assertReportDoesNotContain(t, report, "private@example.com", "/Users/private/repo", "oauth-refresh-token", "session-secret")
+}
+
 func TestAnalyze_RejectsUnknownExplicitSource(t *testing.T) {
 	dir := t.TempDir()
 	logPath := writeSampleLog(t, dir)
@@ -537,7 +563,7 @@ func TestCopilotVSCodeSessionReader_NormalizesToolsAndDoesNotLeakReportData(t *t
 	if err != nil {
 		t.Fatalf("AnalyzeForSource: %v", err)
 	}
-	if report.AnalysisSignals.ToolCallCount == 0 || report.AnalysisSignals.ToolResultCount == 0 {
+	if report.AnalysisSignals.ToolCallCount != 1 || report.AnalysisSignals.ToolResultCount != 1 {
 		t.Fatalf("expected Copilot tool signals, got %#v", report.AnalysisSignals)
 	}
 	assertReportDoesNotContain(t, report, "private@example.com", "/Users/private/repo", "oauth-refresh-token", "session-secret")
