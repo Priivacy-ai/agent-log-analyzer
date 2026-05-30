@@ -1,12 +1,16 @@
-//go:build !lambda
+//go:build lambda
 
 package main
 
 import (
+	"context"
+	"encoding/json"
+	"errors"
 	"log/slog"
 	"os"
-	"time"
 
+	"github.com/aws/aws-lambda-go/events"
+	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/priivacy-ai/agent-log-analyzer/internal/analytics"
 	"github.com/priivacy-ai/agent-log-analyzer/internal/analyzer"
 	"github.com/priivacy-ai/agent-log-analyzer/internal/app"
@@ -20,25 +24,38 @@ func main() {
 		slog.Error("store init failed", "error", err)
 		os.Exit(1)
 	}
-	interval, err := time.ParseDuration(getenv("CLAUDE_ANALYZER_WORKER_INTERVAL", "2s"))
-	if err != nil {
-		interval = 2 * time.Second
-	}
-	slog.Info("worker started", "interval", interval.String())
-	for {
-		if err := processOnce(store); err != nil {
-			slog.Error("worker process failed", "error_category", "process_once")
-		}
-		time.Sleep(interval)
-	}
+	lambda.Start(func(ctx context.Context, event events.SQSEvent) error {
+		return handleSQSEvent(ctx, store, event)
+	})
 }
 
-func processOnce(store app.WorkerStore) error {
-	job, ok, err := store.ClaimNextJob()
-	if err != nil || !ok {
+func handleSQSEvent(_ context.Context, store app.WorkerStore, event events.SQSEvent) error {
+	var batchErr error
+	for _, record := range event.Records {
+		if err := processRecord(store, record.Body); err != nil {
+			slog.Error("worker record failed", "error_category", "process_record")
+			batchErr = err
+		}
+	}
+	return batchErr
+}
+
+func processRecord(store app.WorkerStore, body string) error {
+	var payload map[string]string
+	if err := json.Unmarshal([]byte(body), &payload); err != nil {
 		return err
 	}
-	slog.Info("job claimed")
+	jobID := payload["job_id"]
+	if jobID == "" {
+		return errors.New("SQS message missing job_id")
+	}
+	job, err := store.GetJob(jobID)
+	if err != nil {
+		return err
+	}
+	if job.Status == app.StatusCompleted {
+		return nil
+	}
 	data, err := store.ReadUpload(job.UploadPath)
 	if err != nil {
 		_ = store.FailJob(job, err)
@@ -74,11 +91,4 @@ func processOnce(store app.WorkerStore) error {
 		"ecosystem", report.AggregateEvent.Ecosystem,
 	)
 	return nil
-}
-
-func getenv(key, fallback string) string {
-	if value := os.Getenv(key); value != "" {
-		return value
-	}
-	return fallback
 }

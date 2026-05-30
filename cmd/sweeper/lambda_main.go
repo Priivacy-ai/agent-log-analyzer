@@ -1,12 +1,14 @@
-//go:build !lambda
+//go:build lambda
 
 package main
 
 import (
+	"context"
 	"log/slog"
 	"os"
 	"time"
 
+	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/priivacy-ai/agent-log-analyzer/internal/backend"
 )
 
@@ -17,13 +19,16 @@ func main() {
 		os.Exit(1)
 	}
 	uploadTTL := mustDuration(getenv("CLAUDE_ANALYZER_UPLOAD_TTL", "15m"))
-	reportTTL := mustDuration(getenv("CLAUDE_ANALYZER_REPORT_TTL", "15m"))
-	result, err := store.SweepExpired(time.Now().UTC(), uploadTTL, reportTTL)
-	if err != nil {
-		slog.Error("sweep failed", "error_category", "retention_sweep")
-		os.Exit(1)
-	}
-	slog.Info("sweep completed", "uploads_deleted", result.UploadsDeleted, "reports_deleted", result.ReportsDeleted)
+	reportTTL := mustDuration(getenv("CLAUDE_ANALYZER_REPORT_TTL", "0"))
+	lambda.Start(func(context.Context) error {
+		result, err := store.SweepExpired(time.Now().UTC(), uploadTTL, reportTTL)
+		if err != nil {
+			slog.Error("sweep failed", "error_category", "retention_sweep")
+			return err
+		}
+		slog.Info("sweep completed", "uploads_deleted", result.UploadsDeleted, "reports_deleted", result.ReportsDeleted)
+		return nil
+	})
 }
 
 func mustDuration(value string) time.Duration {

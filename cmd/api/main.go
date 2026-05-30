@@ -45,7 +45,7 @@ type paidSessionRequest struct {
 	Acknowledgment string `json:"acknowledgment"`
 }
 
-func main() {
+func runServer() {
 	addr := getenv("CLAUDE_ANALYZER_ADDR", ":8080")
 	store, err := backend.NewAPIStore()
 	if err != nil {

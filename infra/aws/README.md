@@ -4,12 +4,15 @@ Terraform scaffold for the first production deployment. Do not apply this until 
 
 What it creates:
 
+- Serverless public path: private S3 static bucket, CloudFront distribution,
+  API Gateway HTTP API, Lambda API, SQS-triggered Lambda worker, Lambda sweeper,
+  and SQS-triggered SES event recorder.
 - ECR repository for the app image.
 - VPC with public ALB subnets and private ECS task subnets.
-- VPC endpoints for S3, DynamoDB, SQS, ECR, and CloudWatch Logs; no NAT gateway is required.
+- VPC endpoints for S3, DynamoDB, SQS, ECR, and CloudWatch Logs, plus legacy ECS NAT gateways.
 - Private S3 buckets for raw uploads and sanitized reports, with encryption, public-access blocks, and one-day lifecycle backstops.
 - SQS queue and DynamoDB job table.
-- ECS Fargate API and worker services.
+- Legacy ECS Fargate API and worker services.
 - Scheduled Fargate sweeper every five minutes to enforce the raw upload TTL. Report links are durable private links and are not swept.
 
 Prepare:
@@ -51,6 +54,10 @@ Production notes:
 - Launch hostname is `analyzer.spec-kitty.ai`.
 - Keep the previous `claude-code.spec-kitty.ai` hostname only as a compatibility redirect to `analyzer.spec-kitty.ai`; do not use it in public launch copy.
 - DNS for `spec-kitty.ai` is managed in Namecheap, not Route 53. Add the `analyzer` app CNAME and ACM validation CNAME there.
+- Cheapest verified target is the serverless path. Current CloudFront target:
+  `d3mkawu1fiuq7p.cloudfront.net`. Move the Namecheap
+  `analyzer.spec-kitty.ai` CNAME from the ALB DNS name to this CloudFront
+  domain before deleting legacy ALB/ECS/VPC resources.
 - When `certificate_arn` is set, the ALB HTTP listener redirects to HTTPS.
 - Terraform still defaults `container_image` to `:latest` for initial stack creation. App deploys should use `scripts/deploy-aws.sh`; if you run Terraform after a script deploy, pass the currently deployed immutable image digest as `container_image` or expect Terraform to register task definitions pointing back at `:latest`.
 - Keep `force_destroy_buckets=false` in production.
@@ -60,7 +67,11 @@ Production notes:
 
 Transactional email:
 
-- SES remains supported and is the default Terraform provider (`email_provider=ses`) for the testing phase.
+- SES is the production Terraform provider (`email_provider=ses`). The current
+  AWS account has sending enabled with the SES sandbox quota: 200 emails/day and
+  1 email/second. Sandbox mode can send only to verified recipients/domains, so
+  request SES production access before relying on arbitrary customer recipient
+  delivery.
 - Postmark is optional and can be enabled after account review by setting `email_provider=postmark`, `email_from=robert@spec-kitty.ai`, and `postmark_server_token_secret_arn`.
 - Postmark uses an external HTTPS API, so production ECS tasks need NAT egress from their private subnets. The Terraform stack provisions one NAT gateway per public subnet for availability; AWS VPC endpoints still carry AWS-service traffic where supported.
 - Store the Postmark server token in AWS Secrets Manager, not Terraform variables:

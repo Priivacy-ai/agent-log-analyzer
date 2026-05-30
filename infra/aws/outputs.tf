@@ -37,3 +37,18 @@ output "waf_web_acl_arn" {
   description = "Regional WAF web ACL associated with the public ALB."
   value       = aws_wafv2_web_acl.alb.arn
 }
+
+output "serverless_api_endpoint" {
+  description = "HTTP API endpoint used by the serverless API Lambda."
+  value       = aws_apigatewayv2_api.http.api_endpoint
+}
+
+output "cloudfront_domain_name" {
+  description = "CloudFront distribution domain for the serverless site."
+  value       = aws_cloudfront_distribution.site.domain_name
+}
+
+output "static_bucket" {
+  description = "Static site bucket served through CloudFront."
+  value       = aws_s3_bucket.static.bucket
+}
