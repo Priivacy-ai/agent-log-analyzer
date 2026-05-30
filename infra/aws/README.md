@@ -44,14 +44,15 @@ Production notes:
 
 Transactional email:
 
-- SES is the production Terraform provider (`email_provider=ses`). The current
-  AWS account has sending enabled with the SES sandbox quota: 200 emails/day and
-  1 email/second. Sandbox mode can send only to verified recipients/domains, so
-  request SES production access before relying on arbitrary customer recipient
-  delivery.
-- Postmark was removed from the production AWS footprint. Reintroducing an
-  external email provider means adding secret delivery and outbound internet
-  access intentionally, not by restoring the old NAT-backed ECS stack.
+- SES remains supported with `email_provider=ses`, but sandbox mode can send
+  only to verified recipients/domains.
+- Postmark is supported with `email_provider=postmark`. Store the server token
+  in AWS Secrets Manager and pass its ARN with
+  `postmark_server_token_secret_arn`; Terraform grants the API Lambda read
+  access to that one secret. Do not pass or commit the raw token through
+  Terraform.
+- Postmark uses public HTTPS from Lambda. No VPC, NAT gateway, or ECS service is
+  required.
 
 Admin usage stats:
 

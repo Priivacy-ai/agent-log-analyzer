@@ -2,10 +2,18 @@ locals {
   lambda_zip_dir  = "${path.module}/../../.data/lambda"
   static_bucket   = "${local.name}-static-${random_id.suffix.hex}"
   lambda_base_env = [for item in local.env : item if item.name != "AWS_REGION"]
+  postmark_env = var.email_provider == "postmark" ? concat(
+    [
+      { name = "CLAUDE_ANALYZER_POSTMARK_MESSAGE_STREAM", value = var.postmark_message_stream }
+    ],
+    var.postmark_server_token_secret_arn != "" ? [
+      { name = "POSTMARK_SERVER_TOKEN_SECRET_ARN", value = var.postmark_server_token_secret_arn }
+    ] : []
+  ) : []
   lambda_env = concat(local.lambda_base_env, local.admin_usage_env, [
     { name = "CLAUDE_ANALYZER_SES_CONFIGURATION_SET", value = aws_sesv2_configuration_set.transactional.configuration_set_name },
     { name = "CLAUDE_ANALYZER_PUBLIC_BASE_URL", value = "https://analyzer.spec-kitty.ai" }
-  ])
+  ], local.postmark_env)
 }
 
 data "aws_cloudfront_cache_policy" "caching_optimized" {
@@ -118,7 +126,7 @@ resource "aws_iam_role_policy" "lambda_app" {
 
   policy = jsonencode({
     Version = "2012-10-17"
-    Statement = [
+    Statement = concat([
       {
         Effect = "Allow"
         Action = ["s3:GetObject", "s3:PutObject", "s3:DeleteObject", "s3:ListBucket"]
@@ -144,7 +152,15 @@ resource "aws_iam_role_policy" "lambda_app" {
         Action   = ["ses:SendEmail"]
         Resource = "*"
       }
-    ]
+      ],
+      var.postmark_server_token_secret_arn != "" ? [
+        {
+          Effect   = "Allow"
+          Action   = ["secretsmanager:GetSecretValue"]
+          Resource = var.postmark_server_token_secret_arn
+        }
+      ] : []
+    )
   })
 }
 

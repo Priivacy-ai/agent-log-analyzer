@@ -1,6 +1,6 @@
 # Transactional Email Operations
 
-Agent Analyzer no longer requires email for the public scan path. SES remains supported for legacy testing and future transactional receipts/support workflows. Postmark is also supported as an optional transactional provider once the Postmark account review is complete.
+Agent Analyzer no longer requires email for the public scan path. SES remains supported for legacy testing, but production report-pack delivery uses Postmark while SES is not production-ready for arbitrary recipients.
 
 ## What We Send
 
@@ -61,7 +61,7 @@ CLAUDE_ANALYZER_POSTMARK_MESSAGE_STREAM=outbound
 POSTMARK_SERVER_TOKEN=<from AWS Secrets Manager in production>
 ```
 
-Do not store `POSTMARK_SERVER_TOKEN` in Terraform files, `.env`, documentation, or logs. In AWS, inject it into the API ECS task from Secrets Manager.
+Do not store `POSTMARK_SERVER_TOKEN` in Terraform files, `.env`, documentation, or logs. In AWS Lambda, set `POSTMARK_SERVER_TOKEN_SECRET_ARN` and grant the API Lambda `secretsmanager:GetSecretValue` for that one secret.
 
 ## Alarms
 

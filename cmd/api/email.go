@@ -18,6 +18,7 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/secretsmanager"
 	"github.com/aws/aws-sdk-go-v2/service/sesv2"
 	sestypes "github.com/aws/aws-sdk-go-v2/service/sesv2/types"
 	"github.com/priivacy-ai/agent-log-analyzer/internal/app"
@@ -329,7 +330,11 @@ func configuredEmailSender() emailSender {
 	}
 	if strings.EqualFold(os.Getenv("CLAUDE_ANALYZER_EMAIL_PROVIDER"), "postmark") {
 		from := strings.TrimSpace(os.Getenv("CLAUDE_ANALYZER_EMAIL_FROM"))
-		token := strings.TrimSpace(os.Getenv("POSTMARK_SERVER_TOKEN"))
+		token, err := configuredPostmarkServerToken()
+		if err != nil {
+			slog.Error("Postmark token configuration failed", "error_category", "email_provider")
+			return loggingEmailSender{}
+		}
 		if from == "" || token == "" {
 			slog.Error("Postmark email provider configured without required sender or token", "error_category", "email_provider")
 			return loggingEmailSender{}
@@ -343,6 +348,30 @@ func configuredEmailSender() emailSender {
 		}
 	}
 	return loggingEmailSender{}
+}
+
+func configuredPostmarkServerToken() (string, error) {
+	if token := strings.TrimSpace(os.Getenv("POSTMARK_SERVER_TOKEN")); token != "" {
+		return token, nil
+	}
+	secretID := strings.TrimSpace(os.Getenv("POSTMARK_SERVER_TOKEN_SECRET_ARN"))
+	if secretID == "" {
+		return "", nil
+	}
+	cfg, err := config.LoadDefaultConfig(context.Background(), config.WithRegion(getenv("AWS_REGION", "us-east-1")))
+	if err != nil {
+		return "", err
+	}
+	resp, err := secretsmanager.NewFromConfig(cfg).GetSecretValue(context.Background(), &secretsmanager.GetSecretValueInput{
+		SecretId: aws.String(secretID),
+	})
+	if err != nil {
+		return "", err
+	}
+	if resp.SecretString != nil {
+		return strings.TrimSpace(*resp.SecretString), nil
+	}
+	return strings.TrimSpace(string(resp.SecretBinary)), nil
 }
 
 func guardEmailSender(sender emailSender, store app.APIStore) emailSender {

@@ -18,7 +18,7 @@ variable "environment" {
 
 variable "email_provider" {
   type        = string
-  description = "Transactional email provider for confirmation and full-scan delivery. Supported values: ses or empty to log only."
+  description = "Transactional email provider for confirmation and full-scan delivery. Supported values: ses, postmark, or empty to log only."
   default     = "ses"
 }
 
@@ -26,6 +26,18 @@ variable "email_from" {
   type        = string
   description = "Verified sender address for transactional email."
   default     = "noreply@spec-kitty.ai"
+}
+
+variable "postmark_message_stream" {
+  type        = string
+  description = "Postmark message stream used when email_provider=postmark."
+  default     = "outbound"
+}
+
+variable "postmark_server_token_secret_arn" {
+  type        = string
+  description = "Optional AWS Secrets Manager secret ARN containing the Postmark server token."
+  default     = ""
 }
 
 variable "certificate_arn" {
